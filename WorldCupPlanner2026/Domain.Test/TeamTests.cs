@@ -15,4 +15,10 @@ public class TeamTests
         Assert.AreEqual(0, team.GoalDiference);
         Assert.AreEqual(0, team.GoalsInFavor);
     }
+
+    [TestMethod]
+    public void CreateTeam_WithInvalidName_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Team("", "CONMEBOL", 8, 0, 0, 0));
+    }
 }
