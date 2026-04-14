@@ -11,6 +11,9 @@ public class Team
 
     public Team(string name, string confederation, int rankingFifa, int points, int goalDiference, int goalsInFavor)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name cannot be empty.");
+        
         Name = name;
         Confederation = confederation;
         RankingFifa = rankingFifa;
