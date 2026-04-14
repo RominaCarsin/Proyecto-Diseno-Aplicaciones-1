@@ -21,4 +21,10 @@ public class TeamTests
     {
         Assert.ThrowsException<ArgumentException>(() => new Team("", "CONMEBOL", 8, 0, 0, 0));
     }
+
+    [TestMethod]
+    public void CreateTeam_WithInvalidConfederation_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", "", 8, 0, 0, 0));
+    }
 }
