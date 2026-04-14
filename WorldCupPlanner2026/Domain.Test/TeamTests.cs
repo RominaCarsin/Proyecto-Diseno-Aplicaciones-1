@@ -27,4 +27,10 @@ public class TeamTests
     {
         Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", "", 8, 0, 0, 0));
     }
+
+    [TestMethod]
+    public void CreateTeam_WithInvalidRankingFifa_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", "CONMEBOL", -1, 0, 0, 0));
+    }
 }
