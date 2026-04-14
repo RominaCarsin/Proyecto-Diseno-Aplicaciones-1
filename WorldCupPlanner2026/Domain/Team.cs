@@ -17,6 +17,9 @@ public class Team
         if (string.IsNullOrWhiteSpace(confederation))
             throw new ArgumentException("Confederation cannot be empty.");
         
+        if (rankingFifa < 0)
+            throw new ArgumentException("Ranking fifa cannot be negative.");
+        
         Name = name;
         Confederation = confederation;
         RankingFifa = rankingFifa;
