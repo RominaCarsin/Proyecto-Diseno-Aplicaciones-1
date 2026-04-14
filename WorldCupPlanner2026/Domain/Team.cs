@@ -11,14 +11,9 @@ public class Team
 
     public Team(string name, string confederation, int rankingFifa, int points, int goalDiference, int goalsInFavor)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name cannot be empty.");
-        
-        if (string.IsNullOrWhiteSpace(confederation))
-            throw new ArgumentException("Confederation cannot be empty.");
-        
-        if (rankingFifa < 0)
-            throw new ArgumentException("Ranking fifa cannot be negative.");
+        ValidateName(name);
+        ValidateConfederation(confederation);
+        ValidateRankingFifa(rankingFifa);
         
         Name = name;
         Confederation = confederation;
@@ -26,5 +21,23 @@ public class Team
         Points = points;
         GoalDiference = goalDiference;
         GoalsInFavor = goalsInFavor;
+    }
+
+    private void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name cannot be empty.");
+    }
+
+    private void ValidateConfederation(string confederation)
+    {
+        if (string.IsNullOrWhiteSpace(confederation))
+            throw new ArgumentException("Confederation cannot be empty.");
+    }
+
+    private void ValidateRankingFifa(int rankingFifa)
+    {
+        if (rankingFifa < 0)
+            throw new ArgumentException("Ranking fifa cannot be negative.");
     }
 }
