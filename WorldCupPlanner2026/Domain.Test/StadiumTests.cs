@@ -15,4 +15,10 @@ public class StadiumTests
         Assert.AreEqual("Historic stadium", stadium.Description);
         Assert.AreEqual(60000, stadium.Capacity);
     }
+
+    [TestMethod]
+    public void CreateStadium_WithEmptyName_ShouldThrowException()
+    {
+        Assert.ThrowsException<Exception>(() => new Stadium("", "Montevideo", "Historic stadium", 60000));
+    }
 }
