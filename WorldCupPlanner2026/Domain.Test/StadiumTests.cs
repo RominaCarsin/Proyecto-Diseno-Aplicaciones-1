@@ -1,0 +1,18 @@
+
+namespace Domain.Test;
+
+[TestClass]
+public class StadiumTests
+{
+    [TestMethod]
+    public void CreatesStadium_WhitValidData_ShouldSucceed()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
+
+        Assert.IsNotNull(stadium);
+        Assert.AreEqual("Centenario", stadium.Name);
+        Assert.AreEqual("Montevideo", stadium.City);
+        Assert.AreEqual("Historic stadium", stadium.Description);
+        Assert.AreEqual(60000, stadium.Capacity);
+    }
+}
