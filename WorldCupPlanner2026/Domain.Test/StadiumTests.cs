@@ -21,4 +21,12 @@ public class StadiumTests
     {
         Assert.ThrowsException<Exception>(() => new Stadium("", "Montevideo", "Historic stadium", 60000));
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithNameLongerThan80Characters_ShouldThrowException()
+    {
+        string longName = new string('A', 81);
+
+        Assert.ThrowsException<Exception>(() => new Stadium(longName, "Montevideo", "Historic stadium", 60000));
+    }
 }
