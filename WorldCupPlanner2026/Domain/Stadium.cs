@@ -9,10 +9,16 @@ public class Stadium
 
     public Stadium(string name, string city, string description, int capacity)
     {
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new Exception("Stadium name cannot be empty");
+        }
         Name = name;
         City = city;
         Description = description;
         Capacity = capacity;
     }
+    
+    
 
 }
