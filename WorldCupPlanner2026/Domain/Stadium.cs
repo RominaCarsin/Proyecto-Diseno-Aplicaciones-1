@@ -24,6 +24,12 @@ public class Stadium
             throw new Exception("Stadium city cannot be empty.");
         }
         
+        if (city.Length > 60)
+        {
+            throw new Exception("Stadium city cannot exceed 60 characters.");
+        }
+        
+        
         Name = name;
         City = city;
         Description = description;
