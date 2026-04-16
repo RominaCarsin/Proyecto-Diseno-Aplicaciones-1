@@ -29,6 +29,10 @@ public class Stadium
             throw new Exception("Stadium city cannot exceed 60 characters.");
         }
         
+        if (capacity < 20000)
+        {
+            throw new Exception("Stadium capacity must be at least 20000.");
+        }
         
         Name = name;
         City = city;

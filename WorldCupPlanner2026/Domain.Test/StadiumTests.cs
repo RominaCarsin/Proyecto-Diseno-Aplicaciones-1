@@ -53,9 +53,6 @@ public class StadiumTests
     [TestMethod]
     public void CreateStadium_WithCapacityLowerThan20000_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
-        {
-            new Stadium("Centenario", "Montevideo", "Historic stadium", 19999);
-        });
+        Assert.ThrowsException<Exception>(() => new Stadium("Centenario", "Montevideo", "Historic stadium", 19999));
     }
 }
