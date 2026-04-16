@@ -61,4 +61,12 @@ public class StadiumTests
     {
         Assert.ThrowsException<Exception>(() => new Stadium(null, "Montevideo", "Historic stadium", 60000));
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithWhitespaceCity_ShouldThrowException()
+    {
+        Assert.ThrowsException<Exception>(() => new Stadium("Centenario", "   ", "Historic stadium", 60000));
+    }
+    
+    
 }
