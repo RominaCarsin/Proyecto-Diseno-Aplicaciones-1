@@ -84,4 +84,13 @@ public class StadiumTests
         Assert.AreEqual(nameWith80Chars, stadium.Name);
     }
     
+    [TestMethod]
+    public void CreateStadium_WithCityExactly60Characters_ShouldSucceed()
+    {
+        string cityWith60Chars = new string('A', 60);
+        var stadium = new Stadium("Centenario", cityWith60Chars, "Historic stadium", 60000);
+    
+        Assert.IsNotNull(stadium);
+        Assert.AreEqual(cityWith60Chars, stadium.City);
+    }
 }
