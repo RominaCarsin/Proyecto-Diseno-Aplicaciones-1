@@ -74,4 +74,14 @@ public class StadiumTests
         Assert.ThrowsException<Exception>(() => new Stadium("Centenario", null, "Historic stadium", 60000));
     }
     
+    [TestMethod]
+    public void CreateStadium_WithNameExactly80Characters_ShouldSucceed()
+    {
+        string nameWith80Chars = new string('A', 80);
+        var stadium = new Stadium(nameWith80Chars, "Montevideo", "Historic stadium", 60000);
+    
+        Assert.IsNotNull(stadium);
+        Assert.AreEqual(nameWith80Chars, stadium.Name);
+    }
+    
 }
