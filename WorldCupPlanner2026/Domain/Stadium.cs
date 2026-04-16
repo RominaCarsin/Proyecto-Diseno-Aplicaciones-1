@@ -19,6 +19,11 @@ public class Stadium
             throw new Exception("Stadium name cannot exceed 80 characters.");
         }
         
+        if (string.IsNullOrWhiteSpace(city))
+        {
+            throw new Exception("Stadium city cannot be empty.");
+        }
+        
         Name = name;
         City = city;
         Description = description;
