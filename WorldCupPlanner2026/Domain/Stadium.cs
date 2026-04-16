@@ -34,6 +34,10 @@ public class Stadium
             throw new Exception("Stadium capacity must be at least 20000.");
         }
         
+        if (description != null && description.Length > 400)
+        {
+            throw new Exception("Stadium description cannot exceed 400 characters.");
+        }
         
         Name = name;
         City = city;
