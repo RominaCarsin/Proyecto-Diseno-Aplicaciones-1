@@ -111,4 +111,13 @@ public class StadiumTests
         Assert.IsNotNull(stadium);
         Assert.IsNull(stadium.Description);
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithEmptyDescription_ShouldSucceed()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "", 60000);
+    
+        Assert.IsNotNull(stadium);
+        Assert.AreEqual("", stadium.Description);
+    }
 }
