@@ -93,4 +93,13 @@ public class StadiumTests
         Assert.IsNotNull(stadium);
         Assert.AreEqual(cityWith60Chars, stadium.City);
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithCapacityExactly20000_ShouldSucceed()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 20000);
+    
+        Assert.IsNotNull(stadium);
+        Assert.AreEqual(20000, stadium.Capacity);
+    }
 }
