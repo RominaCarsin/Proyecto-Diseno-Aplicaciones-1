@@ -38,4 +38,15 @@ public class StadiumTests
             new Stadium("Centenario", "", "Historic stadium", 60000);
         });
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithCityLongerThan60Characters_ShouldThrowException()
+    {
+        string longCity = new string('A', 61);
+
+        Assert.ThrowsException<Exception>(() =>
+        {
+            new Stadium("Centenario", longCity, "Historic stadium", 60000);
+        });
+    }
 }
