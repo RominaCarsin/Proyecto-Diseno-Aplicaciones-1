@@ -120,4 +120,17 @@ public class StadiumTests
         Assert.IsNotNull(stadium);
         Assert.AreEqual("", stadium.Description);
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithDescriptionLongerThan400Characters_ShouldThrowException()
+    {
+        string longDescription = new string('A', 401);
+
+        Assert.ThrowsException<Exception>(() =>
+        {
+            new Stadium("Centenario", "Montevideo", longDescription, 60000);
+        });
+    }
+    
+    
 }

@@ -34,6 +34,7 @@ public class Stadium
             throw new Exception("Stadium capacity must be at least 20000.");
         }
         
+        
         Name = name;
         City = city;
         Description = description;
