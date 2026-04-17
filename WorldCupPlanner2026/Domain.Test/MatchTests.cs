@@ -56,4 +56,14 @@ public class MatchTests
 
         Assert.ThrowsException<Exception>(() => new Match(DateTime.Now, stadium, homeTeam, null, group, TournamentPhase.GroupStage));
     }
+    
+    [TestMethod]
+    public void CreateMatch_WithSameTeams_ShouldThrowException()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
+        var team = new Team("Uruguay");
+        var group = new Group('A');
+
+        Assert.ThrowsException<Exception>(() => new Match(DateTime.Now, stadium, team, team, group, TournamentPhase.GroupStage));
+    }
 }
