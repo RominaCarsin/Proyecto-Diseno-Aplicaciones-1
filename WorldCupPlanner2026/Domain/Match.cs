@@ -26,6 +26,11 @@ public class Match
             throw new Exception("Match away team cannot be null.");
         }
         
+        if (homeTeam == awayTeam)
+        {
+            throw new Exception("Home team and away team must be different.");
+        }
+        
         Date = date;
         Stadium = stadium;
         HomeTeam = homeTeam;
