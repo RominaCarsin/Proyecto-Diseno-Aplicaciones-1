@@ -77,5 +77,14 @@ public class MatchTests
         Assert.ThrowsException<Exception>(() => new Match(DateTime.Now, stadium, homeTeam, awayTeam, null, TournamentPhase.GroupStage));
     }
     
+    [TestMethod]//El if lo hice en Group.cs
+    public void CreateMatch_WithInvalidGroupLabel_ShouldThrowException()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
+        var homeTeam = new Team("Uruguay");
+        var awayTeam = new Team("Argentina");
+
+        Assert.ThrowsException<Exception>(() => new Match(DateTime.Now, stadium, homeTeam, awayTeam, new Group('Z'), TournamentPhase.GroupStage));
+    }
     
 }
