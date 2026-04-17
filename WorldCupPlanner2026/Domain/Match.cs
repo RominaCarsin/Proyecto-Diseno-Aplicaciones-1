@@ -12,6 +12,10 @@ public class Match
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, Group group, TournamentPhase phase)
     {
         
+        if (stadium == null)
+        {
+            throw new Exception("Match stadium cannot be null.");
+        }
         if (homeTeam == null)
         {
             throw new Exception("Match home team cannot be null.");
