@@ -87,4 +87,31 @@ public class MatchTests
         Assert.ThrowsException<Exception>(() => new Match(DateTime.Now, stadium, homeTeam, awayTeam, new Group('Z'), TournamentPhase.GroupStage));
     }
     
+    [TestMethod] //no me dio error esto se borra
+    public void CreateMatch_WithPlayoffsPhase_ShouldSucceed()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
+        var homeTeam = new Team("Uruguay");
+        var awayTeam = new Team("Argentina");
+        var group = new Group('A');
+
+        var match = new Match(DateTime.Now, stadium, homeTeam, awayTeam, group, TournamentPhase.Playoffs);
+
+        Assert.IsNotNull(match);
+        Assert.AreEqual(TournamentPhase.Playoffs, match.Phase);
+    }
+    
+    
+    [TestMethod]
+    public void LoadResult_WithValidData_ShouldSucceed()
+    {
+        var match = CreateValidMatch();
+
+        match.LoadResult(2, 1);
+
+        Assert.AreEqual(2, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+    }
+    
+    
 }
