@@ -27,6 +27,21 @@ public class MatchTests
         Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
     }
     
-    
+    [TestMethod]
+    public void CreateMatch_WithNullHomeTeam_ShouldThrowException()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
+        var awayTeam = new Team("Argentina");
+        var group = new Group('A');
+
+        Assert.ThrowsException<Exception>(() =>
+            new Match(
+                DateTime.Now,
+                stadium,
+                null,
+                awayTeam,
+                group,
+                TournamentPhase.GroupStage));
+    }
     
 }
