@@ -9,14 +9,14 @@ public class Match
     public Group Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
 
-    public Match(
-        DateTime date,
-        Stadium stadium,
-        Team homeTeam,
-        Team awayTeam,
-        Group group,
-        TournamentPhase phase)
+    public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, Group group, TournamentPhase phase)
     {
+        
+        if (homeTeam == null)
+        {
+            throw new Exception("Match home team cannot be null.");
+        }
+        
         Date = date;
         Stadium = stadium;
         HomeTeam = homeTeam;

@@ -35,13 +35,7 @@ public class MatchTests
         var group = new Group('A');
 
         Assert.ThrowsException<Exception>(() =>
-            new Match(
-                DateTime.Now,
-                stadium,
-                null,
-                awayTeam,
-                group,
-                TournamentPhase.GroupStage));
+            new Match( DateTime.Now, stadium, null, awayTeam, group, TournamentPhase.GroupStage));
     }
     
 }
