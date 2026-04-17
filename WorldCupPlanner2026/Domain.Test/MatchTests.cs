@@ -1,5 +1,6 @@
 ﻿namespace Domain.Test;
 
+[TestClass]
 public class MatchTests
 {
     [TestMethod]
@@ -25,6 +26,7 @@ public class MatchTests
         Assert.AreEqual(group, match.Group);
         Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
     }
+    
     
     
 }
