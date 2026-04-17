@@ -28,6 +28,17 @@ public class MatchTests
     }
     
     [TestMethod]
+    public void CreateMatch_WithNullStadium_ShouldThrowException()
+    {
+        var homeTeam = new Team("Uruguay");
+        var awayTeam = new Team("Argentina");
+        var group = new Group('A');
+
+        Assert.ThrowsException<Exception>(() =>
+            new Match(DateTime.Now, null, homeTeam, awayTeam, group, TournamentPhase.GroupStage));
+    }
+    
+    [TestMethod]
     public void CreateMatch_WithNullHomeTeam_ShouldThrowException()
     {
         var stadium = new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
@@ -37,5 +48,6 @@ public class MatchTests
         Assert.ThrowsException<Exception>(() =>
             new Match( DateTime.Now, stadium, null, awayTeam, group, TournamentPhase.GroupStage));
     }
+    
     
 }
