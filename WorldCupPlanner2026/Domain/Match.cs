@@ -50,4 +50,11 @@ public class Match
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
     }
+    
+    public void SetResult(int homeGoals, int awayGoals)
+    {
+        HomeGoals = homeGoals;
+        AwayGoals = awayGoals;
+        Winner = homeGoals > awayGoals ? HomeTeam : awayGoals > homeGoals ? AwayTeam : null;
+    }
 }

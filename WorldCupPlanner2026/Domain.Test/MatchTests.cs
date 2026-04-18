@@ -80,4 +80,13 @@ public class MatchTests
         Assert.ThrowsException<DomainException>(() => new Match(date: new DateTime(2026, 6, 1), stadium: CreateValidStadium(), homeTeam: CreateValidHomeTeam(), awayTeam: CreateValidAwayTeam(), group: "a", phase: TournamentPhase.GroupStage));
     }
     
+    [TestMethod]
+    public void SetResult_WithNegativeHomeGoals_ShouldThrowDomainException()
+    {
+        var match = CreateValidMatch();
+
+        Assert.ThrowsException<DomainException>(() => match.SetResult(-1, 2));
+    }
+    
+    
 }
