@@ -1,5 +1,7 @@
 ﻿namespace Domain.Test;
 
+using Domain.Exceptions;
+
 [TestClass]
 public class MatchTests
 {
