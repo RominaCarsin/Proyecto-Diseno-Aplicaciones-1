@@ -73,4 +73,11 @@ public class MatchTests
 
         Assert.ThrowsException<DomainException>(() => new Match(date: new DateTime(2026, 6, 1), stadium: CreateValidStadium(), homeTeam: team, awayTeam: team, group: "A", phase: TournamentPhase.GroupStage));
     }
+    
+    [TestMethod]
+    public void CreateMatch_WithInvalidGroupLowercase_ShouldThrowDomainException()
+    {
+        Assert.ThrowsException<DomainException>(() => new Match(date: new DateTime(2026, 6, 1), stadium: CreateValidStadium(), homeTeam: CreateValidHomeTeam(), awayTeam: CreateValidAwayTeam(), group: "a", phase: TournamentPhase.GroupStage));
+    }
+    
 }
