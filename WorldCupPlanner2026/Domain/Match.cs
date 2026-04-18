@@ -1,5 +1,7 @@
 ﻿namespace Domain;
 
+using Domain.Exceptions;
+
 public class Match
 {
     public DateTime Date { get; private set; }
@@ -14,11 +16,18 @@ public class Match
 
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, string group, TournamentPhase phase)
     {
+        if (stadium == null) throw new DomainException("Stadium cannot be null");
         Date = date;
         Stadium = stadium;
         HomeTeam = homeTeam;
         AwayTeam = awayTeam;
         Group = group;
         Phase = phase;
+    }
+
+    public void LoadResult(int homeGoals, int awayGoals)
+    {
+        HomeGoals = homeGoals;
+        AwayGoals = awayGoals;
     }
 }
