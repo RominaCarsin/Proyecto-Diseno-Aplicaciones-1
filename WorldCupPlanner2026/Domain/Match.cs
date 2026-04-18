@@ -27,6 +27,9 @@ public class Match
         {
             throw new DomainException("Away team cannot be null.");
         }
+        
+        if (homeTeam.Name == awayTeam.Name)
+            throw new DomainException("Home team and away team must be different.");
 
         Date = date;
         Stadium = stadium;
