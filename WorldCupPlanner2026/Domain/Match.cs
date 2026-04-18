@@ -27,9 +27,15 @@ public class Match
         {
             throw new DomainException("Away team cannot be null.");
         }
-        
+
         if (homeTeam.Name == awayTeam.Name)
+        {
             throw new DomainException("Home team and away team must be different.");
+        }
+
+        if (string.IsNullOrWhiteSpace(group) || group.Length != 1 || group[0] < 'A' || group[0] > 'L'){
+            throw new DomainException("Group must be a single uppercase letter between A and L.");
+        }
 
         Date = date;
         Stadium = stadium;
