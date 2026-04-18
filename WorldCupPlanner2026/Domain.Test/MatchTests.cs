@@ -7,7 +7,7 @@ public class MatchTests
         new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
 
     private Team CreateValidHomeTeam() =>
-        new Team("Argentina", Confederation.CONMEBOL, 1800);
+        new Team("Argentina",Confederation.CONMEBOL, 1800);
 
     private Team CreateValidAwayTeam() =>
         new Team("Brazil", Confederation.CONMEBOL, 1750);
