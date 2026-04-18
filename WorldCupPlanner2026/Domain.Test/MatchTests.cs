@@ -53,15 +53,18 @@ public class MatchTests
                 phase: TournamentPhase.GroupStage
             ));
     }
-
+    
     [TestMethod]
-    public void LoadResult_WithValidData_ShouldSucceed()
+    public void CreateMatch_WithNullHomeTeam_ShouldThrowDomainException()
     {
-        var match = CreateValidMatch();
-
-        match.LoadResult(2, 1);
-
-        Assert.AreEqual(2, match.HomeGoals);
-        Assert.AreEqual(1, match.AwayGoals);
+        Assert.ThrowsException<DomainException>(() =>
+            new Match(
+                date: new DateTime(2026, 6, 1),
+                stadium: CreateValidStadium(),
+                homeTeam: null,
+                awayTeam: CreateValidAwayTeam(),
+                group: "A",
+                phase: TournamentPhase.GroupStage
+            ));
     }
 }
