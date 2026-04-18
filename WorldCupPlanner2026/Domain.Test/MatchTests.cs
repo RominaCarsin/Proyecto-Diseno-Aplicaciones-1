@@ -57,14 +57,6 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithNullHomeTeam_ShouldThrowDomainException()
     {
-        Assert.ThrowsException<DomainException>(() =>
-            new Match(
-                date: new DateTime(2026, 6, 1),
-                stadium: CreateValidStadium(),
-                homeTeam: null,
-                awayTeam: CreateValidAwayTeam(),
-                group: "A",
-                phase: TournamentPhase.GroupStage
-            ));
+        Assert.ThrowsException<DomainException>(() => new Match(date: new DateTime(2026, 6, 1), stadium: CreateValidStadium(), homeTeam: null, awayTeam: CreateValidAwayTeam(), group: "A", phase: TournamentPhase.GroupStage));
     }
 }
