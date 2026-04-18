@@ -19,10 +19,15 @@ public class Match
         if (stadium == null) throw new DomainException("Stadium cannot be null");
         if (homeTeam == null)
         {
-                        throw new DomainException("Home team cannot be null.");
+            throw new DomainException("Home team cannot be null.");
 
         }
-        
+
+        if (awayTeam == null)
+        {
+            throw new DomainException("Away team cannot be null.");
+        }
+
         Date = date;
         Stadium = stadium;
         HomeTeam = homeTeam;
