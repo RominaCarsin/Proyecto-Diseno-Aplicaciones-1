@@ -17,6 +17,8 @@ public class Match
     private static int _nextId = 1;
     
     public int Id { get; private set; }
+    
+    
 
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, string group, TournamentPhase phase)
     {
@@ -72,5 +74,15 @@ public class Match
     public void UpdateDate(DateTime newDate)
     {
         Date = newDate;
+    }
+    
+    public void UpdateStadium(Stadium newStadium)
+    {
+        if (newStadium == null)
+        {
+            throw new DomainException("Stadium cannot be null.");
+        }
+
+        Stadium = newStadium;
     }
 }

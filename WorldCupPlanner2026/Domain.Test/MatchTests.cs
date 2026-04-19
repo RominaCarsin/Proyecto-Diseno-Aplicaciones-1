@@ -108,4 +108,26 @@ public class MatchTests
 
         Assert.AreEqual(newDate, match.Date);
     }
+    
+    [TestMethod]
+    public void UpdateStadium_WithValidStadium_ShouldSucceed()
+    {
+        var match = CreateValidMatch();
+        var newStadium = new Stadium("Maracana", "Rio de Janeiro", "Historic stadium", 78000);
+
+        match.UpdateStadium(newStadium);
+
+        Assert.AreEqual(newStadium, match.Stadium);
+    }
+    
+    [TestMethod]
+    public void UpdateDate_WhenMatchIsLocked_ShouldThrowDomainException()
+    {
+        var match = CreateValidMatch();
+        match.LockEdition();
+
+        Assert.ThrowsException<DomainException>(() => match.UpdateDate(new DateTime(2026, 6, 4)));
+    }
+    
+    
 }
