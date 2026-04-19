@@ -13,6 +13,8 @@ public class Match
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
+    
+    
 
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, string group, TournamentPhase phase)
     {

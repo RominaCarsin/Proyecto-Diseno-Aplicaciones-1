@@ -88,5 +88,13 @@ public class MatchTests
         Assert.ThrowsException<DomainException>(() => match.SetResult(-1, 2));
     }
     
-    
+    [TestMethod]
+    public void CreateMatch_ShouldGenerateIncrementalId()
+    {
+        var firstMatch = new Match(date: new DateTime(2026, 6, 1), stadium: CreateValidStadium(), homeTeam: CreateValidHomeTeam(), awayTeam: CreateValidAwayTeam(), group: "A", phase: TournamentPhase.GroupStage);
+
+        var secondMatch = new Match(date: new DateTime(2026, 6, 2), stadium: CreateValidStadium(), homeTeam: new Team("Uruguay", Confederation.CONMEBOL, 1700), awayTeam: new Team("Chile", Confederation.CONMEBOL, 1650), group: "B", phase: TournamentPhase.GroupStage);
+
+        Assert.AreEqual(firstMatch.Id + 1, secondMatch.Id);
+    }
 }
