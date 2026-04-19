@@ -83,6 +83,11 @@ public class Match
     
     public void UpdateStadium(Stadium newStadium)
     {
+        if (IsLocked)
+        {
+            throw new DomainException("Locked matches cannot be edited.");
+        }
+
         if (newStadium == null)
         {
             throw new DomainException("Stadium cannot be null.");
@@ -96,4 +101,7 @@ public class Match
     {
         IsLocked = true;
     }
+    
+    
+    
 }
