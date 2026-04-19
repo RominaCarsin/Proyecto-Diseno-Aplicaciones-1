@@ -97,4 +97,15 @@ public class MatchTests
 
         Assert.AreEqual(firstMatch.Id + 1, secondMatch.Id);
     }
+    
+    [TestMethod]
+    public void UpdateDate_WithValidDate_ShouldSucceed()
+    {
+        var match = CreateValidMatch();
+        var newDate = new DateTime(2026, 6, 3);
+
+        match.UpdateDate(newDate);
+
+        Assert.AreEqual(newDate, match.Date);
+    }
 }
