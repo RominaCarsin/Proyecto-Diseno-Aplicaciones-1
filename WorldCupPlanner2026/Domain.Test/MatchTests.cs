@@ -140,5 +140,12 @@ public class MatchTests
         Assert.ThrowsException<DomainException>(() => match.UpdateStadium(newStadium));
     }
     
-    
+    [TestMethod]
+    public void SetResult_WhenMatchIsLocked_ShouldThrowDomainException()
+    {
+        var match = CreateValidMatch();
+        match.LockEdition();
+
+        Assert.ThrowsException<DomainException>(() => match.SetResult(2, 1));
+    }
 }
