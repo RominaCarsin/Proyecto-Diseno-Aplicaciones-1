@@ -1,9 +1,18 @@
 ﻿namespace Domain;
 
+//using Domain.Enums;
 using Domain.Exceptions;
 
 public class Match
 {
+    private const char MinGroupLabel = 'A';
+    private const char MaxGroupLabel = 'L';
+    private const int MinGoals = 0;
+    private const string LockedMatchError = "Locked matches cannot be edited.";
+
+    private static int _nextId = 1;
+
+    public int Id { get; private set; }
     public DateTime Date { get; private set; }
     public Stadium Stadium { get; private set; }
     public Team HomeTeam { get; private set; }
@@ -13,38 +22,17 @@ public class Match
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
-    
-    private static int _nextId = 1;
-    
-    public int Id { get; private set; }
-    
     public bool IsLocked { get; private set; }
 
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, string group, TournamentPhase phase)
     {
-        if (stadium == null) throw new DomainException("Stadium cannot be null");
-        if (homeTeam == null)
-        {
-            throw new DomainException("Home team cannot be null.");
+        ValidateStadium(stadium);
+        ValidateHomeTeam(homeTeam);
+        ValidateAwayTeam(awayTeam);
+        ValidateTeamsAreDifferent(homeTeam, awayTeam);
+        ValidateGroup(group);
 
-        }
-
-        if (awayTeam == null)
-        {
-            throw new DomainException("Away team cannot be null.");
-        }
-
-        if (homeTeam.Name == awayTeam.Name)
-        {
-            throw new DomainException("Home team and away team must be different.");
-        }
-
-        if (string.IsNullOrWhiteSpace(group) || group.Length != 1 || group[0] < 'A' || group[0] > 'L'){
-            throw new DomainException("Group must be a single uppercase letter between A and L.");
-        }
-        
         Id = _nextId++;
-
         Date = date;
         Stadium = stadium;
         HomeTeam = homeTeam;
@@ -53,57 +41,82 @@ public class Match
         Phase = phase;
     }
 
-    public void LoadResult(int homeGoals, int awayGoals)
-    {
-        HomeGoals = homeGoals;
-        AwayGoals = awayGoals;
-    }
-    
     public void SetResult(int homeGoals, int awayGoals)
     {
-        if (IsLocked)
-            throw new DomainException("Locked matches cannot be edited.");
-        if (homeGoals < 0)
-            throw new DomainException("Home goals cannot be negative.");
-        if (awayGoals < 0)
-            throw new DomainException("Away goals cannot be negative.");
+        ValidateNotLocked();
+        ValidateGoals(homeGoals, awayGoals);
 
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
-        Winner = homeGoals > awayGoals ? HomeTeam : awayGoals > homeGoals ? AwayTeam : null;
+        Winner = CalculateWinner(homeGoals, awayGoals);
     }
-    
+
     public void UpdateDate(DateTime newDate)
     {
-        if (IsLocked)
-        {
-            throw new DomainException("Locked matches cannot be edited.");
-        }
-
+        ValidateNotLocked();
         Date = newDate;
     }
-    
+
     public void UpdateStadium(Stadium newStadium)
     {
-        if (IsLocked)
-        {
-            throw new DomainException("Locked matches cannot be edited.");
-        }
-
-        if (newStadium == null)
-        {
-            throw new DomainException("Stadium cannot be null.");
-        }
-
+        ValidateNotLocked();
+        ValidateStadium(newStadium);
         Stadium = newStadium;
     }
-    
-    
+
     public void LockEdition()
     {
         IsLocked = true;
     }
-    
-    
-    
+
+    private static void ValidateStadium(Stadium stadium)
+    {
+        if (stadium == null)
+            throw new DomainException("Stadium cannot be null.");
+    }
+
+    private static void ValidateHomeTeam(Team homeTeam)
+    {
+        if (homeTeam == null)
+            throw new DomainException("Home team cannot be null.");
+    }
+
+    private static void ValidateAwayTeam(Team awayTeam)
+    {
+        if (awayTeam == null)
+            throw new DomainException("Away team cannot be null.");
+    }
+
+    private static void ValidateTeamsAreDifferent(Team homeTeam, Team awayTeam)
+    {
+        if (homeTeam.Name == awayTeam.Name)
+            throw new DomainException("Home team and away team must be different.");
+    }
+
+    private static void ValidateGroup(string group)
+    {
+        if (string.IsNullOrWhiteSpace(group) || group.Length != 1 || group[0] < MinGroupLabel || group[0] > MaxGroupLabel)
+            throw new DomainException($"Group must be a single uppercase letter between {MinGroupLabel} and {MaxGroupLabel}.");
+    }
+
+    private void ValidateNotLocked()
+    {
+        if (IsLocked)
+            throw new DomainException(LockedMatchError);
+    }
+
+    private static void ValidateGoals(int homeGoals, int awayGoals)
+    {
+        if (homeGoals < MinGoals)
+            throw new DomainException("Home goals cannot be negative.");
+        if (awayGoals < MinGoals)
+            throw new DomainException("Away goals cannot be negative.");
+    }
+
+    private Team? CalculateWinner(int homeGoals, int awayGoals)
+    {
+        if (homeGoals > awayGoals) return HomeTeam;
+        if (awayGoals > homeGoals) return AwayTeam;
+        return null;
+    }
 }
