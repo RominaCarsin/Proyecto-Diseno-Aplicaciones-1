@@ -61,6 +61,8 @@ public class Match
     
     public void SetResult(int homeGoals, int awayGoals)
     {
+        if (IsLocked)
+            throw new DomainException("Locked matches cannot be edited.");
         if (homeGoals < 0)
             throw new DomainException("Home goals cannot be negative.");
         if (awayGoals < 0)
