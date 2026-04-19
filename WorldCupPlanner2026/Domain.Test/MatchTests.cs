@@ -129,5 +129,16 @@ public class MatchTests
         Assert.ThrowsException<DomainException>(() => match.UpdateDate(new DateTime(2026, 6, 4)));
     }
     
+    [TestMethod]
+    public void UpdateStadium_WhenMatchIsLocked_ShouldThrowDomainException()
+    {
+        var match = CreateValidMatch();
+        var newStadium = new Stadium("Maracana", "Rio de Janeiro", "Historic stadium", 78000);
+
+        match.LockEdition();
+
+        Assert.ThrowsException<DomainException>(() => match.UpdateStadium(newStadium));
+    }
+    
     
 }
