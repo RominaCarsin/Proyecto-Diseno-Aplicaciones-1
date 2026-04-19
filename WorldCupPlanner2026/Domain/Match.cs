@@ -14,7 +14,9 @@ public class Match
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
     
+    private static int _nextId = 1;
     
+    public int Id { get; private set; }
 
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, string group, TournamentPhase phase)
     {
@@ -38,6 +40,8 @@ public class Match
         if (string.IsNullOrWhiteSpace(group) || group.Length != 1 || group[0] < 'A' || group[0] > 'L'){
             throw new DomainException("Group must be a single uppercase letter between A and L.");
         }
+        
+        Id = _nextId++;
 
         Date = date;
         Stadium = stadium;
