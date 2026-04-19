@@ -18,7 +18,7 @@ public class Match
     
     public int Id { get; private set; }
     
-    
+    public bool IsLocked { get; private set; }
 
     public Match(DateTime date, Stadium stadium, Team homeTeam, Team awayTeam, string group, TournamentPhase phase)
     {
@@ -73,6 +73,11 @@ public class Match
     
     public void UpdateDate(DateTime newDate)
     {
+        if (IsLocked)
+        {
+            throw new DomainException("Locked matches cannot be edited.");
+        }
+
         Date = newDate;
     }
     
@@ -84,5 +89,11 @@ public class Match
         }
 
         Stadium = newStadium;
+    }
+    
+    
+    public void LockEdition()
+    {
+        IsLocked = true;
     }
 }
