@@ -68,4 +68,9 @@ public class Match
         AwayGoals = awayGoals;
         Winner = homeGoals > awayGoals ? HomeTeam : awayGoals > homeGoals ? AwayTeam : null;
     }
+    
+    public void UpdateDate(DateTime newDate)
+    {
+        Date = newDate;
+    }
 }
