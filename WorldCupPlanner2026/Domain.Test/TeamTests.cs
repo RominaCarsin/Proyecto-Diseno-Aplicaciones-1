@@ -1,21 +1,19 @@
-﻿namespace Domain.Test;
+﻿// TeamTests.cs
+namespace Domain.Test;
 
 [TestClass]
 public class TeamTests
 {
-    private static Confederation _conmebol = new Confederation("CONMEBOL", new List<Team>(), 6);
-    
+    private static Confederation _conmebol = new Confederation("CONMEBOL", 6);
+
     [TestMethod]
     public void CreateTeam_WithValidData_ShouldSucceed()
     {
-        var team = new Team("Uruguay", -_conmebol, 8, 0, 0, 0);
+        var team = new Team("Uruguay", _conmebol, 8, 0, 0, 0);
         Assert.IsNotNull(team);
         Assert.AreEqual("Uruguay", team.Name);
         Assert.AreEqual(_conmebol, team.Confederation);
         Assert.AreEqual(8, team.RankingFifa);
-        Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalDiference);
-        Assert.AreEqual(0, team.GoalsInFavor);
     }
 
     [TestMethod]

@@ -7,50 +7,47 @@ public class ConfederationTests
     [TestMethod]
     public void CreateConfederation_WithValidData_ShouldSucceed()
     {
-        
-        var teamList = new List<Team>
-        {
-            new Team("Argentina", "CONMEBOL", 1, 25, 10, 15),
-            new Team("Brazil", "CONMEBOL", 2, 24, 8, 12)
-        };
-        
-        var confederation = new Confederation("CONMEBOL", new List<Team>(), 5);
+        var confederation = new Confederation("CONMEBOL", 6);
         Assert.IsNotNull(confederation);
+        Assert.AreEqual("CONMEBOL", confederation.Name);
+        Assert.AreEqual(6, confederation.Slots);
+        Assert.AreEqual(0, confederation.Teams.Count);
     }
 
     [TestMethod]
     public void CreateConfederation_WithEmptyName_ShouldThrowException()
     {
-        var teamList = new List<Team>
-        {
-            new Team("Argentina", "CONMEBOL", 1, 25, 10, 15)
-        };
-
-        Assert.ThrowsException<ArgumentException>(() => new Confederation("", teamList, 5));
-    }
-
-    [TestMethod]
-    public void CreateConfederation_WithNullTeams_ShouldThrowException()
-    {
-        Assert.ThrowsException<ArgumentException>(() => new Confederation("CONMEBOL", null, 5));
-    }
-
-    [TestMethod]
-    public void CreateConfederation_WithEmptyTeams_ShouldThrowException()
-    {
-        var teamList = new List<Team>();
-
-        Assert.ThrowsException<ArgumentException>(() => new Confederation("CONMEBOL", teamList, 5));
+        Assert.ThrowsException<ArgumentException>(() => new Confederation("", 6));
     }
 
     [TestMethod]
     public void CreateConfederation_WithNegativeSlots_ShouldThrowException()
     {
-        var teamList = new List<Team>
-        {
-            new Team("Argentina", "CONMEBOL", 1, 25, 10, 15)
-        };
+        Assert.ThrowsException<ArgumentException>(() => new Confederation("CONMEBOL", -1));
+    }
 
-        Assert.ThrowsException<ArgumentException>(() => new Confederation("CONMEBOL", teamList, -1));
+    [TestMethod]
+    public void CreateConfederation_WithZeroSlots_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Confederation("CONMEBOL", 0));
+    }
+
+    [TestMethod]
+    public void AddTeam_WithValidTeam_ShouldAddToList()
+    {
+        var confederation = new Confederation("CONMEBOL", 6);
+        var team = new Team("Uruguay", confederation, 8, 0, 0, 0);
+
+        confederation.AddTeam(team);
+
+        Assert.AreEqual(1, confederation.Teams.Count);
+    }
+
+    [TestMethod]
+    public void AddTeam_WithNullTeam_ShouldThrowException()
+    {
+        var confederation = new Confederation("CONMEBOL", 6);
+
+        Assert.ThrowsException<ArgumentException>(() => confederation.AddTeam(null));
     }
 }

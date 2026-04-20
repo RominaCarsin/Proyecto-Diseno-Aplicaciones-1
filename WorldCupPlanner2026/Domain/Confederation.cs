@@ -6,27 +6,27 @@ public class Confederation
     public List<Team> Teams { get; private set; }
     public int Slots { get; private set; }
 
-    public Confederation(string name, List<Team> teams, int slots)
+    public Confederation(string name, int slots)
     {
         ValidateName(name);
-        ValidateTeams(teams);
         ValidateSlots(slots);
         
         Name = name;
-        Teams = teams;
         Slots = slots;
+        Teams = new List<Team>();
+    }
+    
+    public void AddTeam(Team team)
+    {
+        if (team == null)
+            throw new ArgumentException("Team cannot be null.");
+        Teams.Add(team);
     }
 
     private void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name cannot be empty.");
-    }
-
-    private void ValidateTeams(List<Team> teams)
-    {
-        if (teams == null || teams.Count == 0)
-            throw new ArgumentException("Teams cannot be null or empty.");
     }
 
     private void ValidateSlots(int slots)
