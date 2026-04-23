@@ -1,6 +1,7 @@
 using Domain;
 using IServices;
 using Services;
+using IRepository;
 using Moq;
 
 namespace Services.Tests;

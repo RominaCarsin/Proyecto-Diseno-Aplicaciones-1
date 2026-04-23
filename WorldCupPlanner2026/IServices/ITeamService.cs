@@ -2,8 +2,7 @@
 
 namespace IServices;
 
-public interface ITeamManagementService
+public interface ITeamService
 {
     void AddTeam(Team team);
-    IEnumerable<Team> GetTeams();
 }
