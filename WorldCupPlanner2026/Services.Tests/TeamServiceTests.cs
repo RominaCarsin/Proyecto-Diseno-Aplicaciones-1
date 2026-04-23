@@ -1,0 +1,32 @@
+using Domain;
+using IServices;
+using Services;
+using Moq;
+
+namespace Services.Tests;
+
+[TestClass]
+public class TeamServiceTests
+{
+    private TeamService _service;
+    private Mock<IRepository<Team>> _mockRepository;
+    private Confederation _confederation;
+
+    [TestInitialize]
+    public void Setup()
+    {
+        _mockRepository = new Mock<IRepository<Team>>();
+        _service = new TeamService(_mockRepository.Object);
+
+        _confederation = new Confederation("CONMBEBOL", 6);
+    }
+    
+    [TestMethod]
+    public void AddTeam_WithValidTeam_ShouldAddTeam()
+    {
+        var team = new Team("Uruguay", _confederation, 8, 0, 0, 0);
+        _service.AddTeam(team);
+        
+        _mockRepository.Verify(r => r.Add(team), Times.Once);
+    }
+}
