@@ -1,0 +1,181 @@
+﻿@page "/Teams/Create"
+@rendermode InteractiveServer
+@using Domain
+@using IServices
+@inject ITeamService TeamService
+@inject NavigationManager Navigation
+
+<div class="page-wrap">
+
+  <div class="ph">
+    <h1 class="pt">Teams</h1>
+    <p class="ps">Create new team · WorldCupPlanner 2026</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">New team</span>
+    </div>
+
+    <div class="card-body">
+
+      <div class="fg">
+        <label class="fl">Name <span class="req">*</span></label>
+        <input class="finput @(_nameInvalid ? "invalid" : "")"
+               type="text" maxlength="60"
+               placeholder="Ex: Argentina"
+               @bind="_name" @bind:event="oninput" />
+        @if (_nameInvalid)
+        {
+          <span class="ferr">Name is required (1–60 characters)</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">Confederation <span class="req">*</span></label>
+        <select class="fsel @(_confInvalid ? "invalid" : "")"
+                @bind="_selectedConfName">
+          <option value="">Select confederation...</option>
+          @foreach (var conf in _confederations)
+          {
+            <option value="@conf.Name">@conf.Name (max. @conf.Slots)</option>
+          }
+        </select>
+        @if (_confInvalid)
+        {
+          <span class="ferr">Select a confederation</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">FIFA Ranking <span class="req">*</span></label>
+        <input class="finput @(_rankInvalid ? "invalid" : "")"
+               type="number" min="1"
+               placeholder="Ex: 1800"
+               @bind="_rankingFifa" @bind:event="oninput" />
+        <span class="fhint">Must be a positive number</span>
+        @if (_rankInvalid)
+        {
+          <span class="ferr">FIFA Ranking must be greater than 0</span>
+        }
+      </div>
+
+      <div class="info-box">
+        FIFA Ranking ties are resolved with Fisher-Yates using
+        <strong>FixtureSeed</strong> when generating the fixture.
+      </div>
+
+      @if (!string.IsNullOrEmpty(_successMessage))
+      {
+        <div class="alert-box suc">✓ @_successMessage</div>
+      }
+
+      @if (!string.IsNullOrEmpty(_errorMessage))
+      {
+        <div class="alert-box err">@_errorMessage</div>
+      }
+
+    </div>
+
+    <div class="card-footer">
+      <a href="/Teams" class="btn btn-g">Cancel</a>
+      <button class="btn-p" @onclick="Save">
+        Save team
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de equipos -->
+  <div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+      <span class="card-title">Registered teams (@_teams.Count())</span>
+    </div>
+    <div class="card-body">
+      @if (!_teams.Any())
+      {
+        <p style="color: #888;">No teams registered yet.</p>
+      }
+      else
+      {
+        <table style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding: 0.5rem;">Name</th>
+              <th style="text-align:left; padding: 0.5rem;">Confederation</th>
+              <th style="text-align:left; padding: 0.5rem;">FIFA Ranking</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var team in _teams)
+            {
+              <tr>
+                <td style="padding: 0.5rem;">@team.Name</td>
+                <td style="padding: 0.5rem;">@team.Confederation.Name</td>
+                <td style="padding: 0.5rem;">@team.RankingFifa</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+</div>
+
+@code {
+    private string _name             = string.Empty;
+    private string _selectedConfName = string.Empty;
+    private int    _rankingFifa;
+    private string _errorMessage     = string.Empty;
+    private string _successMessage   = string.Empty;
+
+    private bool _nameInvalid;
+    private bool _confInvalid;
+    private bool _rankInvalid;
+
+    private IEnumerable<Team> _teams = Enumerable.Empty<Team>();
+
+    private List<Confederation> _confederations = new()
+    {
+        new Confederation("UEFA",     16),
+        new Confederation("CAF",       9),
+        new Confederation("AFC",       8),
+        new Confederation("CONCACAF",  7),
+        new Confederation("CONMEBOL",  7),
+        new Confederation("OFC",       1),
+    };
+
+    protected override void OnInitialized()
+    {
+        _teams = TeamService.GetTeams();
+    }
+
+    private void Save()
+    {
+        _errorMessage = string.Empty;
+        _successMessage = string.Empty;
+        _nameInvalid  = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
+        _confInvalid  = string.IsNullOrEmpty(_selectedConfName);
+        _rankInvalid  = _rankingFifa < 1;
+
+        if (_nameInvalid || _confInvalid || _rankInvalid) return;
+
+        try
+        {
+            var confederation = _confederations.First(c => c.Name == _selectedConfName);
+            var team = new Team(_name, confederation, _rankingFifa, 0, 0, 0);
+            TeamService.AddTeam(team);
+            
+            // Éxito: mostrar mensaje, limpiar formulario y refrescar lista
+            _successMessage = $"Team '{_name}' created successfully!";
+            _name = string.Empty;
+            _selectedConfName = string.Empty;
+            _rankingFifa = 0;
+            _teams = TeamService.GetTeams();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+}
