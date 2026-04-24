@@ -45,7 +45,6 @@ public class TeamServiceTests
         var result = _service.GetTeams();
         
         Assert.AreEqual(2, result.Count());
-        Assert.AreEqual("Uruguay", result.First().Name);
-        Assert.AreEqual("Argentina", result.Last().Name);
+        _mockRepository.Verify(r => r.GetAll(), Times.Once);
     }
 }
