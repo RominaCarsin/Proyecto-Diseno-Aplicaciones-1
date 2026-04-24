@@ -30,4 +30,22 @@ public class TeamServiceTests
         
         _mockRepository.Verify(r => r.Add(team), Times.Once);
     }
+    
+    [TestMethod]
+    public void GetTeams_ShouldReturnAllTeams()
+    {
+        var teams = new List<Team>
+        {
+            new Team("Uruguay", _confederation, 8, 0, 0, 0),
+            new Team("Argentina", _confederation, 3, 0, 0, 0)
+        };
+        
+        _mockRepository.Setup(r => r.GetAll()).Returns(teams);
+        
+        var result = _service.GetTeams();
+        
+        Assert.AreEqual(2, result.Count());
+        Assert.AreEqual("Uruguay", result.First().Name);
+        Assert.AreEqual("Argentina", result.Last().Name);
+    }
 }
