@@ -53,10 +53,10 @@
                type="number" min="1"
                placeholder="Ex: 1800"
                @bind="_rankingFifa" @bind:event="oninput" />
-        <span class="fhint">Must be a positive number</span>
+        <span class="fhint">Between 300-2500</span>
         @if (_rankInvalid)
         {
-          <span class="ferr">FIFA Ranking must be greater than 0</span>
+          <span class="ferr">FIFA Ranking must be between 300-2500</span>
         }
       </div>
 
