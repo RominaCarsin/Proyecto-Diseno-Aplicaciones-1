@@ -7,7 +7,7 @@ public class ConfederationServiceTest
     [TestInitialize]
     public void Setup()
     {
-        _service = new ConfederationServiceTest();
+        _service = new ConfederationService();
     }
 
     [TestMethod]
