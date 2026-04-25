@@ -47,4 +47,13 @@ public class TeamServiceTests
         Assert.AreEqual(2, result.Count());
         _mockRepository.Verify(r => r.GetAll(), Times.Once);
     }
+
+    public void AddTeam_ShouldAddTeamToConfederation()
+    {
+        var team = new Team("Uruguay", _confederation, 500, 0, 0, 0);
+        _service.AddTeam(team);
+        
+        Assert.AreEqual(1, _confederation.Teams.Count);
+        Assert.AreEqual(team, _confederation.Teams.First());
+    }
 }
