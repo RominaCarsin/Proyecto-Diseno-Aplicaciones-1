@@ -19,26 +19,26 @@ public class TeamTests
     [TestMethod]
     public void CreateTeam_WithInvalidName_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("", _conmebol, 8, 0, 0, 0));
+        Assert.ThrowsException<ArgumentException>(() => new Team("", _conmebol, 500, 0, 0, 0));
     }
     
     [TestMethod]
     public void CreateTeam_WithNameAbove60Characters_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("(..)Comouruguayoquieroserpartedeti.Recorrertodastusplayas(..)", _conmebol, 8, 0, 0, 0));
+        Assert.ThrowsException<ArgumentException>(() => new Team("(..)Comouruguayoquieroserpartedeti.Recorrertodastusplayas(..)", _conmebol, 500, 0, 0, 0));
     }
     
     [TestMethod]
     public void CreateTeam_WithName60Characters_ShouldSucceed()
     {
-        var team = new Team("(..)ComouruguayoquieroserpartedetiRecorrertodastusplayas(..)", _conmebol, 8, 0, 0, 0));
+        var team = new Team("(..)ComouruguayoquieroserpartedetiRecorrertodastusplayas(..)", _conmebol, 500, 0, 0, 0);
         Assert.AreEqual("(..)ComouruguayoquieroserpartedetiRecorrertodastusplayas(..)", team.Name);
     }
 
     [TestMethod]
     public void CreateTeam_WithNullConfederation_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", null, 8, 0, 0, 0));
+        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", null, 500, 0, 0, 0));
     }
 
     [TestMethod]
