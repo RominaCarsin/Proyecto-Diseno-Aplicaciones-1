@@ -37,7 +37,7 @@ public class Team
 
     private void ValidateRankingFifa(int rankingFifa)
     {
-        if (rankingFifa < 0)
-            throw new ArgumentException("Ranking fifa cannot be negative.");
+        if (rankingFifa < 300 ||  rankingFifa > 2500)
+            throw new ArgumentException("Ranking fifa must be between 300 and 2500.");
     }
 }

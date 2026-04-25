@@ -43,12 +43,14 @@ public class TeamTests
     [TestMethod]
     public void CreateTeam_WithRankingFifaAt300_ShouldSucceed()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", _conmebol, 300, 0, 0, 0));
+        var team = new Team("Uruguay", _conmebol, 300, 0, 0, 0);
+        Assert.AreEqual(300, team.RankingFifa);
     }
     
     [TestMethod]
     public void CreateTeam_WithRankingFifaAt2500_ShouldSucced()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", _conmebol, 2500, 0, 0, 0));
+        var team = new Team("Uruguay", _conmebol, 2500, 0, 0, 0);
+        Assert.AreEqual(2500, team.RankingFifa);
     }
 }

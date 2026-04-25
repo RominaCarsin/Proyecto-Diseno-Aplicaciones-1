@@ -36,7 +36,7 @@ public class ConfederationTests
     public void AddTeam_WithValidTeam_ShouldAddToList()
     {
         var confederation = new Confederation("CONMEBOL", 6);
-        var team = new Team("Uruguay", confederation, 8, 0, 0, 0);
+        var team = new Team("Uruguay", confederation, 500, 0, 0, 0);
 
         confederation.AddTeam(team);
 

@@ -25,7 +25,7 @@ public class TeamServiceTests
     [TestMethod]
     public void AddTeam_WithValidTeam_ShouldAddTeam()
     {
-        var team = new Team("Uruguay", _confederation, 8, 0, 0, 0);
+        var team = new Team("Uruguay", _confederation, 500, 0, 0, 0);
         _service.AddTeam(team);
         
         _mockRepository.Verify(r => r.Add(team), Times.Once);
@@ -36,8 +36,8 @@ public class TeamServiceTests
     {
         var teams = new List<Team>
         {
-            new Team("Uruguay", _confederation, 8, 0, 0, 0),
-            new Team("Argentina", _confederation, 3, 0, 0, 0)
+            new Team("Uruguay", _confederation, 500, 0, 0, 0),
+            new Team("Argentina", _confederation, 501, 0, 0, 0)
         };
         
         _mockRepository.Setup(r => r.GetAll()).Returns(teams);
