@@ -1,5 +1,6 @@
 ﻿namespace Services.Tests;
 
+[TestClass]
 public class ConfederationServiceTest
 {
     private ConfederationService _service;

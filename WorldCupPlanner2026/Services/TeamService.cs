@@ -16,6 +16,7 @@ public class TeamService : ITeamService
     public void AddTeam(Team team)
     {
         _repository.Add(team);
+        team.Confederation.AddTeam(team);
     }
 
     public IEnumerable<Team> GetTeams()
