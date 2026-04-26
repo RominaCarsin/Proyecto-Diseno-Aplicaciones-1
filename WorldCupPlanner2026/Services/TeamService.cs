@@ -15,6 +15,10 @@ public class TeamService : ITeamService
 
     public void AddTeam(Team team)
     {
+        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == team.Name);
+        if (existing != null)
+            throw new ArgumentException("A team with this name already exists.");
+        
         _repository.Add(team);
         team.Confederation.AddTeam(team);
     }

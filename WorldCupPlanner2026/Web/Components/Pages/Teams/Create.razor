@@ -3,6 +3,7 @@
 @using Domain
 @using IServices
 @inject ITeamService TeamService
+@inject IConfederationService ConfederationService
 @inject NavigationManager Navigation
 
 <div class="page-wrap">
@@ -134,29 +135,21 @@
     private bool _rankInvalid;
 
     private IEnumerable<Team> _teams = Enumerable.Empty<Team>();
-
-    private List<Confederation> _confederations = new()
-    {
-        new Confederation("UEFA",     16),
-        new Confederation("CAF",       9),
-        new Confederation("AFC",       8),
-        new Confederation("CONCACAF",  7),
-        new Confederation("CONMEBOL",  7),
-        new Confederation("OFC",       1),
-    };
+    private List<Confederation> _confederations = new();
 
     protected override void OnInitialized()
     {
+        _confederations = ConfederationService.GetAll().ToList();
         _teams = TeamService.GetTeams();
     }
 
     private void Save()
     {
-        _errorMessage = string.Empty;
+        _errorMessage   = string.Empty;
         _successMessage = string.Empty;
-        _nameInvalid  = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
-        _confInvalid  = string.IsNullOrEmpty(_selectedConfName);
-        _rankInvalid  = _rankingFifa < 1;
+        _nameInvalid    = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
+        _confInvalid    = string.IsNullOrEmpty(_selectedConfName);
+        _rankInvalid    = _rankingFifa < 300 || _rankingFifa > 2500;
 
         if (_nameInvalid || _confInvalid || _rankInvalid) return;
 
@@ -165,13 +158,12 @@
             var confederation = _confederations.First(c => c.Name == _selectedConfName);
             var team = new Team(_name, confederation, _rankingFifa, 0, 0, 0);
             TeamService.AddTeam(team);
-            
-            // Éxito: mostrar mensaje, limpiar formulario y refrescar lista
-            _successMessage = $"Team '{_name}' created successfully!";
-            _name = string.Empty;
+
+            _successMessage   = $"Team '{_name}' created successfully!";
+            _name             = string.Empty;
             _selectedConfName = string.Empty;
-            _rankingFifa = 0;
-            _teams = TeamService.GetTeams();
+            _rankingFifa      = 0;
+            _teams            = TeamService.GetTeams();
         }
         catch (ArgumentException ex)
         {

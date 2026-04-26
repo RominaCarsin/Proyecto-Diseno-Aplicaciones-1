@@ -12,6 +12,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IConfederationService, ConfederationService>();
 
 var app = builder.Build();
 
