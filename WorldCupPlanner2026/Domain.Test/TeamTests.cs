@@ -66,11 +66,5 @@ public class TeamTests
         var team = new Team("Uruguay", _conmebol, 2500, 0, 0, 0);
         Assert.AreEqual(2500, team.RankingFifa);
     }
-
-    [TestMethod]
-    public void CreateTeam_WithAlreadyExistingName_ShouldThrowException()
-    {
-        var team  = new Team("Uruguay", _conmebol, 500, 0, 0, 0);
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", _conmebol, 600, 0, 0, 0));
-    }
+    
 }

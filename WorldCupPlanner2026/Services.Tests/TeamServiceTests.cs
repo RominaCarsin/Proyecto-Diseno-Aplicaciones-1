@@ -56,4 +56,17 @@ public class TeamServiceTests
         Assert.AreEqual(1, _confederation.Teams.Count);
         Assert.AreEqual(team, _confederation.Teams.First());
     }
+    
+    [TestMethod]
+    public void AddTeam_WithAlreadyExistingName_ShouldThrowException()
+    {
+        var existingTeams = new List<Team>
+        {
+            new Team("Uruguay", _confederation, 500, 0, 0, 0)
+        };
+        _mockRepository.Setup(r => r.GetAll()).Returns(existingTeams);
+        
+        var duplicate = new Team("Uruguay", _confederation, 600, 0, 0, 0);
+        Assert.ThrowsException<ArgumentException>(() => _service.AddTeam(duplicate));
+    }
 }
