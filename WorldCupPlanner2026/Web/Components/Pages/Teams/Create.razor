@@ -38,7 +38,7 @@
           <option value="">Select confederation...</option>
           @foreach (var conf in _confederations)
           {
-            <option value="@conf.Name">@conf.Name (max. @conf.Slots)</option>
+            <option value="@conf.Name">@conf.Name (Slots. @conf.Slots)</option>
           }
         </select>
         @if (_confInvalid)
