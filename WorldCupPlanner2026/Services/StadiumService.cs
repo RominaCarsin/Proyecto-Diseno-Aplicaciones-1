@@ -1,9 +1,10 @@
 ﻿using Domain;
 using IRepository;
+using IServices;
 
 namespace Services;
 
-public class StadiumService
+public class StadiumService : IStadiumService
 {
         private readonly IRepository<Stadium> _repository;
     

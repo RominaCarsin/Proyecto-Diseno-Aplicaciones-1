@@ -1,8 +1,16 @@
 using Web.Components;
+using Services;
+using IServices;
+using Repository;
+using IRepository;
+using Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddTransient<IRepository<Stadium>, Repository<Stadium>>();
+builder.Services.AddTransient<IStadiumService, StadiumService>();
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
