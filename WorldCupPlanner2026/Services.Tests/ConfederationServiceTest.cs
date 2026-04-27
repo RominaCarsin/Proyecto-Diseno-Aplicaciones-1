@@ -1,4 +1,6 @@
-﻿namespace Services.Tests;
+﻿using Domain;
+
+namespace Services.Tests;
 
 [TestClass]
 public class ConfederationServiceTest
@@ -34,4 +36,13 @@ public class ConfederationServiceTest
         }
     }
     
+    public void AddTeam_NotFullConfederation_ShouldAddTeamToConfederation()
+    {
+        var confederation = new Confederation("UEFA", 16);
+        var team = new Team("Spain", confederation.Name, 500, 0, 0, 0);
+        
+        _service.AddTeamToConfederation(team);
+        
+        Assert.IsTrue(confederation.Teams.Contains(team), "Team should be added to the confederation");
+    }
 }
