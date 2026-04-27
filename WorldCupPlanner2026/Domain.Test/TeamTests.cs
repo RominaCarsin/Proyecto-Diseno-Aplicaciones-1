@@ -1,5 +1,4 @@
-﻿// TeamTests.cs
-namespace Domain.Test;
+﻿namespace Domain.Test;
 
 [TestClass]
 public class TeamTests
