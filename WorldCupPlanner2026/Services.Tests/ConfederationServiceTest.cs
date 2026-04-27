@@ -79,8 +79,8 @@ public class ConfederationServiceTest
         _service.RemoveTeamFromConfederation(team);
         
         var uefa = _service.GetAll().First(c => c.Name == "UEFA");
-        Assert.IsTrue(uefa.Teams.Contains(team), "Team should be added to the confederation");
-        Assert.IsFalse(uefa.Teams.Contains(team2), "Team should be removed from the confederation");
+        Assert.IsFalse(uefa.Teams.Contains(team), "Team should be removed from the confederation");
+        Assert.IsTrue(uefa.Teams.Contains(team2), "Team2 should still be in the confederation");
         
     }
 

@@ -80,4 +80,12 @@ public class ConfederationTests
 
         Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(team));
     }
+
+    [TestMethod]
+    public void RemoveTeam_WithNullTeam_ShouldThrowException()
+    {
+        var confederation = new Confederation("CONMEBOL", 6);
+
+        Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(null));
+    }
 }

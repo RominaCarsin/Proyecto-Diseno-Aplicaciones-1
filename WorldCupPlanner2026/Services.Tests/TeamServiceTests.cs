@@ -105,7 +105,6 @@ public class TeamServiceTests
         Assert.AreEqual("Uruguay", existing.Name);
         Assert.AreEqual(1200, existing.RankingFifa);
     }
-    
 
     [TestMethod]
     public void DeleteTeam_WhenTeamExists_ShouldRemoveFromRepository()

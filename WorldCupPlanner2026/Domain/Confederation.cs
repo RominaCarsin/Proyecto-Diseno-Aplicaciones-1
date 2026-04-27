@@ -25,6 +25,19 @@ public class Confederation
         
         Teams.Add(team);
     }
+    
+    public void RemoveTeam(Team team)
+    {
+        if (team == null)
+            throw new ArgumentException("Team cannot be null.");
+        
+        if (team.ConfederationName == Name)
+            Teams.Remove(team);
+        else
+        {
+            throw new ArgumentException($"Team '{team.Name}' does not belong to confederation '{Name}'.");
+        }
+    }
 
     private void ValidateName(string name)
     {

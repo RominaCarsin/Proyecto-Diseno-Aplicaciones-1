@@ -15,4 +15,9 @@ public class Repository<T> : IRepository<T>
     {
         return _entities;
     }
+    
+    public void Delete(T entity)
+    {
+        _entities.Remove(entity);
+    }
 }
