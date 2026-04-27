@@ -28,8 +28,11 @@ public class StadiumService
         {
             var stadium = _repository.GetAll().FirstOrDefault(s => s.Name == stadiumName);
     
-            if (stadium != null)
-                _repository.Delete(stadium);
+            
+            if (stadium == null)
+                throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
+
+            _repository.Delete(stadium);
         }
 
 
