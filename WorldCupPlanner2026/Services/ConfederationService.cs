@@ -27,4 +27,15 @@ public class ConfederationService : IConfederationService
 
         confederation.AddTeam(team);
     }
+
+    public void RemoveTeamFromConfederation(Team team)
+    {
+        var confederation = _confederations
+            .FirstOrDefault(c => c.Name == team.ConfederationName);
+        
+        if (confederation == null)
+            throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
+        
+        confederation.RemoveTeam(team);
+    }
 }

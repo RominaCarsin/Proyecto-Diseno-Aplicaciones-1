@@ -59,4 +59,25 @@ public class ConfederationTests
         confederation.AddTeam(team);
         Assert.ThrowsException<ArgumentException>(() => confederation.AddTeam(new Team("Francia", "OFC", 1200, 0, 0, 0)));
     }
+
+    [TestMethod]
+    public void RemoveTeam_WhenTeamExists_ShouldRemoveTeam()
+    {
+        var confederation = new Confederation("OFC", 1);
+        var team = new Team("Uruguay", "OFC", 1200, 0, 0, 0);
+        confederation.AddTeam(team);
+
+        confederation.RemoveTeam(team);
+        Assert.AreEqual(0, confederation.Teams.Count);
+    }
+
+    [TestMethod]
+    public void RemoveTeam_WhenTeamNotInConfederation_ShouldThrowArgumentException()
+    {
+        var confederation = new Confederation("OFC", 1);
+        var team = new Team("Uruguay", "UEFA", 1200, 0, 0, 0);
+        confederation.AddTeam(team);
+
+        Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(team));
+    }
 }
