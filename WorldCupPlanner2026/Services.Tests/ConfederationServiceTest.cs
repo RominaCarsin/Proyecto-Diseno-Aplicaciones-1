@@ -67,13 +67,65 @@ public class ConfederationServiceTest
     }
 
     [TestMethod]
-    public void UpdateTeam_WithValidConfederation_ShouldUpdateConfederationAndPassTheTeamFromOneConfederationToAnother()
+    public void UpdateTeamConfederation_ShouldRemoveTeamFromOldConfederation()
     {
         var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
         _service.AddTeamToConfederation(team);
-        team.UpdateConfederation("CONMEBOL");
+
+        _service.UpdateTeamConfederation(team, "CONMEBOL");
+
+        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
+        Assert.IsFalse(uefa.Teams.Contains(team), "Team should no longer be in UEFA");
+    }
+
+    [TestMethod]
+    public void UpdateTeamConfederation_ShouldAddTeamToNewConfederation()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(team);
+
+        _service.UpdateTeamConfederation(team, "CONMEBOL");
+
+        var conmebol = _service.GetAll().First(c => c.Name == "CONMEBOL");
+        Assert.IsTrue(conmebol.Teams.Contains(team), "Team should be in CONMEBOL");
+    }
+
+    [TestMethod]
+    public void UpdateTeamConfederation_WhenNewConfederationIsFull_ShouldThrowAndNotMove()
+    {
         
-        Assert.AreEqual("CONMEBOL", team.ConfederationName, "Team's confederation should be updated");
+        var existing = new Team("NewZealand", "OFC", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(existing);
+
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(team);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "OFC"));
+        
+        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
+        Assert.IsTrue(uefa.Teams.Contains(team), "Team should still be in UEFA after failed move");
+    }
+
+    [TestMethod]
+    public void UpdateTeamConfederation_WhenNewConfederationNotFound_ShouldThrowException()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(team);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "INVALID"));
+    }
+
+    [TestMethod]
+    public void UpdateTeamConfederation_WhenSameConfederation_ShouldNotMoveTeam()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(team);
+
+        _service.UpdateTeamConfederation(team, "UEFA");
+
+        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
+        Assert.AreEqual(1, uefa.Teams.Count, "Team count should remain the same");
+        Assert.IsTrue(uefa.Teams.Contains(team));
     }
 
     [TestMethod]

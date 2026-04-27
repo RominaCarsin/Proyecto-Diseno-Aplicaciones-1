@@ -35,6 +35,12 @@ public class Team
         RankingFifa = rankingFifa;
     }
 
+    public void UpdateConfederationName(string confederationName)
+    {
+        ValidateConfederation(confederationName);
+        ConfederationName = confederationName;
+    }
+
     private void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
