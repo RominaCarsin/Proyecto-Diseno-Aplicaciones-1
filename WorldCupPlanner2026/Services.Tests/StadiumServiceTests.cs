@@ -81,5 +81,12 @@ public class StadiumServiceTests
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateStadium("Estadio Nacional", updated));
     }
 
+    [TestMethod]
+    public void UpdateStadium_WithNonExistingOriginalName_ShouldThrowArgumentException()
+    {
+        var updated = new Stadium("Nuevo Estadio", "Ciudad", null, 25000);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.UpdateStadium("NombreQueNoExiste", updated));
+    }
 
 }
