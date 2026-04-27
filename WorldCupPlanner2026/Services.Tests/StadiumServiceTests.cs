@@ -40,4 +40,14 @@ public class StadiumServiceTests
         Assert.ThrowsException<ArgumentException>(() => _service.AddStadium(stadium2));
     }
     
+    [TestMethod]
+    public void DeleteStadium_WithExistingStadium_ShouldRemoveIt()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
+        _service.AddStadium(stadium);
+
+        _service.DeleteStadium(stadium.Name);
+
+        Assert.IsNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario"));
+    }
 }
