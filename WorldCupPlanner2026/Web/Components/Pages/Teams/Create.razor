@@ -4,7 +4,6 @@
 @using IServices
 @inject ITeamService TeamService
 @inject IConfederationService ConfederationService
-@inject NavigationManager Navigation
 
 <div class="page-wrap">
 
@@ -15,7 +14,7 @@
 
   <div class="card">
     <div class="card-header">
-      <span class="card-title">New team</span>
+      <span class="card-title">@(_isEditing ? "Edit team" : "New team")</span>
     </div>
 
     <div class="card-body">
@@ -79,9 +78,12 @@
     </div>
 
     <div class="card-footer">
-      <a href="/Teams" class="btn btn-g">Cancel</a>
+      @if (_isEditing)
+      {
+        <button class="btn btn-g" @onclick="ResetForm">Cancel edit</button>
+      }
       <button class="btn-p" @onclick="Save">
-        Save team
+        @(_isEditing ? "Update team" : "Save team")
       </button>
     </div>
   </div>
@@ -104,6 +106,7 @@
               <th style="text-align:left; padding: 0.5rem;">Name</th>
               <th style="text-align:left; padding: 0.5rem;">Confederation</th>
               <th style="text-align:left; padding: 0.5rem;">FIFA Ranking</th>
+              <th style="text-align:left; padding: 0.5rem;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -113,6 +116,14 @@
                 <td style="padding: 0.5rem;">@team.Name</td>
                 <td style="padding: 0.5rem;">@team.ConfederationName</td>
                 <td style="padding: 0.5rem;">@team.RankingFifa</td>
+                <td style="padding: 0.5rem;">
+                  <button class="btn btn-s"
+                          disabled="@(_isEditing && _currentTeamName == team.Name)"
+                          @onclick="() => EditTeam(team)">Edit</button>
+                  <button class="btn btn-d"
+                          disabled="@(_isEditing && _currentTeamName == team.Name)"
+                          @onclick="() => DeleteTeam(team.Name)">Delete</button>
+                </td>
               </tr>
             }
           </tbody>
@@ -133,6 +144,9 @@
     private bool _nameInvalid;
     private bool _confInvalid;
     private bool _rankInvalid;
+
+    private bool _isEditing;
+    private string _currentTeamName = string.Empty;
 
     private IEnumerable<Team> _teams = Enumerable.Empty<Team>();
     private List<Confederation> _confederations = new();
@@ -155,19 +169,67 @@
 
         try
         {
-            var confederation = _confederations.First(c => c.Name == _selectedConfName);
-            var team = new Team(_name, confederation.Name, _rankingFifa, 0, 0, 0);
-            TeamService.AddTeam(team);
+            if (_isEditing)
+            {
+                TeamService.UpdateTeam(_currentTeamName, _name, _rankingFifa);
+                _successMessage = $"Team '{_name}' updated successfully!";
+            }
+            else
+            {
+                var confederation = _confederations.First(c => c.Name == _selectedConfName);
+                var team = new Team(_name, confederation.Name, _rankingFifa, 0, 0, 0);
+                TeamService.AddTeam(team);
+                _successMessage = $"Team '{_name}' created successfully!";
+            }
 
-            _successMessage   = $"Team '{_name}' created successfully!";
-            _name             = string.Empty;
-            _selectedConfName = string.Empty;
-            _rankingFifa      = 0;
-            _teams            = TeamService.GetTeams();
+            ResetForm();
+            _teams = TeamService.GetTeams();
         }
         catch (ArgumentException ex)
         {
             _errorMessage = ex.Message;
         }
+    }
+
+    private void EditTeam(Team team)
+    {
+        _name             = team.Name;
+        _selectedConfName = team.ConfederationName;
+        _rankingFifa      = team.RankingFifa;
+        _isEditing        = true;
+        _currentTeamName  = team.Name;
+        _errorMessage     = string.Empty;
+        _successMessage   = string.Empty;
+    }
+
+    private void DeleteTeam(string teamName)
+    {
+        try
+        {
+            if (_isEditing && _currentTeamName == teamName)
+                ResetForm();
+
+            TeamService.DeleteTeam(teamName);
+            _successMessage = $"Team '{teamName}' deleted successfully!";
+            _teams = TeamService.GetTeams();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void ResetForm()
+    {
+        _name             = string.Empty;
+        _selectedConfName = string.Empty;
+        _rankingFifa      = 0;
+        _isEditing        = false;
+        _currentTeamName  = string.Empty;
+        _nameInvalid      = false;
+        _confInvalid      = false;
+        _rankInvalid      = false;
+        _errorMessage     = string.Empty;
+        _successMessage   = string.Empty;
     }
 }
