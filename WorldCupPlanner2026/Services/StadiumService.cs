@@ -24,6 +24,15 @@ public class StadiumService
             _repository.Add(stadium);
         }
 
+        public void DeleteStadium(string stadiumName)
+        {
+            var stadium = _repository.GetAll().FirstOrDefault(s => s.Name == stadiumName);
+    
+            if (stadium != null)
+                _repository.Delete(stadium);
+        }
+
+
     
         public IEnumerable<Stadium> GetStadiums()
         {
