@@ -68,4 +68,27 @@ public class ConfederationServiceTest
         
         Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(team));
     }
+
+    [TestMethod]
+    public void RemoveTeamFromConfederation_WhenTeamExists_ShouldOnlyRemoveThatTeam()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team2 =  new Team("Bosnia", "UEFA", 600, 0, 0, 0);
+        _service.AddTeamToConfederation(team);
+        _service.AddTeamToConfederation(team2);
+        _service.RemoveTeamFromConfederation(team);
+        
+        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
+        Assert.IsTrue(uefa.Teams.Contains(team), "Team should be added to the confederation");
+        Assert.IsFalse(uefa.Teams.Contains(team2), "Team should be removed from the confederation");
+        
+    }
+
+    [TestMethod]
+    public void RemoveTeamFromConfederation_WhenConfederationNotFound_ShouldThrowException()
+    {
+        var team = new Team("InvalidTeam", "INVALID", 500, 0, 0, 0);
+        
+        Assert.ThrowsException<ArgumentException>(() => _service.RemoveTeamFromConfederation(team));
+    }
 }

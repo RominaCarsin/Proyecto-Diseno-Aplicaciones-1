@@ -7,4 +7,5 @@ public interface IConfederationService
 {
     IEnumerable<Confederation> GetAll();
     void AddTeamToConfederation(Team team);
+    void RemoveTeamFromConfederation(Team team);
 }
