@@ -23,11 +23,12 @@ public class StadiumServiceTests
     public void AddStadium_WithValidStadium_ShouldAddStadium()
     {
         var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
-
+    
         _service.AddStadium(stadium);
-
-        Assert.IsTrue(_service.GetStadiums().Any(s => s.Name == "Centenario"));
+    
+        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario"));
     }
+    
     
     [TestMethod]
     public void AddStadium_WithDuplicateName_ShouldThrowArgumentException()
