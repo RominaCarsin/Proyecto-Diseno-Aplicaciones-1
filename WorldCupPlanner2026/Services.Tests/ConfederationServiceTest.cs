@@ -127,6 +127,14 @@ public class ConfederationServiceTest
         Assert.AreEqual(1, uefa.Teams.Count, "Team count should remain the same");
         Assert.IsTrue(uefa.Teams.Contains(team));
     }
+    
+    [TestMethod]
+    public void UpdateTeamConfederation_WhenOldConfederationNotFound_ShouldThrowException()
+    {
+        var team = new Team("Spain", "INVALID_OLD", 500, 0, 0, 0);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "UEFA"));
+    }
 
     [TestMethod]
     public void RemoveTeamFromConfederation_WhenTeamExists_ShouldOnlyRemoveThatTeam()

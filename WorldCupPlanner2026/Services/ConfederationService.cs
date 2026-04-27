@@ -38,4 +38,27 @@ public class ConfederationService : IConfederationService
         
         confederation.RemoveTeam(team);
     }
+    
+    public void UpdateTeamConfederation(Team team, string newConfederationName)
+    {
+        if (team.ConfederationName == newConfederationName)
+            return;
+
+        var newConfederation = _confederations
+            .FirstOrDefault(c => c.Name == newConfederationName);
+        if (newConfederation == null)
+            throw new ArgumentException($"Confederation '{newConfederationName}' not found.");
+        
+        if (newConfederation.Teams.Count() == newConfederation.Slots)
+            throw new ArgumentException($"Confederation '{newConfederationName}' is full.");
+
+        var oldConfederation = _confederations
+            .FirstOrDefault(c => c.Name == team.ConfederationName);
+        if (oldConfederation == null)
+            throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
+
+        oldConfederation.RemoveTeam(team);
+        team.UpdateConfederationName(newConfederationName);
+        newConfederation.AddTeam(team);
+    }
 }
