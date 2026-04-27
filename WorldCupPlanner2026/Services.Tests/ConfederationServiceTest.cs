@@ -39,13 +39,10 @@ public class ConfederationServiceTest
     [TestMethod] 
     public void AddTeam_NotFullConfederation_ShouldAddTeamToConfederation()
     {
-        // Arrange
         var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
         
-        // Act
         _service.AddTeamToConfederation(team);
         
-        // Assert - Obtener la confederación UEFA del servicio (no local)
         var uefa = _service.GetAll().First(c => c.Name == "UEFA");
         Assert.IsTrue(uefa.Teams.Contains(team), "Team should be added to the confederation");
     }
@@ -67,6 +64,16 @@ public class ConfederationServiceTest
         var team = new Team("InvalidTeam", "INVALID", 500, 0, 0, 0);
         
         Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(team));
+    }
+
+    [TestMethod]
+    public void UpdateTeam_WithValidConfederation_ShouldUpdateConfederationAndPassTheTeamFromOneConfederationToAnother()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(team);
+        team.UpdateConfederation("CONMEBOL");
+        
+        Assert.AreEqual("CONMEBOL", team.ConfederationName, "Team's confederation should be updated");
     }
 
     [TestMethod]
