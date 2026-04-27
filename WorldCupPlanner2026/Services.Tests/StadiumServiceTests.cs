@@ -56,4 +56,17 @@ public class StadiumServiceTests
     {
         Assert.ThrowsException<ArgumentException>(() => _service.DeleteStadium("NombreQueNoExiste"));
     }
+    
+    [TestMethod]
+    public void UpdateStadium_WithValidData_ShouldUpdateStadium()
+    {
+        var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
+        _service.AddStadium(stadium);
+        var updated = new Stadium("Centenario Renovado", "Montevideo", null, 25000);
+
+        _service.UpdateStadium("Centenario", updated);
+
+        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario Renovado"));
+    }
+
 }
