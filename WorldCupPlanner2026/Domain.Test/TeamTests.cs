@@ -157,5 +157,15 @@ public class TeamTests
 
         Assert.AreEqual(2500, team.RankingFifa);
     }
+
+    [TestMethod]
+    public void UpdateConfederation_WithValidData_ShouldSucced()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        
+        team.UpdateConfederationName("Spain");
+        
+        Assert.AreEqual("Spain", team.Name);
+    }
    
 }
