@@ -22,6 +22,18 @@ public class Team
         GoalDiference = goalDiference;
         GoalsInFavor = goalsInFavor;
     }
+    
+    public void UpdateName(string name)
+    {
+        ValidateName(name);
+        Name = name;
+    }
+
+    public void UpdateRankingFifa(int rankingFifa)
+    {
+        ValidateRankingFifa(rankingFifa);
+        RankingFifa = rankingFifa;
+    }
 
     private void ValidateName(string name)
     {
