@@ -34,6 +34,19 @@ public class StadiumService
 
             _repository.Delete(stadium);
         }
+        
+        public void UpdateStadium(string originalName, Stadium stadium)
+        {
+            var existingStadium = _repository.GetAll()
+                .FirstOrDefault(s => s.Name == originalName);
+            
+            if (existingStadium == null)
+                throw new ArgumentException($"A stadium with the name '{originalName}' does not exist");
+            
+            _repository.Delete(existingStadium);
+            _repository.Add(stadium);
+        }
+        
 
 
     
