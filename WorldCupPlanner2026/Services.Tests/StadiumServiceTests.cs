@@ -28,4 +28,15 @@ public class StadiumServiceTests
 
         Assert.IsTrue(_service.GetStadiums().Any(s => s.Name == "Centenario"));
     }
+    
+    [TestMethod]
+    public void AddStadium_WithDuplicateName_ShouldThrowArgumentException()
+    {
+        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium2 = new Stadium("Centenario", "Buenos Aires", null, 50000);
+        _service.AddStadium(stadium1);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.AddStadium(stadium2));
+    }
+    
 }
