@@ -8,7 +8,7 @@ public class TeamService : ITeamService
 {
     private readonly IRepository<Team> _repository;
     private readonly IConfederationService _confederationService;
-    
+
     public TeamService(IRepository<Team> repository, IConfederationService confederationService)
     {
         _repository = repository;
@@ -20,17 +20,14 @@ public class TeamService : ITeamService
         var existing = _repository.GetAll().FirstOrDefault(t => t.Name == team.Name);
         if (existing != null)
             throw new ArgumentException("A team with this name already exists.");
-        
+
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
     }
 
-    public IEnumerable<Team> GetTeams()
-    {
-        return _repository.GetAll();
-    }
-    
-    public void UpdateTeam(string currentName, string newName, int rankingFifa)
+    public IEnumerable<Team> GetTeams() => _repository.GetAll();
+
+    public void UpdateTeam(string currentName, string newName, int rankingFifa, string confederationName)
     {
         var existing = _repository.GetAll().FirstOrDefault(t => t.Name == currentName);
         if (existing == null)
@@ -43,6 +40,9 @@ public class TeamService : ITeamService
 
         existing.UpdateName(newName);
         existing.UpdateRankingFifa(rankingFifa);
+
+        if (existing.ConfederationName != confederationName)
+            _confederationService.UpdateTeamConfederation(existing, confederationName);
     }
 
     public void DeleteTeam(string name)
