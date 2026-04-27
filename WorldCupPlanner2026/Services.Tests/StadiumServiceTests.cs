@@ -50,4 +50,10 @@ public class StadiumServiceTests
 
         Assert.IsNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario"));
     }
+    
+    [TestMethod]
+    public void DeleteStadium_WithNonExistingName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => _service.DeleteStadium("NombreQueNoExiste"));
+    }
 }
