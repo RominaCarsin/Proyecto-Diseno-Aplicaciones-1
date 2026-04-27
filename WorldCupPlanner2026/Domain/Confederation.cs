@@ -20,6 +20,10 @@ public class Confederation
     {
         if (team == null)
             throw new ArgumentException("Team cannot be null.");
+        if ()
+            throw new ArgumentException("Confederation is full.");
+        
+        this.--;
         Teams.Add(team);
     }
 

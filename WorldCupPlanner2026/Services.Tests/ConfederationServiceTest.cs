@@ -33,4 +33,5 @@ public class ConfederationServiceTest
             Assert.AreEqual(slots, conf.Slots, $"{name} should have {slots} slots");
         }
     }
+    
 }

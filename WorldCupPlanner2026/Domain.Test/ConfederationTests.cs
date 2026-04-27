@@ -36,7 +36,7 @@ public class ConfederationTests
     public void AddTeam_WithValidTeam_ShouldAddToList()
     {
         var confederation = new Confederation("CONMEBOL", 6);
-        var team = new Team("Uruguay", confederation, 500, 0, 0, 0);
+        var team = new Team("Uruguay", confederation.Name, 500, 0, 0, 0);
 
         confederation.AddTeam(team);
 
@@ -49,5 +49,14 @@ public class ConfederationTests
         var confederation = new Confederation("CONMEBOL", 6);
 
         Assert.ThrowsException<ArgumentException>(() => confederation.AddTeam(null));
+    }
+    
+    [TestMethod]
+    public void AddTeam_OnAFullConfederation_ShouldTrowException()
+    {
+        var confederation = new Confederation("OFC", 1);
+        var team = new Team("Uruguay", "OFC", 1200, 0, 0, 0);
+        confederation.AddTeam(team);
+        Assert.ThrowsException<ArgumentException>(() => confederation.AddTeam(new Team("Francia", "OFC", 1200, 0, 0, 0)));
     }
 }
