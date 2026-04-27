@@ -111,7 +111,7 @@
             {
               <tr>
                 <td style="padding: 0.5rem;">@team.Name</td>
-                <td style="padding: 0.5rem;">@team.Confederation.Name</td>
+                <td style="padding: 0.5rem;">@team.ConfederationName</td>
                 <td style="padding: 0.5rem;">@team.RankingFifa</td>
               </tr>
             }
@@ -156,7 +156,7 @@
         try
         {
             var confederation = _confederations.First(c => c.Name == _selectedConfName);
-            var team = new Team(_name, confederation, _rankingFifa, 0, 0, 0);
+            var team = new Team(_name, confederation.Name, _rankingFifa, 0, 0, 0);
             TeamService.AddTeam(team);
 
             _successMessage   = $"Team '{_name}' created successfully!";

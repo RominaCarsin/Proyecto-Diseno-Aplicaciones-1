@@ -9,10 +9,10 @@ public class MatchTests
         new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
 
     private Team CreateValidHomeTeam() =>
-        new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
+        new Team("Argentina", CreateValidConfederation().ToString(), 1800, 0, 0, 0);
 
     private Team CreateValidAwayTeam() =>
-        new Team("Brazil", CreateValidConfederation(), 1750, 0, 0, 0);
+        new Team("Brazil", CreateValidConfederation().ToString(), 1750, 0, 0, 0);
 
     private Match CreateValidGroupStageMatch() =>
         new Match(
@@ -147,8 +147,8 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithDifferentInstancesButSameTeamName_ShouldThrowDomainException()
     {
-        var homeTeam = new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
-        var awayTeam = new Team("Argentina", CreateValidConfederation(), 1750, 0, 0, 0);
+        var homeTeam = new Team("Argentina", CreateValidConfederation().Name, 1800, 0, 0, 0);
+        var awayTeam = new Team("Argentina", CreateValidConfederation().Name, 1750, 0, 0, 0);
 
         Assert.ThrowsException<DomainException>(() =>
             new Match(
@@ -164,8 +164,8 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithDifferentInstancesButSameTeamNameIgnoringCase_ShouldThrowDomainException()
     {
-        var homeTeam = new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
-        var awayTeam = new Team("argentina", CreateValidConfederation(), 1750, 0, 0, 0);
+        var homeTeam = new Team("Argentina", CreateValidConfederation().Name, 1800, 0, 0, 0);
+        var awayTeam = new Team("argentina", CreateValidConfederation().Name, 1750, 0, 0, 0);
 
         Assert.ThrowsException<DomainException>(() =>
             new Match(
@@ -263,8 +263,8 @@ public class MatchTests
         var secondMatch = new Match(
             date: new DateTime(2026, 6, 2),
             stadium: CreateValidStadium(),
-            homeTeam: new Team("Uruguay", CreateValidConfederation(), 1700, 0, 0, 0),
-            awayTeam: new Team("Chile", CreateValidConfederation(), 1650, 0, 0, 0),
+            homeTeam: new Team("Uruguay", CreateValidConfederation().Name, 1700, 0, 0, 0),
+            awayTeam: new Team("Chile", CreateValidConfederation().Name, 1650, 0, 0, 0),
             group: "B",
             phase: TournamentPhase.GroupStage
         );

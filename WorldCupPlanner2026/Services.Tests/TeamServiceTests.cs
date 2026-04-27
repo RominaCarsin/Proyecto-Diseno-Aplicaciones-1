@@ -25,7 +25,7 @@ public class TeamServiceTests
     [TestMethod]
     public void AddTeam_WithValidTeam_ShouldAddTeam()
     {
-        var team = new Team("Uruguay", _confederation, 500, 0, 0, 0);
+        var team = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
         _service.AddTeam(team);
         
         _mockRepository.Verify(r => r.Add(team), Times.Once);
@@ -36,8 +36,8 @@ public class TeamServiceTests
     {
         var teams = new List<Team>
         {
-            new Team("Uruguay", _confederation, 500, 0, 0, 0),
-            new Team("Argentina", _confederation, 501, 0, 0, 0)
+            new Team("Uruguay", _confederation.Name, 500, 0, 0, 0),
+            new Team("Argentina", _confederation.Name, 501, 0, 0, 0)
         };
         
         _mockRepository.Setup(r => r.GetAll()).Returns(teams);
@@ -48,25 +48,16 @@ public class TeamServiceTests
         _mockRepository.Verify(r => r.GetAll(), Times.Once);
     }
 
-    public void AddTeam_ShouldAddTeamToConfederation()
-    {
-        var team = new Team("Uruguay", _confederation, 500, 0, 0, 0);
-        _service.AddTeam(team);
-        
-        Assert.AreEqual(1, _confederation.Teams.Count);
-        Assert.AreEqual(team, _confederation.Teams.First());
-    }
-    
     [TestMethod]
     public void AddTeam_WithAlreadyExistingName_ShouldThrowException()
     {
         var existingTeams = new List<Team>
         {
-            new Team("Uruguay", _confederation, 500, 0, 0, 0)
+            new Team("Uruguay", _confederation.Name, 500, 0, 0, 0)
         };
         _mockRepository.Setup(r => r.GetAll()).Returns(existingTeams);
         
-        var duplicate = new Team("Uruguay", _confederation, 600, 0, 0, 0);
+        var duplicate = new Team("Uruguay", _confederation.Name, 600, 0, 0, 0);
         Assert.ThrowsException<ArgumentException>(() => _service.AddTeam(duplicate));
     }
 }

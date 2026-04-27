@@ -20,7 +20,6 @@ public class TeamService : ITeamService
             throw new ArgumentException("A team with this name already exists.");
         
         _repository.Add(team);
-        team.Confederation.AddTeam(team);
     }
 
     public IEnumerable<Team> GetTeams()
