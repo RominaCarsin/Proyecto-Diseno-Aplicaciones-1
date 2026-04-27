@@ -2,7 +2,7 @@
 
 namespace Repository;
 
-public class Repositorory<T> : IRepository<T>
+public class Repository<T> : IRepository<T>
 {
     private readonly List<T> _entities = new();
 

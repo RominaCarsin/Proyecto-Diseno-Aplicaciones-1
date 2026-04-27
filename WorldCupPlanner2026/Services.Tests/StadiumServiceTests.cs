@@ -1,14 +1,22 @@
+using Domain;
+using Services;
+using Repository;
+using IRepository;
+
+
 namespace Services.Tests;
 
 [TestClass]
 public class StadiumServiceTests
 {
-    private StadiumsService _service = null!;
+    private StadiumService _service = null!;
+    private IRepository<Stadium> _repository = null!;
 
     [TestInitialize]
     public void SetUp()
     {
-        _service = new StadiumsService();
+        _repository = new Repository<Stadium>();
+        _service = new StadiumService(_repository);
     }
 
     [TestMethod]
@@ -16,8 +24,8 @@ public class StadiumServiceTests
     {
         var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
 
-        _service.Add(stadium);
+        _service.AddStadium(stadium);
 
-        Assert.IsTrue(_service.GetAll().Any(s => s.Name == "Centenario"));
+        Assert.IsTrue(_service.GetStadiums().Any(s => s.Name == "Centenario"));
     }
 }
