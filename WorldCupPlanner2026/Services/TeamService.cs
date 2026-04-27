@@ -7,10 +7,12 @@ namespace Services;
 public class TeamService : ITeamService
 {
     private readonly IRepository<Team> _repository;
+    private readonly IConfederationService _confederationService;
     
-    public TeamService(IRepository<Team> repository)
+    public TeamService(IRepository<Team> repository, IConfederationService confederationService)
     {
         _repository = repository;
+        _confederationService = confederationService;
     }
 
     public void AddTeam(Team team)
@@ -20,6 +22,8 @@ public class TeamService : ITeamService
             throw new ArgumentException("A team with this name already exists.");
         
         _repository.Add(team);
+        
+        _confederationService.AddTeamToConfederation(team);
     }
 
     public IEnumerable<Team> GetTeams()

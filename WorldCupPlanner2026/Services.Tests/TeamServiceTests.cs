@@ -11,15 +11,17 @@ public class TeamServiceTests
 {
     private TeamService _service;
     private Mock<IRepository<Team>> _mockRepository;
+    private Mock<IConfederationService> _mockConfederationService;
     private Confederation _confederation;
 
     [TestInitialize]
     public void Setup()
     {
         _mockRepository = new Mock<IRepository<Team>>();
-        _service = new TeamService(_mockRepository.Object);
+        _mockConfederationService = new Mock<IConfederationService>();
+        _service = new TeamService(_mockRepository.Object, _mockConfederationService.Object);
 
-        _confederation = new Confederation("CONMBEBOL", 6);
+        _confederation = new Confederation("CONMEBOL", 6);
     }
     
     [TestMethod]
@@ -29,6 +31,7 @@ public class TeamServiceTests
         _service.AddTeam(team);
         
         _mockRepository.Verify(r => r.Add(team), Times.Once);
+        _mockConfederationService.Verify(c => c.AddTeamToConfederation(team), Times.Once);
     }
     
     [TestMethod]

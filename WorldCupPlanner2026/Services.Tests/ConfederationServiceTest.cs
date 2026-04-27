@@ -35,14 +35,37 @@ public class ConfederationServiceTest
             Assert.AreEqual(slots, conf.Slots, $"{name} should have {slots} slots");
         }
     }
-    
+   
+    [TestMethod] 
     public void AddTeam_NotFullConfederation_ShouldAddTeamToConfederation()
     {
-        var confederation = new Confederation("UEFA", 16);
-        var team = new Team("Spain", confederation.Name, 500, 0, 0, 0);
+        // Arrange
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
         
+        // Act
         _service.AddTeamToConfederation(team);
         
-        Assert.IsTrue(confederation.Teams.Contains(team), "Team should be added to the confederation");
+        // Assert - Obtener la confederación UEFA del servicio (no local)
+        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
+        Assert.IsTrue(uefa.Teams.Contains(team), "Team should be added to the confederation");
+    }
+    
+    [TestMethod]
+    public void AddTeam_FullConfederation_ShouldThrowException()
+    {
+        var ofc = _service.GetAll().First(c => c.Name == "OFC");
+        var firstTeam = new Team("NewZealand", "OFC", 500, 0, 0, 0);
+        _service.AddTeamToConfederation(firstTeam);
+        
+        var secondTeam = new Team("Fiji", "OFC", 600, 0, 0, 0);
+        Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(secondTeam));
+    }
+    
+    [TestMethod]
+    public void AddTeam_InvalidConfederation_ShouldThrowException()
+    {
+        var team = new Team("InvalidTeam", "INVALID", 500, 0, 0, 0);
+        
+        Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(team));
     }
 }
