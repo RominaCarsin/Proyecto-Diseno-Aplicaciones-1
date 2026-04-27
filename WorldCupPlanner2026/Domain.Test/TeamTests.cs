@@ -67,5 +67,96 @@ public class TeamTests
         Assert.AreEqual(2500, team.RankingFifa);
     }
 
+    [TestMethod]
+    public void UpdateName_WithValidData_ShouldSucceed()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        team.UpdateName("France");
+
+        Assert.AreEqual("France", team.Name);
+    }
+
+    [TestMethod]
+    public void UpdateName_WithEmptyName_ShouldThrowArgumentException()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        Assert.ThrowsException<ArgumentException>(() => team.UpdateName(""));
+    }
+
+    [TestMethod]
+    public void UpdateName_WithWhitespaceName_ShouldThrowArgumentException()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        Assert.ThrowsException<ArgumentException>(() => team.UpdateName("   "));
+    }
+
+    [TestMethod]
+    public void UpdateName_WithNameExceeding60Chars_ShouldThrowArgumentException()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var longName = new string('A', 61);
+
+        Assert.ThrowsException<ArgumentException>(() => team.UpdateName(longName));
+    }
+
+    [TestMethod]
+    public void UpdateName_WithNameExactly60Chars_ShouldSucceed()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var maxName = new string('A', 60);
+
+        team.UpdateName(maxName);
+
+        Assert.AreEqual(maxName, team.Name);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_WithValidData_ShouldSucceed()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        team.UpdateRankingFifa(1200);
+
+        Assert.AreEqual(1200, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_BelowMinimum_ShouldThrowArgumentException()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        Assert.ThrowsException<ArgumentException>(() => team.UpdateRankingFifa(299));
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AboveMaximum_ShouldThrowArgumentException()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        Assert.ThrowsException<ArgumentException>(() => team.UpdateRankingFifa(2501));
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AtMinimumBoundary_ShouldSucceed()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        team.UpdateRankingFifa(300);
+
+        Assert.AreEqual(300, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AtMaximumBoundary_ShouldSucceed()
+    {
+        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+
+        team.UpdateRankingFifa(2500);
+
+        Assert.AreEqual(2500, team.RankingFifa);
+    }
    
 }

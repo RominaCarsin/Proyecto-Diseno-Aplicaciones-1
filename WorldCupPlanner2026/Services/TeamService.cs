@@ -21,9 +21,8 @@ public class TeamService : ITeamService
         if (existing != null)
             throw new ArgumentException("A team with this name already exists.");
         
-        _repository.Add(team);
-        
         _confederationService.AddTeamToConfederation(team);
+        _repository.Add(team);
     }
 
     public IEnumerable<Team> GetTeams()

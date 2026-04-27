@@ -21,13 +21,10 @@ public class ConfederationService : IConfederationService
     {
         var confederation = _confederations
             .FirstOrDefault(c => c.Name == team.ConfederationName);
-        
+
         if (confederation == null)
             throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
-        
-        if (confederation.Teams.Count >= confederation.Slots)
-            throw new ArgumentException($"Confederation '{team.ConfederationName}' is full. No available slots.");
-        
+
         confederation.AddTeam(team);
     }
 }
