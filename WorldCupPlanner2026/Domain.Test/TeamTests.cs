@@ -66,5 +66,12 @@ public class TeamTests
         var team = new Team("Uruguay", _conmebol, 2500, 0, 0, 0);
         Assert.AreEqual(2500, team.RankingFifa);
     }
-    
+
+    [TestMethod]
+    public void CreateTeam_OnAFullConfederation_ShouldTrowException()
+    {
+        Confederation ofc = new Confederation("OFC", 1);
+        var team = new Team("Uruguay", ofc, 2500, 0, 0, 0);
+        Assert.ThrowsException<ArgumentException>(() => new Team("Argentina", ofc, 500, 0, 0, 0));
+    }
 }
