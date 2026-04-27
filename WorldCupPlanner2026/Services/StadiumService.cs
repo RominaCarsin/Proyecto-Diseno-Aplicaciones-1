@@ -39,13 +39,20 @@ public class StadiumService
         {
             var existingStadium = _repository.GetAll()
                 .FirstOrDefault(s => s.Name == originalName);
-            
+    
             if (existingStadium == null)
                 throw new ArgumentException($"A stadium with the name '{originalName}' does not exist");
-            
+    
+            bool nameExists = _repository.GetAll()
+                .FirstOrDefault(s => s.Name == stadium.Name) != null;
+    
+            if (nameExists && stadium.Name != originalName)
+                throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
+    
             _repository.Delete(existingStadium);
             _repository.Add(stadium);
         }
+
         
 
 
