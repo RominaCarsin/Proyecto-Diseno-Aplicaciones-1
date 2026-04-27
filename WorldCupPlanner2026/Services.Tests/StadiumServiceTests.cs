@@ -68,5 +68,18 @@ public class StadiumServiceTests
 
         Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario Renovado"));
     }
+    
+    [TestMethod]
+    public void UpdateStadium_WithDuplicateName_ShouldThrowArgumentException()
+    {
+        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium2 = new Stadium("Estadio Nacional", "Montevideo", null, 30000);
+        _service.AddStadium(stadium1);
+        _service.AddStadium(stadium2);
+        var updated = new Stadium("Centenario", "Otra ciudad", null, 25000);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.UpdateStadium("Estadio Nacional", updated));
+    }
+
 
 }
