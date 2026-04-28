@@ -1,7 +1,7 @@
 ﻿@page "/Teams/Create"
 @rendermode InteractiveServer
-@using Domain
 @using IServices
+@using DTOs
 @inject ITeamService TeamService
 @inject IConfederationService ConfederationService
 
@@ -38,7 +38,7 @@
           <option value="">Select confederation...</option>
           @foreach (var conf in _confederations)
           {
-            <option value="@conf.Name">@conf.Name (Slots. @conf.Slots)</option>
+            <option value="@conf.Name">@conf.Name (Slots. @conf.RemainingSlots)</option>
           }
         </select>
         @if (_confInvalid)
@@ -148,50 +148,61 @@
     private bool _isEditing;
     private string _currentTeamName = string.Empty;
 
-    private IEnumerable<Team> _teams = Enumerable.Empty<Team>();
-    private List<Confederation> _confederations = new();
+    private IEnumerable<TeamResponse> _teams = Enumerable.Empty<TeamResponse>();
+    private IEnumerable<ConfederationResponse> _confederations = Enumerable.Empty<ConfederationResponse>();
 
     protected override void OnInitialized()
     {
-        _confederations = ConfederationService.GetAll().ToList();
+        _confederations = ConfederationService.GetAll();
         _teams = TeamService.GetTeams();
     }
 
     private void Save()
     {
-      _errorMessage   = string.Empty;
-      _successMessage = string.Empty;
-      _nameInvalid    = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
-      _confInvalid    = string.IsNullOrEmpty(_selectedConfName);
-      _rankInvalid    = _rankingFifa < 300 || _rankingFifa > 2500;
+        _errorMessage   = string.Empty;
+        _successMessage = string.Empty;
+        _nameInvalid    = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
+        _confInvalid    = string.IsNullOrEmpty(_selectedConfName);
+        _rankInvalid    = _rankingFifa < 300 || _rankingFifa > 2500;
 
-      if (_nameInvalid || _confInvalid || _rankInvalid) return;
+        if (_nameInvalid || _confInvalid || _rankInvalid) return;
 
-      try
-      {
-        if (_isEditing)
+        try
         {
-          TeamService.UpdateTeam(_currentTeamName, _name, _rankingFifa, _selectedConfName);
-          _successMessage = $"Team '{_name}' updated successfully!";
-        }
-        else
-        {
-          var confederation = _confederations.First(c => c.Name == _selectedConfName);
-          var team = new Team(_name, confederation.Name, _rankingFifa, 0, 0, 0);
-          TeamService.AddTeam(team);
-          _successMessage = $"Team '{_name}' created successfully!";
-        }
+            if (_isEditing)
+            {
+                var request = new TeamRequest
+                {
+                    Name             = _name,
+                    ConfederationName = _selectedConfName,
+                    RankingFifa      = _rankingFifa
+                };
+                TeamService.UpdateTeam(_currentTeamName, request);
+                _successMessage = $"Team '{_name}' updated successfully!";
+            }
+            else
+            {
+                var request = new TeamRequest
+                {
+                    Name             = _name,
+                    ConfederationName = _selectedConfName,
+                    RankingFifa      = _rankingFifa
+                };
+                TeamService.AddTeam(request);
+                _successMessage = $"Team '{_name}' created successfully!";
+            }
 
-        ResetForm();
-        _teams = TeamService.GetTeams();
-      }
-      catch (ArgumentException ex)
-      {
-        _errorMessage = ex.Message;
-      }
+            ResetForm();
+            _teams = TeamService.GetTeams();
+            _confederations = ConfederationService.GetAll();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
     }
 
-    private void EditTeam(Team team)
+    private void EditTeam(TeamResponse team)
     {
         _name             = team.Name;
         _selectedConfName = team.ConfederationName;
@@ -212,6 +223,7 @@
             TeamService.DeleteTeam(teamName);
             _successMessage = $"Team '{teamName}' deleted successfully!";
             _teams = TeamService.GetTeams();
+            _confederations = ConfederationService.GetAll();
         }
         catch (ArgumentException ex)
         {

@@ -1,12 +1,12 @@
-﻿using Domain;
-using IRepository;
+﻿using DTOs;
+
 
 namespace IServices;
 
 public interface ITeamService
 {
-    void AddTeam(Team team);
-    IEnumerable<Team> GetTeams();
-    void UpdateTeam(string currentName, string newName, int rankingFifa, string confederationName);
+    void AddTeam(TeamRequest team);
+    IEnumerable<TeamResponse> GetTeams();
+    void UpdateTeam(string currentName, TeamRequest request);
     void DeleteTeam(string name);
 }

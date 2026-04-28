@@ -3,6 +3,7 @@ using IServices;
 using Services;
 using IRepository;
 using Repository;
+using Blazored.LocalStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
+builder.Services.AddBlazoredLocalStorage();
 
 var app = builder.Build();
 

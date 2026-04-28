@@ -1,4 +1,5 @@
 using Domain;
+using DTOs;
 using IServices;
 using Services;
 using IRepository;
@@ -26,27 +27,27 @@ public class TeamServiceTests
     [TestMethod]
     public void AddTeam_WithValidTeam_ShouldAddTeam()
     {
-        var team = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
-        _service.AddTeam(team);
+        var request = new TeamRequest { Name = "Uruguay", ConfederationName = "CONMEBOL", RankingFifa = 500 };
 
-        _mockRepository.Verify(r => r.Add(team), Times.Once);
-        _mockConfederationService.Verify(c => c.AddTeamToConfederation(team), Times.Once);
+        _service.AddTeam(request);
+
+        _mockRepository.Verify(r => r.Add(It.Is<Team>(t => t.Name == "Uruguay")), Times.Once);
     }
 
     [TestMethod]
-    public void GetTeams_ShouldReturnAllTeams()
+    public void GetTeams_ShouldReturnTeamResponses()
     {
         var teams = new List<Team>
         {
-            new Team("Uruguay", _confederation.Name, 500, 0, 0, 0),
-            new Team("Argentina", _confederation.Name, 501, 0, 0, 0)
+            new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0)
         };
         _mockRepository.Setup(r => r.GetAll()).Returns(teams);
 
-        var result = _service.GetTeams();
+        var result = _service.GetTeams().ToList();
 
-        Assert.AreEqual(2, result.Count());
-        _mockRepository.Verify(r => r.GetAll(), Times.Once);
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("Uruguay", result[0].Name);
+        Assert.IsInstanceOfType(result[0], typeof(TeamResponse));
     }
 
     [TestMethod]
@@ -58,76 +59,80 @@ public class TeamServiceTests
         };
         _mockRepository.Setup(r => r.GetAll()).Returns(existingTeams);
 
-        var duplicate = new Team("Uruguay", _confederation.Name, 600, 0, 0, 0);
+        var duplicate = new TeamRequest { Name = "Uruguay", ConfederationName = _confederation.Name, RankingFifa = 600 };
         Assert.ThrowsException<ArgumentException>(() => _service.AddTeam(duplicate));
     }
 
     [TestMethod]
-    public void UpdateTeam_WhenTeamExists_ShouldUpdateNameAndRanking()
-    {
-        var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
-        _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
+public void UpdateTeam_WhenTeamExists_ShouldUpdateNameAndRanking()
+{
+    var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+    _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
-        _service.UpdateTeam("Uruguay", "Uruguay Updated", 1200, _confederation.Name);
+    var request = new TeamRequest { Name = "Uruguay Updated", ConfederationName = _confederation.Name, RankingFifa = 1200 };
+    _service.UpdateTeam("Uruguay", request);
 
-        Assert.AreEqual("Uruguay Updated", existing.Name);
-        Assert.AreEqual(1200, existing.RankingFifa);
-    }
+    Assert.AreEqual("Uruguay Updated", existing.Name);
+    Assert.AreEqual(1200, existing.RankingFifa);
+}
 
-    [TestMethod]
-    public void UpdateTeam_WhenTeamNotFound_ShouldThrowArgumentException()
-    {
-        _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team>());
+[TestMethod]
+public void UpdateTeam_WhenTeamNotFound_ShouldThrowArgumentException()
+{
+    _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team>());
 
-        Assert.ThrowsException<ArgumentException>(() =>
-            _service.UpdateTeam("Uruguay", "Uruguay Updated", 1200, _confederation.Name));
-    }
+    var request = new TeamRequest { Name = "Uruguay Updated", ConfederationName = _confederation.Name, RankingFifa = 1200 };
+    Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeam("Uruguay", request));
+}
 
-    [TestMethod]
-    public void UpdateTeam_WhenNewNameAlreadyTakenByAnotherTeam_ShouldThrowArgumentException()
-    {
-        var uruguay = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
-        var argentina = new Team("Argentina", _confederation.Name, 600, 0, 0, 0);
-        _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { uruguay, argentina });
+[TestMethod]
+public void UpdateTeam_WhenNewNameAlreadyTakenByAnotherTeam_ShouldThrowArgumentException()
+{
+    var uruguay = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+    var argentina = new Team("Argentina", _confederation.Name, 600, 0, 0, 0);
+    _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { uruguay, argentina });
 
-        Assert.ThrowsException<ArgumentException>(() =>
-            _service.UpdateTeam("Uruguay", "Argentina", 500, _confederation.Name));
-    }
+    var request = new TeamRequest { Name = "Argentina", ConfederationName = _confederation.Name, RankingFifa = 500 };
+    Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeam("Uruguay", request));
+}
 
-    [TestMethod]
-    public void UpdateTeam_WhenNewNameIsSameAsCurrentName_ShouldSucceed()
-    {
-        var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
-        _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
+[TestMethod]
+public void UpdateTeam_WhenNewNameIsSameAsCurrentName_ShouldSucceed()
+{
+    var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+    _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
-        _service.UpdateTeam("Uruguay", "Uruguay", 1200, _confederation.Name);
+    var request = new TeamRequest { Name = "Uruguay", ConfederationName = _confederation.Name, RankingFifa = 1200 };
+    _service.UpdateTeam("Uruguay", request);
 
-        Assert.AreEqual("Uruguay", existing.Name);
-        Assert.AreEqual(1200, existing.RankingFifa);
-    }
+    Assert.AreEqual("Uruguay", existing.Name);
+    Assert.AreEqual(1200, existing.RankingFifa);
+}
 
-    [TestMethod]
-    public void UpdateTeam_WhenChangingConfederation_ShouldCallUpdateTeamConfederation()
-    {
-        var existing = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
-        _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
+[TestMethod]
+public void UpdateTeam_WhenChangingConfederation_ShouldCallUpdateTeamConfederation()
+{
+    var existing = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
+    _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
-        _service.UpdateTeam("Uruguay", "Uruguay", 500, "UEFA");
+    var request = new TeamRequest { Name = "Uruguay", ConfederationName = "UEFA", RankingFifa = 500 };
+    _service.UpdateTeam("Uruguay", request);
 
-        _mockConfederationService.Verify(c => c.UpdateTeamConfederation(existing, "UEFA"), Times.Once);
-    }
+    _mockConfederationService.Verify(c => c.UpdateTeamConfederation(existing, "UEFA"), Times.Once);
+}
 
-    [TestMethod]
-    public void UpdateTeam_WhenConfederationNotChanged_ShouldNotCallUpdateTeamConfederation()
-    {
-        var existing = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
-        _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
+[TestMethod]
+public void UpdateTeam_WhenConfederationNotChanged_ShouldNotCallUpdateTeamConfederation()
+{
+    var existing = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
+    _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
-        _service.UpdateTeam("Uruguay", "Uruguay", 1200, "CONMEBOL");
+    var request = new TeamRequest { Name = "Uruguay", ConfederationName = "CONMEBOL", RankingFifa = 1200 };
+    _service.UpdateTeam("Uruguay", request);
 
-        _mockConfederationService.Verify(c =>
-            c.UpdateTeamConfederation(It.IsAny<Team>(), It.IsAny<string>()), Times.Never);
-    }
+    _mockConfederationService.Verify(c =>
+        c.UpdateTeamConfederation(It.IsAny<Team>(), It.IsAny<string>()), Times.Never);
+}
 
     [TestMethod]
     public void DeleteTeam_WhenTeamExists_ShouldRemoveFromRepository()

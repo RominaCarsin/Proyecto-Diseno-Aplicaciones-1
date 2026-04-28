@@ -1,4 +1,5 @@
 ﻿using Domain;
+using DTOs;
 using IServices;
 
 namespace Services;
@@ -15,7 +16,8 @@ public class ConfederationService : IConfederationService
         new Confederation("OFC",       1),
     };
 
-    public IEnumerable<Confederation> GetAll() => _confederations;
+    public IEnumerable<ConfederationResponse> GetAll() =>
+        _confederations.Select(ConfederationResponse.FromEntity);
 
     public void AddTeamToConfederation(Team team)
     {
@@ -32,13 +34,13 @@ public class ConfederationService : IConfederationService
     {
         var confederation = _confederations
             .FirstOrDefault(c => c.Name == team.ConfederationName);
-        
+
         if (confederation == null)
             throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
-        
+
         confederation.RemoveTeam(team);
     }
-    
+
     public void UpdateTeamConfederation(Team team, string newConfederationName)
     {
         if (team.ConfederationName == newConfederationName)
@@ -48,8 +50,8 @@ public class ConfederationService : IConfederationService
             .FirstOrDefault(c => c.Name == newConfederationName);
         if (newConfederation == null)
             throw new ArgumentException($"Confederation '{newConfederationName}' not found.");
-        
-        if (newConfederation.Teams.Count() == newConfederation.Slots)
+
+        if (newConfederation.IsFull)
             throw new ArgumentException($"Confederation '{newConfederationName}' is full.");
 
         var oldConfederation = _confederations

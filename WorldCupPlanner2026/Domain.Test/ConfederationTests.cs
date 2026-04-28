@@ -74,11 +74,12 @@ public class ConfederationTests
     [TestMethod]
     public void RemoveTeam_WhenTeamNotInConfederation_ShouldThrowArgumentException()
     {
-        var confederation = new Confederation("OFC", 1);
-        var team = new Team("Uruguay", "UEFA", 1200, 0, 0, 0);
-        confederation.AddTeam(team);
-
-        Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(team));
+        var confederation = new Confederation("OFC", 2);
+        var team1 = new Team("Uruguay", "OFC", 1200, 0, 0, 0);
+        var team2 = new Team("Brazil", "OFC", 1300, 0, 0, 0);
+        confederation.AddTeam(team1);
+        
+        Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(team2));
     }
 
     [TestMethod]

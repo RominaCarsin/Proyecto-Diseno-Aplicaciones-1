@@ -1,4 +1,5 @@
 ﻿using Domain;
+using DTOs;
 using IServices;
 using IRepository;
 
@@ -15,34 +16,38 @@ public class TeamService : ITeamService
         _confederationService = confederationService;
     }
 
-    public void AddTeam(Team team)
+    public void AddTeam(TeamRequest request)
     {
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == team.Name);
+        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == request.Name);
         if (existing != null)
             throw new ArgumentException("A team with this name already exists.");
 
+        var team = new Team(request.Name, request.ConfederationName, request.RankingFifa, 0, 0, 0);
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
     }
 
-    public IEnumerable<Team> GetTeams() => _repository.GetAll();
+    public IEnumerable<TeamResponse> GetTeams()
+    {
+        return _repository.GetAll().Select(TeamResponse.FromEntity);
+    }
 
-    public void UpdateTeam(string currentName, string newName, int rankingFifa, string confederationName)
+    public void UpdateTeam(string currentName, TeamRequest request)
     {
         var existing = _repository.GetAll().FirstOrDefault(t => t.Name == currentName);
         if (existing == null)
             throw new ArgumentException("Team not found.");
 
         var nameConflict = _repository.GetAll()
-            .FirstOrDefault(t => t.Name == newName && t.Name != currentName);
+            .FirstOrDefault(t => t.Name == request.Name && t.Name != currentName);
         if (nameConflict != null)
             throw new ArgumentException("A team with this name already exists.");
 
-        existing.UpdateName(newName);
-        existing.UpdateRankingFifa(rankingFifa);
+        existing.UpdateName(request.Name);
+        existing.UpdateRankingFifa(request.RankingFifa);
 
-        if (existing.ConfederationName != confederationName)
-            _confederationService.UpdateTeamConfederation(existing, confederationName);
+        if (existing.ConfederationName != request.ConfederationName)
+            _confederationService.UpdateTeamConfederation(existing, request.ConfederationName);
     }
 
     public void DeleteTeam(string name)
