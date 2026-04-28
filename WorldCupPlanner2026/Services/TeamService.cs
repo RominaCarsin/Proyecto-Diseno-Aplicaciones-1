@@ -22,7 +22,7 @@ public class TeamService : ITeamService
         if (existing != null)
             throw new ArgumentException("A team with this name already exists.");
 
-        var team = new Team(request.Name, request.ConfederationName, request.RankingFifa, 0, 0, 0);
+        var team = TeamRequest.ToEntity(request);
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
     }
