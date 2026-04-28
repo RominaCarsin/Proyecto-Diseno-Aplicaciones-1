@@ -27,6 +27,7 @@ public class StadiumService : IStadiumService
 
         public void DeleteStadium(string stadiumName)
         {
+            stadiumName = stadiumName?.Trim() ?? string.Empty;
             var stadium = _repository.GetAll().FirstOrDefault(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase));
     
             
@@ -38,6 +39,7 @@ public class StadiumService : IStadiumService
         
         public void UpdateStadium(string originalName, Stadium stadium)
         {
+            originalName = originalName?.Trim() ?? string.Empty;
             var existingStadium = _repository.GetAll()
                 .FirstOrDefault(s => s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
     
