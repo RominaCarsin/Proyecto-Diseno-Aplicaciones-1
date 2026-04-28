@@ -41,6 +41,16 @@ public class StadiumServiceTests
     }
     
     [TestMethod]
+    public void AddStadium_WithDuplicateNameIgnoringCase_ShouldThrowArgumentException()
+    {
+        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium2 = new Stadium("CENTENARIO", "Buenos Aires", null, 50000);
+        _service.AddStadium(stadium1);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.AddStadium(stadium2));
+    }
+    
+    [TestMethod]
     public void DeleteStadium_WithExistingStadium_ShouldRemoveIt()
     {
         var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
@@ -77,6 +87,18 @@ public class StadiumServiceTests
         _service.AddStadium(stadium1);
         _service.AddStadium(stadium2);
         var updated = new Stadium("Centenario", "Otra ciudad", null, 25000);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.UpdateStadium("Estadio Nacional", updated));
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithDuplicateNameIgnoringCase_ShouldThrowArgumentException()
+    {
+        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium2 = new Stadium("Estadio Nacional", "Montevideo", null, 30000);
+        _service.AddStadium(stadium1);
+        _service.AddStadium(stadium2);
+        var updated = new Stadium("CENTENARIO", "Otra ciudad", null, 25000);
 
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateStadium("Estadio Nacional", updated));
     }
