@@ -17,7 +17,7 @@ public class StadiumService : IStadiumService
         public void AddStadium(Stadium stadium)
         {
             bool nameExists = _repository.GetAll()
-                .FirstOrDefault(s => s.Name == stadium.Name) != null;
+                .FirstOrDefault(s => s.Name.Equals(stadium.Name, StringComparison.OrdinalIgnoreCase)) != null;
 
             if (nameExists)
                 throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
@@ -27,7 +27,7 @@ public class StadiumService : IStadiumService
 
         public void DeleteStadium(string stadiumName)
         {
-            var stadium = _repository.GetAll().FirstOrDefault(s => s.Name == stadiumName);
+            var stadium = _repository.GetAll().FirstOrDefault(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase));
     
             
             if (stadium == null)
@@ -39,15 +39,15 @@ public class StadiumService : IStadiumService
         public void UpdateStadium(string originalName, Stadium stadium)
         {
             var existingStadium = _repository.GetAll()
-                .FirstOrDefault(s => s.Name == originalName);
+                .FirstOrDefault(s => s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
     
             if (existingStadium == null)
                 throw new ArgumentException($"A stadium with the name '{originalName}' does not exist");
     
             bool nameExists = _repository.GetAll()
-                .FirstOrDefault(s => s.Name == stadium.Name) != null;
+                .FirstOrDefault(s => s.Name.Equals(stadium.Name, StringComparison.OrdinalIgnoreCase)) != null;
     
-            if (nameExists && stadium.Name != originalName)
+            if (nameExists && !stadium.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
     
             _repository.Delete(existingStadium);
