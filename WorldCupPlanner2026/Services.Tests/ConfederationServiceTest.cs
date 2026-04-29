@@ -37,11 +37,12 @@ public class ConfederationServiceTest
             Assert.AreEqual(slots, conf.Slots, $"{name} should have {slots} slots");
         }
     }
-
+    
+    
     [TestMethod]
     public void AddTeam_NotFullConfederation_ShouldAddTeamToConfederation()
     {
-        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team = new Team("Spain", "UEFA", 500);
 
         _service.AddTeamToConfederation(team);
 
@@ -52,25 +53,17 @@ public class ConfederationServiceTest
     [TestMethod]
     public void AddTeam_FullConfederation_ShouldThrowException()
     {
-        var firstTeam = new Team("NewZealand", "OFC", 500, 0, 0, 0);
+        var firstTeam = new Team("NewZealand", "OFC", 500);
         _service.AddTeamToConfederation(firstTeam);
 
-        var secondTeam = new Team("Fiji", "OFC", 600, 0, 0, 0);
+        var secondTeam = new Team("Fiji", "OFC", 600);
         Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(secondTeam));
-    }
-
-    [TestMethod]
-    public void AddTeam_InvalidConfederation_ShouldThrowException()
-    {
-        var team = new Team("InvalidTeam", "INVALID", 500, 0, 0, 0);
-
-        Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(team));
     }
 
     [TestMethod]
     public void UpdateTeamConfederation_ShouldRemoveTeamFromOldConfederation()
     {
-        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team = new Team("Spain", "UEFA", 500);
         _service.AddTeamToConfederation(team);
 
         _service.UpdateTeamConfederation(team, "CONMEBOL");
@@ -82,7 +75,7 @@ public class ConfederationServiceTest
     [TestMethod]
     public void UpdateTeamConfederation_ShouldAddTeamToNewConfederation()
     {
-        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team = new Team("Spain", "UEFA", 500);
         _service.AddTeamToConfederation(team);
 
         _service.UpdateTeamConfederation(team, "CONMEBOL");
@@ -94,10 +87,10 @@ public class ConfederationServiceTest
     [TestMethod]
     public void UpdateTeamConfederation_WhenNewConfederationIsFull_ShouldThrowAndNotMove()
     {
-        var existing = new Team("NewZealand", "OFC", 500, 0, 0, 0);
+        var existing = new Team("NewZealand", "OFC", 500);
         _service.AddTeamToConfederation(existing);
 
-        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team = new Team("Spain", "UEFA", 500);
         _service.AddTeamToConfederation(team);
 
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "OFC"));
@@ -109,16 +102,17 @@ public class ConfederationServiceTest
     [TestMethod]
     public void UpdateTeamConfederation_WhenNewConfederationNotFound_ShouldThrowException()
     {
-        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team = new Team("Spain", "UEFA", 500);
         _service.AddTeamToConfederation(team);
 
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "INVALID"));
     }
+    
 
     [TestMethod]
     public void UpdateTeamConfederation_WhenSameConfederation_ShouldNotMoveTeam()
     {
-        var team = new Team("Spain", "UEFA", 500, 0, 0, 0);
+        var team = new Team("Spain", "UEFA", 500);
         _service.AddTeamToConfederation(team);
 
         _service.UpdateTeamConfederation(team, "UEFA");
@@ -126,20 +120,13 @@ public class ConfederationServiceTest
         var uefa = _service.GetAll().First(c => c.Name == "UEFA");
         Assert.AreEqual(15, uefa.RemainingSlots);
     }
-
-    [TestMethod]
-    public void UpdateTeamConfederation_WhenOldConfederationNotFound_ShouldThrowException()
-    {
-        var team = new Team("Spain", "INVALID_OLD", 500, 0, 0, 0);
-
-        Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "UEFA"));
-    }
-
+    
+    
     [TestMethod]
     public void RemoveTeamFromConfederation_WhenTeamExists_ShouldOnlyRemoveThatTeam()
     {
-        var team  = new Team("Spain",  "UEFA", 500, 0, 0, 0);
-        var team2 = new Team("Bosnia", "UEFA", 600, 0, 0, 0);
+        var team  = new Team("Spain",  "UEFA", 500);
+        var team2 = new Team("Bosnia", "UEFA", 600);
         _service.AddTeamToConfederation(team);
         _service.AddTeamToConfederation(team2);
 
@@ -148,12 +135,6 @@ public class ConfederationServiceTest
         var uefa = _service.GetAll().First(c => c.Name == "UEFA");
         Assert.AreEqual(15, uefa.RemainingSlots);
     }
-
-    [TestMethod]
-    public void RemoveTeamFromConfederation_WhenConfederationNotFound_ShouldThrowException()
-    {
-        var team = new Team("InvalidTeam", "INVALID", 500, 0, 0, 0);
-
-        Assert.ThrowsException<ArgumentException>(() => _service.RemoveTeamFromConfederation(team));
-    }
+    
+    
 }

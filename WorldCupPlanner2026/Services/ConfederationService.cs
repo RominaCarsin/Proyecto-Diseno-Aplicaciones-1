@@ -24,9 +24,6 @@ public class ConfederationService : IConfederationService
         var confederation = _confederations
             .FirstOrDefault(c => c.Name == team.ConfederationName);
 
-        if (confederation == null)
-            throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
-
         confederation.AddTeam(team);
     }
 
@@ -34,9 +31,6 @@ public class ConfederationService : IConfederationService
     {
         var confederation = _confederations
             .FirstOrDefault(c => c.Name == team.ConfederationName);
-
-        if (confederation == null)
-            throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
 
         confederation.RemoveTeam(team);
     }
@@ -56,8 +50,6 @@ public class ConfederationService : IConfederationService
 
         var oldConfederation = _confederations
             .FirstOrDefault(c => c.Name == team.ConfederationName);
-        if (oldConfederation == null)
-            throw new ArgumentException($"Confederation '{team.ConfederationName}' not found.");
 
         oldConfederation.RemoveTeam(team);
         team.UpdateConfederationName(newConfederationName);

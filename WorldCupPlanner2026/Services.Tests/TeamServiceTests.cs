@@ -39,7 +39,7 @@ public class TeamServiceTests
     {
         var teams = new List<Team>
         {
-            new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0)
+            new Team("Uruguay", "CONMEBOL", 500)
         };
         _mockRepository.Setup(r => r.GetAll()).Returns(teams);
 
@@ -55,7 +55,7 @@ public class TeamServiceTests
     {
         var existingTeams = new List<Team>
         {
-            new Team("Uruguay", _confederation.Name, 500, 0, 0, 0)
+            new Team("Uruguay", _confederation.Name, 500)
         };
         _mockRepository.Setup(r => r.GetAll()).Returns(existingTeams);
 
@@ -66,7 +66,7 @@ public class TeamServiceTests
     [TestMethod]
 public void UpdateTeam_WhenTeamExists_ShouldUpdateNameAndRanking()
 {
-    var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+    var existing = new Team("Uruguay", _confederation.Name, 500);
     _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
     var request = new TeamRequest { Name = "Uruguay Updated", ConfederationName = _confederation.Name, RankingFifa = 1200 };
@@ -88,8 +88,8 @@ public void UpdateTeam_WhenTeamNotFound_ShouldThrowArgumentException()
 [TestMethod]
 public void UpdateTeam_WhenNewNameAlreadyTakenByAnotherTeam_ShouldThrowArgumentException()
 {
-    var uruguay = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
-    var argentina = new Team("Argentina", _confederation.Name, 600, 0, 0, 0);
+    var uruguay = new Team("Uruguay", _confederation.Name, 500);
+    var argentina = new Team("Argentina", _confederation.Name, 600);
     _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { uruguay, argentina });
 
     var request = new TeamRequest { Name = "Argentina", ConfederationName = _confederation.Name, RankingFifa = 500 };
@@ -99,7 +99,7 @@ public void UpdateTeam_WhenNewNameAlreadyTakenByAnotherTeam_ShouldThrowArgumentE
 [TestMethod]
 public void UpdateTeam_WhenNewNameIsSameAsCurrentName_ShouldSucceed()
 {
-    var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+    var existing = new Team("Uruguay", _confederation.Name, 500);
     _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
     var request = new TeamRequest { Name = "Uruguay", ConfederationName = _confederation.Name, RankingFifa = 1200 };
@@ -112,7 +112,7 @@ public void UpdateTeam_WhenNewNameIsSameAsCurrentName_ShouldSucceed()
 [TestMethod]
 public void UpdateTeam_WhenChangingConfederation_ShouldCallUpdateTeamConfederation()
 {
-    var existing = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
+    var existing = new Team("Uruguay", "CONMEBOL", 500);
     _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
     var request = new TeamRequest { Name = "Uruguay", ConfederationName = "UEFA", RankingFifa = 500 };
@@ -124,7 +124,7 @@ public void UpdateTeam_WhenChangingConfederation_ShouldCallUpdateTeamConfederati
 [TestMethod]
 public void UpdateTeam_WhenConfederationNotChanged_ShouldNotCallUpdateTeamConfederation()
 {
-    var existing = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
+    var existing = new Team("Uruguay", "CONMEBOL", 500);
     _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
     var request = new TeamRequest { Name = "Uruguay", ConfederationName = "CONMEBOL", RankingFifa = 1200 };
@@ -137,7 +137,7 @@ public void UpdateTeam_WhenConfederationNotChanged_ShouldNotCallUpdateTeamConfed
     [TestMethod]
     public void DeleteTeam_WhenTeamExists_ShouldRemoveFromRepository()
     {
-        var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+        var existing = new Team("Uruguay", _confederation.Name, 500);
         _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
         _service.DeleteTeam("Uruguay");
@@ -148,7 +148,7 @@ public void UpdateTeam_WhenConfederationNotChanged_ShouldNotCallUpdateTeamConfed
     [TestMethod]
     public void DeleteTeam_WhenTeamExists_ShouldFreeSlotInConfederation()
     {
-        var existing = new Team("Uruguay", _confederation.Name, 500, 0, 0, 0);
+        var existing = new Team("Uruguay", _confederation.Name, 500);
         _mockRepository.Setup(r => r.GetAll()).Returns(new List<Team> { existing });
 
         _service.DeleteTeam("Uruguay");

@@ -13,7 +13,7 @@ public class RepositoryTests
     public void Setup()
     {
         _repository = new Repository<Team>();
-        _team = new Team("Uruguay", "CONMEBOL", 500, 0, 0, 0);
+        _team = new Team("Uruguay", "CONMEBOL", 500);
     }
     
 
@@ -28,7 +28,7 @@ public class RepositoryTests
     [TestMethod]
     public void Add_MultipleTimes_ShouldAddAll()
     {
-        var team2 = new Team("Argentina", "CONMEBOL", 600, 0, 0, 0);
+        var team2 = new Team("Argentina", "CONMEBOL", 600);
 
         _repository.Add(_team);
         _repository.Add(team2);
@@ -48,7 +48,7 @@ public class RepositoryTests
     [TestMethod]
     public void GetAll_ShouldReturnAllAddedEntities()
     {
-        var team2 = new Team("Argentina", "CONMEBOL", 600, 0, 0, 0);
+        var team2 = new Team("Argentina", "CONMEBOL", 600);
         _repository.Add(_team);
         _repository.Add(team2);
 
@@ -72,7 +72,7 @@ public class RepositoryTests
     [TestMethod]
     public void Delete_ShouldOnlyRemoveTargetEntity()
     {
-        var team2 = new Team("Argentina", "CONMEBOL", 600, 0, 0, 0);
+        var team2 = new Team("Argentina", "CONMEBOL", 600);
         _repository.Add(_team);
         _repository.Add(team2);
 
@@ -87,7 +87,7 @@ public class RepositoryTests
     public void Delete_WhenEntityNotExists_ShouldNotThrow()
     {
         _repository.Add(_team);
-        var nonExistent = new Team("Brazil", "CONMEBOL", 700, 0, 0, 0);
+        var nonExistent = new Team("Brazil", "CONMEBOL", 700);
 
         _repository.Delete(nonExistent);
 

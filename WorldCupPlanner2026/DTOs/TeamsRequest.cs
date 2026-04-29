@@ -10,6 +10,6 @@ public class TeamRequest
 
     public static Team ToEntity(TeamRequest dto)
     {
-        return new Team(dto.Name, dto.ConfederationName, dto.RankingFifa, 0, 0, 0);
+        return new Team(dto.Name, dto.ConfederationName, dto.RankingFifa);
     }
 }
