@@ -14,6 +14,9 @@ public class Stadium
 
     public Stadium(string name, string city, string description, int capacity)
     {
+        name = name?.Trim() ?? string.Empty;
+        city = city?.Trim() ?? string.Empty;
+       
         
         ValidateName(name);
         ValidateCity(city);
