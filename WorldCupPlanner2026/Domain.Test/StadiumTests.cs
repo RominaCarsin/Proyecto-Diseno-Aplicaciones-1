@@ -3,8 +3,8 @@ namespace Domain.Test;
 [TestClass]
 public class StadiumTests
 {
-    private const string ValidName = "Centenario";
-    private const string ValidCity = "Montevideo";
+    private const string ValidName = "CENTENARIO";
+    private const string ValidCity = "MONTEVIDO";
     private const string ValidDescription = "Historic stadium";
     private const int ValidCapacity = 60000;
 
@@ -18,6 +18,15 @@ public class StadiumTests
         Assert.AreEqual(ValidCity, stadium.City);
         Assert.AreEqual(ValidDescription, stadium.Description);
         Assert.AreEqual(ValidCapacity, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithSpacesInNameAndCity_ShouldSucceed()
+    {
+        var stadium = new Stadium(" CENTENARIO", " MONTEVIDEO", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
     }
 
     [TestMethod]
