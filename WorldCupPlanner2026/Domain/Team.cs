@@ -20,9 +20,10 @@ public class Team
 
     public Team(string name, string confederationName, int rankingFifa)
     {
-        Name              = ValidateName(NormalizeName(name));
-        ConfederationName = ValidateConfederation(NormalizeConfederation(confederationName));
-        RankingFifa       = ValidateRankingFifa(rankingFifa);
+        UpdateName(name);
+        UpdateConfederationName(confederationName);
+        UpdateRankingFifa(rankingFifa);
+        
         Points            = 0;
         GoalDifference    = 0;
         GoalsInFavor      = 0;
@@ -30,44 +31,48 @@ public class Team
 
     public void UpdateName(string name)
     {
-        Name = ValidateName(NormalizeName(name));
+        var normalized = Normalized(name);
+
+        if (InvalidNameLength(normalized))
+            throw new ArgumentException($"Name must be between 1 and {MaxNameLength} characters.");
+
+        Name = normalized;
     }
 
     public void UpdateRankingFifa(int rankingFifa)
     {
-        RankingFifa = ValidateRankingFifa(rankingFifa);
+        if (InvalidRankingFifa(rankingFifa))
+            throw new ArgumentException($"Ranking fifa must be between {MinRanking} and {MaxRanking}.");
+
+        RankingFifa = rankingFifa;
     }
 
     public void UpdateConfederationName(string confederationName)
     {
-        ConfederationName = ValidateConfederation(NormalizeConfederation(confederationName));
-    }
+        var normalized = Normalized(confederationName);
 
-    private static string NormalizeName(string name) => name?.Trim() ?? string.Empty;
-
-    private static string ValidateName(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name) || name.Length > MaxNameLength)
-            throw new ArgumentException($"Name must be between 1 and {MaxNameLength} characters.");
-        return name;
-    }
-
-    private static string NormalizeConfederation(string confederationName) =>
-        confederationName?.Trim().ToUpper() ?? string.Empty;
-
-    private static string ValidateConfederation(string confederationName)
-    {
-        if (string.IsNullOrWhiteSpace(confederationName))
+        if (string.IsNullOrWhiteSpace(normalized))
             throw new ArgumentException("Confederation is required.");
-        if (!ValidConfederations.Contains(confederationName))
-            throw new ArgumentException("Invalid confederation.");
-        return confederationName;
-    }
 
-    private static int ValidateRankingFifa(int rankingFifa)
-    {
-        if (rankingFifa < MinRanking || rankingFifa > MaxRanking)
-            throw new ArgumentException($"Ranking fifa must be between {MinRanking} and {MaxRanking}.");
-        return rankingFifa;
+        if (!ValidConfederations.Contains(normalized))
+            throw new ArgumentException("Invalid confederation.");
+
+        ConfederationName = normalized;
     }
+    
+    private static bool InvalidNameLength(string normalized)
+    {
+        return string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength;
+    }
+    
+    private static bool InvalidRankingFifa(int rankingFifa)
+    {
+        return rankingFifa < MinRanking || rankingFifa > MaxRanking;
+    }
+    
+    public static string Normalized(string name)
+    {
+        return name?.Trim().ToUpper() ?? string.Empty;
+    }
+    
 }

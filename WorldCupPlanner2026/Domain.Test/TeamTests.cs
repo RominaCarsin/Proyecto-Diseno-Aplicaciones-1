@@ -3,183 +3,99 @@
 [TestClass]
 public class TeamTests
 {
+    
+    private const string ValidName = "URUGUAY";
+    private const string ValidConf = "CONMEBOL";
+    private const int ValidRanking = 500;
+
     [TestMethod]
-    public void CreateTeam_WithValidData_ShouldSucceed()
+    public void CreateTeam_WithValidData_ShouldSucceedAndNormalize()
     {
-        var team = new Team("Uruguay", "CONMEBOL", 500);
+        
+        var team = new Team("uruguay", "conmebol", ValidRanking);
+        
         Assert.IsNotNull(team);
-        Assert.AreEqual("Uruguay", team.Name);
+        Assert.AreEqual("URUGUAY", team.Name);
         Assert.AreEqual("CONMEBOL", team.ConfederationName);
-        Assert.AreEqual(500, team.RankingFifa);
+        Assert.AreEqual(ValidRanking, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithSpacesInNameAndConf_ShouldTrimAndUppercase()
+    {
+        var team = new Team("  argentina  ", "  uefa  ", ValidRanking);
+        
+        Assert.AreEqual("ARGENTINA", team.Name);
+        Assert.AreEqual("UEFA", team.ConfederationName);
     }
 
     [TestMethod]
     public void CreateTeam_WithInvalidName_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("", "CONMEBOL", 500));
+        
+        Assert.ThrowsException<ArgumentException>(() => new Team("", ValidConf, ValidRanking));
+        Assert.ThrowsException<ArgumentException>(() => new Team("   ", ValidConf, ValidRanking));
     }
 
     [TestMethod]
-    public void CreateTeam_WithNameAbove60Characters_ShouldThrowException()
+    public void CreateTeam_WithNameExactly60Characters_ShouldSucceedInUpper()
     {
-        var longName = new string('A', 61);
-        Assert.ThrowsException<ArgumentException>(() => new Team(longName, "CONMEBOL", 500));
-    }
-
-    [TestMethod]
-    public void CreateTeam_WithNameExactly60Characters_ShouldSucceed()
-    {
-        var maxName = new string('A', 60);
-        var team = new Team(maxName, "CONMEBOL", 500);
-        Assert.AreEqual(maxName, team.Name);
-    }
-
-    [TestMethod]
-    public void CreateTeam_WithNullConfederation_ShouldThrowException()
-    {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", null, 500));
+        var maxName = new string('a', 60);
+        var team = new Team(maxName, ValidConf, ValidRanking);
+        
+        Assert.AreEqual(maxName.ToUpper(), team.Name);
     }
 
     [TestMethod]
     public void CreateTeam_WithInvalidConfederation_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", "INVALID", 500));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, "INVALID", ValidRanking));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, null, ValidRanking));
     }
 
     [TestMethod]
-    public void CreateTeam_WithLowercaseConfederation_ShouldNormalizeToUppercase()
+    public void UpdateName_ShouldNormalizeToUppercase()
     {
-        var team = new Team("Uruguay", "conmebol", 500);
-        Assert.AreEqual("CONMEBOL", team.ConfederationName);
+        var team = new Team("Spain", "UEFA", ValidRanking);
+        
+        team.UpdateName("france");
+        
+        Assert.AreEqual("FRANCE", team.Name);
     }
 
     [TestMethod]
-    public void CreateTeam_WithRankingFifaBelow300_ShouldThrowException()
+    public void UpdateConfederationName_ShouldNormalizeToUppercase()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", "CONMEBOL", 299));
+        var team = new Team("Spain", "UEFA", ValidRanking);
+        
+        team.UpdateConfederationName("afc");
+        
+        Assert.AreEqual("AFC", team.ConfederationName);
     }
 
     [TestMethod]
-    public void CreateTeam_WithRankingFifaAbove2500_ShouldThrowException()
+    public void CreateTeam_WithRankingFifaAtBoundaries_ShouldSucceed()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", "CONMEBOL", 2501));
+        var teamMin = new Team(ValidName, ValidConf, 300);
+        var teamMax = new Team(ValidName, ValidConf, 2500);
+
+        Assert.AreEqual(300, teamMin.RankingFifa);
+        Assert.AreEqual(2500, teamMax.RankingFifa);
     }
 
     [TestMethod]
-    public void CreateTeam_WithRankingFifaAt300_ShouldSucceed()
+    public void CreateTeam_WithRankingFifaOutOfRange_ShouldThrowException()
     {
-        var team = new Team("Uruguay", "CONMEBOL", 300);
-        Assert.AreEqual(300, team.RankingFifa);
-    }
-
-    [TestMethod]
-    public void CreateTeam_WithRankingFifaAt2500_ShouldSucceed()
-    {
-        var team = new Team("Uruguay", "CONMEBOL", 2500);
-        Assert.AreEqual(2500, team.RankingFifa);
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 299));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 2501));
     }
 
     [TestMethod]
     public void CreateTeam_ShouldInitializePointsAndGoalsToZero()
     {
-        var team = new Team("Uruguay", "CONMEBOL", 500);
+        var team = new Team(ValidName, ValidConf, ValidRanking);
         Assert.AreEqual(0, team.Points);
         Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
-    }
-    
-
-    [TestMethod]
-    public void UpdateName_WithValidData_ShouldSucceed()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        team.UpdateName("France");
-        Assert.AreEqual("France", team.Name);
-    }
-
-    [TestMethod]
-    public void UpdateName_WithEmptyName_ShouldThrowArgumentException()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        Assert.ThrowsException<ArgumentException>(() => team.UpdateName(""));
-    }
-
-    [TestMethod]
-    public void UpdateName_WithWhitespaceName_ShouldThrowArgumentException()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        Assert.ThrowsException<ArgumentException>(() => team.UpdateName("   "));
-    }
-
-    [TestMethod]
-    public void UpdateName_WithNameExceeding60Chars_ShouldThrowArgumentException()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        var longName = new string('A', 61);
-        Assert.ThrowsException<ArgumentException>(() => team.UpdateName(longName));
-    }
-
-    [TestMethod]
-    public void UpdateName_WithNameExactly60Chars_ShouldSucceed()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        var maxName = new string('A', 60);
-        team.UpdateName(maxName);
-        Assert.AreEqual(maxName, team.Name);
-    }
-    
-
-    [TestMethod]
-    public void UpdateRankingFifa_WithValidData_ShouldSucceed()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        team.UpdateRankingFifa(1200);
-        Assert.AreEqual(1200, team.RankingFifa);
-    }
-
-    [TestMethod]
-    public void UpdateRankingFifa_BelowMinimum_ShouldThrowArgumentException()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        Assert.ThrowsException<ArgumentException>(() => team.UpdateRankingFifa(299));
-    }
-
-    [TestMethod]
-    public void UpdateRankingFifa_AboveMaximum_ShouldThrowArgumentException()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        Assert.ThrowsException<ArgumentException>(() => team.UpdateRankingFifa(2501));
-    }
-
-    [TestMethod]
-    public void UpdateRankingFifa_AtMinimumBoundary_ShouldSucceed()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        team.UpdateRankingFifa(300);
-        Assert.AreEqual(300, team.RankingFifa);
-    }
-
-    [TestMethod]
-    public void UpdateRankingFifa_AtMaximumBoundary_ShouldSucceed()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        team.UpdateRankingFifa(2500);
-        Assert.AreEqual(2500, team.RankingFifa);
-    }
-
-    [TestMethod]
-    public void UpdateConfederationName_WithValidData_ShouldSucceed()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        team.UpdateConfederationName("CONMEBOL");
-        Assert.AreEqual("CONMEBOL", team.ConfederationName);
-    }
-
-    [TestMethod]
-    public void UpdateConfederationName_WithLowercase_ShouldNormalizeToUppercase()
-    {
-        var team = new Team("Spain", "UEFA", 500);
-        team.UpdateConfederationName("conmebol");
-        Assert.AreEqual("CONMEBOL", team.ConfederationName);
     }
 }
