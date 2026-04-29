@@ -22,19 +22,19 @@ public class StadiumServiceTests
     [TestMethod]
     public void AddStadium_WithValidStadium_ShouldAddStadium()
     {
-        var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
     
         _service.AddStadium(stadium);
     
-        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario"));
+        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "CENTENARIO"));
     }
     
     
     [TestMethod]
     public void AddStadium_WithDuplicateName_ShouldThrowArgumentException()
     {
-        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
-        var stadium2 = new Stadium("Centenario", "Buenos Aires", null, 50000);
+        var stadium1 = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
+        var stadium2 = new Stadium("CENTENARIO", "Buenos Aires", null, 50000);
         _service.AddStadium(stadium1);
 
         Assert.ThrowsException<ArgumentException>(() => _service.AddStadium(stadium2));
@@ -43,7 +43,7 @@ public class StadiumServiceTests
     [TestMethod]
     public void AddStadium_WithDuplicateNameIgnoringCase_ShouldThrowArgumentException()
     {
-        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium1 = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
         var stadium2 = new Stadium("CENTENARIO", "Buenos Aires", null, 50000);
         _service.AddStadium(stadium1);
 
@@ -53,12 +53,12 @@ public class StadiumServiceTests
     [TestMethod]
     public void DeleteStadium_WithExistingStadium_ShouldRemoveIt()
     {
-        var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
         _service.AddStadium(stadium);
 
         _service.DeleteStadium(stadium.Name);
 
-        Assert.IsNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario"));
+        Assert.IsNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "CENTENARIO"));
     }
     
     [TestMethod]
@@ -70,23 +70,23 @@ public class StadiumServiceTests
     [TestMethod]
     public void UpdateStadium_WithValidData_ShouldUpdateStadium()
     {
-        var stadium = new Stadium("Centenario", "Montevideo", null, 20000);
+        var stadium = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
         _service.AddStadium(stadium);
-        var updated = new Stadium("Centenario Renovado", "Montevideo", null, 25000);
+        var updated = new Stadium("CENTENARIO Renovado", "MONTEVIDEO", null, 25000);
 
-        _service.UpdateStadium("Centenario", updated);
+        _service.UpdateStadium("CENTENARIO", updated);
 
-        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "Centenario Renovado"));
+        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "CENTENARIO RENOVADO"));
     }
     
     [TestMethod]
     public void UpdateStadium_WithDuplicateName_ShouldThrowArgumentException()
     {
-        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
-        var stadium2 = new Stadium("Estadio Nacional", "Montevideo", null, 30000);
+        var stadium1 = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
+        var stadium2 = new Stadium("Estadio Nacional", "MONTEVIDEO", null, 30000);
         _service.AddStadium(stadium1);
         _service.AddStadium(stadium2);
-        var updated = new Stadium("Centenario", "Otra ciudad", null, 25000);
+        var updated = new Stadium("CENTENARIO", "Otra ciudad", null, 25000);
 
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateStadium("Estadio Nacional", updated));
     }
@@ -94,8 +94,8 @@ public class StadiumServiceTests
     [TestMethod]
     public void UpdateStadium_WithDuplicateNameIgnoringCase_ShouldThrowArgumentException()
     {
-        var stadium1 = new Stadium("Centenario", "Montevideo", null, 20000);
-        var stadium2 = new Stadium("Estadio Nacional", "Montevideo", null, 30000);
+        var stadium1 = new Stadium("CENTENARIO", "MONTEVIDEO", null, 20000);
+        var stadium2 = new Stadium("Estadio Nacional", "MONTEVIDEO", null, 30000);
         _service.AddStadium(stadium1);
         _service.AddStadium(stadium2);
         var updated = new Stadium("CENTENARIO", "Otra ciudad", null, 25000);
