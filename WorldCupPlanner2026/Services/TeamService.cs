@@ -19,9 +19,9 @@ public class TeamService : ITeamService
     public void AddTeam(TeamRequest request)
     {
         
-        var normalizedName = Team.Normalized(request.Name);
+        var name = request.Name;
         
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == normalizedName);
+        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == name);
         if (existing != null)
             throw new ArgumentException("A team with this name already exists.");
 
@@ -32,15 +32,15 @@ public class TeamService : ITeamService
 
     public void UpdateTeam(string currentName, TeamRequest request)
     {
-        var normalizedCurrent = Team.Normalized(currentName);
-        var normalizedNew = Team.Normalized(request.Name);
+        var current = currentName;
+        var newName = request.Name;
 
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == normalizedCurrent);
+        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == current);
         if (existing == null)
             throw new ArgumentException("Team not found.");
         
         var nameConflict = _repository.GetAll()
-            .FirstOrDefault(t => t.Name == normalizedNew && t.Name != normalizedCurrent);
+            .FirstOrDefault(t => t.Name == newName && t.Name != current);
             
         if (nameConflict != null)
             throw new ArgumentException("A team with this name already exists.");
@@ -48,19 +48,19 @@ public class TeamService : ITeamService
         existing.UpdateName(request.Name);
         existing.UpdateRankingFifa(request.RankingFifa);
         
-        var newConfederationNormalized = Team.Normalized(request.ConfederationName);
+        var newConfederationName = request.ConfederationName;
         
-        if (existing.ConfederationName != newConfederationNormalized)
+        if (existing.ConfederationName != newConfederationName)
         {
             existing.UpdateConfederationName(request.ConfederationName);
-            _confederationService.UpdateTeamConfederation(existing, newConfederationNormalized);
+            _confederationService.UpdateTeamConfederation(existing, newConfederationName);
         }
+        
     }
 
     public void DeleteTeam(string name)
     {
-        var normalizedName = Team.Normalized(name);
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == normalizedName);
+        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == name);
         
         if (existing == null)
             throw new ArgumentException("Team not found.");
