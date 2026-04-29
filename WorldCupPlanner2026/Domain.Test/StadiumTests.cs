@@ -28,6 +28,15 @@ public class StadiumTests
         Assert.AreEqual("CENTENARIO", stadium.Name);
         Assert.AreEqual("MONTEVIDEO", stadium.City);
     }
+    
+    [TestMethod]
+    public void CreateStadium_WithLowerCaseNameAndCity_ShouldStoreInUpperCase()
+    {
+        var stadium = new Stadium("Centenario", " Montevideo", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
 
     [TestMethod]
     public void CreateStadium_WithEmptyName_ShouldThrowException()
