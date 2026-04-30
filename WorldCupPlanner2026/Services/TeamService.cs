@@ -18,13 +18,7 @@ public class TeamService : ITeamService
 
     public void AddTeam(TeamRequest request)
     {
-        
-        var name = request.Name;
-        
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == name);
-        if (existing != null)
-            throw new ArgumentException("A team with this name already exists.");
-
+        CheckNameIsAvailable(request.Name);
         var team = TeamRequest.ToEntity(request);
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
@@ -32,45 +26,45 @@ public class TeamService : ITeamService
 
     public void UpdateTeam(string currentName, TeamRequest request)
     {
-        var current = currentName;
-        var newName = request.Name;
+        var team = GetExistingTeamOrThrowArgumentException(currentName);
+        CheckNameIsAvailableForUpdate(currentName, request.Name);
 
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == current);
-        if (existing == null)
-            throw new ArgumentException("Team not found.");
-        
-        var nameConflict = _repository.GetAll()
-            .FirstOrDefault(t => t.Name == newName && t.Name != current);
-            
-        if (nameConflict != null)
-            throw new ArgumentException("A team with this name already exists.");
+        team.UpdateName(request.Name);
+        team.UpdateRankingFifa(request.RankingFifa);
 
-        existing.UpdateName(request.Name);
-        existing.UpdateRankingFifa(request.RankingFifa);
-        
-        var newConfederationName = request.ConfederationName;
-        
-        if (existing.ConfederationName != newConfederationName)
+        if (team.ConfederationName != request.ConfederationName)
         {
-            existing.UpdateConfederationName(request.ConfederationName);
-            _confederationService.UpdateTeamConfederation(existing, newConfederationName);
+            team.UpdateConfederationName(request.ConfederationName);
+            _confederationService.UpdateTeamConfederation(team, request.ConfederationName);
         }
-        
     }
 
     public void DeleteTeam(string name)
     {
-        var existing = _repository.GetAll().FirstOrDefault(t => t.Name == name);
-        
-        if (existing == null)
-            throw new ArgumentException("Team not found.");
-
-        _confederationService.RemoveTeamFromConfederation(existing);
-        _repository.Delete(existing);
+        var team = GetExistingTeamOrThrowArgumentException(name);
+        _confederationService.RemoveTeamFromConfederation(team);
+        _repository.Delete(team);
     }
 
-    public IEnumerable<TeamResponse> GetTeams()
+    public IEnumerable<TeamResponse> GetTeams() =>
+        _repository.GetAll().Select(TeamResponse.FromEntity);
+
+    private Team? FindByName(string name) =>
+        _repository.GetAll().FirstOrDefault(t => t.Name == name);
+
+    private Team GetExistingTeamOrThrowArgumentException(string name) =>
+        FindByName(name) ?? throw new ArgumentException("Team not found.");
+
+    private void CheckNameIsAvailable(string name)
     {
-        return _repository.GetAll().Select(TeamResponse.FromEntity);
+        if (FindByName(name) != null)
+            throw new ArgumentException("A team with this name already exists.");
+    }
+
+    private void CheckNameIsAvailableForUpdate(string currentName, string newName)
+    {
+        var teamWithNewName = FindByName(newName);
+        if (teamWithNewName != null && teamWithNewName.Name != currentName)
+            throw new ArgumentException("A team with this name already exists.");
     }
 }
