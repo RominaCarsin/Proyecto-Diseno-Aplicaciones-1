@@ -1,6 +1,6 @@
 ﻿@page "/Stadiums/Create"
 @rendermode InteractiveServer
-@using Domain
+@using DTOs
 @using IServices
 @inject IStadiumService StadiumService
 
@@ -74,10 +74,6 @@
   textarea.finput {
     min-height: 90px;
     resize: vertical;
-  }
-
-  .finput.invalid {
-    border-color: #c0392b;
   }
 
   .ferr {
@@ -324,14 +320,14 @@
     private string _errorMessage = string.Empty;
     private string _successMessage = string.Empty;
 
-    private string? _editingStadiumName = null;
+    private string? _editingStadiumName;
 
     private bool _nameInvalid;
     private bool _cityInvalid;
     private bool _descInvalid;
     private bool _capacityInvalid;
 
-    private IEnumerable<Stadium> _stadiums = Enumerable.Empty<Stadium>();
+    private IEnumerable<StadiumResponse> _stadiums = Enumerable.Empty<StadiumResponse>();
 
     protected override void OnInitialized()
     {
@@ -361,7 +357,7 @@
         _capacityInvalid = false;
     }
 
-    private void EditStadium(Stadium stadium)
+    private void EditStadium(StadiumResponse stadium)
     {
         _editingStadiumName = stadium.Name;
 
@@ -403,8 +399,14 @@
 
         try
         {
-            var stadium = new Stadium(_name, _city, _description, _capacity);
-            StadiumService.AddStadium(stadium);
+            var request = new StadiumRequest
+            {
+                Name = _name,
+                City = _city,
+                Description = _description,
+                Capacity = _capacity
+            };
+            StadiumService.AddStadium(request);
 
             _successMessage = $"Stadium '{_name}' created successfully!";
             ClearForm();
@@ -425,8 +427,14 @@
 
         try
         {
-            var stadium = new Stadium(_name, _city, _description, _capacity);
-            StadiumService.UpdateStadium(_editingStadiumName!, stadium);
+            var request = new StadiumRequest
+            {
+                Name = _name,
+                City = _city,
+                Description = _description,
+                Capacity = _capacity
+            };
+            StadiumService.UpdateStadium(_editingStadiumName!, request);
 
             _successMessage = $"Stadium '{_name}' updated successfully!";
             ClearForm();

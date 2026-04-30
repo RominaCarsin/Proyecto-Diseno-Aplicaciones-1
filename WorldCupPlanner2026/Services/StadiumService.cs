@@ -5,7 +5,7 @@ using Services.Mappers;
 
 namespace Services;
 
-public class StadiumService
+public class StadiumService  
 {
     private readonly IRepository<Stadium> _repository;
 
