@@ -4,14 +4,12 @@ using Domain.Exceptions;
 
 public class Match
 {
-    private const char MinGroupLabel = 'A';
-    private const char MaxGroupLabel = 'L';
     private const int MinGoals = 0;
 
     private const string LockedMatchError = "Locked matches cannot be edited.";
     private const string InvalidDateError = "Match date must be valid.";
     private const string DifferentTeamsError = "Home team and away team must be different.";
-    private const string InvalidGroupError = "Group must be a single uppercase letter between A and L.";
+    private const string RequiredGroupError = "Group is required for group stage matches.";
     private const string KnockoutGroupError = "Only group stage matches can have a group.";
 
     private static int _nextId = 1;
@@ -21,7 +19,7 @@ public class Match
     public Stadium Stadium { get; private set; }
     public Team HomeTeam { get; private set; }
     public Team AwayTeam { get; private set; }
-    public string? Group { get; private set; }
+    public Group? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
@@ -33,7 +31,7 @@ public class Match
         Stadium stadium,
         Team homeTeam,
         Team awayTeam,
-        string? group,
+        Group? group,
         TournamentPhase phase)
     {
         ValidateDate(date);
@@ -122,22 +120,14 @@ public class Match
         }
     }
 
-    private static void ValidateGroup(string? group, TournamentPhase phase)
+    private static void ValidateGroup(Group? group, TournamentPhase phase)
     {
-        if (phase == TournamentPhase.GroupStage)
+        if (phase == TournamentPhase.GroupStage && group == null)
         {
-            if (string.IsNullOrWhiteSpace(group) ||
-                group.Length != 1 ||
-                group[0] < MinGroupLabel ||
-                group[0] > MaxGroupLabel)
-            {
-                throw new DomainException(InvalidGroupError);
-            }
-
-            return;
+            throw new DomainException(RequiredGroupError);
         }
 
-        if (!string.IsNullOrWhiteSpace(group))
+        if (phase != TournamentPhase.GroupStage && group != null)
         {
             throw new DomainException(KnockoutGroupError);
         }
