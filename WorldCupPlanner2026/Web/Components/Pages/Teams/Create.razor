@@ -5,6 +5,7 @@
 @inject ITeamService TeamService
 @inject IConfederationService ConfederationService
 
+
 <div class="page-wrap">
 
   <div class="ph">
@@ -158,7 +159,7 @@
     }
 
     private void Save()
-    {
+    { 
         _errorMessage   = string.Empty;
         _successMessage = string.Empty;
         _nameInvalid    = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
@@ -169,37 +170,34 @@
 
         try
         {
+            var request = new TeamRequest
+            {
+                Name              = _name,
+                ConfederationName = _selectedConfName,
+                RankingFifa       = _rankingFifa
+            };
+
             if (_isEditing)
             {
-                var request = new TeamRequest
-                {
-                    Name             = _name,
-                    ConfederationName = _selectedConfName,
-                    RankingFifa      = _rankingFifa
-                };
                 TeamService.UpdateTeam(_currentTeamName, request);
-                _successMessage = $"Team '{_name}' updated successfully!";
+                var message = $"Team '{_name}' updated successfully!";
+                ResetForm();
+                RefreshData();
+                _successMessage = message;
             }
             else
             {
-                var request = new TeamRequest
-                {
-                    Name             = _name,
-                    ConfederationName = _selectedConfName,
-                    RankingFifa      = _rankingFifa
-                };
                 TeamService.AddTeam(request);
-                _successMessage = $"Team '{_name}' created successfully!";
+                var message = $"Team '{_name}' created successfully!";
+                ResetForm();
+                RefreshData();
+                _successMessage = message;
             }
-
-            ResetForm();
-            _teams = TeamService.GetTeams();
-            _confederations = ConfederationService.GetAll();
-        }
-        catch (ArgumentException ex)
-        {
-            _errorMessage = ex.Message;
-        }
+      }
+      catch (ArgumentException ex)
+      {
+          _errorMessage = ex.Message;
+      }
     }
 
     private void EditTeam(TeamResponse team)
@@ -222,8 +220,7 @@
 
             TeamService.DeleteTeam(teamName);
             _successMessage = $"Team '{teamName}' deleted successfully!";
-            _teams = TeamService.GetTeams();
-            _confederations = ConfederationService.GetAll();
+            RefreshData();
         }
         catch (ArgumentException ex)
         {
@@ -243,5 +240,11 @@
         _rankInvalid      = false;
         _errorMessage     = string.Empty;
         _successMessage   = string.Empty;
+    }
+    
+    private void RefreshData()
+    {
+      _teams = TeamService.GetTeams();
+      _confederations = ConfederationService.GetAll();
     }
 }

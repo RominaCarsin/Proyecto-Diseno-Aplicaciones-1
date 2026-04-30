@@ -1,6 +1,7 @@
 ﻿using Domain;
 using DTOs;
 using IServices;
+using Services.Mappers;
 
 namespace Services;
 
@@ -17,7 +18,7 @@ public class ConfederationService : IConfederationService
     };
 
     public IEnumerable<ConfederationResponse> GetAll() => 
-        _confederations.Select(ConfederationResponse.FromEntity);
+        _confederations.Select(ConfederationMapper.FromEntity);
 
     public void AddTeamToConfederation(Team team)
     {

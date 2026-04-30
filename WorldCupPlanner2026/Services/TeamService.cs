@@ -2,6 +2,7 @@
 using DTOs;
 using IServices;
 using IRepository;
+using Services.Mappers;
 
 namespace Services;
 
@@ -19,7 +20,7 @@ public class TeamService : ITeamService
     public void AddTeam(TeamRequest request)
     {
         CheckNameIsAvailable(request.Name);
-        var team = TeamRequest.ToEntity(request);
+        var team = TeamMapper.ToEntity(request);
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
     }
@@ -47,10 +48,10 @@ public class TeamService : ITeamService
     }
 
     public IEnumerable<TeamResponse> GetTeams() =>
-        _repository.GetAll().Select(TeamResponse.FromEntity);
+        _repository.GetAll().Select(TeamMapper.FromEntity);
 
     private Team? FindByName(string name) =>
-        _repository.GetAll().FirstOrDefault(t => t.Name == name);
+        _repository.GetAll().FirstOrDefault(t => t.Name == Team.Normalized(name));
 
     private Team GetExistingTeamOrThrowArgumentException(string name) =>
         FindByName(name) ?? throw new ArgumentException("Team not found.");
