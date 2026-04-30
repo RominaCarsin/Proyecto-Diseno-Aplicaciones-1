@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repository.Tests", "Reposit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "Web\Web.csproj", "{6274A9A1-39AE-4640-9978-84F3A4E0F8E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTOs", "DTOs\DTOs.csproj", "{B7FFAE40-D718-4DFD-83C9-6BEE00BCCA25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +62,9 @@ Global
 		{6274A9A1-39AE-4640-9978-84F3A4E0F8E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6274A9A1-39AE-4640-9978-84F3A4E0F8E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6274A9A1-39AE-4640-9978-84F3A4E0F8E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7FFAE40-D718-4DFD-83C9-6BEE00BCCA25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7FFAE40-D718-4DFD-83C9-6BEE00BCCA25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7FFAE40-D718-4DFD-83C9-6BEE00BCCA25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7FFAE40-D718-4DFD-83C9-6BEE00BCCA25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

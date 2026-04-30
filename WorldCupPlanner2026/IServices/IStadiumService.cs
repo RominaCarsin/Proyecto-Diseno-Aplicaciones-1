@@ -1,12 +1,13 @@
 ﻿using Domain;
+using DTOs;
 
 namespace IServices;
 
 public interface IStadiumService
 {
-    void AddStadium(Stadium stadium);
-    IEnumerable<Stadium> GetStadiums();
+    void AddStadium(StadiumRequest stadium);
+    IEnumerable<StadiumRequest> GetStadiums();
     void DeleteStadium(string stadiumName);
-    void UpdateStadium(string originalName, Stadium stadium);
+    void UpdateStadium(string originalName, StadiumRequest stadium);
 }
 

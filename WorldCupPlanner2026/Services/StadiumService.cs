@@ -1,67 +1,71 @@
 ﻿using Domain;
+using DTOs;
 using IRepository;
-using IServices;
+using Services.Mappers;
 
 namespace Services;
 
-public class StadiumService : IStadiumService
+public class StadiumService
 {
-        private readonly IRepository<Stadium> _repository;
-    
-        public StadiumService(IRepository<Stadium> repository)
-        {
-            _repository = repository;
-        }
-    
-       
-        public void AddStadium(Stadium stadium)
-        {
-            bool nameExists = _repository.GetAll()
-                .FirstOrDefault(s => s.Name.Equals(stadium.Name, StringComparison.OrdinalIgnoreCase)) != null;
+    private readonly IRepository<Stadium> _repository;
 
-            if (nameExists)
-                throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
+    public StadiumService(IRepository<Stadium> repository)
+    {
+        _repository = repository;
+    }
 
-            _repository.Add(stadium);
-        }
+    public void AddStadium(StadiumRequest request)
+    {
+        var stadium = StadiumMapper.ToEntity(request);
 
-        public void DeleteStadium(string stadiumName)
-        {
-            stadiumName = stadiumName?.Trim() ?? string.Empty;
-            var stadium = _repository.GetAll().FirstOrDefault(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase));
-    
-            
-            if (stadium == null)
-                throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
+        bool nameExists = _repository.GetAll()
+            .Any(s => s.Name.Equals(stadium.Name, StringComparison.OrdinalIgnoreCase));
 
-            _repository.Delete(stadium);
-        }
-        
-        public void UpdateStadium(string originalName, Stadium stadium)
-        {
-            originalName = originalName?.Trim() ?? string.Empty;
-            var existingStadium = _repository.GetAll()
-                .FirstOrDefault(s => s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
-    
-            if (existingStadium == null)
-                throw new ArgumentException($"A stadium with the name '{originalName}' does not exist");
-    
-            bool nameExists = _repository.GetAll()
-                .FirstOrDefault(s => s.Name.Equals(stadium.Name, StringComparison.OrdinalIgnoreCase)) != null;
-    
-            if (nameExists && !stadium.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
-    
-            _repository.Delete(existingStadium);
-            _repository.Add(stadium);
-        }
+        if (nameExists)
+            throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
 
-        
+        _repository.Add(stadium);
+    }
 
+    public void DeleteStadium(string stadiumName)
+    {
 
-    
-        public IEnumerable<Stadium> GetStadiums()
-        {
-            return _repository.GetAll();
-        }
+        var stadium = _repository.GetAll()
+            .FirstOrDefault(s => s.Name == stadiumName);
+
+        if (stadium == null)
+            throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
+
+        _repository.Delete(stadium);
+    }
+
+    public void UpdateStadium(string originalName, StadiumRequest request)
+    {
+        originalName = originalName?.Trim() ?? string.Empty;
+
+        var existingStadium = _repository.GetAll()
+            .FirstOrDefault(s => s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
+
+        if (existingStadium == null)
+            throw new ArgumentException($"A stadium with the name '{originalName}' does not exist");
+
+        var updatedStadium = StadiumMapper.ToEntity(request);
+
+        bool nameExists = _repository.GetAll()
+            .Any(s =>
+                s.Name.Equals(updatedStadium.Name, StringComparison.OrdinalIgnoreCase)
+                && !s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
+
+        if (nameExists)
+            throw new ArgumentException($"A stadium with the name '{updatedStadium.Name}' already exists");
+
+        _repository.Delete(existingStadium);
+        _repository.Add(updatedStadium);
+    }
+
+    public IEnumerable<StadiumResponse> GetStadiums()
+    {
+        return _repository.GetAll()
+            .Select(StadiumMapper.FromEntity);
+    }
 }
