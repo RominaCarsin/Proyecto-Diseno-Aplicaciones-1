@@ -34,8 +34,4 @@
       <ProjectReference Include="..\Services\Services.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="RandomizationTests\" />
-    </ItemGroup>
-
 </Project>
