@@ -20,6 +20,9 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();
 
+
+builder.Services.AddScoped<ShuffleService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
