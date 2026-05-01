@@ -1,6 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿namespace Domain.Test;
 
-namespace Domain.Test;
 
 [TestClass]
 public class UserTests
@@ -80,7 +79,7 @@ public class UserTests
     }
     
     [TestMethod]
-    public void CreateUser_WithEmptyPassword_ShouldTrowException()
+    public void CreateUser_WithEmptyPassword_ShouldThrowException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), ""));
@@ -126,5 +125,55 @@ public class UserTests
         var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
 
         Assert.IsNotNull(user);
+    }
+
+    
+    [TestMethod]
+    public void CreateUser_ShouldStorePasswordAsHash()
+    {
+        var plainPassword = "Password1!";
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), plainPassword);
+
+        Assert.AreNotEqual(plainPassword, user.PasswordHash);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(user.PasswordHash));
+        Assert.IsFalse(user.PasswordHash.Contains(plainPassword));
+    }
+
+
+    [TestMethod]
+    public void CreateUser_ShouldEncryptPasswordWithCaesarCipher()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        Assert.AreEqual("Sdvvzrug4$", user.PasswordHash);
+    }
+
+    [TestMethod]
+    public void VerifyPassword_WithCorrectPassword_ShouldReturnTrue()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        Assert.IsTrue(user.VerifyPassword("Password1!"));
+    }
+
+    [TestMethod]
+    public void VerifyPassword_WithWrongPassword_ShouldReturnFalse()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        Assert.IsFalse(user.VerifyPassword("Password2!"));
+    }
+
+    [TestMethod]
+    public void SetPassword_ShouldChangeHash()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+        var oldHash = user.PasswordHash;
+
+        user.SetPassword("Newpass1!");
+
+        Assert.AreNotEqual(oldHash, user.PasswordHash);
+        Assert.IsTrue(user.VerifyPassword("Newpass1!"));
+        Assert.IsFalse(user.VerifyPassword("Password1!"));
     }
 }

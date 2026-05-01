@@ -1,4 +1,15 @@
-﻿namespace Domain;
+﻿using System;
+using System.Linq;
+
+namespace Domain;
+
+[Flags]
+public enum Role
+{
+    None = 0,
+    Admin = 1,
+    Editor = 2
+}
 
 public class User
 {
@@ -6,21 +17,56 @@ public class User
     public string Surname { get; set; }
     public string Email { get; set; }
     public DateTime DateOfBirth { get; set; }
-    public string Password { get; set; }
+    public string PasswordHash { get; private set; } = string.Empty;
+    public Role Roles { get; private set; }
 
-    public User(string name, string surname, string email, DateTime dateOfBirth, string password)
+    private const int CaesarShift = 3;
+
+    public User(string name, string surname, string email, DateTime dateOfBirth, string plainPassword, Role roles = Role.None)
     {
        ValidateName(name);
        ValidateSurname(surname);
        ValidateEmail(email);
        ValidateBirthDate(dateOfBirth);
-       ValidatePassword(password);
-       
+       ValidatePasswordComplexity(plainPassword);
+
        Name = name;
        Surname = surname;
        Email = email;
        DateOfBirth = dateOfBirth;
-       Password = password;
+       Roles = roles;
+
+       SetPassword(plainPassword);
+    }
+
+    public void SetPassword(string plainPassword)
+    {
+        ValidatePasswordComplexity(plainPassword);
+
+        PasswordHash = EncryptPassword(plainPassword, CaesarShift);
+    }
+
+    public bool VerifyPassword(string plainPassword)
+    {
+        if (string.IsNullOrEmpty(PasswordHash))
+            return false;
+
+        var decrypted = DecryptPassword(PasswordHash, CaesarShift);
+        return decrypted == plainPassword;
+    }
+
+    public void AddRole(Role role) => Roles |= role;
+    public void RemoveRole(Role role) => Roles &= ~role;
+    public bool HasRole(Role role) => (Roles & role) == role;
+
+    private static string EncryptPassword(string password, int shift)
+    {
+        return new string(password.Select(c => (char)(c + shift)).ToArray());
+    }
+
+    private static string DecryptPassword(string cipherText, int shift)
+    {
+        return new string(cipherText.Select(c => (char)(c - shift)).ToArray());
     }
 
     private void ValidateName(string name)
@@ -60,7 +106,8 @@ public class User
         if (birthDate > DateTime.Now)
             throw new ArgumentException("Date of birth cannot be in the future");
     }
-    private void ValidatePassword(string password)
+
+    private void ValidatePasswordComplexity(string password)
     {
         if (string.IsNullOrEmpty(password))
             throw new ArgumentException("Password cannot be empty");
