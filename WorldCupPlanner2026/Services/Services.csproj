@@ -4,11 +4,13 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-Services-717ba920-7726-4bbe-94da-677e9b744752</UserSecretsId>
     </PropertyGroup>
-    
+
     <ItemGroup>
-      <ProjectReference Include="..\Domain\Domain.csproj" />
-      <ProjectReference Include="..\IServices\IServices.csproj" />
+        <ProjectReference Include="..\Domain\Domain.csproj" />
+        <ProjectReference Include="..\Repository\Repository.csproj" />
         <ProjectReference Include="..\IRepository\IRepository.csproj" />
+        <ProjectReference Include="..\IServices\IServices.csproj" />
     </ItemGroup>
 </Project>
