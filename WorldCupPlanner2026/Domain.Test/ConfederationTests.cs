@@ -36,7 +36,7 @@ public class ConfederationTests
     public void AddTeam_WithValidTeam_ShouldAddToList()
     {
         var confederation = new Confederation("CONMEBOL", 6);
-        var team = new Team("Uruguay", confederation, 8, 0, 0, 0);
+        var team = new Team("Uruguay", confederation.Name, 500);
 
         confederation.AddTeam(team);
 
@@ -49,5 +49,44 @@ public class ConfederationTests
         var confederation = new Confederation("CONMEBOL", 6);
 
         Assert.ThrowsException<ArgumentException>(() => confederation.AddTeam(null));
+    }
+    
+    [TestMethod]
+    public void AddTeam_OnAFullConfederation_ShouldTrowException()
+    {
+        var confederation = new Confederation("OFC", 1);
+        var team = new Team("Uruguay", "OFC", 1200);
+        confederation.AddTeam(team);
+        Assert.ThrowsException<ArgumentException>(() => confederation.AddTeam(new Team("Francia", "OFC", 1200)));
+    }
+
+    [TestMethod]
+    public void RemoveTeam_WhenTeamExists_ShouldRemoveTeam()
+    {
+        var confederation = new Confederation("OFC", 1);
+        var team = new Team("Uruguay", "OFC", 1200);
+        confederation.AddTeam(team);
+
+        confederation.RemoveTeam(team);
+        Assert.AreEqual(0, confederation.Teams.Count);
+    }
+
+    [TestMethod]
+    public void RemoveTeam_WhenTeamNotInConfederation_ShouldThrowArgumentException()
+    {
+        var confederation = new Confederation("OFC", 2);
+        var team1 = new Team("Uruguay", "OFC", 1200);
+        var team2 = new Team("Brazil", "OFC", 1300);
+        confederation.AddTeam(team1);
+        
+        Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(team2));
+    }
+
+    [TestMethod]
+    public void RemoveTeam_WithNullTeam_ShouldThrowException()
+    {
+        var confederation = new Confederation("CONMEBOL", 6);
+
+        Assert.ThrowsException<ArgumentException>(() => confederation.RemoveTeam(null));
     }
 }

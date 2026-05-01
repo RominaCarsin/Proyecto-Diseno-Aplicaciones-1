@@ -1,36 +1,101 @@
-﻿// TeamTests.cs
-namespace Domain.Test;
+﻿namespace Domain.Test;
 
 [TestClass]
 public class TeamTests
 {
-    private static Confederation _conmebol = new Confederation("CONMEBOL", 6);
+    
+    private const string ValidName = "URUGUAY";
+    private const string ValidConf = "CONMEBOL";
+    private const int ValidRanking = 500;
 
     [TestMethod]
-    public void CreateTeam_WithValidData_ShouldSucceed()
+    public void CreateTeam_WithValidData_ShouldSucceedAndNormalize()
     {
-        var team = new Team("Uruguay", _conmebol, 8, 0, 0, 0);
+        
+        var team = new Team("uruguay", "conmebol", ValidRanking);
+        
         Assert.IsNotNull(team);
-        Assert.AreEqual("Uruguay", team.Name);
-        Assert.AreEqual(_conmebol, team.Confederation);
-        Assert.AreEqual(8, team.RankingFifa);
+        Assert.AreEqual("URUGUAY", team.Name);
+        Assert.AreEqual("CONMEBOL", team.ConfederationName);
+        Assert.AreEqual(ValidRanking, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithSpacesInNameAndConf_ShouldTrimAndUppercase()
+    {
+        var team = new Team("  argentina  ", "  uefa  ", ValidRanking);
+        
+        Assert.AreEqual("ARGENTINA", team.Name);
+        Assert.AreEqual("UEFA", team.ConfederationName);
     }
 
     [TestMethod]
     public void CreateTeam_WithInvalidName_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("", _conmebol, 8, 0, 0, 0));
+        
+        Assert.ThrowsException<ArgumentException>(() => new Team("", ValidConf, ValidRanking));
+        Assert.ThrowsException<ArgumentException>(() => new Team("   ", ValidConf, ValidRanking));
     }
 
     [TestMethod]
-    public void CreateTeam_WithNullConfederation_ShouldThrowException()
+    public void CreateTeam_WithNameExactly60Characters_ShouldSucceedInUpper()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", null, 8, 0, 0, 0));
+        var maxName = new string('a', 60);
+        var team = new Team(maxName, ValidConf, ValidRanking);
+        
+        Assert.AreEqual(maxName.ToUpper(), team.Name);
     }
 
     [TestMethod]
-    public void CreateTeam_WithInvalidRankingFifa_ShouldThrowException()
+    public void CreateTeam_WithInvalidConfederation_ShouldThrowException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("Uruguay", _conmebol, -1, 0, 0, 0));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, "INVALID", ValidRanking));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, null, ValidRanking));
+    }
+
+    [TestMethod]
+    public void UpdateName_ShouldNormalizeToUppercase()
+    {
+        var team = new Team("Spain", "UEFA", ValidRanking);
+        
+        team.UpdateName("france");
+        
+        Assert.AreEqual("FRANCE", team.Name);
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_ShouldNormalizeToUppercase()
+    {
+        var team = new Team("Spain", "UEFA", ValidRanking);
+        
+        team.UpdateConfederationName("afc");
+        
+        Assert.AreEqual("AFC", team.ConfederationName);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithRankingFifaAtBoundaries_ShouldSucceed()
+    {
+        var teamMin = new Team(ValidName, ValidConf, 300);
+        var teamMax = new Team(ValidName, ValidConf, 2500);
+
+        Assert.AreEqual(300, teamMin.RankingFifa);
+        Assert.AreEqual(2500, teamMax.RankingFifa);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithRankingFifaOutOfRange_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 299));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 2501));
+    }
+
+    [TestMethod]
+    public void CreateTeam_ShouldInitializePointsAndGoalsToZero()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalDifference);
+        Assert.AreEqual(0, team.GoalsInFavor);
     }
 }

@@ -1,0 +1,234 @@
+﻿@page "/Teams/Create"
+@rendermode InteractiveServer
+@using IServices
+@using DTOs
+@inject ITeamService TeamService
+@inject IConfederationService ConfederationService
+
+<div class="page-wrap">
+
+  <div class="ph">
+    <h1 class="pt">Teams</h1>
+    <p class="ps">Create new team · WorldCupPlanner 2026</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">@(_editingTeamName != null ? "Edit team" : "New team")</span>
+    </div>
+
+    <div class="card-body">
+      <div class="fg">
+        <label class="fl">Name <span class="req">*</span></label>
+        <input class="finput @(_nameInvalid ? "invalid" : "")"
+               type="text" maxlength="60"
+               placeholder="Ex: Argentina"
+               @bind="_name" @bind:event="oninput" />
+        @if (_nameInvalid)
+        {
+          <span class="ferr">Name is required (1–60 characters)</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">Confederation <span class="req">*</span></label>
+        <select class="finput @(_confInvalid ? "invalid" : "")" @bind="_selectedConfName">
+          <option value="">Select confederation...</option>
+          @foreach (var conf in _confederations)
+          {
+            <option value="@conf.Name">@conf.Name (Slots: @conf.RemainingSlots)</option>
+          }
+        </select>
+        @if (_confInvalid)
+        {
+          <span class="ferr">Select a confederation</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">FIFA Ranking <span class="req">*</span></label>
+        <input class="finput @(_rankInvalid ? "invalid" : "")"
+               type="number" min="300" max="2500"
+               placeholder="Ex: 1800"
+               @bind="_rankingFifa" @bind:event="oninput" />
+        <span class="fhint">Between 300 - 2500</span>
+        @if (_rankInvalid)
+        {
+          <span class="ferr">FIFA Ranking must be between 300-2500</span>
+        }
+      </div>
+
+      @if (!string.IsNullOrEmpty(_successMessage))
+      {
+        <div class="alert-box suc">✓ @_successMessage</div>
+      }
+
+      @if (!string.IsNullOrEmpty(_errorMessage))
+      {
+        <div class="alert-box err">@_errorMessage</div>
+      }
+    </div>
+
+    <div class="card-footer">
+      @if (_editingTeamName != null)
+      {
+        <button class="btn btn-g" @onclick="CancelEdit">Cancel edit</button>
+      }
+      <button class="btn-p" @onclick="Save">
+        @(_editingTeamName != null ? "Update team" : "Save team")
+      </button>
+    </div>
+  </div>
+
+  @* --- Tabla con Scroll Horizontal y Truncamiento --- *@
+  <div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+      <span class="card-title">Registered teams (@_teams.Count())</span>
+    </div>
+    <div class="card-body" style="overflow-x: auto;">
+      @if (!_teams.Any())
+      {
+        <p style="color: #888;">No teams registered yet.</p>
+      }
+      else
+      {
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Confederation</th>
+              <th>FIFA Ranking</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var team in _teams)
+            {
+              <tr>
+                <td title="@team.Name">@team.Name</td>
+                <td title="@team.ConfederationName">@team.ConfederationName</td>
+                <td>@team.RankingFifa.ToString("N0")</td>
+                <td>
+                  <div class="actions-cell">
+                    <button class="btn btn-s"
+                            disabled="@(_editingTeamName == team.Name)"
+                            @onclick="() => EditTeam(team)">Edit</button>
+                    <button class="btn btn-d"
+                            disabled="@(_editingTeamName == team.Name)"
+                            @onclick="() => DeleteTeam(team.Name)">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+</div>
+
+@code {
+    private string _name = string.Empty;
+    private string _selectedConfName = string.Empty;
+    private int _rankingFifa;
+    
+    private string _errorMessage = string.Empty;
+    private string _successMessage = string.Empty;
+    private string? _editingTeamName;
+
+    private bool _nameInvalid;
+    private bool _confInvalid;
+    private bool _rankInvalid;
+
+    private IEnumerable<TeamResponse> _teams = Enumerable.Empty<TeamResponse>();
+    private IEnumerable<ConfederationResponse> _confederations = Enumerable.Empty<ConfederationResponse>();
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
+
+    private void Save()
+    {
+        _errorMessage = string.Empty;
+        _successMessage = string.Empty;
+
+        if (!ValidateForm()) return;
+
+        try
+        {
+            var request = BuildRequest();
+
+            if (_editingTeamName != null)
+                TeamService.UpdateTeam(_editingTeamName, request);
+            else
+                TeamService.AddTeam(request);
+
+            _successMessage = $"Team '{_name}' saved successfully!";
+            ClearForm();
+            LoadData();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void EditTeam(TeamResponse team)
+    {
+        _editingTeamName = team.Name;
+        _name = team.Name;
+        _selectedConfName = team.ConfederationName;
+        _rankingFifa = team.RankingFifa;
+        
+        _nameInvalid = _confInvalid = _rankInvalid = false;
+        _errorMessage = _successMessage = string.Empty;
+    }
+
+    private void CancelEdit() => ClearForm();
+
+    private void DeleteTeam(string teamName)
+    {
+        try
+        {
+            if (_editingTeamName == teamName) ClearForm();
+            TeamService.DeleteTeam(teamName);
+            _successMessage = $"Team '{teamName}' removed.";
+            LoadData();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void ClearForm()
+    {
+        _name = string.Empty;
+        _selectedConfName = string.Empty;
+        _rankingFifa = 0;
+        _editingTeamName = null;
+        _nameInvalid = _confInvalid = _rankInvalid = false;
+    }
+
+    private bool ValidateForm()
+    {
+        _nameInvalid = string.IsNullOrWhiteSpace(_name) || _name.Length > 60;
+        _confInvalid = string.IsNullOrEmpty(_selectedConfName);
+        _rankInvalid = _rankingFifa < 300 || _rankingFifa > 2500;
+        return !_nameInvalid && !_confInvalid && !_rankInvalid;
+    }
+
+    private TeamRequest BuildRequest() => new()
+    {
+        Name = _name,
+        ConfederationName = _selectedConfName,
+        RankingFifa = _rankingFifa
+    };
+
+    private void LoadData()
+    {
+        _teams = TeamService.GetTeams();
+        _confederations = ConfederationService.GetAll();
+    }
+}
