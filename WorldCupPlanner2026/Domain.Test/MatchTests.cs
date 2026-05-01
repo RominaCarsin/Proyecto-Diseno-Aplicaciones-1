@@ -9,10 +9,10 @@ public class MatchTests
         new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
 
     private Team CreateValidHomeTeam() =>
-        new Team("Argentina", Confederation.CONMEBOL, 1800);
+        new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
 
     private Team CreateValidAwayTeam() =>
-        new Team("Brazil", Confederation.CONMEBOL, 1750);
+        new Team("Brazil", CreateValidConfederation(), 1750, 0, 0, 0);
 
     private Match CreateValidGroupStageMatch() =>
         new Match(
@@ -33,6 +33,9 @@ public class MatchTests
             group: null,
             phase: TournamentPhase.RoundOf32
         );
+
+    private Confederation CreateValidConfederation() =>
+        new Confederation("CONMEBOL", 10);
 
     [TestMethod]
     public void CreateMatch_WithValidGroupStageData_ShouldSucceed()
@@ -144,8 +147,8 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithDifferentInstancesButSameTeamName_ShouldThrowDomainException()
     {
-        var homeTeam = new Team("Argentina", Confederation.CONMEBOL, 1800);
-        var awayTeam = new Team("Argentina", Confederation.CONMEBOL, 1750);
+        var homeTeam = new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
+        var awayTeam = new Team("Argentina", CreateValidConfederation(), 1750, 0, 0, 0);
 
         Assert.ThrowsException<DomainException>(() =>
             new Match(
@@ -161,8 +164,8 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithDifferentInstancesButSameTeamNameIgnoringCase_ShouldThrowDomainException()
     {
-        var homeTeam = new Team("Argentina", Confederation.CONMEBOL, 1800);
-        var awayTeam = new Team("argentina", Confederation.CONMEBOL, 1750);
+        var homeTeam = new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
+        var awayTeam = new Team("argentina", CreateValidConfederation(), 1750, 0, 0, 0);
 
         Assert.ThrowsException<DomainException>(() =>
             new Match(
@@ -260,8 +263,8 @@ public class MatchTests
         var secondMatch = new Match(
             date: new DateTime(2026, 6, 2),
             stadium: CreateValidStadium(),
-            homeTeam: new Team("Uruguay", Confederation.CONMEBOL, 1700),
-            awayTeam: new Team("Chile", Confederation.CONMEBOL, 1650),
+            homeTeam: new Team("Uruguay", CreateValidConfederation(), 1700, 0, 0, 0),
+            awayTeam: new Team("Chile", CreateValidConfederation(), 1650, 0, 0, 0),
             group: new Group('B'),
             phase: TournamentPhase.GroupStage
         );
