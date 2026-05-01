@@ -15,6 +15,7 @@ builder.Services.AddScoped<IStadiumService, StadiumService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddScoped<IRepository<Team>, Repository<Team>>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();

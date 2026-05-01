@@ -1,6 +1,4 @@
-﻿using Domain;
-
-namespace DTOs;
+﻿namespace DTOs;
 
 public class TeamRequest
 {
