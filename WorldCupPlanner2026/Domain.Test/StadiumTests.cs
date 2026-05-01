@@ -3,8 +3,8 @@ namespace Domain.Test;
 [TestClass]
 public class StadiumTests
 {
-    private const string ValidName = "Centenario";
-    private const string ValidCity = "Montevideo";
+    private const string ValidName = "CENTENARIO";
+    private const string ValidCity = "MONTEVIDO";
     private const string ValidDescription = "Historic stadium";
     private const int ValidCapacity = 60000;
 
@@ -18,6 +18,24 @@ public class StadiumTests
         Assert.AreEqual(ValidCity, stadium.City);
         Assert.AreEqual(ValidDescription, stadium.Description);
         Assert.AreEqual(ValidCapacity, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithSpacesInNameAndCity_ShouldSucceed()
+    {
+        var stadium = new Stadium(" CENTENARIO", " MONTEVIDEO", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
+    
+    [TestMethod]
+    public void CreateStadium_WithLowerCaseNameAndCity_ShouldStoreInUpperCase()
+    {
+        var stadium = new Stadium("Centenario", " Montevideo", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
     }
 
     [TestMethod]
@@ -155,5 +173,86 @@ public class StadiumTests
     private static Stadium CreateValidStadium()
     {
         return new Stadium(ValidName, ValidCity, ValidDescription, ValidCapacity);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithDifferentCases_ShouldConvertToUpperCase()
+    {
+        var stadium = new Stadium("cenTENario", "monTeVidEo", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithTrailingAndLeadingWhitespace_ShouldBeTrimmed()
+    {
+        var stadium = new Stadium("  CENTENARIO  ", "  MONTEVIDEO  ", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithVeryHighCapacity_ShouldSucceed()
+    {
+        var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 200000);
+        
+        Assert.AreEqual(200000, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void Stadium_Properties_ShouldBeReadable()
+    {
+        var stadium = CreateValidStadium();
+        
+        Assert.AreEqual(ValidName, stadium.Name);
+        Assert.AreEqual(ValidCity, stadium.City);
+        Assert.AreEqual(ValidDescription, stadium.Description);
+        Assert.AreEqual(ValidCapacity, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void CreateStadium_NameWith79Characters_ShouldSucceed()
+    {
+        var nameWith79Chars = new string('A', 79);
+        var stadium = new Stadium(nameWith79Chars, ValidCity, ValidDescription, ValidCapacity);
+        
+        Assert.IsNotNull(stadium);
+    }
+
+    [TestMethod]
+    public void CreateStadium_CityWith59Characters_ShouldSucceed()
+    {
+        var cityWith59Chars = new string('B', 59);
+        var stadium = new Stadium(ValidName, cityWith59Chars, ValidDescription, ValidCapacity);
+        
+        Assert.IsNotNull(stadium);
+    }
+
+    [TestMethod]
+    public void CreateStadium_DescriptionWith399Characters_ShouldSucceed()
+    {
+        var descriptionWith399Chars = new string('C', 399);
+        var stadium = new Stadium(ValidName, ValidCity, descriptionWith399Chars, ValidCapacity);
+        
+        Assert.IsNotNull(stadium);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithCapacity20001_ShouldSucceed()
+    {
+        var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 20001);
+        
+        Assert.AreEqual(20001, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithLowercaseAndSpaces_ShouldBeNormalized()
+    {
+        var stadium = new Stadium("  san juan  ", "  buenos aires  ", ValidDescription, ValidCapacity);
+        
+        Assert.AreEqual("SAN JUAN", stadium.Name);
+        Assert.AreEqual("BUENOS AIRES", stadium.City);
     }
 }

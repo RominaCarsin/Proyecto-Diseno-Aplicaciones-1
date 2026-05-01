@@ -9,10 +9,10 @@ public class MatchTests
         new Stadium("Centenario", "Montevideo", "Historic stadium", 60000);
 
     private Team CreateValidHomeTeam() =>
-        new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
+        new Team("Argentina", "CONMEBOL", 1800);
 
     private Team CreateValidAwayTeam() =>
-        new Team("Brazil", CreateValidConfederation(), 1750, 0, 0, 0);
+        new Team("Brazil", "CONMEBOL", 1750);
 
     private Match CreateValidGroupStageMatch() =>
         new Match(
@@ -34,14 +34,10 @@ public class MatchTests
             phase: TournamentPhase.RoundOf32
         );
 
-    private Confederation CreateValidConfederation() =>
-        new Confederation("CONMEBOL", 10);
-
     [TestMethod]
     public void CreateMatch_WithValidGroupStageData_ShouldSucceed()
     {
         var match = CreateValidGroupStageMatch();
-
         Assert.IsNotNull(match);
         Assert.AreEqual("A", match.Group);
         Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
@@ -51,7 +47,6 @@ public class MatchTests
     public void CreateMatch_WithValidKnockoutData_ShouldSucceed()
     {
         var match = CreateValidKnockoutMatch();
-
         Assert.IsNotNull(match);
         Assert.IsNull(match.Group);
         Assert.AreEqual(TournamentPhase.RoundOf32, match.Phase);
@@ -68,7 +63,6 @@ public class MatchTests
             group: "L",
             phase: TournamentPhase.GroupStage
         );
-
         Assert.AreEqual("L", match.Group);
     }
 
@@ -132,7 +126,6 @@ public class MatchTests
     public void CreateMatch_WithSameHomeAndAwayTeamReference_ShouldThrowDomainException()
     {
         var team = CreateValidHomeTeam();
-
         Assert.ThrowsException<DomainException>(() =>
             new Match(
                 date: new DateTime(2026, 6, 1),
@@ -147,9 +140,8 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithDifferentInstancesButSameTeamName_ShouldThrowDomainException()
     {
-        var homeTeam = new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
-        var awayTeam = new Team("Argentina", CreateValidConfederation(), 1750, 0, 0, 0);
-
+        var homeTeam = new Team("Argentina", "CONMEBOL", 1800);
+        var awayTeam = new Team("Argentina", "CONMEBOL", 1750);
         Assert.ThrowsException<DomainException>(() =>
             new Match(
                 date: new DateTime(2026, 6, 1),
@@ -164,9 +156,8 @@ public class MatchTests
     [TestMethod]
     public void CreateMatch_WithDifferentInstancesButSameTeamNameIgnoringCase_ShouldThrowDomainException()
     {
-        var homeTeam = new Team("Argentina", CreateValidConfederation(), 1800, 0, 0, 0);
-        var awayTeam = new Team("argentina", CreateValidConfederation(), 1750, 0, 0, 0);
-
+        var homeTeam = new Team("Argentina", "CONMEBOL", 1800);
+        var awayTeam = new Team("argentina", "CONMEBOL", 1750);
         Assert.ThrowsException<DomainException>(() =>
             new Match(
                 date: new DateTime(2026, 6, 1),
@@ -263,8 +254,8 @@ public class MatchTests
         var secondMatch = new Match(
             date: new DateTime(2026, 6, 2),
             stadium: CreateValidStadium(),
-            homeTeam: new Team("Uruguay", CreateValidConfederation(), 1700, 0, 0, 0),
-            awayTeam: new Team("Chile", CreateValidConfederation(), 1650, 0, 0, 0),
+            homeTeam: new Team("Uruguay", "CONMEBOL", 1700),
+            awayTeam: new Team("Chile", "CONMEBOL", 1650),
             group: "B",
             phase: TournamentPhase.GroupStage
         );
@@ -276,7 +267,6 @@ public class MatchTests
     public void DefaultValues_AreNullOrFalse()
     {
         var match = CreateValidGroupStageMatch();
-
         Assert.IsNull(match.HomeGoals);
         Assert.IsNull(match.AwayGoals);
         Assert.IsNull(match.Winner);
@@ -287,9 +277,7 @@ public class MatchTests
     public void SetResult_WithHomeGoalsGreaterThanAwayGoals_ShouldSetHomeTeamAsWinner()
     {
         var match = CreateValidGroupStageMatch();
-
         match.SetResult(3, 1);
-
         Assert.AreEqual(match.HomeTeam, match.Winner);
     }
 
@@ -297,9 +285,7 @@ public class MatchTests
     public void SetResult_WithAwayGoalsGreaterThanHomeGoals_ShouldSetAwayTeamAsWinner()
     {
         var match = CreateValidGroupStageMatch();
-
         match.SetResult(1, 2);
-
         Assert.AreEqual(match.AwayTeam, match.Winner);
     }
 
@@ -307,9 +293,7 @@ public class MatchTests
     public void SetResult_WithDraw_ShouldSetWinnerToNull()
     {
         var match = CreateValidGroupStageMatch();
-
         match.SetResult(1, 1);
-
         Assert.IsNull(match.Winner);
     }
 
@@ -317,9 +301,7 @@ public class MatchTests
     public void SetResult_WithZeroGoals_ShouldSetWinnerToNull()
     {
         var match = CreateValidGroupStageMatch();
-
         match.SetResult(0, 0);
-
         Assert.AreEqual(0, match.HomeGoals);
         Assert.AreEqual(0, match.AwayGoals);
         Assert.IsNull(match.Winner);
@@ -329,7 +311,6 @@ public class MatchTests
     public void SetResult_WithNegativeHomeGoals_ShouldThrowDomainException()
     {
         var match = CreateValidGroupStageMatch();
-
         Assert.ThrowsException<DomainException>(() => match.SetResult(-1, 2));
     }
 
@@ -337,7 +318,6 @@ public class MatchTests
     public void SetResult_WithNegativeAwayGoals_ShouldThrowDomainException()
     {
         var match = CreateValidGroupStageMatch();
-
         Assert.ThrowsException<DomainException>(() => match.SetResult(2, -1));
     }
 
@@ -345,13 +325,10 @@ public class MatchTests
     public void SetResult_MultipleCalls_ShouldUpdateWinnerAndGoals()
     {
         var match = CreateValidGroupStageMatch();
-
         match.SetResult(2, 1);
         Assert.AreEqual(match.HomeTeam, match.Winner);
-
         match.SetResult(1, 2);
         Assert.AreEqual(match.AwayTeam, match.Winner);
-
         match.SetResult(1, 1);
         Assert.IsNull(match.Winner);
     }
@@ -361,9 +338,7 @@ public class MatchTests
     {
         var match = CreateValidGroupStageMatch();
         var newDate = new DateTime(2026, 6, 3);
-
         match.UpdateDate(newDate);
-
         Assert.AreEqual(newDate, match.Date);
     }
 
@@ -371,9 +346,7 @@ public class MatchTests
     public void UpdateDate_WithInvalidDate_ShouldThrowDomainException()
     {
         var match = CreateValidGroupStageMatch();
-
-        Assert.ThrowsException<DomainException>(() =>
-            match.UpdateDate(DateTime.MinValue));
+        Assert.ThrowsException<DomainException>(() => match.UpdateDate(DateTime.MinValue));
     }
 
     [TestMethod]
@@ -381,9 +354,7 @@ public class MatchTests
     {
         var match = CreateValidGroupStageMatch();
         match.LockEdition();
-
-        Assert.ThrowsException<DomainException>(() =>
-            match.UpdateDate(new DateTime(2026, 6, 4)));
+        Assert.ThrowsException<DomainException>(() => match.UpdateDate(new DateTime(2026, 6, 4)));
     }
 
     [TestMethod]
@@ -391,9 +362,7 @@ public class MatchTests
     {
         var match = CreateValidGroupStageMatch();
         var newStadium = new Stadium("Maracana", "Rio de Janeiro", "Historic stadium", 78000);
-
         match.UpdateStadium(newStadium);
-
         Assert.AreEqual(newStadium, match.Stadium);
     }
 
@@ -401,7 +370,6 @@ public class MatchTests
     public void UpdateStadium_WithNullStadium_ShouldThrowDomainException()
     {
         var match = CreateValidGroupStageMatch();
-
         Assert.ThrowsException<DomainException>(() => match.UpdateStadium(null));
     }
 
@@ -411,7 +379,6 @@ public class MatchTests
         var match = CreateValidGroupStageMatch();
         var newStadium = new Stadium("Maracana", "Rio de Janeiro", "Historic stadium", 78000);
         match.LockEdition();
-
         Assert.ThrowsException<DomainException>(() => match.UpdateStadium(newStadium));
     }
 
@@ -419,9 +386,7 @@ public class MatchTests
     public void LockEdition_ShouldSetIsLockedToTrue()
     {
         var match = CreateValidGroupStageMatch();
-
         match.LockEdition();
-
         Assert.IsTrue(match.IsLocked);
     }
 
@@ -430,7 +395,6 @@ public class MatchTests
     {
         var match = CreateValidGroupStageMatch();
         match.LockEdition();
-
         Assert.ThrowsException<DomainException>(() => match.SetResult(2, 1));
     }
 }
