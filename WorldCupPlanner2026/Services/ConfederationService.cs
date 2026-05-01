@@ -1,6 +1,7 @@
 ﻿using Domain;
 using DTOs;
 using IServices;
+using Services.Mappers;
 
 namespace Services;
 
@@ -16,22 +17,20 @@ public class ConfederationService : IConfederationService
         new Confederation("OFC",       1),
     };
 
-    public IEnumerable<ConfederationResponse> GetAll() =>
-        _confederations.Select(ConfederationResponse.FromEntity);
+    public IEnumerable<ConfederationResponse> GetAll() => 
+        _confederations.Select(ConfederationMapper.FromEntity);
 
     public void AddTeamToConfederation(Team team)
     {
-        var confederation = _confederations
-            .FirstOrDefault(c => c.Name == team.ConfederationName);
-
+        var confederation = GetExistingConfederationOrThrowArgumentException(team.ConfederationName);
+        CheckConfederationIsNotFull(confederation);
+        
         confederation.AddTeam(team);
     }
 
     public void RemoveTeamFromConfederation(Team team)
     {
-        var confederation = _confederations
-            .FirstOrDefault(c => c.Name == team.ConfederationName);
-
+        var confederation = GetExistingConfederationOrThrowArgumentException(team.ConfederationName);
         confederation.RemoveTeam(team);
     }
 
@@ -40,19 +39,26 @@ public class ConfederationService : IConfederationService
         if (team.ConfederationName == newConfederationName)
             return;
 
-        var newConfederation = _confederations
-            .FirstOrDefault(c => c.Name == newConfederationName);
-        if (newConfederation == null)
-            throw new ArgumentException($"Confederation '{newConfederationName}' not found.");
+        var newConfederation = GetExistingConfederationOrThrowArgumentException(newConfederationName);
+        CheckConfederationIsNotFull(newConfederation);
 
-        if (newConfederation.IsFull)
-            throw new ArgumentException($"Confederation '{newConfederationName}' is full.");
-
-        var oldConfederation = _confederations
-            .FirstOrDefault(c => c.Name == team.ConfederationName);
+        var oldConfederation = GetExistingConfederationOrThrowArgumentException(team.ConfederationName);
 
         oldConfederation.RemoveTeam(team);
         team.UpdateConfederationName(newConfederationName);
         newConfederation.AddTeam(team);
+    }
+    
+
+    private Confederation? FindByName(string name) =>
+        _confederations.FirstOrDefault(c => c.Name == name);
+
+    private Confederation GetExistingConfederationOrThrowArgumentException(string name) =>
+        FindByName(name) ?? throw new ArgumentException($"Confederation '{name}' not found.");
+
+    private void CheckConfederationIsNotFull(Confederation confederation)
+    {
+        if (confederation.IsFull)
+            throw new ArgumentException($"Confederation '{confederation.Name}' is full.");
     }
 }

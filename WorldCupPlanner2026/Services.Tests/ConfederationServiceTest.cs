@@ -16,7 +16,7 @@ public class ConfederationServiceTest
     }
 
     [TestMethod]
-    public void GetAll_ShouldContainAllConfederationsWithCorrectSlots()
+    public void GetAll_ShouldContainAllConfederations()
     {
         var expected = new Dictionary<string, int>
         {
@@ -27,14 +27,14 @@ public class ConfederationServiceTest
             { "CONMEBOL",  7 },
             { "OFC",       1 },
         };
-
-        var result = _service.GetAll().ToList();
-
-        foreach (var (name, slots) in expected)
+        
+        var result = _service.GetAll();
+        var resultData = result.ToDictionary(c => c.Name, c => c.Slots);
+        
+        foreach (var key in expected.Keys)
         {
-            var conf = result.FirstOrDefault(c => c.Name == name);
-            Assert.IsNotNull(conf, $"Confederation {name} not found");
-            Assert.AreEqual(slots, conf.Slots, $"{name} should have {slots} slots");
+            Assert.IsTrue(resultData.ContainsKey(key));
+            Assert.AreEqual(expected[key], resultData[key]);
         }
     }
     
