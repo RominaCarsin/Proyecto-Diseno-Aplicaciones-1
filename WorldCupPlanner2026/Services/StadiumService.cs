@@ -1,11 +1,12 @@
 ﻿using Domain;
 using DTOs;
 using IRepository;
+using IServices;
 using Services.Mappers;
 
 namespace Services;
 
-public class StadiumService  
+public class StadiumService : IStadiumService
 {
     private readonly IRepository<Stadium> _repository;
 

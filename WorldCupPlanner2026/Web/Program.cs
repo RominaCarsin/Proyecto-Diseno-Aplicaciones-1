@@ -8,9 +8,8 @@ using Domain;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddTransient<IRepository<Stadium>, Repository<Stadium>>();
-
-builder.Services.AddTransient<IStadiumService, StadiumService>();
+builder.Services.AddScoped<IRepository<Stadium>, Repository<Stadium>>();
+builder.Services.AddScoped<IStadiumService, StadiumService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

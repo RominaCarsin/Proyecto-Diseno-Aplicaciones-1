@@ -4,165 +4,6 @@
 @using IServices
 @inject IStadiumService StadiumService
 
-<style>
-  .page-wrap {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 2rem;
-  }
-
-  .ph {
-    margin-bottom: 1.5rem;
-  }
-
-  .pt {
-    font-size: 2.5rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .ps {
-    color: #666;
-    font-size: 1rem;
-  }
-
-  .card {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .card-header {
-    padding: 1rem 1.25rem;
-    background: #f7f7f7;
-    border-bottom: 1px solid #ddd;
-  }
-
-  .card-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-  }
-
-  .card-body {
-    padding: 1.25rem;
-  }
-
-  .fg {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 1rem;
-  }
-
-  .fl {
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-  }
-
-  .req {
-    color: #c0392b;
-  }
-
-  .finput {
-    width: 100%;
-    max-width: 420px;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-  }
-
-  textarea.finput {
-    min-height: 90px;
-    resize: vertical;
-  }
-
-  .ferr {
-    color: #c0392b;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-  }
-
-  .fhint {
-    color: #777;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-  }
-
-  .alert-box {
-    padding: 0.75rem;
-    border-radius: 6px;
-    margin-top: 1rem;
-  }
-
-  .alert-box.suc {
-    background: #eafaf1;
-    color: #1e8449;
-  }
-
-  .alert-box.err {
-    background: #fdecea;
-    color: #c0392b;
-  }
-
-  .card-footer {
-    padding: 1rem 1.25rem;
-    background: #f7f7f7;
-    border-top: 1px solid #ddd;
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  .btn,
-  .btn-p {
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem 0.9rem;
-    cursor: pointer;
-    font-size: 0.95rem;
-  }
-
-  .btn-p {
-    background: #1f2937;
-    color: white;
-  }
-
-  .btn-g {
-    background: #e5e7eb;
-    color: #111827;
-  }
-
-  .btn-s {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  .btn-d {
-    background: #fee2e2;
-    color: #b91c1c;
-  }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th {
-    text-align: left;
-    padding: 0.75rem;
-    border-bottom: 1px solid #ddd;
-  }
-
-  td {
-    padding: 0.75rem;
-    border-bottom: 1px solid #eee;
-  }
-</style>
-
 <div class="page-wrap">
 
   <div class="ph">
@@ -180,11 +21,9 @@
       <div class="fg">
         <label class="fl">Name <span class="req">*</span></label>
         <input class="finput @(_nameInvalid ? "invalid" : "")"
-               type="text"
-               maxlength="80"
+               type="text" maxlength="80"
                placeholder="Ex: Estadio Centenario"
-               @bind="_name"
-               @bind:event="oninput" />
+               @bind="_name" @bind:event="oninput" />
         @if (_nameInvalid)
         {
           <span class="ferr">Name is required (1–80 characters)</span>
@@ -194,11 +33,9 @@
       <div class="fg">
         <label class="fl">City <span class="req">*</span></label>
         <input class="finput @(_cityInvalid ? "invalid" : "")"
-               type="text"
-               maxlength="60"
+               type="text" maxlength="60"
                placeholder="Ex: Montevideo"
-               @bind="_city"
-               @bind:event="oninput" />
+               @bind="_city" @bind:event="oninput" />
         @if (_cityInvalid)
         {
           <span class="ferr">City is required (1–60 characters)</span>
@@ -210,8 +47,7 @@
         <textarea class="finput @(_descInvalid ? "invalid" : "")"
                   maxlength="400"
                   placeholder="Optional description..."
-                  @bind="_description"
-                  @bind:event="oninput"></textarea>
+                  @bind="_description" @bind:event="oninput"></textarea>
         @if (_descInvalid)
         {
           <span class="ferr">Description cannot exceed 400 characters</span>
@@ -221,11 +57,9 @@
       <div class="fg">
         <label class="fl">Capacity <span class="req">*</span></label>
         <input class="finput @(_capacityInvalid ? "invalid" : "")"
-               type="number"
-               min="20000"
+               type="number" min="20000"
                placeholder="Ex: 60000"
-               @bind="_capacity"
-               @bind:event="oninput" />
+               @bind="_capacity" @bind:event="oninput" />
         <span class="fhint">Minimum 20,000 spectators</span>
         @if (_capacityInvalid)
         {
@@ -250,8 +84,7 @@
       {
         <button class="btn btn-g" @onclick="CancelEdit">Cancel edit</button>
       }
-
-      <button class="btn-p" @onclick="@(_editingStadiumName != null ? SaveEdit : Save)">
+      <button class="btn-p" @onclick="Save">
         @(_editingStadiumName != null ? "Update stadium" : "Save stadium")
       </button>
     </div>
@@ -261,8 +94,7 @@
     <div class="card-header">
       <span class="card-title">Registered stadiums (@_stadiums.Count())</span>
     </div>
-
-    <div class="card-body">
+    <div class="card-body" style="overflow-x: auto;">
       @if (!_stadiums.Any())
       {
         <p style="color: #888;">No stadiums registered yet.</p>
@@ -271,38 +103,34 @@
       {
         <table>
           <thead>
-            <tr>
-              <th>Name</th>
-              <th>City</th>
-              <th>Capacity</th>
-              <th>Description</th>
-              <th>Actions</th>
-            </tr>
+          <tr>
+            <th>Name</th>
+            <th>City</th>
+            <th>Capacity</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
           </thead>
-
           <tbody>
-            @foreach (var stadium in _stadiums)
-            {
-              <tr>
-                <td>@stadium.Name</td>
-                <td>@stadium.City</td>
-                <td>@stadium.Capacity.ToString("N0")</td>
-                <td>@(stadium.Description ?? "-")</td>
-                <td>
-                  <button class="btn btn-s"
+          @foreach (var stadium in _stadiums)
+          {
+            <tr>
+              <td title="@stadium.Name">@stadium.Name</td>
+              <td title="@stadium.City">@stadium.City</td>
+              <td>@stadium.Capacity.ToString("N0")</td>
+              <td title="@stadium.Description">@(stadium.Description ?? "-")</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn btn-s" 
                           disabled="@(_editingStadiumName == stadium.Name)"
-                          @onclick="() => EditStadium(stadium)">
-                    Edit
-                  </button>
-
+                          @onclick="() => EditStadium(stadium)">Edit</button>
                   <button class="btn btn-d"
                           disabled="@(_editingStadiumName == stadium.Name)"
-                          @onclick="() => DeleteStadium(stadium.Name)">
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            }
+                          @onclick="() => DeleteStadium(stadium.Name)">Delete</button>
+                </div>
+              </td>
+            </tr>
+          }
           </tbody>
         </table>
       }
@@ -312,12 +140,12 @@
 </div>
 
 @code {
-    private string _name = string.Empty;
-    private string _city = string.Empty;
+    private string  _name        = string.Empty;
+    private string  _city        = string.Empty;
     private string? _description;
-    private int _capacity;
+    private int     _capacity;
 
-    private string _errorMessage = string.Empty;
+    private string _errorMessage   = string.Empty;
     private string _successMessage = string.Empty;
 
     private string? _editingStadiumName;
@@ -334,45 +162,49 @@
         LoadStadiums();
     }
 
-    private void LoadStadiums()
+    private void Save()
     {
-        _stadiums = StadiumService.GetStadiums();
-    }
-
-    private void ClearForm()
-    {
-        _name = string.Empty;
-        _city = string.Empty;
-        _description = null;
-        _capacity = 0;
-
-        _errorMessage = string.Empty;
+        _errorMessage   = string.Empty;
         _successMessage = string.Empty;
 
-        _editingStadiumName = null;
+        if (!ValidateForm()) return;
 
-        _nameInvalid = false;
-        _cityInvalid = false;
-        _descInvalid = false;
-        _capacityInvalid = false;
+        try
+        {
+            var request = BuildRequest();
+
+            if (_editingStadiumName != null)
+                StadiumService.UpdateStadium(_editingStadiumName, request);
+            else
+                StadiumService.AddStadium(request);
+
+            var message = _editingStadiumName != null
+                ? $"Stadium '{_name}' updated successfully!"
+                : $"Stadium '{_name}' created successfully!";
+
+            ClearForm();
+            LoadStadiums();
+            _successMessage = message;
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
     }
 
     private void EditStadium(StadiumResponse stadium)
     {
         _editingStadiumName = stadium.Name;
-
-        _name = stadium.Name;
-        _city = stadium.City;
-        _description = stadium.Description;
-        _capacity = stadium.Capacity;
-
-        _errorMessage = string.Empty;
-        _successMessage = string.Empty;
-
-        _nameInvalid = false;
-        _cityInvalid = false;
-        _descInvalid = false;
-        _capacityInvalid = false;
+        _name               = stadium.Name;
+        _city               = stadium.City;
+        _description        = stadium.Description;
+        _capacity           = stadium.Capacity;
+        _errorMessage       = string.Empty;
+        _successMessage     = string.Empty;
+        _nameInvalid        = false;
+        _cityInvalid        = false;
+        _descInvalid        = false;
+        _capacityInvalid    = false;
     }
 
     private void CancelEdit()
@@ -380,89 +212,60 @@
         ClearForm();
     }
 
-    private bool ValidateForm()
-    {
-        _nameInvalid = string.IsNullOrWhiteSpace(_name) || _name.Length > 80;
-        _cityInvalid = string.IsNullOrWhiteSpace(_city) || _city.Length > 60;
-        _descInvalid = _description != null && _description.Length > 400;
-        _capacityInvalid = _capacity < 20000;
-
-        return !_nameInvalid && !_cityInvalid && !_descInvalid && !_capacityInvalid;
-    }
-
-    private void Save()
-    {
-        _errorMessage = string.Empty;
-        _successMessage = string.Empty;
-
-        if (!ValidateForm()) return;
-
-        try
-        {
-            var request = new StadiumRequest
-            {
-                Name = _name,
-                City = _city,
-                Description = _description,
-                Capacity = _capacity
-            };
-            StadiumService.AddStadium(request);
-
-            _successMessage = $"Stadium '{_name}' created successfully!";
-            ClearForm();
-            LoadStadiums();
-        }
-        catch (ArgumentException ex)
-        {
-            _errorMessage = ex.Message;
-        }
-    }
-
-    private void SaveEdit()
-    {
-        _errorMessage = string.Empty;
-        _successMessage = string.Empty;
-
-        if (!ValidateForm()) return;
-
-        try
-        {
-            var request = new StadiumRequest
-            {
-                Name = _name,
-                City = _city,
-                Description = _description,
-                Capacity = _capacity
-            };
-            StadiumService.UpdateStadium(_editingStadiumName!, request);
-
-            _successMessage = $"Stadium '{_name}' updated successfully!";
-            ClearForm();
-            LoadStadiums();
-        }
-        catch (ArgumentException ex)
-        {
-            _errorMessage = ex.Message;
-        }
-    }
-
     private void DeleteStadium(string stadiumName)
     {
         try
         {
             if (_editingStadiumName == stadiumName)
-            {
                 ClearForm();
-            }
 
             StadiumService.DeleteStadium(stadiumName);
 
-            _successMessage = $"Stadium '{stadiumName}' deleted successfully!";
+            var message = $"Stadium '{stadiumName}' deleted successfully!";
             LoadStadiums();
+            _successMessage = message;
         }
         catch (ArgumentException ex)
         {
             _errorMessage = ex.Message;
         }
+    }
+
+    private void ClearForm()
+    {
+        _name               = string.Empty;
+        _city               = string.Empty;
+        _description        = null;
+        _capacity           = 0;
+        _editingStadiumName = null;
+        _nameInvalid        = false;
+        _cityInvalid        = false;
+        _descInvalid        = false;
+        _capacityInvalid    = false;
+        _errorMessage       = string.Empty;
+        _successMessage     = string.Empty;
+    }
+
+    private bool ValidateForm()
+    {
+        _nameInvalid     = string.IsNullOrWhiteSpace(_name) || _name.Length > 80;
+        _cityInvalid     = string.IsNullOrWhiteSpace(_city) || _city.Length > 60;
+        _descInvalid     = _description != null && _description.Length > 400;
+        _capacityInvalid = _capacity < 20000;
+
+        return !_nameInvalid && !_cityInvalid && !_descInvalid && !_capacityInvalid;
+    }
+
+    private StadiumRequest BuildRequest() => new()
+    {
+        Name        = _name,
+        City        = _city,
+        Description = _description,
+        Capacity    = _capacity
+    };
+
+    private void LoadStadiums()
+    {
+        _stadiums = StadiumService.GetStadiums();
     }
 }
