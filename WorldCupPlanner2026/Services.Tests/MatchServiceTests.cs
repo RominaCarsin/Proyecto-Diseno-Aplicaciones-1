@@ -157,4 +157,22 @@ public class MatchServiceTests
 
         Assert.AreEqual(newDate, result.Date);
     }
+    
+    [TestMethod]
+    public void UpdateMatchStadium_WithExistingMatch_ShouldUpdateStadium()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+        var newStadium = CreateAnotherValidStadiumRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.UpdateMatchStadium(savedMatch.Id, newStadium);
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+
+        Assert.AreEqual("MARACANA", result.Stadium.Name);
+        Assert.AreEqual("RIO DE JANEIRO", result.Stadium.City);
+    }
 }
