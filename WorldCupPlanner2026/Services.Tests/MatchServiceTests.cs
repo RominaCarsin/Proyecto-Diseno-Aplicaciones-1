@@ -208,4 +208,19 @@ public class MatchServiceTests
         Assert.IsTrue(matches.Single(match => match.Phase == "GroupStage").IsLocked);
         Assert.IsFalse(matches.Single(match => match.Phase == "RoundOf32").IsLocked);
     }
+    
+    [TestMethod]
+    public void UpdateMatchDate_WhenMatchWasLockedByPhase_ShouldThrowException()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.LockMatchesByPhase("GroupStage");
+
+        Assert.ThrowsException<Exception>(() =>
+            _matchService.UpdateMatchDate(savedMatch.Id, new DateTime(2026, 6, 20)));
+    }
 }
