@@ -65,7 +65,14 @@ public class MatchService
     {
         var match = FindMatchById(id);
 
-        match.SetResult(homeGoals, awayGoals);
+        try
+        {
+            match.SetResult(homeGoals, awayGoals);
+        }
+        catch (Exception exception)
+        {
+            throw new ArgumentException(exception.Message);
+        }
     }
     
     public void UpdateMatchDate(int id, DateTime newDate)
