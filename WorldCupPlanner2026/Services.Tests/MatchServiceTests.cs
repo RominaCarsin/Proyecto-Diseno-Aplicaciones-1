@@ -175,4 +175,20 @@ public class MatchServiceTests
         Assert.AreEqual("MARACANA", result.Stadium.Name);
         Assert.AreEqual("RIO DE JANEIRO", result.Stadium.City);
     }
+    
+    [TestMethod]
+    public void LockMatchEdition_WithExistingMatch_ShouldLockMatch()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.LockMatchEdition(savedMatch.Id);
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+
+        Assert.IsTrue(result.IsLocked);
+    }
 }
