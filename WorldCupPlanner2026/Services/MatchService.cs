@@ -82,4 +82,11 @@ public class MatchService
 
         match.UpdateStadium(stadium);
     }
+    
+    public void LockMatchEdition(int id)
+    {
+        var match = FindMatchById(id);
+
+        match.LockEdition();
+    }
 }
