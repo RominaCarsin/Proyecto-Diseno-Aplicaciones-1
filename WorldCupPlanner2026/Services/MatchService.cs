@@ -1,34 +1,27 @@
-﻿using System.Text.RegularExpressions;
-using IServices;
-using Domain;
+﻿using Domain;
 using DTOs;
+using IRepository;
+using IServices;
 using Services.Mappers;
-
 
 namespace Services;
 
-using Domain;
-using IRepository;
-
-public class MatchService
+public class MatchService : IMatchService
 {
-    private readonly IRepository<Match> _repository;
-    
-    private const string RequiredMatchError = "Match cannot be null";
-
+    private const string RequiredMatchError = "Match cannot be null.";
+    private const string RequiredStadiumError = "Stadium cannot be null.";
     private const string MatchNotFoundError = "Match was not found.";
-    
+
+    private readonly IRepository<Match> _repository;
+
     public MatchService(IRepository<Match> repository)
     {
         _repository = repository;
     }
-    
+
     public void AddMatch(MatchRequest request)
     {
-        if (request is null)
-        {
-            throw new ArgumentException(RequiredMatchError);
-        }
+        ValidateMatchRequest(request);
 
         var match = MatchMapper.ToEntity(request);
 
@@ -40,7 +33,7 @@ public class MatchService
         return _repository.GetAll()
             .Select(MatchMapper.ToResponse);
     }
-    
+
     public MatchResponse GetMatchById(int id)
     {
         var match = FindMatchById(id);
@@ -48,10 +41,51 @@ public class MatchService
         return MatchMapper.ToResponse(match);
     }
 
+    public void SetMatchResult(int id, int homeGoals, int awayGoals)
+    {
+        var match = FindMatchById(id);
+
+        ExecuteMatchUpdate(() => match.SetResult(homeGoals, awayGoals));
+    }
+
+    public void UpdateMatchDate(int id, DateTime newDate)
+    {
+        var match = FindMatchById(id);
+
+        ExecuteMatchUpdate(() => match.UpdateDate(newDate));
+    }
+
+    public void UpdateMatchStadium(int id, StadiumRequest newStadium)
+    {
+        ValidateStadiumRequest(newStadium);
+
+        var match = FindMatchById(id);
+        var stadium = StadiumMapper.ToEntity(newStadium);
+
+        ExecuteMatchUpdate(() => match.UpdateStadium(stadium));
+    }
+
+    public void LockMatchEdition(int id)
+    {
+        var match = FindMatchById(id);
+
+        match.LockEdition();
+    }
+
+    public void LockMatchesByPhase(string phase)
+    {
+        var tournamentPhase = ParseTournamentPhase(phase);
+
+        foreach (var match in GetMatchesByPhase(tournamentPhase))
+        {
+            match.LockEdition();
+        }
+    }
+
     private Match FindMatchById(int id)
     {
         var match = _repository.GetAll()
-            .FirstOrDefault(match => match.Id == id);
+            .FirstOrDefault(currentMatch => currentMatch.Id == id);
 
         if (match is null)
         {
@@ -60,67 +94,43 @@ public class MatchService
 
         return match;
     }
-    
-    public void SetMatchResult(int id, int homeGoals, int awayGoals)
-    {
-        var match = FindMatchById(id);
 
+    private IEnumerable<Match> GetMatchesByPhase(TournamentPhase phase)
+    {
+        return _repository.GetAll()
+            .Where(match => match.Phase == phase);
+    }
+
+    private static void ValidateMatchRequest(MatchRequest request)
+    {
+        if (request is null)
+        {
+            throw new ArgumentException(RequiredMatchError);
+        }
+    }
+
+    private static void ValidateStadiumRequest(StadiumRequest stadium)
+    {
+        if (stadium is null)
+        {
+            throw new ArgumentException(RequiredStadiumError);
+        }
+    }
+
+    private static TournamentPhase ParseTournamentPhase(string phase)
+    {
+        return Enum.Parse<TournamentPhase>(phase);
+    }
+
+    private static void ExecuteMatchUpdate(Action updateAction)
+    {
         try
         {
-            match.SetResult(homeGoals, awayGoals);
+            updateAction();
         }
         catch (Exception exception)
         {
             throw new ArgumentException(exception.Message);
-        }
-    }
-    
-    public void UpdateMatchDate(int id, DateTime newDate)
-    {
-        var match = FindMatchById(id);
-
-        try
-        {
-            match.UpdateDate(newDate);
-        }
-        catch (Exception exception)
-        {
-            throw new ArgumentException(exception.Message);
-        }
-    }
-    
-    public void UpdateMatchStadium(int id, StadiumRequest newStadium)
-    {
-        var match = FindMatchById(id);
-        var stadium = StadiumMapper.ToEntity(newStadium);
-
-        try
-        {
-            match.UpdateStadium(stadium);
-        }
-        catch (Exception exception)
-        {
-            throw new ArgumentException(exception.Message);
-        }
-    }
-    
-    public void LockMatchEdition(int id)
-    {
-        var match = FindMatchById(id);
-
-        match.LockEdition();
-    }
-    
-    public void LockMatchesByPhase(string phase)
-    {
-        var tournamentPhase = Enum.Parse<TournamentPhase>(phase);
-
-        var matchesToLock = _repository.GetAll()
-            .Where(match => match.Phase == tournamentPhase);
-
-        foreach (var match in matchesToLock)
-        {
-            match.LockEdition();
         }
     }
 }
