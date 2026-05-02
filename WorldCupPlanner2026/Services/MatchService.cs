@@ -74,4 +74,12 @@ public class MatchService
 
         match.UpdateDate(newDate);
     }
+    
+    public void UpdateMatchStadium(int id, StadiumRequest newStadium)
+    {
+        var match = FindMatchById(id);
+        var stadium = StadiumMapper.ToEntity(newStadium);
+
+        match.UpdateStadium(stadium);
+    }
 }
