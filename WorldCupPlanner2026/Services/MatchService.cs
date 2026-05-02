@@ -89,4 +89,17 @@ public class MatchService
 
         match.LockEdition();
     }
+    
+    public void LockMatchesByPhase(string phase)
+    {
+        var tournamentPhase = Enum.Parse<TournamentPhase>(phase);
+
+        var matchesToLock = _repository.GetAll()
+            .Where(match => match.Phase == tournamentPhase);
+
+        foreach (var match in matchesToLock)
+        {
+            match.LockEdition();
+        }
+    }
 }
