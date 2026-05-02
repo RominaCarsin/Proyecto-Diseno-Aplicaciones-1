@@ -9,7 +9,7 @@ namespace Services.Tests;
 [TestClass]
 public class MatchServiceTests
 {
-    private IMatchService _matchService = null!;
+    private MatchService _matchService = null!;
 
     [TestInitialize]
     public void Setup()
