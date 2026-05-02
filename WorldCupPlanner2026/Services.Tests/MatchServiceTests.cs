@@ -191,4 +191,21 @@ public class MatchServiceTests
 
         Assert.IsTrue(result.IsLocked);
     }
+    
+    [TestMethod]
+    public void LockMatchesByPhase_WithExistingMatches_ShouldLockOnlyMatchesFromThatPhase()
+    {
+        var groupStageRequest = CreateValidGroupStageMatchRequest();
+        var knockoutRequest = CreateValidKnockoutMatchRequest();
+
+        _matchService.AddMatch(groupStageRequest);
+        _matchService.AddMatch(knockoutRequest);
+
+        _matchService.LockMatchesByPhase("GroupStage");
+
+        var matches = _matchService.GetMatches().ToList();
+
+        Assert.IsTrue(matches.Single(match => match.Phase == "GroupStage").IsLocked);
+        Assert.IsFalse(matches.Single(match => match.Phase == "RoundOf32").IsLocked);
+    }
 }
