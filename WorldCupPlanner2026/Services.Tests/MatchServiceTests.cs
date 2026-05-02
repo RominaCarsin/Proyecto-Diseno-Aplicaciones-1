@@ -1,4 +1,6 @@
 ﻿using Domain;
+using Domain.Exceptions;
+using DTOs;
 using IRepository;
 using IServices;
 using Repository;
@@ -19,39 +21,80 @@ public class MatchServiceTests
         
     }
     
-    private Stadium CreateValidStadium()
+    private StadiumRequest CreateValidStadiumRequest()
     {
-        return new Stadium("CENTENARIO", "MONTEVIDEO", "Historic stadium", 60000);
+        return new StadiumRequest
+        {
+            Name = "CENTENARIO",
+            City = "MONTEVIDEO",
+            Description = "Historic stadium",
+            Capacity = 60000
+        };
     }
 
-    private Team CreateValidHomeTeam()
+    private StadiumRequest CreateAnotherValidStadiumRequest()
     {
-        return new Team("ARGENTINA", "CONMEBOL", 1800);
+        return new StadiumRequest
+        {
+            Name = "MARACANA",
+            City = "RIO DE JANEIRO",
+            Description = "Historic stadium",
+            Capacity = 78000
+        };
     }
 
-    private Team CreateValidAwayTeam()
+    private TeamRequest CreateValidHomeTeamRequest()
     {
-        return new Team("BRAZIL", "CONMEBOL", 1750);
+        return new TeamRequest
+        {
+            Name = "ARGENTINA",
+            ConfederationName = "CONMEBOL",
+            RankingFifa = 1800
+        };
     }
 
-    private Match CreateValidGroupStageMatch()
+    private TeamRequest CreateValidAwayTeamRequest()
     {
-        return new Match(
-            date: new DateTime(2026, 6, 1),
-            stadium: CreateValidStadium(),
-            homeTeam: CreateValidHomeTeam(),
-            awayTeam: CreateValidAwayTeam(),
-            group: new Group('A'),
-            phase: TournamentPhase.GroupStage
-        );
+        return new TeamRequest
+        {
+            Name = "BRAZIL",
+            ConfederationName = "CONMEBOL",
+            RankingFifa = 1750
+        };
+    }
+
+    private MatchRequest CreateValidGroupStageMatchRequest()
+    {
+        return new MatchRequest
+        {
+            Date = new DateTime(2026, 6, 1),
+            Stadium = CreateValidStadiumRequest(),
+            HomeTeam = CreateValidHomeTeamRequest(),
+            AwayTeam = CreateValidAwayTeamRequest(),
+            Group = 'A',
+            Phase = "GroupStage"
+        };
+    }
+
+    private MatchRequest CreateValidKnockoutMatchRequest()
+    {
+        return new MatchRequest
+        {
+            Date = new DateTime(2026, 7, 1),
+            Stadium = CreateValidStadiumRequest(),
+            HomeTeam = CreateValidHomeTeamRequest(),
+            AwayTeam = CreateValidAwayTeamRequest(),
+            Group = null,
+            Phase = "RoundOf32"
+        };
     }
     
     [TestMethod]
-    public void AddMatch_WithValidMatch_ShouldAddMatch()
+    public void AddMatch_WithValidRequest_ShouldAddMatch()
     {
-        var match = CreateValidGroupStageMatch();
+        var request = CreateValidGroupStageMatchRequest();
 
-        _matchService.AddMatch(match);
+        _matchService.AddMatch(request);
 
         Assert.AreEqual(1, _matchService.GetMatches().Count());
     }
