@@ -67,4 +67,11 @@ public class MatchService
 
         match.SetResult(homeGoals, awayGoals);
     }
+    
+    public void UpdateMatchDate(int id, DateTime newDate)
+    {
+        var match = FindMatchById(id);
+
+        match.UpdateDate(newDate);
+    }
 }
