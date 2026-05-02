@@ -107,4 +107,19 @@ public class MatchServiceTests
     }
     
     
+    [TestMethod]
+    public void GetMatchById_WithExistingId_ShouldReturnMatch()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+
+        Assert.AreEqual(savedMatch.Id, result.Id);
+        Assert.AreEqual("ARGENTINA", result.HomeTeam.Name);
+        Assert.AreEqual("BRAZIL", result.AwayTeam.Name);
+    }
 }
