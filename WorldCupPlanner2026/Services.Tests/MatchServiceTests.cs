@@ -122,4 +122,22 @@ public class MatchServiceTests
         Assert.AreEqual("ARGENTINA", result.HomeTeam.Name);
         Assert.AreEqual("BRAZIL", result.AwayTeam.Name);
     }
+
+    [TestMethod]
+    public void SetMatchResult_WithExistingMatch_ShouldUpdateResult()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.SetMatchResult(savedMatch.Id, 3, 1);
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+
+        Assert.AreEqual(3, result.HomeGoals);
+        Assert.AreEqual(1, result.AwayGoals);
+        Assert.AreEqual("ARGENTINA", result.Winner!.Name);
+    }
 }
