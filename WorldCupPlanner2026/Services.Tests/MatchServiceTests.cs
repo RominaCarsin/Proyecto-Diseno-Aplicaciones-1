@@ -210,7 +210,7 @@ public class MatchServiceTests
     }
     
     [TestMethod]
-    public void UpdateMatchDate_WhenMatchWasLockedByPhase_ShouldThrowException()
+    public void UpdateMatchDate_WhenMatchWasLockedByPhase_ShouldThrowArgumentException()
     {
         var request = CreateValidGroupStageMatchRequest();
 
@@ -220,7 +220,7 @@ public class MatchServiceTests
 
         _matchService.LockMatchesByPhase("GroupStage");
 
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             _matchService.UpdateMatchDate(savedMatch.Id, new DateTime(2026, 6, 20)));
     }
 }

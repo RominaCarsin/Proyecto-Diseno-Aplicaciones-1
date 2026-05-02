@@ -72,7 +72,14 @@ public class MatchService
     {
         var match = FindMatchById(id);
 
-        match.UpdateDate(newDate);
+        try
+        {
+            match.UpdateDate(newDate);
+        }
+        catch (Exception exception)
+        {
+            throw new ArgumentException(exception.Message);
+        }
     }
     
     public void UpdateMatchStadium(int id, StadiumRequest newStadium)
