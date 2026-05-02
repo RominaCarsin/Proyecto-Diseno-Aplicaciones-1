@@ -238,4 +238,27 @@ public class MatchServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.SetMatchResult(savedMatch.Id, 2, 1));
     }
+    
+    [TestMethod]
+    public void GetMatchById_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.GetMatchById(999));
+    }
+    
+    [TestMethod]
+    public void UpdateMatchStadium_WhenMatchWasLockedByPhase_ShouldThrowArgumentException()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+        var newStadium = CreateAnotherValidStadiumRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.LockMatchesByPhase("GroupStage");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.UpdateMatchStadium(savedMatch.Id, newStadium));
+    }
 }

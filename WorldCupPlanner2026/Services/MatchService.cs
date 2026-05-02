@@ -94,7 +94,14 @@ public class MatchService
         var match = FindMatchById(id);
         var stadium = StadiumMapper.ToEntity(newStadium);
 
-        match.UpdateStadium(stadium);
+        try
+        {
+            match.UpdateStadium(stadium);
+        }
+        catch (Exception exception)
+        {
+            throw new ArgumentException(exception.Message);
+        }
     }
     
     public void LockMatchEdition(int id)
