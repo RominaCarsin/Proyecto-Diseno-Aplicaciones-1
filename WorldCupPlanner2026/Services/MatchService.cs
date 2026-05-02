@@ -16,6 +16,8 @@ public class MatchService
     
     private const string RequiredMatchError = "Match cannot be null";
 
+    private const string MatchNotFoundError = "Match was not found.";
+    
     public MatchService(IRepository<Match> repository)
     {
         _repository = repository;
@@ -37,5 +39,25 @@ public class MatchService
     {
         return _repository.GetAll()
             .Select(MatchMapper.ToResponse);
+    }
+    
+    public MatchResponse GetMatchById(int id)
+    {
+        var match = FindMatchById(id);
+
+        return MatchMapper.ToResponse(match);
+    }
+
+    private Match FindMatchById(int id)
+    {
+        var match = _repository.GetAll()
+            .FirstOrDefault(match => match.Id == id);
+
+        if (match is null)
+        {
+            throw new ArgumentException(MatchNotFoundError);
+        }
+
+        return match;
     }
 }
