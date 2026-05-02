@@ -223,4 +223,19 @@ public class MatchServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.UpdateMatchDate(savedMatch.Id, new DateTime(2026, 6, 20)));
     }
+    
+    [TestMethod]
+    public void SetMatchResult_WhenMatchWasLockedByPhase_ShouldThrowArgumentException()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.LockMatchesByPhase("GroupStage");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.SetMatchResult(savedMatch.Id, 2, 1));
+    }
 }
