@@ -140,4 +140,21 @@ public class MatchServiceTests
         Assert.AreEqual(1, result.AwayGoals);
         Assert.AreEqual("ARGENTINA", result.Winner!.Name);
     }
+    
+    [TestMethod]
+    public void UpdateMatchDate_WithExistingMatch_ShouldUpdateDate()
+    {
+        var request = CreateValidGroupStageMatchRequest();
+        var newDate = new DateTime(2026, 6, 10);
+
+        _matchService.AddMatch(request);
+
+        var savedMatch = _matchService.GetMatches().First();
+
+        _matchService.UpdateMatchDate(savedMatch.Id, newDate);
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+
+        Assert.AreEqual(newDate, result.Date);
+    }
 }
