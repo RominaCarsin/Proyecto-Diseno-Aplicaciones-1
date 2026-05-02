@@ -60,4 +60,11 @@ public class MatchService
 
         return match;
     }
+    
+    public void SetMatchResult(int id, int homeGoals, int awayGoals)
+    {
+        var match = FindMatchById(id);
+
+        match.SetResult(homeGoals, awayGoals);
+    }
 }
