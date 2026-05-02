@@ -98,4 +98,11 @@ public class MatchServiceTests
 
         Assert.AreEqual(1, _matchService.GetMatches().Count());
     }
+    
+    [TestMethod]
+    public void AddMatch_WithNullRequest_ShouldThrowDomainException()
+    {
+        Assert.ThrowsException<DomainException>(() =>
+            _matchService.AddMatch(null!));
+    }
 }
