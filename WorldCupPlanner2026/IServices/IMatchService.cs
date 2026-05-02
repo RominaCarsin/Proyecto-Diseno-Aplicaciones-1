@@ -1,22 +1,22 @@
-﻿using Domain;
+﻿using DTOs;
 
 namespace IServices;
 
 public interface IMatchService
 {
-    void AddMatch(Match match);
+    void AddMatch(MatchRequest request);
 
-    IEnumerable<Match> GetMatches();
+    IEnumerable<MatchResponse> GetMatches();
 
-    Match GetMatchById(int id);
+    MatchResponse GetMatchById(int id);
 
     void SetMatchResult(int id, int homeGoals, int awayGoals);
 
     void UpdateMatchDate(int id, DateTime newDate);
 
-    void UpdateMatchStadium(int id, Stadium newStadium);
+    void UpdateMatchStadium(int id, StadiumRequest newStadium);
 
     void LockMatchEdition(int id);
 
-    void LockMatchesByPhase(TournamentPhase phase);
+    void LockMatchesByPhase(string phase);
 }

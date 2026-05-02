@@ -6,8 +6,13 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
-<!--      <ProjectReference Include="..\Web\Web.csproj" />-->
+    <ItemGroup><!--      <ProjectReference Include="..\Web\Web.csproj" />-->
+    
+      <ProjectReference Include="..\Domain.Test\Domain.Test.csproj" />
+      <ProjectReference Include="..\Domain\Domain.csproj" />
+      <ProjectReference Include="..\IRepository\IRepository.csproj" />
+      <ProjectReference Include="..\Repository.Tests\Repository.Tests.csproj" />
+      <ProjectReference Include="..\Repository\Repository.csproj" />
     </ItemGroup>
 
 </Project>
