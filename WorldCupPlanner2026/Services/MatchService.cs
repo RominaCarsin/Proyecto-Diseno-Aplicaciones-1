@@ -13,6 +13,8 @@ using IRepository;
 public class MatchService
 {
     private readonly IRepository<Match> _repository;
+    
+    private const string RequiredMatchError = "Match cannot be null";
 
     public MatchService(IRepository<Match> repository)
     {
@@ -21,6 +23,11 @@ public class MatchService
     
     public void AddMatch(MatchRequest request)
     {
+        if (request is null)
+        {
+            throw new ArgumentException(RequiredMatchError);
+        }
+
         var match = MatchMapper.ToEntity(request);
 
         _repository.Add(match);

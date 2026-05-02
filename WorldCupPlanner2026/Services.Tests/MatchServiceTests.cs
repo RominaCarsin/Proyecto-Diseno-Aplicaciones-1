@@ -100,9 +100,11 @@ public class MatchServiceTests
     }
     
     [TestMethod]
-    public void AddMatch_WithNullRequest_ShouldThrowDomainException()
+    public void AddMatch_WithNullRequest_ShouldThrowArgumentException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             _matchService.AddMatch(null!));
     }
+    
+    
 }
