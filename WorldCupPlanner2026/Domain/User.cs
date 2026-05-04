@@ -11,10 +11,10 @@ public enum Role
 
 public class User
 {
-    public string Name { get; set; }
-    public string Surname { get; set; }
-    public string Email { get; set; }
-    public DateTime DateOfBirth { get; set; }
+    public string Name { get; private set; }
+    public string Surname { get; private set; }
+    public string Email { get; private set; }
+    public DateTime DateOfBirth { get; private set; }
     public string PasswordHash { get; private set; } = string.Empty;
     public Role Roles { get; private set; }
 
@@ -22,19 +22,24 @@ public class User
 
     public User(string name, string surname, string email, DateTime dateOfBirth, string plainPassword, Role roles = Role.None)
     {
-       ValidateName(name);
-       ValidateSurname(surname);
-       ValidateEmail(email);
-       ValidateBirthDate(dateOfBirth);
-       ValidatePasswordComplexity(plainPassword);
-
-       Name = name;
-       Surname = surname;
-       Email = email;
-       DateOfBirth = dateOfBirth;
+       UpdatePersonalInfo(name, surname, email, dateOfBirth);
        Roles = roles;
-
+       ValidatePasswordComplexity(plainPassword);
        SetPassword(plainPassword);
+    }
+
+    public void UpdatePersonalInfo(string name, string surname, string email, DateTime dateOfBirth)
+    {
+        ValidateName(name);
+        ValidateSurname(surname);
+        ValidateEmail(email);
+        ValidateBirthDate(dateOfBirth);
+       
+
+        Name = name;
+        Surname = surname;
+        Email = email;
+        DateOfBirth = dateOfBirth;
     }
 
     public void SetPassword(string plainPassword)
@@ -97,10 +102,12 @@ public class User
 
     private void ValidateBirthDate(DateTime birthDate)
     {
-        if (birthDate < DateTime.Now.AddYears(-120))
-            throw new ArgumentException("Date of birth is not realistic");
         if (birthDate == DateTime.MinValue)
             throw new ArgumentException("Date of birth is required");
+        
+        if (birthDate < DateTime.Now.AddYears(-120))
+            throw new ArgumentException("Date of birth is not realistic");
+        
         if (birthDate > DateTime.Now)
             throw new ArgumentException("Date of birth cannot be in the future");
     }

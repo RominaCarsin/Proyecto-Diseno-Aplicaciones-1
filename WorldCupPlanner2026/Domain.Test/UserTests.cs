@@ -176,4 +176,131 @@ public class UserTests
         Assert.IsTrue(user.VerifyPassword("Newpass1!"));
         Assert.IsFalse(user.VerifyPassword("Password1!"));
     }
+    
+    [TestMethod]
+    public void SetPassword_WithInvalidPassword_ShouldThrow()
+    {
+        var user = new User("Juan", "Chaves", "a@gmail.com", new DateTime(2000,1,1), "Password1!");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            user.SetPassword("short"));
+    }
+
+    [TestMethod]
+    public void AddRole_ShouldAddRoleToUser()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        user.AddRole(Role.Admin);
+
+        Assert.IsTrue(user.HasRole(Role.Admin));
+    }
+
+    [TestMethod]
+    public void AddRole_ShouldAllowMultipleRoles()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        user.AddRole(Role.Admin);
+        user.AddRole(Role.Editor);
+
+        Assert.IsTrue(user.HasRole(Role.Admin));
+        Assert.IsTrue(user.HasRole(Role.Editor));
+    }
+
+    [TestMethod]
+    public void RemoveRole_ShouldRemoveRoleFromUser()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        user.AddRole(Role.Admin);
+        user.RemoveRole(Role.Admin);
+
+        Assert.IsFalse(user.HasRole(Role.Admin));
+    }
+
+    [TestMethod]
+    public void RemoveRole_ShouldNotAffectOtherRoles()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        user.AddRole(Role.Admin);
+        user.AddRole(Role.Editor);
+        user.RemoveRole(Role.Admin);
+
+        Assert.IsFalse(user.HasRole(Role.Admin));
+        Assert.IsTrue(user.HasRole(Role.Editor));
+    }
+
+    [TestMethod]
+    public void HasRole_ShouldReturnFalseWhenRoleNotAdded()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2026, 4, 12), "Password1!");
+
+        Assert.IsFalse(user.HasRole(Role.Admin));
+    }
+    
+    [TestMethod]
+    public void HasRole_WithCombinedRoles_ShouldWorkCorrectly()
+    {
+        var user = new User("Juan", "Chaves", "a@gmail.com", new DateTime(2000,1,1), "Password1!");
+
+        user.AddRole(Role.Admin | Role.Editor);
+
+        Assert.IsTrue(user.HasRole(Role.Admin));
+        Assert.IsTrue(user.HasRole(Role.Editor));
+        Assert.IsTrue(user.HasRole(Role.Admin | Role.Editor));
+    }
+    
+    [TestMethod]
+    public void RemoveRole_WhenRoleNotPresent_ShouldDoNothing()
+    {
+        var user = new User("Juan", "Chaves", "a@gmail.com", new DateTime(2000,1,1), "Password1!");
+
+        user.RemoveRole(Role.Admin);
+
+        Assert.IsFalse(user.HasRole(Role.Admin));
+    }
+    
+    [TestMethod]
+    public void CreateUser_WithInitialRoles_ShouldAssignRoles()
+    {
+        var user = new User("Juan", "Chaves", "a@gmail.com", new DateTime(2000,1,1), "Password1!", Role.Admin);
+
+        Assert.IsTrue(user.HasRole(Role.Admin));
+    }
+    
+    [TestMethod]
+    public void VerifyPassword_WithEmptyHash_ShouldReturnFalse()
+    {
+        var user = new User("Juan", "Chaves", "jauncito@gmail.com", new DateTime(2000, 1, 1), "Password1!");
+
+        typeof(User)
+            .GetProperty("PasswordHash")
+            .SetValue(user, "");
+
+        Assert.IsFalse(user.VerifyPassword("Password1!"));
+    }
+    
+    [TestMethod]
+    public void UpdatePersonalInfo_ShouldUpdateFields()
+    {
+        var user = new User("Juan", "Chaves", "a@gmail.com", new DateTime(2000,1,1), "Password1!");
+
+        user.UpdatePersonalInfo("Pedro", "Gomez", "b@gmail.com", new DateTime(1995,1,1));
+
+        Assert.AreEqual("Pedro", user.Name);
+        Assert.AreEqual("Gomez", user.Surname);
+        Assert.AreEqual("b@gmail.com", user.Email);
+    }
+    
+    [TestMethod]
+    public void UpdatePersonalInfo_WithInvalidName_ShouldThrow()
+    {
+        var user = new User("Juan", "Chaves", "a@gmail.com", new DateTime(2000,1,1), "Password1!");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            user.UpdatePersonalInfo("", "Gomez", "b@gmail.com", new DateTime(1995,1,1)));
+    }
+    
 }

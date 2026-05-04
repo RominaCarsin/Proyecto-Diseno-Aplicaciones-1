@@ -1,6 +1,5 @@
 using Domain;
 using DTOs;
-using IServices;
 using IRepository;
 using Repository;
 
@@ -10,7 +9,7 @@ namespace Services.Tests;
 public class UserServiceTests
 {
     private UserService _service;
-    private IRepository<User> _repository;
+    private IUserRepository _repository;
     private UserRequest _validUser = new UserRequest {
         Name = "Juan",
         Surname = "Perez",
@@ -31,8 +30,25 @@ public class UserServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<User>();
+        _repository = new UserRepository();
         _service = new UserService(_repository);
+    }
+
+    private void CreateAdminUser(string email, string name, string surname, DateTime dob, string password)
+    {
+        var adminRequest = new UserRequest
+        {
+            Name = name,
+            Surname = surname,
+            Email = email,
+            DateOfBirth = dob,
+            Password = password
+        };
+        _service.AddUser(adminRequest);
+        
+        // Asignar rol admin directamente desde el repositorio (bootstrap inicial)
+        var admin = _repository.GetByEmail(email);
+        admin!.AddRole(Role.Admin);
     }
 
     [TestMethod]
@@ -72,6 +88,7 @@ public class UserServiceTests
 
         var user = _repository.GetAll().FirstOrDefault(u => u.Email == "juan@gmail.com");
 
+        Assert.IsNotNull(user);
         Assert.AreEqual("Nuevo", user.Name);
         Assert.AreEqual("Apellido", user.Surname);
     }
@@ -121,8 +138,6 @@ public class UserServiceTests
             _service.DeleteUser("notfound@gmail.com"));
     }
 
-    
-    [Ignore("UserService methods not implemented yet")]
     [TestMethod]
     public void GetUserByEmail_ShouldReturnUser()
     {
@@ -134,7 +149,6 @@ public class UserServiceTests
         Assert.AreEqual("juan@gmail.com", result.Email);
     }
 
-    [Ignore("UserService methods not implemented yet")]
     [TestMethod]
     public void GetUsers_ShouldReturnAllUsers()
     {
@@ -149,9 +163,10 @@ public class UserServiceTests
     [TestMethod]
     public void AddRoleToUser_ShouldAssignRole()
     {
+        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
         _service.AddUser(_validUser);
 
-        _service.AddRoleToUser("juan@gmail.com", RoleDto.Admin);
+        _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
 
         var hasRole = _service.UserHasRole("juan@gmail.com", RoleDto.Admin);
 
@@ -159,19 +174,42 @@ public class UserServiceTests
     }
 
     [TestMethod]
-    public void RemoveRoleFromUser_ShouldRemoveRole()
+    public void AddRoleToUser_WhenAdminNotAuthenticated_ShouldThrowException()
     {
         _service.AddUser(_validUser);
+        _service.AddUser(_otherUser);
 
-        _service.AddRoleToUser("juan@gmail.com", RoleDto.Admin);
-        _service.RemoveRoleFromUser("juan@gmail.com", RoleDto.Admin);
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddRoleToUser("carlos@gmail.com", "juan@gmail.com", RoleDto.Admin));
+    }
+
+    [TestMethod]
+    public void RemoveRoleFromUser_ShouldRemoveRole()
+    {
+        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
+        _service.AddUser(_validUser);
+
+        _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
+        _service.RemoveRoleFromUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
 
         var hasRole = _service.UserHasRole("juan@gmail.com", RoleDto.Admin);
 
         Assert.IsFalse(hasRole);
     }
 
-    [Ignore("UserService methods not implemented yet")]
+    [TestMethod]
+    public void RemoveRoleFromUser_WhenAdminNotAuthenticated_ShouldThrowException()
+    {
+        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
+        _service.AddUser(_validUser);
+        _service.AddUser(_otherUser);
+
+        _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.RemoveRoleFromUser("carlos@gmail.com", "juan@gmail.com", RoleDto.Admin));
+    }
+
     [TestMethod]
     public void Login_WithCorrectCredentials_ShouldReturnUser()
     {
@@ -182,7 +220,6 @@ public class UserServiceTests
         Assert.AreEqual("juan@gmail.com", result.Email);
     }
 
-    [Ignore("UserService methods not implemented yet")]
     [TestMethod]
     public void Login_WithWrongPassword_ShouldThrowException()
     {
@@ -192,30 +229,49 @@ public class UserServiceTests
             _service.Login("juan@gmail.com", "WrongPassword"));
     }
 
-    [Ignore("UserService methods not implemented yet")]
     [TestMethod]
     public void ChangePassword_ShouldUpdatePassword()
     {
         _service.AddUser(_validUser);
 
-        _service.ChangePassword("juan@gmail.com", "Newpass1!");
+        _service.ChangePassword("juan@gmail.com", "Password1!", "Newpass1!");
 
         var user = _repository.GetAll().First();
 
         Assert.IsTrue(user.VerifyPassword("Newpass1!"));
     }
 
-    [Ignore("UserService methods not implemented yet")]
     [TestMethod]
-    public void ResetPassword_ShouldChangePassword()
+    public void ChangePassword_WithWrongCurrentPassword_ShouldThrowException()
     {
         _service.AddUser(_validUser);
 
-        _service.ResetPassword("juan@gmail.com");
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.ChangePassword("juan@gmail.com", "WrongPassword", "Newpass1!"));
+    }
 
-        var user = _repository.GetAll().First();
+    [TestMethod]
+    public void ResetPassword_ShouldChangePassword()
+    {
+        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
+        _service.AddUser(_validUser);
+
+        _service.ResetPassword("admin@test.com", "juan@gmail.com", "NewPass1!");
+
+        var user = _repository.GetAll().First(u => u.Email == "juan@gmail.com");
 
         Assert.IsFalse(user.VerifyPassword("Password1!"));
-    }   
+        Assert.IsTrue(user.VerifyPassword("NewPass1!"));
+    }
 
+    [TestMethod]
+    public void ResetPassword_WhenAdminNotAuthenticated_ShouldThrowException()
+    {
+        _service.AddUser(_validUser);
+        _service.AddUser(_otherUser);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.ResetPassword("carlos@gmail.com", "juan@gmail.com", "NewPass1!"));
+    }
 }
+

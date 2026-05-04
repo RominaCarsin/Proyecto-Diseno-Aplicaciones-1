@@ -8,7 +8,7 @@ namespace Services;
 
 public class TeamService : ITeamService
 {
-    private readonly IRepository<Team> _repository;
+     private readonly IRepository<Team> _repository;
     private readonly IConfederationService _confederationService;
 
     public TeamService(IRepository<Team> repository, IConfederationService confederationService)
