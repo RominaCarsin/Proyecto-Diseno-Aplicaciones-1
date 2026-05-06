@@ -8,11 +8,11 @@ namespace Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IRepository<User> _repository;
     
-    public UserService(IUserRepository userRepository)
+    public UserService(IRepository<User> repository)
     {
-        _userRepository = userRepository;
+        _repository = repository;
     }
     
     public UserResponse AddUser(UserRequest request)
@@ -20,17 +20,15 @@ public class UserService : IUserService
         if (FindByEmail(request.Email) != null)
             throw new ArgumentException("User already exists");
         var user = UserMapper.ToEntity(request);
-        _userRepository.Add(user);
+        _repository.Add(user);
         return UserMapper.FromEntity(user);
     }
 
     private User GetExistingUserOrThrowArgumentException(string email) =>
         FindByEmail(email) ?? throw new ArgumentException("User not found.");
     
-    private User? FindByEmail(string email)
-    {
-        return _userRepository.GetByEmail(email);
-    }
+    private User? FindByEmail(string email) =>
+        _repository.GetAll().FirstOrDefault(u =>  u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
     
     public void UpdateUser(string email, UserRequest request)
     {
@@ -47,7 +45,7 @@ public class UserService : IUserService
     private void ValidateEmailNotInUse(string currentEmail, string newEmail)
     {
         if (!currentEmail.Equals(newEmail, StringComparison.OrdinalIgnoreCase)
-            && _userRepository.ExistsByEmail(newEmail))
+            && FindByEmail(newEmail) != null)
         {
             throw new ArgumentException("Email already in use");
         }
@@ -77,7 +75,7 @@ public class UserService : IUserService
     public void DeleteUser(string email)
     {
         User existingUser = GetExistingUserOrThrowArgumentException(email);
-        _userRepository.Delete(existingUser);
+        _repository.Delete(existingUser);
     }
 
     public UserResponse GetUserByEmail(string email)
@@ -88,7 +86,7 @@ public class UserService : IUserService
 
     public IEnumerable<UserResponse> GetUsers()
     {
-        return _userRepository.GetAll().Select(UserMapper.FromEntity);
+        return _repository.GetAll().Select(UserMapper.FromEntity);
     }
 
     public UserResponse Login(string email, string password)

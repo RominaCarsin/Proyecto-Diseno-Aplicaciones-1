@@ -9,7 +9,7 @@ namespace Services.Tests;
 public class UserServiceTests
 {
     private UserService _service;
-    private IUserRepository _repository;
+    private IRepository<User> _repository;
     private UserRequest _validUser = new UserRequest {
         Name = "Juan",
         Surname = "Perez",
@@ -17,7 +17,6 @@ public class UserServiceTests
         DateOfBirth = new DateTime(2000, 1, 1),
         Password = "Password1!"
     };
-
     private UserRequest _otherUser = new UserRequest
     {
         Name = "Carlos",
@@ -30,7 +29,7 @@ public class UserServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new UserRepository();
+        _repository = new Repository<User>();
         _service = new UserService(_repository);
     }
 
@@ -46,20 +45,21 @@ public class UserServiceTests
         };
         _service.AddUser(adminRequest);
         
-        // Asignar rol admin directamente desde el repositorio (bootstrap inicial)
-        var admin = _repository.GetByEmail(email);
+        var admin = _repository.GetAll().FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
         admin!.AddRole(Role.Admin);
     }
 
     [TestMethod]
     public void AddUser_WithValidData_ShouldAddUser()
     {
-        _service.AddUser(_validUser);
+        var result = _service.AddUser(_validUser);
 
         var user = _repository.GetAll().FirstOrDefault(u => u.Email == "juan@gmail.com");
 
         Assert.IsNotNull(user);
         Assert.AreEqual("Juan", user.Name);
+        Assert.AreEqual("juan@gmail.com", result.Email);
+        Assert.AreEqual("Juan", result.Name);
     }
 
     [TestMethod]
@@ -158,6 +158,8 @@ public class UserServiceTests
         var result = _service.GetUsers().ToList();
 
         Assert.AreEqual(2, result.Count);
+        Assert.IsTrue(result.Any(u => u.Email == "juan@gmail.com" && u.Name == "Juan"));
+        Assert.IsTrue(result.Any(u => u.Email == "carlos@gmail.com" && u.Name == "Carlos"));
     }
 
     [TestMethod]
@@ -167,7 +169,6 @@ public class UserServiceTests
         _service.AddUser(_validUser);
 
         _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
-
         var hasRole = _service.UserHasRole("juan@gmail.com", RoleDto.Admin);
 
         Assert.IsTrue(hasRole);
