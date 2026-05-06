@@ -1,0 +1,581 @@
+﻿@page "/Matches/Create"
+@rendermode InteractiveServer
+@using DTOs
+@using IServices
+@inject IMatchService MatchService
+@inject IStadiumService StadiumService
+@inject ITeamService TeamService
+
+<div class="page-wrap">
+
+    <div class="ph">
+        <h1 class="pt">Matches</h1>
+        <p class="ps">Create and edit matches · WorldCupPlanner 2026</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">New match</span>
+        </div>
+
+        <div class="card-body">
+
+            <div class="fg">
+                <label class="fl">Date <span class="req">*</span></label>
+                <input class="finput @(_dateInvalid ? "invalid" : "")"
+                       type="datetime-local"
+                       @bind="_date" />
+                @if (_dateInvalid)
+                {
+                    <span class="ferr">Date is required.</span>
+                }
+            </div>
+
+            <div class="fg">
+                <label class="fl">Stadium <span class="req">*</span></label>
+                <select class="finput @(_stadiumInvalid ? "invalid" : "")"
+                        @bind="_selectedStadiumName">
+                    <option value="">Select stadium</option>
+                    @foreach (var stadium in _stadiums)
+                    {
+                        <option value="@stadium.Name">@stadium.Name - @stadium.City</option>
+                    }
+                </select>
+                @if (_stadiumInvalid)
+                {
+                    <span class="ferr">Stadium is required.</span>
+                }
+            </div>
+
+            <div class="fg">
+                <label class="fl">Home team <span class="req">*</span></label>
+                <select class="finput @(_homeTeamInvalid ? "invalid" : "")"
+                        @bind="_selectedHomeTeamName">
+                    <option value="">Select home team</option>
+                    @foreach (var team in _teams)
+                    {
+                        <option value="@team.Name">@team.Name</option>
+                    }
+                </select>
+                @if (_homeTeamInvalid)
+                {
+                    <span class="ferr">Home team is required.</span>
+                }
+            </div>
+
+            <div class="fg">
+                <label class="fl">Away team <span class="req">*</span></label>
+                <select class="finput @(_awayTeamInvalid ? "invalid" : "")"
+                        @bind="_selectedAwayTeamName">
+                    <option value="">Select away team</option>
+                    @foreach (var team in _teams)
+                    {
+                        <option value="@team.Name">@team.Name</option>
+                    }
+                </select>
+                @if (_awayTeamInvalid)
+                {
+                    <span class="ferr">Away team is required and must be different from home team.</span>
+                }
+            </div>
+
+            <div class="fg">
+                <label class="fl">Phase <span class="req">*</span></label>
+                <select class="finput" @bind="_phase">
+                    <option value="GroupStage">Group stage</option>
+                    <option value="RoundOf32">Round of 32</option>
+                    <option value="QuarterFinals">Quarter finals</option>
+                    <option value="SemiFinals">Semi finals</option>
+                    <option value="ThirdPlace">Third place</option>
+                    <option value="Final">Final</option>
+                </select>
+            </div>
+
+            @if (_phase == "GroupStage")
+            {
+                <div class="fg">
+                    <label class="fl">Group <span class="req">*</span></label>
+                    <select class="finput @(_groupInvalid ? "invalid" : "")"
+                            @bind="_group">
+                        <option value="">Select group</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group">@group</option>
+                        }
+                    </select>
+                    @if (_groupInvalid)
+                    {
+                        <span class="ferr">Group is required for group stage matches.</span>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <div class="alert-box suc">✓ @_successMessage</div>
+            }
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert-box err">@_errorMessage</div>
+            }
+
+        </div>
+
+        <div class="card-footer">
+            <button class="btn-p" @onclick="SaveMatch">Save match</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+            <span class="card-title">Filters</span>
+        </div>
+
+        <div class="card-body">
+            <div class="filters-grid">
+                <div class="fg">
+                    <label class="fl">Date</label>
+                    <input class="finput" type="date" @bind="_filterDate" />
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Stadium</label>
+                    <select class="finput" @bind="_filterStadium">
+                        <option value="">All stadiums</option>
+                        @foreach (var stadium in _stadiums)
+                        {
+                            <option value="@stadium.Name">@stadium.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Group</label>
+                    <select class="finput" @bind="_filterGroup">
+                        <option value="">All groups</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group">@group</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Phase</label>
+                    <select class="finput" @bind="_filterPhase">
+                        <option value="">All phases</option>
+                        <option value="GroupStage">Group stage</option>
+                        <option value="RoundOf32">Round of 32</option>
+                        <option value="QuarterFinals">Quarter finals</option>
+                        <option value="SemiFinals">Semi finals</option>
+                        <option value="ThirdPlace">Third place</option>
+                        <option value="Final">Final</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-g" @onclick="ClearFilters">Clear filters</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+            <span class="card-title">Registered matches (@FilteredMatches.Count())</span>
+        </div>
+
+        <div class="card-body" style="overflow-x: auto;">
+            @if (!FilteredMatches.Any())
+            {
+                <p style="color: #888;">No matches registered yet.</p>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Date</th>
+                        <th>Stadium</th>
+                        <th>Home</th>
+                        <th>Away</th>
+                        <th>Group</th>
+                        <th>Phase</th>
+                        <th>Result</th>
+                        <th>Winner</th>
+                        <th>Locked</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var match in FilteredMatches)
+                    {
+                        <tr>
+                            <td>@match.Id</td>
+                            <td>@match.Date.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@match.Stadium.Name</td>
+                            <td>@match.HomeTeam.Name</td>
+                            <td>@match.AwayTeam.Name</td>
+                            <td>@(match.Group?.ToString() ?? "-")</td>
+                            <td>@match.Phase</td>
+                            <td>@FormatResult(match)</td>
+                            <td>@(match.Winner?.Name ?? "-")</td>
+                            <td>@(match.IsLocked ? "Yes" : "No")</td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="btn btn-s"
+                                            disabled="@match.IsLocked"
+                                            @onclick="() => StartEditDate(match)">
+                                        Date
+                                    </button>
+
+                                    <button class="btn btn-s"
+                                            disabled="@match.IsLocked"
+                                            @onclick="() => StartEditStadium(match)">
+                                        Stadium
+                                    </button>
+
+                                    <button class="btn btn-s"
+                                            disabled="@match.IsLocked"
+                                            @onclick="() => StartEditResult(match)">
+                                        Result
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    @if (_editingMatchId != null)
+    {
+        <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">
+                <span class="card-title">@_editTitle</span>
+            </div>
+
+            <div class="card-body">
+                @if (_editMode == EditMode.Date)
+                {
+                    <div class="fg">
+                        <label class="fl">New date</label>
+                        <input class="finput" type="datetime-local" @bind="_editDate" />
+                    </div>
+                }
+
+                @if (_editMode == EditMode.Stadium)
+                {
+                    <div class="fg">
+                        <label class="fl">New stadium</label>
+                        <select class="finput" @bind="_editStadiumName">
+                            @foreach (var stadium in _stadiums)
+                            {
+                                <option value="@stadium.Name">@stadium.Name - @stadium.City</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @if (_editMode == EditMode.Result)
+                {
+                    <div class="fg">
+                        <label class="fl">Home goals</label>
+                        <input class="finput" type="number" min="0" @bind="_editHomeGoals" />
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Away goals</label>
+                        <input class="finput" type="number" min="0" @bind="_editAwayGoals" />
+                    </div>
+                }
+            </div>
+
+            <div class="card-footer">
+                <button class="btn btn-g" @onclick="CancelEdit">Cancel</button>
+                <button class="btn-p" @onclick="SaveEdit">Save changes</button>
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+    private enum EditMode
+    {
+        None,
+        Date,
+        Stadium,
+        Result
+    }
+
+    private DateTime _date = new(2026, 6, 1, 14, 0, 0);
+    private string _selectedStadiumName = string.Empty;
+    private string _selectedHomeTeamName = string.Empty;
+    private string _selectedAwayTeamName = string.Empty;
+    private string _phase = "GroupStage";
+    private string? _group = "A";
+
+    private string _errorMessage = string.Empty;
+    private string _successMessage = string.Empty;
+
+    private bool _dateInvalid;
+    private bool _stadiumInvalid;
+    private bool _homeTeamInvalid;
+    private bool _awayTeamInvalid;
+    private bool _groupInvalid;
+
+    private IEnumerable<MatchResponse> _matches = Enumerable.Empty<MatchResponse>();
+    private IEnumerable<StadiumResponse> _stadiums = Enumerable.Empty<StadiumResponse>();
+    private IEnumerable<TeamResponse> _teams = Enumerable.Empty<TeamResponse>();
+
+    private readonly char[] _groups = Enumerable.Range('A', 12)
+        .Select(value => (char)value)
+        .ToArray();
+
+    private DateTime? _filterDate;
+    private string _filterStadium = string.Empty;
+    private string _filterGroup = string.Empty;
+    private string _filterPhase = string.Empty;
+
+    private int? _editingMatchId;
+    private EditMode _editMode = EditMode.None;
+    private string _editTitle = string.Empty;
+    private DateTime _editDate;
+    private string _editStadiumName = string.Empty;
+    private int _editHomeGoals;
+    private int _editAwayGoals;
+
+    private IEnumerable<MatchResponse> FilteredMatches =>
+        _matches
+            .Where(MatchesDateFilter)
+            .Where(MatchesStadiumFilter)
+            .Where(MatchesGroupFilter)
+            .Where(MatchesPhaseFilter)
+            .OrderBy(match => match.Date);
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
+
+    private void SaveMatch()
+    {
+        ClearMessages();
+
+        if (!ValidateForm())
+        {
+            return;
+        }
+
+        try
+        {
+            MatchService.AddMatch(BuildMatchRequest());
+            _successMessage = "Match created successfully!";
+            ClearCreateForm();
+            LoadData();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private MatchRequest BuildMatchRequest()
+    {
+        var stadium = FindStadiumRequest(_selectedStadiumName);
+        var homeTeam = FindTeamRequest(_selectedHomeTeamName);
+        var awayTeam = FindTeamRequest(_selectedAwayTeamName);
+
+        return new MatchRequest
+        {
+            Date = _date,
+            Stadium = stadium,
+            HomeTeam = homeTeam,
+            AwayTeam = awayTeam,
+            Group = _phase == "GroupStage" ? _group![0] : null,
+            Phase = _phase
+        };
+    }
+
+    private bool ValidateForm()
+    {
+        _dateInvalid = _date == DateTime.MinValue;
+        _stadiumInvalid = string.IsNullOrWhiteSpace(_selectedStadiumName);
+        _homeTeamInvalid = string.IsNullOrWhiteSpace(_selectedHomeTeamName);
+        _awayTeamInvalid = string.IsNullOrWhiteSpace(_selectedAwayTeamName)
+                           || _selectedAwayTeamName == _selectedHomeTeamName;
+        _groupInvalid = _phase == "GroupStage" && string.IsNullOrWhiteSpace(_group);
+
+        return !_dateInvalid
+               && !_stadiumInvalid
+               && !_homeTeamInvalid
+               && !_awayTeamInvalid
+               && !_groupInvalid;
+    }
+
+    private void StartEditDate(MatchResponse match)
+    {
+        _editingMatchId = match.Id;
+        _editMode = EditMode.Date;
+        _editTitle = $"Edit date · Match {match.Id}";
+        _editDate = match.Date;
+        ClearMessages();
+    }
+
+    private void StartEditStadium(MatchResponse match)
+    {
+        _editingMatchId = match.Id;
+        _editMode = EditMode.Stadium;
+        _editTitle = $"Edit stadium · Match {match.Id}";
+        _editStadiumName = match.Stadium.Name;
+        ClearMessages();
+    }
+
+    private void StartEditResult(MatchResponse match)
+    {
+        _editingMatchId = match.Id;
+        _editMode = EditMode.Result;
+        _editTitle = $"Load result · Match {match.Id}";
+        _editHomeGoals = match.HomeGoals ?? 0;
+        _editAwayGoals = match.AwayGoals ?? 0;
+        ClearMessages();
+    }
+
+    private void SaveEdit()
+    {
+        if (_editingMatchId is null)
+        {
+            return;
+        }
+
+        ClearMessages();
+
+        try
+        {
+            if (_editMode == EditMode.Date)
+            {
+                MatchService.UpdateMatchDate(_editingMatchId.Value, _editDate);
+            }
+
+            if (_editMode == EditMode.Stadium)
+            {
+                MatchService.UpdateMatchStadium(_editingMatchId.Value, FindStadiumRequest(_editStadiumName));
+            }
+
+            if (_editMode == EditMode.Result)
+            {
+                MatchService.SetMatchResult(_editingMatchId.Value, _editHomeGoals, _editAwayGoals);
+            }
+
+            _successMessage = "Match updated successfully!";
+            CancelEdit();
+            LoadData();
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editingMatchId = null;
+        _editMode = EditMode.None;
+        _editTitle = string.Empty;
+    }
+
+    private void ClearFilters()
+    {
+        _filterDate = null;
+        _filterStadium = string.Empty;
+        _filterGroup = string.Empty;
+        _filterPhase = string.Empty;
+    }
+
+    private void ClearCreateForm()
+    {
+        _date = new DateTime(2026, 6, 1, 14, 0, 0);
+        _selectedStadiumName = string.Empty;
+        _selectedHomeTeamName = string.Empty;
+        _selectedAwayTeamName = string.Empty;
+        _phase = "GroupStage";
+        _group = "A";
+
+        _dateInvalid = false;
+        _stadiumInvalid = false;
+        _homeTeamInvalid = false;
+        _awayTeamInvalid = false;
+        _groupInvalid = false;
+    }
+
+    private void ClearMessages()
+    {
+        _errorMessage = string.Empty;
+        _successMessage = string.Empty;
+    }
+
+    private void LoadData()
+    {
+        _matches = MatchService.GetMatches();
+        _stadiums = StadiumService.GetStadiums();
+        _teams = TeamService.GetTeams();
+    }
+
+    private StadiumRequest FindStadiumRequest(string stadiumName)
+    {
+        var stadium = _stadiums.First(stadium => stadium.Name == stadiumName);
+
+        return new StadiumRequest
+        {
+            Name = stadium.Name,
+            City = stadium.City,
+            Description = stadium.Description,
+            Capacity = stadium.Capacity
+        };
+    }
+
+    private TeamRequest FindTeamRequest(string teamName)
+    {
+        var team = _teams.First(team => team.Name == teamName);
+
+        return new TeamRequest
+        {
+            Name = team.Name,
+            ConfederationName = team.ConfederationName,
+            RankingFifa = team.RankingFifa
+        };
+    }
+
+    private bool MatchesDateFilter(MatchResponse match)
+    {
+        return _filterDate is null || match.Date.Date == _filterDate.Value.Date;
+    }
+
+    private bool MatchesStadiumFilter(MatchResponse match)
+    {
+        return string.IsNullOrWhiteSpace(_filterStadium) || match.Stadium.Name == _filterStadium;
+    }
+
+    private bool MatchesGroupFilter(MatchResponse match)
+    {
+        return string.IsNullOrWhiteSpace(_filterGroup) || match.Group?.ToString() == _filterGroup;
+    }
+
+    private bool MatchesPhaseFilter(MatchResponse match)
+    {
+        return string.IsNullOrWhiteSpace(_filterPhase) || match.Phase == _filterPhase;
+    }
+
+    private static string FormatResult(MatchResponse match)
+    {
+        if (match.HomeGoals is null || match.AwayGoals is null)
+        {
+            return "-";
+        }
+
+        return $"{match.HomeGoals} - {match.AwayGoals}";
+    }
+}
