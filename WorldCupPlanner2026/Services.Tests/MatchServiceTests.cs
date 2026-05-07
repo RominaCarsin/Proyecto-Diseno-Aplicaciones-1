@@ -11,12 +11,9 @@ namespace Services.Tests;
 [TestClass]
 public class MatchServiceTests
 {
-    private const string GroupStagePhase = "GroupStage";
-    private const string RoundOf32Phase = "RoundOf32";
-
     private const string HomeTeamName = "ARGENTINA";
     private const string AwayTeamName = "BRAZIL";
-
+      
     private const string MainStadiumName = "CENTENARIO";
     private const string MainStadiumCity = "MONTEVIDEO";
 
@@ -24,7 +21,6 @@ public class MatchServiceTests
     private const string AlternativeStadiumCity = "RIO DE JANEIRO";
 
     private static readonly DateTime GroupStageDate = new(2026, 6, 1);
-    private static readonly DateTime KnockoutDate = new(2026, 7, 1);
     private static readonly DateTime UpdatedDate = new(2026, 6, 10);
     private static readonly DateTime LockedUpdatedDate = new(2026, 6, 20);
 
@@ -125,54 +121,6 @@ public class MatchServiceTests
         Assert.IsTrue(result.IsLocked);
     }
 
-    [TestMethod]
-    public void LockMatchesByPhase_WithExistingMatches_ShouldLockOnlyMatchesFromThatPhase()
-    {
-        AddValidGroupStageMatch();
-        AddValidKnockoutMatch();
-
-        _matchService.LockMatchesByPhase(GroupStagePhase);
-
-        var matches = _matchService.GetMatches().ToList();
-
-        Assert.IsTrue(matches.Single(match => match.Phase.ToString() == GroupStagePhase).IsLocked);
-        Assert.IsFalse(matches.Single(match => match.Phase.ToString() == RoundOf32Phase).IsLocked);
-    }
-
-    [TestMethod]
-    public void UpdateMatchDate_WhenMatchWasLockedByPhase_ShouldThrowArgumentException()
-    {
-        var savedMatch = AddValidGroupStageMatch();
-
-        _matchService.LockMatchesByPhase(GroupStagePhase);
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            _matchService.UpdateMatchDate(savedMatch.Id, LockedUpdatedDate));
-    }
-
-    [TestMethod]
-    public void UpdateMatchStadium_WhenMatchWasLockedByPhase_ShouldThrowArgumentException()
-    {
-        var savedMatch = AddValidGroupStageMatch();
-        var newStadium = CreateAlternativeStadiumRequest();
-
-        _matchService.LockMatchesByPhase(GroupStagePhase);
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            _matchService.UpdateMatchStadium(savedMatch.Id, newStadium));
-    }
-
-    [TestMethod]
-    public void SetMatchResult_WhenMatchWasLockedByPhase_ShouldThrowArgumentException()
-    {
-        var savedMatch = AddValidGroupStageMatch();
-
-        _matchService.LockMatchesByPhase(GroupStagePhase);
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            _matchService.SetMatchResult(savedMatch.Id, 2, 1));
-    }
-
     private MatchResponse AddValidGroupStageMatch()
     {
         var request = CreateValidGroupStageMatchRequest();
@@ -180,15 +128,6 @@ public class MatchServiceTests
         _matchService.AddMatch(request);
 
         return _matchService.GetMatches().First();
-    }
-
-    private MatchResponse AddValidKnockoutMatch()
-    {
-        var request = CreateValidKnockoutMatchRequest();
-
-        _matchService.AddMatch(request);
-
-        return _matchService.GetMatches().Last();
     }
 
     private static StadiumRequest CreateValidStadiumRequest()
@@ -240,24 +179,11 @@ public class MatchServiceTests
             Date = GroupStageDate,
             Stadium = CreateValidStadiumRequest(),
             HomeTeam = CreateValidHomeTeamRequest(),
-            AwayTeam = CreateValidAwayTeamRequest(),
-            Group = 'A',
-            Phase = GroupStagePhase
+            AwayTeam = CreateValidAwayTeamRequest()
         };
     }
 
-    private static MatchRequest CreateValidKnockoutMatchRequest()
-    {
-        return new MatchRequest
-        {
-            Date = KnockoutDate,
-            Stadium = CreateValidStadiumRequest(),
-            HomeTeam = CreateValidHomeTeamRequest(),
-            AwayTeam = CreateValidAwayTeamRequest(),
-            Group = null,
-            Phase = RoundOf32Phase
-        };
-    }
+
     
     [TestMethod]
     public void UpdateMatchStadium_WithNullStadiumRequest_ShouldThrowArgumentException()

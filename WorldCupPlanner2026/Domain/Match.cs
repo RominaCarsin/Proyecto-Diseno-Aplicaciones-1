@@ -9,11 +9,8 @@ public class Match
     private const string RequiredHomeTeamError = "Home team cannot be null.";
     private const string RequiredAwayTeamError = "Away team cannot be null.";
     private const string SameTeamsError = "Home team and away team must be different.";
-    private const string RequiredGroupError = "Group is required for group stage matches.";
-    private const string KnockoutGroupError = "Only group stage matches can have a group.";
     private const string LockedMatchError = "Locked matches cannot be edited.";
     private const string NegativeGoalsError = "Goals cannot be negative.";
-    private const string DrawInKnockoutError = "Knockout matches cannot end in a draw.";
 
     private static int _nextId = 1;
 
@@ -22,8 +19,6 @@ public class Match
     public Stadium Stadium { get; private set; }
     public Team HomeTeam { get; private set; }
     public Team AwayTeam { get; private set; }
-    public Group? Group { get; private set; }
-    public TournamentPhase Phase { get; private set; }
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
@@ -33,19 +28,15 @@ public class Match
         DateTime date,
         Stadium? stadium,
         Team? homeTeam,
-        Team? awayTeam,
-        Group? group,
-        TournamentPhase phase)
+        Team? awayTeam)
     {
-        ValidateCreationData(date, stadium, homeTeam, awayTeam, group, phase);
+        ValidateCreationData(date, stadium, homeTeam, awayTeam);
 
         Id = _nextId++;
         Date = date;
         Stadium = stadium!;
         HomeTeam = homeTeam!;
         AwayTeam = awayTeam!;
-        Group = group;
-        Phase = phase;
     }
 
     public void SetResult(int homeGoals, int awayGoals)
@@ -83,22 +74,18 @@ public class Match
         DateTime date,
         Stadium? stadium,
         Team? homeTeam,
-        Team? awayTeam,
-        Group? group,
-        TournamentPhase phase)
+        Team? awayTeam)
     {
         ValidateDate(date);
         ValidateRequired(stadium, RequiredStadiumError);
         ValidateRequired(homeTeam, RequiredHomeTeamError);
         ValidateRequired(awayTeam, RequiredAwayTeamError);
         ValidateTeamsAreDifferent(homeTeam!, awayTeam!);
-        ValidateGroupForPhase(group, phase);
     }
 
-    private void ValidateResult(int homeGoals, int awayGoals)
+    private static void ValidateResult(int homeGoals, int awayGoals)
     {
         ValidateGoals(homeGoals, awayGoals);
-        ValidateDrawInKnockout(homeGoals, awayGoals);
     }
 
     private void ValidateCanEdit()
@@ -121,7 +108,7 @@ public class Match
     {
         if (value is null)
         {
-            throw new ArgumentNullException(errorMessage);
+            throw new ArgumentException(errorMessage);
         }
     }
 
@@ -142,57 +129,17 @@ public class Match
                    StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void ValidateGroupForPhase(Group? group, TournamentPhase phase)
-    {
-        if (IsGroupStage(phase))
-        {
-            ValidateGroupStageHasGroup(group);
-            return;
-        }
-
-        ValidateKnockoutHasNoGroup(group);
-    }
-
-    private static void ValidateGroupStageHasGroup(Group? group)
-    {
-        if (group is null)
-        {
-            throw new InvalidOperationException(RequiredGroupError);
-        }
-    }
-
-    private static void ValidateKnockoutHasNoGroup(Group? group)
-    {
-        if (group is not null)
-        {
-            throw new InvalidOperationException(KnockoutGroupError);
-        }
-    }
-
-    private static bool IsGroupStage(TournamentPhase phase)
-    {
-        return phase == TournamentPhase.GroupStage;
-    }
-
     private static void ValidateGoals(int homeGoals, int awayGoals)
     {
-        if (homeGoals < MinGoals || awayGoals < MinGoals)
+        if (homeGoals < MinGoals)
         {
-            throw new ArgumentOutOfRangeException(null, NegativeGoalsError);
+            throw new ArgumentOutOfRangeException(nameof(homeGoals), NegativeGoalsError);
         }
-    }
 
-    private void ValidateDrawInKnockout(int homeGoals, int awayGoals)
-    {
-        if (!IsGroupStage(Phase) && IsDraw(homeGoals, awayGoals))
+        if (awayGoals < MinGoals)
         {
-            throw new InvalidOperationException(DrawInKnockoutError);
+            throw new ArgumentOutOfRangeException(nameof(awayGoals), NegativeGoalsError);
         }
-    }
-
-    private static bool IsDraw(int homeGoals, int awayGoals)
-    {
-        return homeGoals == awayGoals;
     }
 
     private Team? GetWinner(int homeGoals, int awayGoals)

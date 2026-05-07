@@ -72,16 +72,6 @@ public class MatchService : IMatchService
         match.LockEdition();
     }
 
-    public void LockMatchesByPhase(string phase)
-    {
-        var tournamentPhase = ParseTournamentPhase(phase);
-
-        foreach (var match in GetMatchesByPhase(tournamentPhase))
-        {
-            match.LockEdition();
-        }
-    }
-
     private Match FindMatchById(int id)
     {
         var match = _repository.GetAll()
@@ -94,12 +84,7 @@ public class MatchService : IMatchService
 
         return match;
     }
-
-    private IEnumerable<Match> GetMatchesByPhase(TournamentPhase phase)
-    {
-        return _repository.GetAll()
-            .Where(match => match.Phase == phase);
-    }
+    
 
     private static void ValidateMatchRequest(MatchRequest request)
     {
@@ -115,11 +100,6 @@ public class MatchService : IMatchService
         {
             throw new ArgumentException(RequiredStadiumError);
         }
-    }
-
-    private static TournamentPhase ParseTournamentPhase(string phase)
-    {
-        return Enum.Parse<TournamentPhase>(phase);
     }
 
     private static void ExecuteMatchUpdate(Action updateAction)
