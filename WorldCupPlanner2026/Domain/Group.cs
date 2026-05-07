@@ -18,6 +18,7 @@ public class Group
 
     public void UpdateLabel(char label)
     {
+        label = char.ToUpperInvariant(label);
         if (label < 'A' || label > 'L')
             throw new ArgumentException(LabelOutOfRangeErrorMessage, nameof(label));
 
