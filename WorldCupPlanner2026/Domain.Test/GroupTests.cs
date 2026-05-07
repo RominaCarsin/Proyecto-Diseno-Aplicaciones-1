@@ -62,4 +62,14 @@ public class GroupTests
       var extraTeam = new Team("Extra", "OFC", 2000);
       Assert.ThrowsException<ArgumentException>(() => group.AddTeam(extraTeam));
    }
+   
+   [TestMethod]
+   public void RemoveTeam_WithExistingTeam_ShouldRemoveTeam()
+   {
+      var group = new Group('A');
+      var team = new Team("Argentina", "CONMEBOL", 1700);
+      group.AddTeam(team);
+      group.RemoveTeam(team);
+      Assert.AreEqual(0, group.Teams.Count);
+   }
 }
