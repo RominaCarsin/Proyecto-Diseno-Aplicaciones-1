@@ -66,4 +66,9 @@ public class Group
         }
         
     }
+    
+    public Team GetTeamByPosition(int position)
+    {
+        return Teams[position - 1];
+    }
 }
