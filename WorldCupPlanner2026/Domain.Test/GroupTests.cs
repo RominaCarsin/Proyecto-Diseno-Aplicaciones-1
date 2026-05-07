@@ -28,7 +28,7 @@ public class GroupTests
    {
       // Arrange
       var group = new Group('A');
-      var team = new Team("Uruguay", Confederation.CONMEBOL, 1500);
+      var team = new Team("Uruguay", "CONMEBOL", 1500);
 
       // Act
       group.AddTeam(team);
