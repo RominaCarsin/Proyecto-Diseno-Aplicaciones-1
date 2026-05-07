@@ -3,7 +3,8 @@
 public class Group
 {
     private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
-
+    private const string NullTeamErrorMessage = "Team cannot be null.";
+    
     public char Label { get; private set; }
     public List<Team> Teams { get; }
 
@@ -25,6 +26,10 @@ public class Group
     
     public void AddTeam(Team team)
     {
+        if (team is null)
+        {
+            throw new ArgumentException(NullTeamErrorMessage);
+        }
         Teams.Add(team);
     }
 }
