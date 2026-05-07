@@ -1,8 +1,5 @@
 ﻿namespace Domain;
 
-using System;
-using System.Collections.Generic;
-
 public class Group
 {
     private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
@@ -23,5 +20,11 @@ public class Group
             throw new ArgumentException(LabelOutOfRangeErrorMessage, nameof(label));
 
         Label = char.ToUpperInvariant(label);
+    }
+    
+    
+    public void AddTeam(Team team)
+    {
+        Teams.Add(team);
     }
 }
