@@ -97,4 +97,17 @@ public class GroupTests
       Assert.AreEqual(1, group.Teams.Count);
       Assert.AreEqual("BRAZIL", group.Teams[0].Name);
    }
+   
+   [TestMethod]
+   public void GetTeamByPosition_WithValidPosition_ShouldReturnTeam()
+   {
+      var group = new Group('A');
+      var team1 = new Team("Team1", "UEFA", 1000);
+      var team2 = new Team("Team2", "UEFA", 1100);
+      group.AddTeam(team1);
+      group.AddTeam(team2);
+
+      var result = group.GetTeamByPosition(1);
+      Assert.AreEqual(team1, result);
+   }
 }
