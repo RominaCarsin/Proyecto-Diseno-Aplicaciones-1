@@ -12,4 +12,14 @@ public class GroupTests
       Assert.AreEqual('A', group.Label);
       Assert.AreEqual(0, group.Teams.Count());
    }
+   
+   [TestMethod]
+   public void CreateGroup_WithLowercaseLabel_ShouldStoreUppercase()
+   {
+      char lowerLabel = 'c';
+
+      var group = new Group(lowerLabel);
+
+      Assert.AreEqual('C', group.Label);
+   }
 }
