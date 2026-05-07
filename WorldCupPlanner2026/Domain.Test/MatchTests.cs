@@ -1,7 +1,5 @@
 ﻿namespace Domain.Test;
 
-using Domain.Exceptions;
-
 [TestClass]
 public class MatchTests
 {
@@ -96,16 +94,16 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void CreateMatch_WithInvalidDate_ShouldThrowDomainException()
+    public void CreateMatch_WithInvalidDate_ShouldThrowArgumentException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             CreateGroupStageMatch(date: DateTime.MinValue));
     }
 
     [TestMethod]
-    public void CreateMatch_WithNullStadium_ShouldThrowDomainException()
+    public void CreateMatch_WithNullStadium_ShouldThrowArgumentNullException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentNullException>(() =>
             new Match(
                 date: ValidGroupStageDate,
                 stadium: null,
@@ -117,9 +115,9 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void CreateMatch_WithNullHomeTeam_ShouldThrowDomainException()
+    public void CreateMatch_WithNullHomeTeam_ShouldThrowArgumentNullException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentNullException>(() =>
             new Match(
                 date: ValidGroupStageDate,
                 stadium: CreateValidStadium(),
@@ -131,9 +129,9 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void CreateMatch_WithNullAwayTeam_ShouldThrowDomainException()
+    public void CreateMatch_WithNullAwayTeam_ShouldThrowArgumentNullException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentNullException>(() =>
             new Match(
                 date: ValidGroupStageDate,
                 stadium: CreateValidStadium(),
@@ -145,28 +143,28 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void CreateMatch_WithSameHomeAndAwayTeamReference_ShouldThrowDomainException()
+    public void CreateMatch_WithSameHomeAndAwayTeamReference_ShouldThrowArgumentException()
     {
         var team = CreateValidHomeTeam();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             CreateGroupStageMatch(homeTeam: team, awayTeam: team));
     }
 
     [TestMethod]
-    public void CreateMatch_WithDifferentInstancesButSameTeamName_ShouldThrowDomainException()
+    public void CreateMatch_WithDifferentInstancesButSameTeamName_ShouldThrowArgumentException()
     {
         var homeTeam = new Team("ARGENTINA", "CONMEBOL", 1800);
         var awayTeam = new Team("ARGENTINA", "CONMEBOL", 1750);
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             CreateGroupStageMatch(homeTeam: homeTeam, awayTeam: awayTeam));
     }
 
     [TestMethod]
-    public void CreateGroupStageMatch_WithoutGroup_ShouldThrowDomainException()
+    public void CreateGroupStageMatch_WithoutGroup_ShouldThrowInvalidOperationException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             new Match(
                 date: ValidGroupStageDate,
                 stadium: CreateValidStadium(),
@@ -178,9 +176,9 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void CreateKnockoutMatch_WithGroupAssigned_ShouldThrowDomainException()
+    public void CreateKnockoutMatch_WithGroupAssigned_ShouldThrowInvalidOperationException()
     {
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             CreateKnockoutMatch(group: CreateGroupA()));
     }
 
@@ -247,39 +245,39 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void SetResult_WithNegativeHomeGoals_ShouldThrowDomainException()
+    public void SetResult_WithNegativeHomeGoals_ShouldThrowArgumentOutOfRangeException()
     {
         var match = CreateGroupStageMatch();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
             match.SetResult(-1, 2));
     }
 
     [TestMethod]
-    public void SetResult_WithNegativeAwayGoals_ShouldThrowDomainException()
+    public void SetResult_WithNegativeAwayGoals_ShouldThrowArgumentOutOfRangeException()
     {
         var match = CreateGroupStageMatch();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
             match.SetResult(2, -1));
     }
 
     [TestMethod]
-    public void SetResult_WithDrawInKnockoutMatch_ShouldThrowDomainException()
+    public void SetResult_WithDrawInKnockoutMatch_ShouldThrowInvalidOperationException()
     {
         var match = CreateKnockoutMatch();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             match.SetResult(1, 1));
     }
 
     [TestMethod]
-    public void SetResult_WhenMatchIsLocked_ShouldThrowDomainException()
+    public void SetResult_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
     {
         var match = CreateGroupStageMatch();
         match.LockEdition();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             match.SetResult(2, 1));
     }
 
@@ -294,21 +292,21 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void UpdateDate_WithInvalidDate_ShouldThrowDomainException()
+    public void UpdateDate_WithInvalidDate_ShouldThrowArgumentException()
     {
         var match = CreateGroupStageMatch();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             match.UpdateDate(DateTime.MinValue));
     }
 
     [TestMethod]
-    public void UpdateDate_WhenMatchIsLocked_ShouldThrowDomainException()
+    public void UpdateDate_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
     {
         var match = CreateGroupStageMatch();
         match.LockEdition();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             match.UpdateDate(NewValidDate));
     }
 
@@ -325,21 +323,21 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void UpdateStadium_WithNullStadium_ShouldThrowDomainException()
+    public void UpdateStadium_WithNullStadium_ShouldThrowArgumentNullException()
     {
         var match = CreateGroupStageMatch();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<ArgumentNullException>(() =>
             match.UpdateStadium(null));
     }
 
     [TestMethod]
-    public void UpdateStadium_WhenMatchIsLocked_ShouldThrowDomainException()
+    public void UpdateStadium_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
     {
         var match = CreateGroupStageMatch();
         match.LockEdition();
 
-        Assert.ThrowsException<DomainException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             match.UpdateStadium(CreateAnotherValidStadium()));
     }
 

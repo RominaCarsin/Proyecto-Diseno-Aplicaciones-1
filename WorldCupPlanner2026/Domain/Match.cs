@@ -1,7 +1,5 @@
 ﻿namespace Domain;
 
-using Domain.Exceptions;
-
 public class Match
 {
     private const int MinGoals = 0;
@@ -107,7 +105,7 @@ public class Match
     {
         if (IsLocked)
         {
-            throw new DomainException(LockedMatchError);
+            throw new InvalidOperationException(LockedMatchError);
         }
     }
 
@@ -115,7 +113,7 @@ public class Match
     {
         if (date == DateTime.MinValue)
         {
-            throw new DomainException(InvalidDateError);
+            throw new ArgumentException(InvalidDateError, nameof(date));
         }
     }
 
@@ -123,7 +121,7 @@ public class Match
     {
         if (value is null)
         {
-            throw new DomainException(errorMessage);
+            throw new ArgumentNullException(errorMessage);
         }
     }
 
@@ -131,7 +129,7 @@ public class Match
     {
         if (AreSameTeam(homeTeam, awayTeam))
         {
-            throw new DomainException(SameTeamsError);
+            throw new ArgumentException(SameTeamsError);
         }
     }
 
@@ -159,7 +157,7 @@ public class Match
     {
         if (group is null)
         {
-            throw new DomainException(RequiredGroupError);
+            throw new InvalidOperationException(RequiredGroupError);
         }
     }
 
@@ -167,7 +165,7 @@ public class Match
     {
         if (group is not null)
         {
-            throw new DomainException(KnockoutGroupError);
+            throw new InvalidOperationException(KnockoutGroupError);
         }
     }
 
@@ -180,7 +178,7 @@ public class Match
     {
         if (homeGoals < MinGoals || awayGoals < MinGoals)
         {
-            throw new DomainException(NegativeGoalsError);
+            throw new ArgumentOutOfRangeException(null, NegativeGoalsError);
         }
     }
 
@@ -188,7 +186,7 @@ public class Match
     {
         if (!IsGroupStage(Phase) && IsDraw(homeGoals, awayGoals))
         {
-            throw new DomainException(DrawInKnockoutError);
+            throw new InvalidOperationException(DrawInKnockoutError);
         }
     }
 
