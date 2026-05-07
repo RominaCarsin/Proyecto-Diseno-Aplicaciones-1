@@ -1,24 +1,26 @@
 ﻿namespace Domain;
 
+using System;
+using System.Collections.Generic;
+
 public class Group
 {
-    private const char MinLabel = 'A';
-    private const char MaxLabel = 'L';
+    private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
 
     public char Label { get; private set; }
+    public List<Team> Teams { get; }
 
     public Group(char label)
     {
-        if (label < MinLabel || label > MaxLabel)
-        {
-            throw new ArgumentException($"Group label must be between {MinLabel} and {MaxLabel}.");
-        }
-
-        Label = label;
+        UpdateLabel(label);
+        Teams = new List<Team>();
     }
 
-    public override string ToString()
+    public void UpdateLabel(char label)
     {
-        return Label.ToString();
+        if (label < 'A' || label > 'L')
+            throw new ArgumentException(LabelOutOfRangeErrorMessage, nameof(label));
+
+        Label = char.ToUpperInvariant(label);
     }
 }
