@@ -41,4 +41,14 @@ public class GroupTests
       var group = new Group('A');
       Assert.ThrowsException<ArgumentException>(() => group.AddTeam(null));
    }
+   
+   [TestMethod]
+   public void AddTeam_WithDuplicatedTeam_ShouldThrowArgumentException()
+   {
+      var group = new Group('A');
+      var team1 = new Team("Brasil", "CONMEBOL", 1800);
+      var team2 = new Team("BRASIL", "CONMEBOL", 1800);
+      group.AddTeam(team1);
+      Assert.ThrowsException<ArgumentException>(() => group.AddTeam(team2));
+   }
 }
