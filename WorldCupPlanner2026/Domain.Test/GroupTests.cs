@@ -110,4 +110,12 @@ public class GroupTests
       var result = group.GetTeamByPosition(1);
       Assert.AreEqual(team1, result);
    }
+   
+   [TestMethod]
+   public void GetTeamByPosition_WithInvalidPosition_ShouldThrowArgumentException()
+   {
+      var group = new Group('A');
+      Assert.ThrowsException<ArgumentException>(() => group.GetTeamByPosition(0));
+      Assert.ThrowsException<ArgumentException>(() => group.GetTeamByPosition(5));
+   }
 }
