@@ -7,6 +7,7 @@ public class Group
     private const string DuplicatedTeamErrorMessage = "Team already exists in group.";
     private const int MaxTeams = 4;
     private const string FullGroupErrorMessage = "Group cannot have more than 4 teams.";
+    private const string TeamNotFoundErrorMessage = "Team does not exist in group.";
     
     public char Label { get; private set; }
     public List<Team> Teams { get; }
@@ -51,6 +52,13 @@ public class Group
     
     public void RemoveTeam(Team? team)
     {
-        Teams.Remove(team);
+        
+        bool removed = Teams.Remove(team);
+
+        if (!removed)
+        {
+            throw new ArgumentException(TeamNotFoundErrorMessage);
+        }
+        
     }
 }
