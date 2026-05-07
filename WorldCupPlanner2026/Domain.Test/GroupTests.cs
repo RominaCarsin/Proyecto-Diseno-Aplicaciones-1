@@ -72,4 +72,12 @@ public class GroupTests
       group.RemoveTeam(team);
       Assert.AreEqual(0, group.Teams.Count);
    }
+   
+   [TestMethod]
+   public void RemoveTeam_WithNonExistingTeam_ShouldThrowArgumentException()
+   {
+      var group = new Group('A');
+      var team = new Team("Chile", "CONMEBOL", 1400);
+      Assert.ThrowsException<ArgumentException>(() => group.RemoveTeam(team));
+   }
 }
