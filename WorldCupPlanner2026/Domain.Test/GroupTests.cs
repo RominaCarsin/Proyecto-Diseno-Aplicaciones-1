@@ -51,4 +51,15 @@ public class GroupTests
       group.AddTeam(team1);
       Assert.ThrowsException<ArgumentException>(() => group.AddTeam(team2));
    }
+   
+   [TestMethod]
+   public void AddTeam_WhenGroupIsFull_ShouldThrowArgumentException()
+   {
+      var group = new Group('A');
+      for (int i = 0; i < 4; i++)
+         group.AddTeam(new Team($"Team{i}", "AFC", 1000 + i));
+
+      var extraTeam = new Team("Extra", "OFC", 2000);
+      Assert.ThrowsException<ArgumentException>(() => group.AddTeam(extraTeam));
+   }
 }
