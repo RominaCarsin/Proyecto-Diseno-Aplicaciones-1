@@ -80,4 +80,21 @@ public class GroupTests
       var team = new Team("Chile", "CONMEBOL", 1400);
       Assert.ThrowsException<ArgumentException>(() => group.RemoveTeam(team));
    }
+   
+   [TestMethod]
+   public void RemoveTeam_WithMultipleTeams_ShouldRemoveOnlySpecifiedTeam()
+   {
+      var group = new Group('A');
+
+      var argentina = new Team("Argentina", "CONMEBOL", 1700);
+      var brazil = new Team("Brazil", "CONMEBOL", 1800);
+
+      group.AddTeam(argentina);
+      group.AddTeam(brazil);
+
+      group.RemoveTeam(argentina);
+
+      Assert.AreEqual(1, group.Teams.Count);
+      Assert.AreEqual("Brazil", group.Teams[0].Name);
+   }
 }
