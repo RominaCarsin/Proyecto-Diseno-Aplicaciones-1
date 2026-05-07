@@ -4,6 +4,7 @@ public class Group
 {
     private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
     private const string NullTeamErrorMessage = "Team cannot be null.";
+    private const string DuplicatedTeamErrorMessage = "Team already exists in group.";
     
     public char Label { get; private set; }
     public List<Team> Teams { get; }
@@ -29,6 +30,14 @@ public class Group
         if (team is null)
         {
             throw new ArgumentException(NullTeamErrorMessage);
+        }
+        bool teamAlreadyExists = Teams.Any(existingTeam =>
+            existingTeam.Name.Equals(
+                team.Name,
+                StringComparison.OrdinalIgnoreCase));
+        if (teamAlreadyExists)
+        {
+            throw new ArgumentException(DuplicatedTeamErrorMessage);
         }
         Teams.Add(team);
     }
