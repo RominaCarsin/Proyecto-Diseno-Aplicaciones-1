@@ -8,6 +8,7 @@ public class Group
     private const int MaxTeams = 4;
     private const string FullGroupErrorMessage = "Group cannot have more than 4 teams.";
     private const string TeamNotFoundErrorMessage = "Team does not exist in group.";
+    private const string InvalidPositionErrorMessage = "Position is invalid.";
     
     public char Label { get; private set; }
     public List<Team> Teams { get; }
@@ -69,6 +70,10 @@ public class Group
     
     public Team GetTeamByPosition(int position)
     {
+        if (position < 1 || position > Teams.Count)
+        {
+            throw new ArgumentException(InvalidPositionErrorMessage);
+        }
         return Teams[position - 1];
     }
 }
