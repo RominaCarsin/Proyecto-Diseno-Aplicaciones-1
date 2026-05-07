@@ -47,4 +47,10 @@ public class Group
         }
         Teams.Add(team);
     }
+    
+    
+    public void RemoveTeam(Team? team)
+    {
+        Teams.Remove(team);
+    }
 }
