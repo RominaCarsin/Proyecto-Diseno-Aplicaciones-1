@@ -22,4 +22,19 @@ public class GroupTests
 
       Assert.AreEqual('C', group.Label);
    }
+   
+   [TestMethod]
+   public void AddTeam_WithValidTeam_ShouldAddTeam()
+   {
+      // Arrange
+      var group = new Group('A');
+      var team = new Team("Uruguay", Confederation.CONMEBOL, 1500);
+
+      // Act
+      group.AddTeam(team);
+
+      // Assert
+      Assert.AreEqual(1, group.Teams.Count);
+      Assert.AreSame(team, group.Teams[0]);
+   }
 }
