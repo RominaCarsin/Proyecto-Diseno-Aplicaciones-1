@@ -27,7 +27,7 @@ public class GroupTests
    public void AddTeam_WithValidTeam_ShouldAddTeam()
    {
       var group = new Group('A');
-      var team = new Team("Uruguay", "CONMEBOL", 1500);
+      var team = new Team("URUGUAY", "CONMEBOL", 1500);
       
       group.AddTeam(team);
       
@@ -46,7 +46,7 @@ public class GroupTests
    public void AddTeam_WithDuplicatedTeam_ShouldThrowArgumentException()
    {
       var group = new Group('A');
-      var team1 = new Team("Brasil", "CONMEBOL", 1800);
+      var team1 = new Team("BRAZIL", "CONMEBOL", 1800);
       var team2 = new Team("BRASIL", "CONMEBOL", 1800);
       group.AddTeam(team1);
       Assert.ThrowsException<ArgumentException>(() => group.AddTeam(team2));
@@ -67,7 +67,7 @@ public class GroupTests
    public void RemoveTeam_WithExistingTeam_ShouldRemoveTeam()
    {
       var group = new Group('A');
-      var team = new Team("Argentina", "CONMEBOL", 1700);
+      var team = new Team("ARGENTINA", "CONMEBOL", 1700);
       group.AddTeam(team);
       group.RemoveTeam(team);
       Assert.AreEqual(0, group.Teams.Count);
@@ -77,7 +77,7 @@ public class GroupTests
    public void RemoveTeam_WithNonExistingTeam_ShouldThrowArgumentException()
    {
       var group = new Group('A');
-      var team = new Team("Chile", "CONMEBOL", 1400);
+      var team = new Team("CHILE", "CONMEBOL", 1400);
       Assert.ThrowsException<ArgumentException>(() => group.RemoveTeam(team));
    }
    
@@ -86,15 +86,15 @@ public class GroupTests
    {
       var group = new Group('A');
 
-      var argentina = new Team("Argentina", "CONMEBOL", 1700);
-      var brazil = new Team("Brazil", "CONMEBOL", 1800);
+      var ARGENTINA = new Team("ARGENTINA", "CONMEBOL", 1700);
+      var BRAZIL = new Team("BRAZIL", "CONMEBOL", 1800);
 
-      group.AddTeam(argentina);
-      group.AddTeam(brazil);
+      group.AddTeam(ARGENTINA);
+      group.AddTeam(BRAZIL);
 
-      group.RemoveTeam(argentina);
+      group.RemoveTeam(ARGENTINA);
 
       Assert.AreEqual(1, group.Teams.Count);
-      Assert.AreEqual("Brazil", group.Teams[0].Name);
+      Assert.AreEqual("BRAZIL", group.Teams[0].Name);
    }
 }

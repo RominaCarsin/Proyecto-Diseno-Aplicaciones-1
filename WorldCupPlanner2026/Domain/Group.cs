@@ -53,6 +53,11 @@ public class Group
     public void RemoveTeam(Team? team)
     {
         
+        if (team is null)
+        {
+            throw new ArgumentException(NullTeamErrorMessage);
+        }
+
         bool removed = Teams.Remove(team);
 
         if (!removed)
