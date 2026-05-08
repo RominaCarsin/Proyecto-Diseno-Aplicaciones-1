@@ -29,4 +29,17 @@ public class GroupServiceTests
         Assert.AreEqual(1, groups.Count);
         Assert.AreEqual('A', groups[0].Label);
     }
+    
+    [TestMethod]
+    public void GetGroupByLabel_ShouldReturnCorrectGroup()
+    {
+        IRepository<Domain.Group> repository = new Repository<Domain.Group>();
+        IGroupService service = new GroupService(repository);
+
+        service.AddGroup(new GroupRequest { Label = 'A' });
+
+        var group = service.GetGroupByLabel('A');
+
+        Assert.AreEqual('A', group.Label);
+    }
 }
