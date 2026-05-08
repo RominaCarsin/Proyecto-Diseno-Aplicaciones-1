@@ -2,16 +2,20 @@
 
 public class Group
 {
+    private const char MinLabel = 'A';
+    private const char MaxLabel = 'L';
+    private const int MaxTeams = 4;
+
     private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
     private const string NullTeamErrorMessage = "Team cannot be null.";
     private const string DuplicatedTeamErrorMessage = "Team already exists in group.";
-    private const int MaxTeams = 4;
     private const string FullGroupErrorMessage = "Group cannot have more than 4 teams.";
     private const string TeamNotFoundErrorMessage = "Team does not exist in group.";
     private const string InvalidPositionErrorMessage = "Position is invalid.";
-    
-    public char Label { get; private set; }
+
     private readonly List<Team> _teams = new();
+
+    public char Label { get; private set; }
 
     public IReadOnlyList<Team> Teams => _teams;
 
@@ -22,59 +26,87 @@ public class Group
 
     public void UpdateLabel(char label)
     {
-        label = char.ToUpperInvariant(label);
-        if (label < 'A' || label > 'L')
-            throw new ArgumentException(LabelOutOfRangeErrorMessage, nameof(label));
+        char normalizedLabel = NormalizeLabel(label);
 
-        Label = char.ToUpperInvariant(label);
+        ValidateLabel(normalizedLabel);
+
+        Label = normalizedLabel;
     }
-    
-    
-    public void AddTeam(Team team)
+
+    public void AddTeam(Team? team)
     {
-        if (team is null)
-        {
-            throw new ArgumentException(NullTeamErrorMessage);
-        }
-        bool teamAlreadyExists = Teams.Any(existingTeam =>
-            existingTeam.Name.Equals(
-                team.Name,
-                StringComparison.OrdinalIgnoreCase));
-        if (teamAlreadyExists)
-        {
-            throw new ArgumentException(DuplicatedTeamErrorMessage);
-        }
-        if (Teams.Count >= MaxTeams)
-        {
-            throw new ArgumentException(FullGroupErrorMessage);
-        }
+        ValidateRequiredTeam(team);
+        ValidateTeamIsNotDuplicated(team);
+        ValidateGroupHasAvailableSlot();
+
         _teams.Add(team);
     }
-    
-    
+
     public void RemoveTeam(Team? team)
     {
-        
-        if (team is null)
-        {
-            throw new ArgumentException(NullTeamErrorMessage);
-        }
+        ValidateRequiredTeam(team);
 
-        bool removed = _teams.Remove(team);
-
-        if (!removed)
+        if (!_teams.Remove(team))
         {
             throw new ArgumentException(TeamNotFoundErrorMessage);
         }
-        
     }
-    
+
     public Team GetTeamByPosition(int position)
     {
-        if (position < 1 || position > Teams.Count)
+        ValidatePosition(position);
+
+        return _teams[position - 1];
+    }
+
+    private static char NormalizeLabel(char label)
+    {
+        return char.ToUpperInvariant(label);
+    }
+
+    private static void ValidateLabel(char label)
+    {
+        if (label < MinLabel || label > MaxLabel)
+        {
+            throw new ArgumentException(LabelOutOfRangeErrorMessage, nameof(label));
+        }
+    }
+
+    private static void ValidateRequiredTeam(Team? team)
+    {
+        if (team is null)
+        {
+            throw new ArgumentException(NullTeamErrorMessage);
+        }
+    }
+
+    private void ValidateTeamIsNotDuplicated(Team team)
+    {
+        if (ContainsTeam(team))
+        {
+            throw new ArgumentException(DuplicatedTeamErrorMessage);
+        }
+    }
+
+    private bool ContainsTeam(Team team)
+    {
+        return _teams.Any(existingTeam =>
+            existingTeam.Name.Equals(team.Name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void ValidateGroupHasAvailableSlot()
+    {
+        if (_teams.Count >= MaxTeams)
+        {
+            throw new ArgumentException(FullGroupErrorMessage);
+        }
+    }
+
+    private void ValidatePosition(int position)
+    {
+        if (position < 1 || position > _teams.Count)
         {
             throw new ArgumentException(InvalidPositionErrorMessage);
         }
-        return Teams[position - 1];
     }
 }
