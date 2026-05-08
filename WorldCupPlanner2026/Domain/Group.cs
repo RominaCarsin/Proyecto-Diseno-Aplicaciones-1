@@ -109,4 +109,13 @@ public class Group
             throw new ArgumentException(InvalidPositionErrorMessage);
         }
     }
+    
+    private readonly List<Match> _matches = new();
+
+    public IReadOnlyList<Match> Matches => _matches;
+
+    public void AddMatch(Match match)
+    {
+        _matches.Add(match);
+    }
 }
