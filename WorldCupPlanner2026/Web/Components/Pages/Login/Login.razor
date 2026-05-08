@@ -1,0 +1,270 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@using DTOs
+@using IServices
+@inject ISessionService SessionService
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>Login · WorldCupPlanner 2026</PageTitle>
+
+<div class="page-wrap">
+
+    <div class="ph">
+        <h1 class="pt">WorldCupPlanner 2026</h1>
+        <p class="ps">@(_showRegister ? "Create your account" : "Sign in to continue")</p>
+    </div>
+
+    <div class="card" style="max-width: 420px; margin: 0 auto;">
+        <div class="card-header">
+            <span class="card-title">@(_showRegister ? "Register" : "Sign in")</span>
+        </div>
+
+        <div class="card-body">
+
+            @if (!_showRegister)
+            {
+                <div class="fg">
+                    <label class="fl">Email <span class="req">*</span></label>
+                    <input class="finput @(_emailInvalid ? "invalid" : "")"
+                           type="email"
+                           placeholder="Ex: juan@gmail.com"
+                           @bind="_email" @bind:event="oninput" />
+                    @if (_emailInvalid)
+                    {
+                        <span class="ferr">Email is required</span>
+                    }
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Password <span class="req">*</span></label>
+                    <input class="finput @(_passwordInvalid ? "invalid" : "")"
+                           type="password"
+                           placeholder="Your password"
+                           @bind="_password" @bind:event="oninput" />
+                    @if (_passwordInvalid)
+                    {
+                        <span class="ferr">Password is required</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="fg">
+                    <label class="fl">Name <span class="req">*</span></label>
+                    <input class="finput @(_nameInvalid ? "invalid" : "")"
+                           type="text"
+                           placeholder="Ex: Juan"
+                           @bind="_name" @bind:event="oninput" />
+                    @if (_nameInvalid)
+                    {
+                        <span class="ferr">Name is required</span>
+                    }
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Surname <span class="req">*</span></label>
+                    <input class="finput @(_surnameInvalid ? "invalid" : "")"
+                           type="text"
+                           placeholder="Ex: Perez"
+                           @bind="_surname" @bind:event="oninput" />
+                    @if (_surnameInvalid)
+                    {
+                        <span class="ferr">Surname is required</span>
+                    }
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Email <span class="req">*</span></label>
+                    <input class="finput @(_emailInvalid ? "invalid" : "")"
+                           type="email"
+                           placeholder="Ex: juan@gmail.com"
+                           @bind="_email" @bind:event="oninput" />
+                    @if (_emailInvalid)
+                    {
+                        <span class="ferr">Email is required</span>
+                    }
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Date of birth <span class="req">*</span></label>
+                    <input class="finput @(_dateInvalid ? "invalid" : "")"
+                           type="date"
+                           @bind="_dateOfBirth" @bind:event="oninput" />
+                    @if (_dateInvalid)
+                    {
+                        <span class="ferr">Date of birth is required</span>
+                    }
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Password <span class="req">*</span></label>
+                    <input class="finput @(_passwordInvalid ? "invalid" : "")"
+                           type="password"
+                           placeholder="Min. 8 chars, upper, lower, number, special"
+                           @bind="_password" @bind:event="oninput" />
+                    @if (_passwordInvalid)
+                    {
+                        <span class="ferr">Password is required</span>
+                    }
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Confirm password <span class="req">*</span></label>
+                    <input class="finput @(_confirmPasswordInvalid ? "invalid" : "")"
+                           type="password"
+                           placeholder="Repeat your password"
+                           @bind="_confirmPassword" @bind:event="oninput" />
+                    @if (_confirmPasswordInvalid)
+                    {
+                        <span class="ferr">Passwords do not match</span>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert-box err">@_errorMessage</div>
+            }
+
+            @if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <div class="alert-box suc">✓ @_successMessage</div>
+            }
+
+        </div>
+
+        <div class="card-footer" style="flex-direction: column; gap: 0.75rem;">
+            <button class="btn-p" @onclick="@(_showRegister ? DoRegister : DoLogin)">
+                @(_showRegister ? "Create account" : "Sign in")
+            </button>
+            <button class="btn btn-g" @onclick="ToggleMode">
+                @(_showRegister ? "Already have an account? Sign in" : "Don't have an account? Register")
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string   _email           = string.Empty;
+    private string   _password        = string.Empty;
+    private string   _confirmPassword = string.Empty;
+    private string   _name            = string.Empty;
+    private string   _surname         = string.Empty;
+    private DateTime _dateOfBirth     = DateTime.Today.AddYears(-18);
+
+    private string _errorMessage   = string.Empty;
+    private string _successMessage = string.Empty;
+
+    private bool _showRegister;
+
+    private bool _emailInvalid;
+    private bool _passwordInvalid;
+    private bool _confirmPasswordInvalid;
+    private bool _nameInvalid;
+    private bool _surnameInvalid;
+    private bool _dateInvalid;
+
+    protected override void OnInitialized()
+    {
+        if (SessionService.IsLoggedIn())
+            Navigation.NavigateTo("/");
+    }
+
+    private async Task DoLogin()
+    {
+        _errorMessage   = string.Empty;
+        _successMessage = string.Empty;
+
+        if (!ValidateLoginForm()) return;
+
+        try
+        {
+            SessionService.Login(_email, _password);
+            Navigation.NavigateTo("/");
+        }
+        catch (ArgumentException)
+        {
+            _errorMessage = "Invalid email or password.";
+        }
+    }
+
+    private async Task DoRegister()
+    {
+        _errorMessage   = string.Empty;
+        _successMessage = string.Empty;
+
+        if (!ValidateRegisterForm()) return;
+
+        try
+        {
+            var request = new UserRequest
+            {
+                Name        = _name,
+                Surname     = _surname,
+                Email       = _email,
+                DateOfBirth = _dateOfBirth,
+                Password    = _password
+            };
+
+            UserService.AddUser(request);
+            _successMessage = "Account created successfully! Redirecting...";
+            StateHasChanged();
+
+            await Task.Delay(1200);
+
+            SessionService.Login(_email, _password);
+            Navigation.NavigateTo("/");
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void ToggleMode()
+    {
+        _showRegister = !_showRegister;
+        ClearForm();
+    }
+
+    private bool ValidateLoginForm()
+    {
+        _emailInvalid    = string.IsNullOrWhiteSpace(_email);
+        _passwordInvalid = string.IsNullOrWhiteSpace(_password);
+
+        return !_emailInvalid && !_passwordInvalid;
+    }
+
+    private bool ValidateRegisterForm()
+    {
+        _nameInvalid            = string.IsNullOrWhiteSpace(_name);
+        _surnameInvalid         = string.IsNullOrWhiteSpace(_surname);
+        _emailInvalid           = string.IsNullOrWhiteSpace(_email);
+        _dateInvalid            = _dateOfBirth == DateTime.MinValue;
+        _passwordInvalid        = string.IsNullOrWhiteSpace(_password);
+        _confirmPasswordInvalid = _password != _confirmPassword;
+
+        return !_nameInvalid && !_surnameInvalid && !_emailInvalid
+            && !_dateInvalid && !_passwordInvalid && !_confirmPasswordInvalid;
+    }
+
+    private void ClearForm()
+    {
+        _email                  = string.Empty;
+        _password               = string.Empty;
+        _confirmPassword        = string.Empty;
+        _name                   = string.Empty;
+        _surname                = string.Empty;
+        _dateOfBirth            = DateTime.Today.AddYears(-18);
+        _errorMessage           = string.Empty;
+        _successMessage         = string.Empty;
+        _emailInvalid           = false;
+        _passwordInvalid        = false;
+        _confirmPasswordInvalid = false;
+        _nameInvalid            = false;
+        _surnameInvalid         = false;
+        _dateInvalid            = false;
+    }
+}
