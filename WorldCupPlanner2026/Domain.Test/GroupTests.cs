@@ -211,4 +211,30 @@ public class GroupTests
 
         Assert.AreEqual(1, group.Matches.Count);
     }
+    
+    [TestMethod]
+    public void GetStandings_ShouldOrderByPoints()
+    {
+        Group group = new Group('A');
+        Team uruguay = CreateUruguayTeam();
+        Team argentina = CreateArgentinaTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        Match match = new Match(
+            date: DateTime.Today,
+            stadium: new Stadium("Centenario", " Montevideo", "ValidDescription", 20000), // o cualquier Stadium válido
+            homeTeam: uruguay,
+            awayTeam: argentina,
+            group: group,                             // importante: el grupo debe ser este
+            phase: TournamentPhase.GroupStage
+        ); match.SetResult(2, 0);
+
+        group.AddMatch(match);
+
+        var standings = group.GetStandings().ToList();
+
+        Assert.AreEqual(uruguay, standings[0]);
+    }
 }
