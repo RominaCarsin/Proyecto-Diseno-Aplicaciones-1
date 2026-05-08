@@ -9,6 +9,7 @@ namespace Services;
 public class GroupService : IGroupService
 {
     private readonly IRepository<Group> _repository;
+    private const string GroupNotFoundErrorMessage = "Group was not found.";
 
     public GroupService(IRepository<Group> repository)
     {
@@ -27,11 +28,6 @@ public class GroupService : IGroupService
         return _repository
             .GetAll()
             .Select(GroupMapper.FromEntity);
-    }
-
-    public GroupResponse GetGroupByLabel(char label)
-    {
-        throw new NotImplementedException();
     }
 
     public void DeleteGroup(char label)
@@ -62,5 +58,14 @@ public class GroupService : IGroupService
     public IEnumerable<MatchResponse> GetPendingGroupMatches(char groupLabel)
     {
         throw new NotImplementedException();
+    }
+    
+    public GroupResponse GetGroupByLabel(char label)
+    {
+        var group = _repository
+            .GetAll()
+            .First(g => g.Label == label);
+
+        return GroupMapper.FromEntity(group);
     }
 }
