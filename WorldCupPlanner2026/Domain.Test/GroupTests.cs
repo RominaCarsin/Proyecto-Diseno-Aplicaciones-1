@@ -281,4 +281,26 @@ public class GroupTests
 
         Assert.AreEqual(brazil, standings[0]);
     }
+    
+    
+    [TestMethod]
+    public void GetTeamByPosition_ShouldReturnTeamFromStandings()
+    {
+        Group group = new Group('A');
+
+        Team uruguay = CreateUruguayTeam();
+        Team argentina = CreateArgentinaTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        Match match = CreateGroupMatch(argentina, uruguay, group);
+        match.SetResult(3, 0);
+
+        group.AddMatch(match);
+
+        Team team = group.GetTeamByPosition(1);
+
+        Assert.AreEqual(argentina, team);
+    }
 }
