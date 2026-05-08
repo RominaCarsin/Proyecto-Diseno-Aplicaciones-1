@@ -47,7 +47,7 @@ public class GroupTests
    {
       var group = new Group('A');
       var team1 = new Team("BRAZIL", "CONMEBOL", 1800);
-      var team2 = new Team("BRASIL", "CONMEBOL", 1800);
+      var team2 = new Team("BRAZIL", "CONMEBOL", 1800);
       group.AddTeam(team1);
       Assert.ThrowsException<ArgumentException>(() => group.AddTeam(team2));
    }
@@ -117,5 +117,41 @@ public class GroupTests
       var group = new Group('A');
       Assert.ThrowsException<ArgumentException>(() => group.GetTeamByPosition(0));
       Assert.ThrowsException<ArgumentException>(() => group.GetTeamByPosition(5));
+   }
+   
+   [TestMethod]
+   public void CreateGroup_WithLowercaseLabel_ShouldStoreUppercaseLabel()
+   {
+      var group = new Group('a');
+
+      Assert.AreEqual('A', group.Label);
+   }
+   
+   [TestMethod]
+   public void UpdateLabel_WithLowercaseLabel_ShouldStoreUppercaseLabel()
+   {
+      var group = new Group('A');
+
+      group.UpdateLabel('b');
+
+      Assert.AreEqual('B', group.Label);
+   }
+   
+   [TestMethod]
+   public void RemoveTeam_WithNullTeam_ShouldThrowArgumentException()
+   {
+      var group = new Group('A');
+
+      Assert.ThrowsException<ArgumentException>(() =>
+         group.RemoveTeam(null));
+   }
+   
+   [TestMethod]
+   public void UpdateLabel_WithInvalidLabel_ShouldThrowArgumentException()
+   {
+      var group = new Group('A');
+
+      Assert.ThrowsException<ArgumentException>(() =>
+         group.UpdateLabel('Z'));
    }
 }

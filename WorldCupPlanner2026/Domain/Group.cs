@@ -11,12 +11,13 @@ public class Group
     private const string InvalidPositionErrorMessage = "Position is invalid.";
     
     public char Label { get; private set; }
-    public List<Team> Teams { get; }
+    private readonly List<Team> _teams = new();
+
+    public IReadOnlyList<Team> Teams => _teams;
 
     public Group(char label)
     {
         UpdateLabel(label);
-        Teams = new List<Team>();
     }
 
     public void UpdateLabel(char label)
@@ -47,7 +48,7 @@ public class Group
         {
             throw new ArgumentException(FullGroupErrorMessage);
         }
-        Teams.Add(team);
+        _teams.Add(team);
     }
     
     
@@ -59,7 +60,7 @@ public class Group
             throw new ArgumentException(NullTeamErrorMessage);
         }
 
-        bool removed = Teams.Remove(team);
+        bool removed = _teams.Remove(team);
 
         if (!removed)
         {
