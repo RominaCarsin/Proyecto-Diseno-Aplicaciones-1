@@ -294,13 +294,20 @@ public class GroupTests
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
 
-        Match match = CreateGroupMatch(argentina, uruguay, group);
+        Match match = new Match(
+            date: DateTime.Today,
+            stadium: new Stadium("Centenario", " Montevideo", "ValidDescription", 20000), // o cualquier Stadium válido
+            homeTeam: uruguay,
+            awayTeam: argentina,
+            group: group,                             
+            phase: TournamentPhase.GroupStage
+        );
         match.SetResult(3, 0);
 
         group.AddMatch(match);
 
         Team team = group.GetTeamByPosition(1);
 
-        Assert.AreEqual(argentina, team);
+        Assert.AreEqual(uruguay, team);
     }
 }

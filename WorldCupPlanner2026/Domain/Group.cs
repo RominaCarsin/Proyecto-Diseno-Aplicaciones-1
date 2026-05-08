@@ -56,7 +56,7 @@ public class Group
     {
         ValidatePosition(position);
 
-        return _teams[position - 1];
+        return GetStandings().ElementAt(position - 1);
     }
 
     private static char NormalizeLabel(char label)
@@ -231,4 +231,5 @@ public class Group
 
         return goalDifference;
     }
+    
 }
