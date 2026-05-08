@@ -70,7 +70,18 @@ public class GroupService : IGroupService
 
     public TeamResponse GetTeamByPosition(char groupLabel, int position)
     {
-        throw new NotImplementedException();
+        Domain.Group group = _repository
+            .GetAll()
+            .First(g => g.Label == groupLabel);
+
+        Team team = group.GetTeamByPosition(position);
+
+        return new TeamResponse
+        {
+            Name = team.Name,
+            ConfederationName = team.ConfederationName,
+            RankingFifa = team.RankingFifa
+        };
     }
 
     public IEnumerable<MatchResponse> GetGroupMatches(char groupLabel)
