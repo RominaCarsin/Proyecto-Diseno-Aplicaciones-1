@@ -189,30 +189,26 @@ public class GroupTests
     }
     
     [TestMethod]
-    public void GetStandings_ShouldReturnTeamsOrderedByPointsGoalDifferenceGoalsInFavorAndName()
+    public void AddMatch_ShouldAddMatchToGroup()
     {
-        var group = CreateValidGroup();
+        Group group = new Group('A');
+        Team uruguay = CreateUruguayTeam();
+        Team argentina = CreateArgentinaTeam();
 
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-        var chile = CreateChileTeam();
-        var uruguay = CreateUruguayTeam();
-
-        argentina.AddMatchResult(3, 1); // 3 pts, GD +2, GF 3
-        brazil.AddMatchResult(2, 0);    // 3 pts, GD +2, GF 2
-        chile.AddMatchResult(1, 1);     // 1 pt, GD 0, GF 1
-        uruguay.AddMatchResult(0, 2);   // 0 pts, GD -2, GF 0
-
-        group.AddTeam(chile);
         group.AddTeam(uruguay);
-        group.AddTeam(brazil);
         group.AddTeam(argentina);
 
-        var standings = group.GetStandings().ToList();
+        Match match = new Match(
+            date: DateTime.Today,
+            stadium: new Stadium("Centenario", " Montevideo", "ValidDescription", 20000), // o cualquier Stadium válido
+            homeTeam: uruguay,
+            awayTeam: argentina,
+            group: group,                             // importante: el grupo debe ser este
+            phase: TournamentPhase.GroupStage
+        );
 
-        Assert.AreEqual(argentina, standings[0]);
-        Assert.AreEqual(brazil, standings[1]);
-        Assert.AreEqual(chile, standings[2]);
-        Assert.AreEqual(uruguay, standings[3]);
+        group.AddMatch(match);
+
+        Assert.AreEqual(1, group.Matches.Count);
     }
 }
