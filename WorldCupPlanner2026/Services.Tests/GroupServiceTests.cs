@@ -42,4 +42,17 @@ public class GroupServiceTests
 
         Assert.AreEqual('A', group.Label);
     }
+    
+    [TestMethod]
+    public void DeleteGroup_ShouldRemoveGroup()
+    {
+        IRepository<Domain.Group> repository = new Repository<Domain.Group>();
+        IGroupService service = new GroupService(repository);
+
+        service.AddGroup(new GroupRequest { Label = 'A' });
+
+        service.DeleteGroup('A');
+
+        Assert.AreEqual(0, service.GetGroups().Count());
+    }
 }
