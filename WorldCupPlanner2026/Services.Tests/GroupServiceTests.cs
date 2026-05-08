@@ -55,4 +55,26 @@ public class GroupServiceTests
 
         Assert.AreEqual(0, service.GetGroups().Count());
     }
+    
+    [TestMethod]
+    public void AddTeamToGroup_ShouldAddTeamToGroup()
+    {
+        IRepository<Domain.Group> repository = new Repository<Domain.Group>();
+        IGroupService service = new GroupService(repository);
+
+        service.AddGroup(new GroupRequest { Label = 'A' });
+
+        TeamRequest teamRequest = new TeamRequest
+        {
+            Name = "Uruguay",
+            ConfederationName = "CONMEBOL",
+            RankingFifa = 1500
+        };
+
+        service.AddTeamToGroup('A', teamRequest);
+
+        GroupResponse group = service.GetGroupByLabel('A');
+
+        Assert.AreEqual(1, group.Teams.Count);
+    }
 }
