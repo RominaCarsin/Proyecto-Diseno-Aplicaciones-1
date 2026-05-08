@@ -187,4 +187,32 @@ public class GroupTests
         group.AddTeam(new Team("TEAM2", "CONCACAF", 1002));
         group.AddTeam(new Team("TEAM3", "UEFA", 1003));
     }
+    
+    [TestMethod]
+    public void GetStandings_ShouldReturnTeamsOrderedByPointsGoalDifferenceGoalsInFavorAndName()
+    {
+        var group = CreateValidGroup();
+
+        var argentina = CreateArgentinaTeam();
+        var brazil = CreateBrazilTeam();
+        var chile = CreateChileTeam();
+        var uruguay = CreateUruguayTeam();
+
+        argentina.AddMatchResult(3, 1); // 3 pts, GD +2, GF 3
+        brazil.AddMatchResult(2, 0);    // 3 pts, GD +2, GF 2
+        chile.AddMatchResult(1, 1);     // 1 pt, GD 0, GF 1
+        uruguay.AddMatchResult(0, 2);   // 0 pts, GD -2, GF 0
+
+        group.AddTeam(chile);
+        group.AddTeam(uruguay);
+        group.AddTeam(brazil);
+        group.AddTeam(argentina);
+
+        var standings = group.GetStandings().ToList();
+
+        Assert.AreEqual(argentina, standings[0]);
+        Assert.AreEqual(brazil, standings[1]);
+        Assert.AreEqual(chile, standings[2]);
+        Assert.AreEqual(uruguay, standings[3]);
+    }
 }
