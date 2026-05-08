@@ -108,4 +108,24 @@ public class GroupServiceTests
         Assert.AreEqual("URUGUAY", standings[0].Name);
         Assert.AreEqual("ARGENTINA", standings[1].Name);
     }
+    
+    [TestMethod]
+    public void GetTeamByPosition_ShouldReturnTeamInGivenPosition()
+    {
+        IRepository<Domain.Group> repository = new Repository<Domain.Group>();
+        IGroupService service = new GroupService(repository);
+
+        service.AddGroup(new GroupRequest { Label = 'A' });
+
+        service.AddTeamToGroup('A', new TeamRequest
+        {
+            Name = "Uruguay",
+            ConfederationName = "CONMEBOL",
+            RankingFifa = 1500
+        });
+
+        TeamResponse team = service.GetTeamByPosition('A', 1);
+
+        Assert.AreEqual("URUGUAY", team.Name);
+    }
 }
