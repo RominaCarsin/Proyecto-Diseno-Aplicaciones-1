@@ -21,7 +21,8 @@ public class UserMapper
         return new UserResponse
         {
             Name = user.Name,
-            Email = user.Email
+            Email = user.Email,
+            Roles = RoleMapper.ToDto(user.Roles)
         };
     }
 }

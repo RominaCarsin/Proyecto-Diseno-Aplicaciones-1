@@ -1,10 +1,5 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Web</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+﻿@using IServices
+@inject ISessionService SessionService
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
@@ -14,19 +9,17 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href= "Teams/Create">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Teams
-            </NavLink>
-            <NavLink class="nav-link" href="stadiums/create">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Stadiums
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+        @if (SessionService.IsLoggedIn() && 
+             (SessionService.GetCurrentUser()?.Roles.ToString() == "Admin" || SessionService.GetCurrentUser()?.Roles.ToString() == "Editor"))
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Teams/Create">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Team Management
+                </NavLink>
+                <NavLink class="nav-link" href="stadiums/create">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Stadium Management
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
