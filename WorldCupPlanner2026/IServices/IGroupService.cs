@@ -11,6 +11,4 @@ public interface IGroupService
     void AddTeamToGroup(char groupLabel, TeamRequest teamRequest);
     IEnumerable<TeamResponse> GetGroupStandings(char groupLabel);
     TeamResponse GetTeamByPosition(char groupLabel, int position);
-    IEnumerable<MatchResponse> GetGroupMatches(char groupLabel);
-    IEnumerable<MatchResponse> GetPendingGroupMatches(char groupLabel);
 }

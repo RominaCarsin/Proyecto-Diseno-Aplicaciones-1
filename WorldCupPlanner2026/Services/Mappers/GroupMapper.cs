@@ -4,7 +4,7 @@ using DTOs;
 
 namespace Services.Mappers;
 
-public  class GroupMapper
+public class GroupMapper
 {
     
     public static Group ToEntity(GroupRequest request)
