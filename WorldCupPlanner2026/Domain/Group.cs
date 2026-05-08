@@ -118,4 +118,45 @@ public class Group
     {
         _matches.Add(match);
     }
+    
+    public IEnumerable<Team> GetStandings()
+    {
+        return _teams.OrderByDescending(GetPoints);
+    }
+
+    private int GetPoints(Team team)
+    {
+        int points = 0;
+
+        foreach (Match match in _matches)
+        {
+            if (match.HomeGoals is null || match.AwayGoals is null)
+            {
+                continue;
+            }
+
+            if (match.HomeGoals == match.AwayGoals && IsTeamInMatch(team, match))
+            {
+                points += 1;
+            }
+
+            if (match.HomeGoals > match.AwayGoals && match.HomeTeam == team)
+            {
+                points += 3;
+            }
+
+            if (match.AwayGoals > match.HomeGoals && match.AwayTeam == team)
+            {
+                points += 3;
+            }
+        }
+
+        return points;
+    }
+
+    private static bool IsTeamInMatch(Team team, Match match)
+    {
+        return match.HomeTeam == team || match.AwayTeam == team;
+    }
+    
 }
