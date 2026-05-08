@@ -121,7 +121,11 @@ public class Group
     
     public IEnumerable<Team> GetStandings()
     {
-        return _teams.OrderByDescending(GetPoints);
+        List<Team> standings = _teams.ToList();
+
+        standings.Sort(CompareTeams);
+
+        return standings;
     }
 
     private int GetPoints(Team team)
@@ -159,4 +163,72 @@ public class Group
         return match.HomeTeam == team || match.AwayTeam == team;
     }
     
+    private int GetGoalsFor(Team team)
+    {
+        int goalsFor = 0;
+
+        foreach (Match match in _matches)
+        {
+            if (match.HomeGoals is null || match.AwayGoals is null)
+            {
+                continue;
+            }
+
+            if (match.HomeTeam == team)
+            {
+                goalsFor += match.HomeGoals.Value;
+            }
+
+            if (match.AwayTeam == team)
+            {
+                goalsFor += match.AwayGoals.Value;
+            }
+        }
+
+        return goalsFor;
+    }
+    
+    private int CompareTeams(Team firstTeam, Team secondTeam)
+    {
+        int pointsComparison = GetPoints(secondTeam).CompareTo(GetPoints(firstTeam));
+
+        if (pointsComparison != 0)
+        {
+            return pointsComparison;
+        }
+
+        int goalDifferenceComparison = GetGoalDifference(secondTeam).CompareTo(GetGoalDifference(firstTeam));
+
+        if (goalDifferenceComparison != 0)
+        {
+            return goalDifferenceComparison;
+        }
+
+        return GetGoalsFor(secondTeam).CompareTo(GetGoalsFor(firstTeam));
+    }
+    
+    private int GetGoalDifference(Team team)
+    {
+        int goalDifference = 0;
+
+        foreach (Match match in _matches)
+        {
+            if (match.HomeGoals is null || match.AwayGoals is null)
+            {
+                continue;
+            }
+
+            if (match.HomeTeam == team)
+            {
+                goalDifference += match.HomeGoals.Value - match.AwayGoals.Value;
+            }
+
+            if (match.AwayTeam == team)
+            {
+                goalDifference += match.AwayGoals.Value - match.HomeGoals.Value;
+            }
+        }
+
+        return goalDifference;
+    }
 }

@@ -267,8 +267,8 @@ public class GroupTests
         Match secondMatch = new Match(
             date: DateTime.Today,
             stadium: new Stadium("Centenario", " Montevideo", "ValidDescription", 20000), // o cualquier Stadium válido
-            homeTeam: chile,
-            awayTeam: brazil,
+            homeTeam: brazil,
+            awayTeam: chile,
             group: group,                            
             phase: TournamentPhase.GroupStage
         );
