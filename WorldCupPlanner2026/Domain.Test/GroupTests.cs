@@ -229,12 +229,56 @@ public class GroupTests
             awayTeam: argentina,
             group: group,                             // importante: el grupo debe ser este
             phase: TournamentPhase.GroupStage
-        ); match.SetResult(2, 0);
+        );
+        match.SetResult(2, 0);
 
         group.AddMatch(match);
 
         var standings = group.GetStandings().ToList();
 
         Assert.AreEqual(uruguay, standings[0]);
+    }
+    
+    [TestMethod]
+    public void GetStandings_WhenSamePointsAndGoalDifference_ShouldOrderByGoalsFor()
+    {
+        Group group = new Group('A');
+
+        Team uruguay = CreateUruguayTeam();
+        Team argentina = CreateArgentinaTeam();
+        Team brazil = CreateBrazilTeam();
+        Team chile = CreateChileTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+        group.AddTeam(brazil);
+        group.AddTeam(chile);
+
+        Match firstMatch = new Match(
+            date: DateTime.Today,
+            stadium: new Stadium("Centenario", " Montevideo", "ValidDescription", 20000), // o cualquier Stadium válido
+            homeTeam: uruguay,
+            awayTeam: argentina,
+            group: group,                            
+            phase: TournamentPhase.GroupStage
+        );
+        firstMatch.SetResult(2, 1);
+
+        Match secondMatch = new Match(
+            date: DateTime.Today,
+            stadium: new Stadium("Centenario", " Montevideo", "ValidDescription", 20000), // o cualquier Stadium válido
+            homeTeam: chile,
+            awayTeam: brazil,
+            group: group,                            
+            phase: TournamentPhase.GroupStage
+        );
+        secondMatch.SetResult(3, 2);
+
+        group.AddMatch(firstMatch);
+        group.AddMatch(secondMatch);
+
+        var standings = group.GetStandings().ToList();
+
+        Assert.AreEqual(brazil, standings[0]);
     }
 }
