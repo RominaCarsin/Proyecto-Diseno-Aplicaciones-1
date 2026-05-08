@@ -1,5 +1,8 @@
 ﻿@using IServices
+@using DTOs
 @inject ISessionService SessionService
+@inject IAuthStateService AuthStateService
+@implements IDisposable
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
@@ -9,8 +12,8 @@
             </NavLink>
         </div>
 
-        @if (SessionService.IsLoggedIn() && 
-             (SessionService.GetCurrentUser()?.Roles.ToString() == "Admin" || SessionService.GetCurrentUser()?.Roles.ToString() == "Editor"))
+        @if (SessionService.IsLoggedIn() &&
+             (SessionService.CurrentUserHasRole(RoleDto.Admin) || SessionService.CurrentUserHasRole(RoleDto.Editor)))
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="Teams/Create">
@@ -23,3 +26,20 @@
         }
     </nav>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthStateService.OnChange += OnAuthStateChanged;
+    }
+
+    private void OnAuthStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthStateService.OnChange -= OnAuthStateChanged;
+    }
+}

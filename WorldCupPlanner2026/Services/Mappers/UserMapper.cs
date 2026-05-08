@@ -12,7 +12,8 @@ public class UserMapper
             request.Surname,
             request.Email,
             request.DateOfBirth,
-            request.Password
+            request.Password,
+            RoleMapper.ToDomain(request.Roles)
         );
     }
 

@@ -20,6 +20,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<IRepository<Team>, Repository<Team>>();
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IAuthStateService, AuthStateService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();
 

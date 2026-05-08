@@ -9,4 +9,5 @@ public interface ISessionService
     bool IsLoggedIn();
     string? GetCurrentUserEmail();
     UserResponse? GetCurrentUser();
+    bool CurrentUserHasRole(RoleDto role);
 }
