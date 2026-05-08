@@ -32,7 +32,11 @@ public class GroupService : IGroupService
 
     public void DeleteGroup(char label)
     {
-        throw new NotImplementedException();
+        Domain.Group group = _repository
+            .GetAll()
+            .First(g => g.Label == label);
+
+        _repository.Delete(group);
     }
 
     public void AddTeamToGroup(char groupLabel, TeamRequest teamRequest)
