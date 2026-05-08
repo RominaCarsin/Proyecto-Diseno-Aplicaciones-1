@@ -55,7 +55,17 @@ public class GroupService : IGroupService
 
     public IEnumerable<TeamResponse> GetGroupStandings(char groupLabel)
     {
-        throw new NotImplementedException();
+        Domain.Group group = _repository
+            .GetAll()
+            .First(g => g.Label == groupLabel);
+
+        return group.Teams
+            .Select(t => new TeamResponse
+            {
+                Name = t.Name,
+                ConfederationName = t.ConfederationName,
+                RankingFifa = t.RankingFifa
+            });
     }
 
     public TeamResponse GetTeamByPosition(char groupLabel, int position)
