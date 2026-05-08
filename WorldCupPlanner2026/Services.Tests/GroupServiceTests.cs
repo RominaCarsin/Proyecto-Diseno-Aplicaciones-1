@@ -77,4 +77,35 @@ public class GroupServiceTests
 
         Assert.AreEqual(1, group.Teams.Count);
     }
+    
+    [TestMethod]
+    public void GetGroupStandings_ShouldReturnTeamsOrderedByPoints()
+    {
+        IRepository<Domain.Group> repository = new Repository<Domain.Group>();
+        IGroupService service = new GroupService(repository);
+
+        service.AddGroup(new GroupRequest { Label = 'A' });
+
+        var uruguay = new TeamRequest
+        {
+            Name = "Uruguay",
+            ConfederationName = "CONMEBOL",
+            RankingFifa = 1500
+        };
+
+        var argentina = new TeamRequest
+        {
+            Name = "Argentina",
+            ConfederationName = "CONMEBOL",
+            RankingFifa = 1800
+        };
+
+        service.AddTeamToGroup('A', uruguay);
+        service.AddTeamToGroup('A', argentina);
+
+        var standings = service.GetGroupStandings('A').ToList();
+
+        Assert.AreEqual("URUGUAY", standings[0].Name);
+        Assert.AreEqual("ARGENTINA", standings[1].Name);
+    }
 }
