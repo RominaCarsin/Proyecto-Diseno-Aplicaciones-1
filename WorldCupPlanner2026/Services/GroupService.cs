@@ -41,7 +41,16 @@ public class GroupService : IGroupService
 
     public void AddTeamToGroup(char groupLabel, TeamRequest teamRequest)
     {
-        throw new NotImplementedException();
+        Domain.Group group = _repository
+            .GetAll()
+            .First(g => g.Label == groupLabel);
+
+        Team team = new Team(
+            teamRequest.Name,
+            teamRequest.ConfederationName,
+            teamRequest.RankingFifa);
+
+        group.AddTeam(team);
     }
 
     public IEnumerable<TeamResponse> GetGroupStandings(char groupLabel)
@@ -66,10 +75,21 @@ public class GroupService : IGroupService
     
     public GroupResponse GetGroupByLabel(char label)
     {
-        var group = _repository
+        Domain.Group group = _repository
             .GetAll()
             .First(g => g.Label == label);
 
-        return GroupMapper.FromEntity(group);
+        return new GroupResponse
+        {
+            Label = group.Label,
+            Teams = group.Teams
+                .Select(t => new TeamResponse
+                {
+                    Name = t.Name,
+                    ConfederationName = t.ConfederationName,
+                    RankingFifa = t.RankingFifa
+                })
+                .ToList()
+        };
     }
 }
