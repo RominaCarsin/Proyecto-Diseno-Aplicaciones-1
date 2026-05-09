@@ -9,9 +9,19 @@ public class AuditLog
 
     public AuditLog(string actorEmail, string action, string details)
     {
+        ValidateActorEmail(actorEmail);
+        
         ActorEmail = actorEmail;
         Action = action;
         Details = details;
         Timestamp = DateTime.UtcNow;
+    }
+
+    private static void ValidateActorEmail(string actorEmail)
+    {
+        if (string.IsNullOrWhiteSpace(actorEmail))
+        {
+            throw new ArgumentException("Actor email cannot be empty.");
+        }
     }
 }
