@@ -10,6 +10,7 @@ public class AuditLog
     public AuditLog(string actorEmail, string action, string details)
     {
         ValidateActorEmail(actorEmail);
+        ValidateAction(action);
         
         ActorEmail = actorEmail;
         Action = action;
@@ -23,5 +24,11 @@ public class AuditLog
         {
             throw new ArgumentException("Actor email cannot be empty.");
         }
+    }
+    
+    private static void ValidateAction(string action)
+    {
+        if (string.IsNullOrWhiteSpace(action))
+            throw new ArgumentException("Action cannot be empty");
     }
 }
