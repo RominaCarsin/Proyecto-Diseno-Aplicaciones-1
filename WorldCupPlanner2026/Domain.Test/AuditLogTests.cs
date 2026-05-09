@@ -13,4 +13,10 @@ public class AuditLogTests
         Assert.AreEqual("user created",log.Action);
         Assert.AreEqual("juan@test.com", log.Details);
     }
+
+    [TestMethod]
+    public void CreateAuditLog_WithEmptyActorEmail_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new AuditLog("", "user created", "juan@test.com"));
+    }
 }
