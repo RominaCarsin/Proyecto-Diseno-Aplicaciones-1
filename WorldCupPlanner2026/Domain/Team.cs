@@ -73,6 +73,7 @@ public class Team
     public static string Normalized(string name)
     {
         return name?.Trim().ToUpper() ?? string.Empty;
+        
     }
     
 }
