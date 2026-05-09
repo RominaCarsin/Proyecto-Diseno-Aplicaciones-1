@@ -15,58 +15,63 @@ public class StadiumService : IStadiumService
         _repository = repository;
     }
 
-    public void AddStadium(StadiumRequest request)
+    public void AddStadium(StadiumRequest stadiumRequest)
     {
-        var stadium = StadiumMapper.ToEntity(request);
+        var stadium = StadiumMapper.ToEntity(stadiumRequest);
 
-        bool nameExists = _repository.GetAll()
-            .Any(s => s.Name.Equals(stadium.Name, StringComparison.OrdinalIgnoreCase));
-
-        if (nameExists)
-            throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
+        EnsureStadiumNameIsNotTaken(stadium.Name);
 
         _repository.Add(stadium);
     }
 
     public void DeleteStadium(string stadiumName)
     {
-
-        var stadium = _repository.GetAll()
-            .FirstOrDefault(s => s.Name == stadiumName);
-
-        if (stadium == null)
-            throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
-
-        _repository.Delete(stadium);
-    }
-
-    public void UpdateStadium(string originalName, StadiumRequest request)
-    {
-        originalName = originalName?.Trim() ?? string.Empty;
-
-        var existingStadium = _repository.GetAll()
-            .FirstOrDefault(s => s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
-
-        if (existingStadium == null)
-            throw new ArgumentException($"A stadium with the name '{originalName}' does not exist");
-
-        var updatedStadium = StadiumMapper.ToEntity(request);
-
-        bool nameExists = _repository.GetAll()
-            .Any(s =>
-                s.Name.Equals(updatedStadium.Name, StringComparison.OrdinalIgnoreCase)
-                && !s.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase));
-
-        if (nameExists)
-            throw new ArgumentException($"A stadium with the name '{updatedStadium.Name}' already exists");
+        var existingStadium = FindStadiumByNameOrThrow(stadiumName);
 
         _repository.Delete(existingStadium);
-        _repository.Add(updatedStadium);
     }
 
-    public IEnumerable<StadiumResponse> GetStadiums()
+    public void UpdateStadium(string originalStadiumName, StadiumRequest updatedStadiumData)
+    {
+        var existingStadium = FindStadiumByNameOrThrow(originalStadiumName);
+
+        var updatedStadium = StadiumMapper.ToEntity(updatedStadiumData);
+
+        bool isRenamingToADifferentName = !updatedStadium.Name.Equals(
+            existingStadium.Name, 
+            StringComparison.OrdinalIgnoreCase);
+        
+        if (isRenamingToADifferentName)
+            EnsureStadiumNameIsNotTaken(updatedStadium.Name);
+
+        ReplaceStadium(existingStadium, updatedStadium);
+    }
+
+    public IEnumerable<StadiumResponse> GetAllStadiums()
     {
         return _repository.GetAll()
             .Select(StadiumMapper.FromEntity);
+    }
+    
+    private Stadium FindStadiumByNameOrThrow(string stadiumName)
+    {
+        return _repository.GetAll()
+            .FirstOrDefault(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
+    }
+
+    private void EnsureStadiumNameIsNotTaken(string stadiumName)
+    {
+        bool nameAlreadyExists = _repository.GetAll()
+            .Any(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase));
+
+        if (nameAlreadyExists)
+            throw new ArgumentException($"A stadium with the name '{stadiumName}' already exists");
+    }
+
+    private void ReplaceStadium(Stadium stadiumToRemove, Stadium stadiumToAdd)
+    {
+        _repository.Delete(stadiumToRemove);
+        _repository.Add(stadiumToAdd);
     }
 }
