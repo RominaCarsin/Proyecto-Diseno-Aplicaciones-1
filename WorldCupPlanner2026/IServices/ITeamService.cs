@@ -9,4 +9,5 @@ public interface ITeamService
     IEnumerable<TeamResponse> GetTeams();
     void UpdateTeam(string currentName, TeamRequest request);
     void DeleteTeam(string name);
+    void AutoCompleteTeams(int seed);
 }

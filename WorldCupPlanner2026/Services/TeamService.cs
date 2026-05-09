@@ -8,7 +8,11 @@ namespace Services;
 
 public class TeamService : ITeamService
 {
-     private readonly IRepository<Team> _repository;
+    private const int RequiredTeamsCount = 48;
+    private const int FirstFifaRanking = 300;
+    private const int LastFifaRanking = 2500;
+
+    private readonly IRepository<Team> _repository;
     private readonly IConfederationService _confederationService;
 
     public TeamService(IRepository<Team> repository, IConfederationService confederationService)
@@ -47,8 +51,45 @@ public class TeamService : ITeamService
         _repository.Delete(team);
     }
 
+    public void AutoCompleteTeams(int seed)
+    {
+        var random = new Random(seed);
+
+        foreach (var confederation in _confederationService.GetAll())
+        {
+            var remainingGlobalSlots = RequiredTeamsCount - _repository.GetAll().Count();
+            if (remainingGlobalSlots <= 0) return;
+
+            var teamsToCreate = Math.Min(confederation.RemainingSlots, remainingGlobalSlots);
+            AddFictionalTeams(confederation.Name, teamsToCreate, random);
+        }
+    }
+
     public IEnumerable<TeamResponse> GetTeams() =>
         _repository.GetAll().Select(TeamMapper.FromEntity);
+
+    private void AddFictionalTeams(string confederationName, int teamsToCreate, Random random)
+    {
+        for (var index = 1; index <= teamsToCreate; index++)
+            AddTeam(BuildFictionalTeamRequest(confederationName, index, random));
+    }
+
+    private TeamRequest BuildFictionalTeamRequest(string confederationName, int index, Random random) => new()
+    {
+        Name = GenerateFictionalName(confederationName, index),
+        ConfederationName = confederationName,
+        RankingFifa = GenerateRandomRanking(random)
+    };
+
+    private string GenerateFictionalName(string confederationName, int index)
+    {
+        return $"{confederationName}_{index:00}";
+    }
+
+    private int GenerateRandomRanking(Random random)
+    {
+        return random.Next(FirstFifaRanking, LastFifaRanking + 1);
+    }
 
     private Team? FindByName(string name) =>
         _repository.GetAll().FirstOrDefault(t => t.Name == Team.Normalized(name));
