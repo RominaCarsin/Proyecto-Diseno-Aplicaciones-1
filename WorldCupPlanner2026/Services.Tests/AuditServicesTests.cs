@@ -56,4 +56,12 @@ public class AuditServicesTests
         Assert.IsTrue(logs.Any(l => l.Action == "User created"));
         Assert.IsTrue(logs.Any(l => l.Action == "User deleted"));
     }
+    
+    [TestMethod]
+    public void GetAll_WhenNoLogs_ShouldReturnEmptyList()
+    {
+        var logs = _service.GetAll().ToList();
+
+        Assert.AreEqual(0, logs.Count);
+    }
 }
