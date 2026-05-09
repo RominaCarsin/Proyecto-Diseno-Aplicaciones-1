@@ -30,11 +30,18 @@ public class AuditLogTests
     public void CreateAuditLog_Timestamp_ShouldBeCloseToNow()
     {
         var before = DateTime.UtcNow;
-        var log    = new AuditLog("admin@test.com", "User created", "juan@test.com");
-        var after  = DateTime.UtcNow;
+        var log = new AuditLog("admin@test.com", "User created", "juan@test.com");
+        var after = DateTime.UtcNow;
 
         Assert.IsTrue(log.Timestamp >= before && log.Timestamp <= after);
     }
-    
-    
+
+    [TestMethod]
+    public void CreateAuditLog_Id_ShouldBeIncresing()
+    {
+        var firstLog = new AuditLog("admin@test.com", "User created", "juan@test.com");
+        var secondLog = new AuditLog("admin@test.com", "User created", "pedro@test.com");
+
+        Assert.IsTrue(secondLog.Id > firstLog.Id);
+    }
 }
