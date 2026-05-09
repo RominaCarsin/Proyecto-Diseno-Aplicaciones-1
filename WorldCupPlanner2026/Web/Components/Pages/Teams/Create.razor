@@ -66,7 +66,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN DE SIMULACIÓN (Sin funcionalidad local) -->
+    <!-- SECCIÓN DE SIMULACIÓN -->
     <div class="bg-white border-custom p-4 diagonal-corners">
         <h3 class="mb-3">Simular / Completar Equipos</h3>
         <GeometricDivider />
@@ -74,13 +74,13 @@
         <div class="row align-items-end g-3 mt-2">
             <div class="col-md-6">
                 <label class="form-label fw-bold">Semilla (opcional)</label>
-                <input type="text" @bind="simulationSeed" placeholder="Lógica no implementada en servicio"
-                       class="form-control border-custom-input" disabled />
+                <input type="text" @bind="simulationSeed" @bind:event="oninput" placeholder="Semilla para simulación"
+                       class="form-control border-custom-input" />
             </div>
             <div class="col-md-4">
-                <button @onclick="SimulateTeams" disabled
+                <button @onclick="SimulateTeams"
                         class="btn btn-wc-green w-100 d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-shuffle"></i> Autocompletar (No implementado)
+                    <i class="bi bi-shuffle"></i> Autocompletar hasta 48
                 </button>
             </div>
             <div class="col-md-2">
@@ -201,7 +201,20 @@
 
     private void SimulateTeams()
     {
-        // Sin funcionalidad: No implementado en ITeamService todavía.
+        ClearMessages();
+
+        try
+        {
+            var parsedSeed = int.TryParse(simulationSeed, out var seed) ? seed : 0;
+
+            TeamService.AutoCompleteTeams(parsedSeed);
+            RefreshUI();
+            successMessage = "Equipos autocompletados correctamente.";
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
     }
 
     private void SaveTeam()
@@ -232,7 +245,9 @@
 
     private void RefreshUI()
     {
-        teams = TeamService.GetTeams();
+        var seed = int.TryParse(simulationSeed, out var parsed) ? parsed : 0;
+
+        teams = TeamService.GetTeamsOrdered(seed);
         confederations = ConfederationService.GetAll();
     }
 

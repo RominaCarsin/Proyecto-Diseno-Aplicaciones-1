@@ -68,6 +68,43 @@ public class TeamService : ITeamService
     public IEnumerable<TeamResponse> GetTeams() =>
         _repository.GetAll().Select(TeamMapper.FromEntity);
 
+    public IEnumerable<TeamResponse> GetTeamsOrdered(int seed)
+    {
+        var orderedTeams = _repository.GetAll()
+            .OrderByDescending(team => team.RankingFifa)
+            .ToList();
+
+        ResolveRankingTies(orderedTeams, seed);
+
+        return orderedTeams.Select(TeamMapper.FromEntity);
+    }
+
+    private void ResolveRankingTies(IList<Team> teams, int seed)
+    {
+        var shuffleService = new ShuffleService(seed);
+        var tieStartIndex = 0;
+
+        while (tieStartIndex < teams.Count)
+        {
+            var tieEndIndex = FindTieEndIndex(teams, tieStartIndex);
+            if (tieEndIndex - tieStartIndex > 1)
+                shuffleService.ShuffleRange(teams, tieStartIndex, tieEndIndex);
+
+            tieStartIndex = tieEndIndex;
+        }
+    }
+
+    private int FindTieEndIndex(IList<Team> teams, int tieStartIndex)
+    {
+        var tieRanking = teams[tieStartIndex].RankingFifa;
+        var tieEndIndex = tieStartIndex + 1;
+
+        while (tieEndIndex < teams.Count && teams[tieEndIndex].RankingFifa == tieRanking)
+            tieEndIndex++;
+
+        return tieEndIndex;
+    }
+
     private void AddFictionalTeams(string confederationName, int teamsToCreate, Random random)
     {
         for (var index = 1; index <= teamsToCreate; index++)
