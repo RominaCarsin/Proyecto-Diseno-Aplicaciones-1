@@ -81,7 +81,7 @@ public class TeamService : ITeamService
 
     private void ResolveRankingTies(IList<Team> teams, int seed)
     {
-        var shuffleService = new ShuffleService(seed);
+        var shuffleService = CreateShuffleService(seed);
         var tieStartIndex = 0;
 
         while (tieStartIndex < teams.Count)
@@ -103,6 +103,11 @@ public class TeamService : ITeamService
             tieEndIndex++;
 
         return tieEndIndex;
+    }
+
+    private IShuffleService CreateShuffleService(int seed)
+    {
+        return new ShuffleService(seed);
     }
 
     private void AddFictionalTeams(string confederationName, int teamsToCreate, Random random)
