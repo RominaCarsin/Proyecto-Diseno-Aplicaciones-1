@@ -19,4 +19,10 @@ public class AuditLogTests
     {
         Assert.ThrowsException<ArgumentException>(() => new AuditLog("", "user created", "juan@test.com"));
     }
+    
+    [TestMethod]
+    public void CreateAuditLog_WithEmptyAction_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() => new AuditLog("admin@test.com", "", "juan@test.com"));
+    }
 }
