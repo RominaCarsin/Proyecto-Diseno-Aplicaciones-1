@@ -43,4 +43,17 @@ public class AuditServicesTests
 
         Assert.AreEqual(3, logs.Count);
     }
+    
+    [TestMethod]
+    public void GetAll_ShouldReturnAllLogs()
+    {
+        _service.Log(AdminEmail, "User created", "juan@test.com");
+        _service.Log(AdminEmail, "User deleted", "pedro@test.com");
+
+        var logs = _service.GetAll().ToList();
+
+        Assert.AreEqual(2, logs.Count);
+        Assert.IsTrue(logs.Any(l => l.Action == "User created"));
+        Assert.IsTrue(logs.Any(l => l.Action == "User deleted"));
+    }
 }
