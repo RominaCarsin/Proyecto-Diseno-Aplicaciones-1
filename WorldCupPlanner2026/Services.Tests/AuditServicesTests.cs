@@ -64,4 +64,28 @@ public class AuditServicesTests
 
         Assert.AreEqual(0, logs.Count);
     }
+    
+    [TestMethod]
+    public void Log_WithEmptyActorEmail_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.Log("", Action, Details));
+    }
+    
+    [TestMethod]
+    public void Log_WithEmptyAction_ShouldThrowException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.Log(AdminEmail, "", Details));
+    }
+    
+    [TestMethod]
+    public void Log_Timestamp_ShouldNotBeInTheFuture()
+    {
+        _service.Log(AdminEmail, Action, Details);
+
+        var log = _repository.GetAll().First();
+
+        Assert.IsTrue(log.Timestamp <= DateTime.UtcNow);
+    }
 }
