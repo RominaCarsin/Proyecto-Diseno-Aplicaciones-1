@@ -11,6 +11,6 @@ public class AuditLogTests
         Assert.IsNotNull(log);
         Assert.AreEqual("admin@test.com",log.ActorEmail);
         Assert.AreEqual("user created",log.Action);
-        Assert.AreEqual("juan@gmail.com", log.Details);
+        Assert.AreEqual("juan@test.com", log.Details);
     }
 }
