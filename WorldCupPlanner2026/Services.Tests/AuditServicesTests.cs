@@ -31,4 +31,16 @@ public class AuditServicesTests
         Assert.AreEqual(Action, logs[0].Action);
         Assert.AreEqual(Details, logs[0].Details);
     }
+    
+    [TestMethod]
+    public void Log_CalledMultipleTimes_ShouldSaveAllLogs()
+    {
+        _service.Log(AdminEmail, "User created",  "juan@test.com");
+        _service.Log(AdminEmail, "User deleted",  "pedro@test.com");
+        _service.Log(AdminEmail, "Stadium added", "Estadio Centenario");
+
+        var logs = _repository.GetAll().ToList();
+
+        Assert.AreEqual(3, logs.Count);
+    }
 }
