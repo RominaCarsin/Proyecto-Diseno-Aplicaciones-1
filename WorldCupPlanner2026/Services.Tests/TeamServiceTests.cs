@@ -178,6 +178,60 @@ public class TeamServiceTests
         CollectionAssert.AreEqual(firstRankings, secondRankings);
     }
 
+    [TestMethod]
+    public void GetTeamsOrdered_WithoutTies_ReturnsRankingsDescending()
+    {
+        AddTeamsToService(
+            ("Uruguay", "CONMEBOL", 1700),
+            ("France", "UEFA", 2100),
+            ("Japan", "AFC", 1300),
+            ("Morocco", "CAF", 1600));
+
+        var result = _service.GetTeamsOrdered(5).ToList();
+
+        CollectionAssert.AreEqual(
+            new[] { 2100, 1700, 1600, 1300 },
+            result.Select(team => team.RankingFifa).ToArray());
+    }
+
+    [TestMethod]
+    public void GetTeamsOrdered_WithTies_ShufflesTiedTeamsDeterministically()
+    {
+        AddTeamsToService(
+            ("Alpha", "UEFA", 1800),
+            ("Beta", "UEFA", 1800),
+            ("Gamma", "UEFA", 1800),
+            ("Delta", "CAF", 1500));
+
+        var firstResult = _service.GetTeamsOrdered(7).ToList();
+        var secondResult = _service.GetTeamsOrdered(7).ToList();
+        var expectedTiedNames = new List<string> { "ALPHA", "BETA", "GAMMA" };
+        new ShuffleService(7).ShuffleRange(expectedTiedNames, 0, expectedTiedNames.Count);
+
+        CollectionAssert.AreEqual(
+            firstResult.Select(team => team.Name).ToArray(),
+            secondResult.Select(team => team.Name).ToArray());
+        CollectionAssert.AreEqual(
+            expectedTiedNames.ToArray(),
+            firstResult.Take(3).Select(team => team.Name).ToArray());
+        Assert.AreEqual("DELTA", firstResult[3].Name);
+    }
+
+    [TestMethod]
+    public void GetTeamsOrdered_WithDifferentSeeds_ProducesDifferentTieBreaks()
+    {
+        AddTeamsToService(
+            ("Alpha", "UEFA", 1800),
+            ("Beta", "UEFA", 1800),
+            ("Gamma", "UEFA", 1800),
+            ("Delta", "UEFA", 1800));
+
+        var firstOrder = _service.GetTeamsOrdered(1).Select(team => team.Name).ToArray();
+        var secondOrder = _service.GetTeamsOrdered(2).Select(team => team.Name).ToArray();
+
+        CollectionAssert.AreNotEqual(firstOrder, secondOrder);
+    }
+
     private static TeamService CreateTeamService()
     {
         return new TeamService(new Repository<Team>(), new ConfederationService());
