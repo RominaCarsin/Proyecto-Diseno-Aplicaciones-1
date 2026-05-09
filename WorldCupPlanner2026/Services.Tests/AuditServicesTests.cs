@@ -1,4 +1,8 @@
-﻿namespace Services.Tests;
+﻿using Domain;
+using IRepository;
+using Repository;
+
+namespace Services.Tests;
 
 [TestClass]
 public class AuditServicesTests
