@@ -25,4 +25,14 @@ public class AuditLogTests
     {
         Assert.ThrowsException<ArgumentException>(() => new AuditLog("admin@test.com", "", "juan@test.com"));
     }
+
+    [TestMethod]
+    public void CreateAuditLog_Timestamp_ShouldBeCloseToNow()
+    {
+        var before = DateTime.UtcNow;
+        var log    = new AuditLog("admin@test.com", "User created", "juan@test.com");
+        var after  = DateTime.UtcNow;
+
+        Assert.IsTrue(log.Timestamp >= before && log.Timestamp <= after);
+    }
 }
