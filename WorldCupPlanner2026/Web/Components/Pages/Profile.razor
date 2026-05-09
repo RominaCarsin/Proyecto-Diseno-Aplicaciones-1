@@ -1,0 +1,155 @@
+﻿@using Web.Components.Shared
+@page "/profile"
+
+<div class="container-fluid p-0 space-y-6">
+    
+    @* --- INFORMACIÓN GENERAL --- *@
+    <div class="bg-white border-custom p-6 diagonal-corners">
+        <div class="d-flex align-items-center gap-4 mb-4">
+            <div class="avatar-box bg-wc-blue text-white d-flex align-items-center justify-content-center">
+                <i class="bi bi-person-fill h1 mb-0"></i>
+            </div>
+            <div>
+                <h3 class="mb-0">@userData.Name</h3>
+                <p class="text-muted mb-0">@userData.Email</p>
+            </div>
+        </div>
+
+        <GeometricDivider />
+
+        <div class="row g-4 mt-2 mb-4">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Nombre</label>
+                <input type="text" @bind="userData.Name" class="form-control border-custom-input" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Email</label>
+                <input type="email" @bind="userData.Email" class="form-control border-custom-input" />
+            </div>
+        </div>
+
+        <button @onclick="UpdateProfile" class="btn btn-wc-blue px-4">
+            Actualizar Perfil
+        </button>
+    </div>
+
+    @* --- ROL Y PERMISOS --- *@
+    <div class="bg-white border-custom p-6 diagonal-corners">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-shield-check text-wc-blue h4 mb-0"></i>
+            <h3 class="mb-0">Rol y Permisos</h3>
+        </div>
+        <GeometricDivider />
+
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Rol Actual</label>
+                <select @bind="userData.Role" class="form-select border-custom-input">
+                    <option value="Admin">Administrador</option>
+                    <option value="Editor">Editor</option>
+                    <option value="Viewer">Visor</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold d-block mb-3">Permisos Activos</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-success-soft text-success px-3 py-2">Lectura</span>
+                    <span class="badge bg-success-soft text-success px-3 py-2">Escritura</span>
+                    <span class="badge bg-success-soft text-success px-3 py-2">Eliminación</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* --- SEGURIDAD --- *@
+    <div class="bg-white border-custom p-6 diagonal-corners">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-key text-wc-red h4 mb-0"></i>
+            <h3 class="mb-0">Cambiar Contraseña</h3>
+        </div>
+        <GeometricDivider />
+
+        <div class="max-w-md mt-4 space-y-4">
+            <div>
+                <label class="form-label fw-bold">Contraseña Actual</label>
+                <input type="password" @bind="currentPassword" class="form-control border-custom-input" placeholder="••••••••" />
+            </div>
+            <div>
+                <label class="form-label fw-bold">Nueva Contraseña</label>
+                <input type="password" @bind="newPassword" class="form-control border-custom-input" placeholder="••••••••" />
+            </div>
+            <div>
+                <label class="form-label fw-bold">Confirmar Nueva Contraseña</label>
+                <input type="password" @bind="confirmPassword" class="form-control border-custom-input" placeholder="••••••••" />
+            </div>
+
+            <button @onclick="ResetPassword" class="btn btn-wc-red px-4 mt-2">
+                Actualizar Contraseña
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private UserData userData = new() {
+        Name = "Administrador",
+        Email = "admin@worldcup.com",
+        Role = "Admin"
+    };
+
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string confirmPassword = "";
+
+    private void UpdateProfile() {
+        // Aquí iría tu servicio de C# (e.g. UserService.Update(userData))
+        Console.WriteLine("Perfil actualizado");
+    }
+
+    private void ResetPassword() {
+        if (newPassword != confirmPassword) {
+            // Podrías usar un servicio de notificaciones aquí
+            return;
+        }
+
+        if (newPassword.Length < 6) {
+            return;
+        }
+
+        Console.WriteLine("Contraseña reseteada");
+        currentPassword = newPassword = confirmPassword = "";
+    }
+
+    public class UserData {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
+}
+
+<style>
+    .avatar-box {
+        width: 80px;
+        height: 80px;
+        border-radius: 4px; /* Manteniendo la estética geométrica */
+    }
+
+    .bg-success-soft {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    .max-w-md {
+        max-width: 500px;
+    }
+
+    .border-custom-input {
+        border: 2px solid var(--wc-border);
+        border-radius: 0;
+        padding: 0.6rem 1rem;
+    }
+
+    .border-custom-input:focus {
+        border-color: var(--wc-blue);
+        box-shadow: none;
+    }
+</style>

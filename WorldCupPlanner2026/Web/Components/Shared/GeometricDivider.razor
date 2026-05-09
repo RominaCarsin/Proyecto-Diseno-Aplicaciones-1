@@ -1,0 +1,27 @@
+﻿<div class="geometric-divider">
+    <div class="line"></div>
+    <div class="diamond"></div>
+    <div class="line"></div>
+</div>
+
+<style>
+    .geometric-divider {
+        display: flex;
+        align-items: center;
+        height: 2px;
+        width: 100%;
+        opacity: 0.3;
+    }
+    .line {
+        flex-grow: 1;
+        height: 1px;
+        background-color: var(--wc-border);
+    }
+    .diamond {
+        width: 6px;
+        height: 6px;
+        background-color: var(--wc-border);
+        transform: rotate(45deg);
+        margin: 0 10px;
+    }
+</style>
