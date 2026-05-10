@@ -51,6 +51,28 @@ public class Match
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
         Winner = DetermineWinner(homeGoals, awayGoals);
+
+        NotifyTeams();
+        
+    }
+    
+    private void NotifyTeams()
+    {
+        if (HomeGoals > AwayGoals)
+        {
+            HomeTeam.RecordWin(HomeGoals.Value, AwayGoals.Value);
+            AwayTeam.RecordLoss(AwayGoals.Value, HomeGoals.Value);
+        }
+        else if (AwayGoals > HomeGoals)
+        {
+            AwayTeam.RecordWin(AwayGoals.Value, HomeGoals.Value);
+            HomeTeam.RecordLoss(HomeGoals.Value, AwayGoals.Value);
+        }
+        else
+        {
+            HomeTeam.RecordDraw(HomeGoals.Value);
+            AwayTeam.RecordDraw(AwayGoals.Value);
+        }
     }
 
     public void UpdateDate(DateTime newDate)
