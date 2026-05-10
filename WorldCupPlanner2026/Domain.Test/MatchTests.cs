@@ -288,6 +288,28 @@ public class MatchTests
 
         Assert.IsTrue(match.IsLocked);
     }
+    
+    [TestMethod]
+    public void SetResult_WhenHomeTeamWins_ShouldUpdateTeamsStats()
+    {
+        Team homeTeam = BuildTeam(name: "URUGUAY");
+        Team awayTeam = BuildTeam(name: "ARGENTINA");
+
+        Match match = CreateValidMatch(
+            homeTeam: homeTeam,
+            awayTeam: awayTeam);
+
+        match.SetResult(3, 1);
+
+        Assert.AreEqual(3, homeTeam.Points);
+        Assert.AreEqual(0, awayTeam.Points);
+
+        Assert.AreEqual(2, homeTeam.GoalDifference);
+        Assert.AreEqual(-2, awayTeam.GoalDifference);
+
+        Assert.AreEqual(3, homeTeam.GoalsInFavor);
+        Assert.AreEqual(1, awayTeam.GoalsInFavor);
+    }
 
 
     private static Match CreateValidMatch(
