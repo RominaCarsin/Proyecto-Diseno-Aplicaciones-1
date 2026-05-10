@@ -1,9 +1,10 @@
 ﻿using Domain;
 using IRepository;
+using IServices;
 
 namespace Services;
 
-public class AuditService
+public class AuditService : IAuditService
 {
     private readonly IRepository<AuditLog> _repository;
 
