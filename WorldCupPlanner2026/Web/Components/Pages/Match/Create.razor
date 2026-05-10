@@ -517,7 +517,7 @@
 
     private void LoadData()
     {
-        _matches = MatchService.GetMatches();
+        _matches = MatchService.GetAllMatches();
         _stadiums = StadiumService.GetStadiums();
         _teams = TeamService.GetTeams();
     }

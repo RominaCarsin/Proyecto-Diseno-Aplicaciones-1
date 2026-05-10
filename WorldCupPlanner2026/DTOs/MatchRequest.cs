@@ -3,11 +3,7 @@
 public class MatchRequest
 {
     public DateTime Date { get; init; }
-    
-    public StadiumRequest Stadium { get; set; } = new();
-
-    public TeamRequest HomeTeam { get; set; } = new();
-
-    public TeamRequest AwayTeam { get; set; } = new();
-    
+    public StadiumRequest Stadium { get; init; } = new();
+    public TeamRequest HomeTeam { get; init; } = new();
+    public TeamRequest AwayTeam { get; init; } = new();
 }

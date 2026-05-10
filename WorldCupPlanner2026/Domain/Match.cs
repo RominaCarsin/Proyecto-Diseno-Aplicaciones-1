@@ -4,13 +4,13 @@ public class Match
 {
     private const int MinGoals = 0;
 
-    private const string InvalidDateError = "Match date must be valid.";
-    private const string RequiredStadiumError = "Stadium cannot be null.";
-    private const string RequiredHomeTeamError = "Home team cannot be null.";
-    private const string RequiredAwayTeamError = "Away team cannot be null.";
-    private const string SameTeamsError = "Home team and away team must be different.";
-    private const string LockedMatchError = "Locked matches cannot be edited.";
-    private const string NegativeGoalsError = "Goals cannot be negative.";
+    private const string InvalidDateErrorMessage = "Match date must be valid.";
+    private const string RequiredStadiumErrorMessage = "Stadium cannot be null.";
+    private const string RequiredHomeTeamErrorMessage = "Home team cannot be null.";
+    private const string RequiredAwayTeamErrorMessage = "Away team cannot be null.";
+    private const string SameTeamsErrorMessage = "Home team and away team must be different.";
+    private const string LockedMatchErrorMessage = "Locked matches cannot be edited.";
+    private const string NegativeGoalsErrorMessage = "Goals cannot be negative.";
 
     private static int _nextId = 1;
 
@@ -30,7 +30,11 @@ public class Match
         Team? homeTeam,
         Team? awayTeam)
     {
-        ValidateCreationData(date, stadium, homeTeam, awayTeam);
+        ValidateDate(date);
+        ValidateRequired(stadium, RequiredStadiumErrorMessage);
+        ValidateRequired(homeTeam, RequiredHomeTeamErrorMessage);
+        ValidateRequired(awayTeam, RequiredAwayTeamErrorMessage);
+        ValidateTeamsAreDifferent(homeTeam!, awayTeam!);
 
         Id = _nextId++;
         Date = date;
@@ -41,17 +45,17 @@ public class Match
 
     public void SetResult(int homeGoals, int awayGoals)
     {
-        ValidateCanEdit();
-        ValidateResult(homeGoals, awayGoals);
+        ValidateIsNotLocked();
+        ValidateGoals(homeGoals, awayGoals);
 
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
-        Winner = GetWinner(homeGoals, awayGoals);
+        Winner = DetermineWinner(homeGoals, awayGoals);
     }
 
     public void UpdateDate(DateTime newDate)
     {
-        ValidateCanEdit();
+        ValidateIsNotLocked();
         ValidateDate(newDate);
 
         Date = newDate;
@@ -59,8 +63,8 @@ public class Match
 
     public void UpdateStadium(Stadium? newStadium)
     {
-        ValidateCanEdit();
-        ValidateRequired(newStadium, RequiredStadiumError);
+        ValidateIsNotLocked();
+        ValidateRequired(newStadium, RequiredStadiumErrorMessage);
 
         Stadium = newStadium!;
     }
@@ -69,91 +73,53 @@ public class Match
     {
         IsLocked = true;
     }
-
-    private static void ValidateCreationData(
-        DateTime date,
-        Stadium? stadium,
-        Team? homeTeam,
-        Team? awayTeam)
-    {
-        ValidateDate(date);
-        ValidateRequired(stadium, RequiredStadiumError);
-        ValidateRequired(homeTeam, RequiredHomeTeamError);
-        ValidateRequired(awayTeam, RequiredAwayTeamError);
-        ValidateTeamsAreDifferent(homeTeam!, awayTeam!);
-    }
-
-    private static void ValidateResult(int homeGoals, int awayGoals)
-    {
-        ValidateGoals(homeGoals, awayGoals);
-    }
-
-    private void ValidateCanEdit()
+    
+    
+    private void ValidateIsNotLocked()
     {
         if (IsLocked)
-        {
-            throw new InvalidOperationException(LockedMatchError);
-        }
+            throw new InvalidOperationException(LockedMatchErrorMessage);
     }
 
     private static void ValidateDate(DateTime date)
     {
         if (date == DateTime.MinValue)
-        {
-            throw new ArgumentException(InvalidDateError, nameof(date));
-        }
+            throw new ArgumentException(InvalidDateErrorMessage, nameof(date));
     }
 
     private static void ValidateRequired<T>(T? value, string errorMessage)
     {
         if (value is null)
-        {
             throw new ArgumentException(errorMessage);
-        }
     }
 
     private static void ValidateTeamsAreDifferent(Team homeTeam, Team awayTeam)
     {
         if (AreSameTeam(homeTeam, awayTeam))
-        {
-            throw new ArgumentException(SameTeamsError);
-        }
-    }
-
-    private static bool AreSameTeam(Team homeTeam, Team awayTeam)
-    {
-        return ReferenceEquals(homeTeam, awayTeam)
-               || string.Equals(
-                   homeTeam.Name,
-                   awayTeam.Name,
-                   StringComparison.OrdinalIgnoreCase);
+            throw new ArgumentException(SameTeamsErrorMessage);
     }
 
     private static void ValidateGoals(int homeGoals, int awayGoals)
     {
-        if (homeGoals < MinGoals)
-        {
-            throw new ArgumentOutOfRangeException(nameof(homeGoals), NegativeGoalsError);
-        }
-
-        if (awayGoals < MinGoals)
-        {
-            throw new ArgumentOutOfRangeException(nameof(awayGoals), NegativeGoalsError);
-        }
+        ValidateSingleGoalValue(homeGoals, nameof(homeGoals));
+        ValidateSingleGoalValue(awayGoals, nameof(awayGoals));
     }
 
-    private Team? GetWinner(int homeGoals, int awayGoals)
+    private static void ValidateSingleGoalValue(int goals, string paramName)
     {
-        if (homeGoals > awayGoals)
-        {
-            return HomeTeam;
-        }
+        if (goals < MinGoals)
+            throw new ArgumentOutOfRangeException(paramName, NegativeGoalsErrorMessage);
+    }
 
-        if (awayGoals > homeGoals)
-        {
-            return AwayTeam;
-        }
 
+    private static bool AreSameTeam(Team homeTeam, Team awayTeam) =>
+        ReferenceEquals(homeTeam, awayTeam)
+        || string.Equals(homeTeam.Name, awayTeam.Name, StringComparison.OrdinalIgnoreCase);
+
+    private Team? DetermineWinner(int homeGoals, int awayGoals)
+    {
+        if (homeGoals > awayGoals) return HomeTeam;
+        if (awayGoals > homeGoals) return AwayTeam;
         return null;
     }
 }
