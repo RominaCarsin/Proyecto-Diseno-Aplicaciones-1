@@ -120,4 +120,15 @@ public class FixtureServiceTests
         var groups = _groupRepository.GetAll().ToList();
         Assert.IsTrue(groups.All(g => g.Teams.Count == 4));
     }
+    
+    [TestMethod]
+    public void GenerateFixture_WithValidData_ShouldCreate6MatchesPerGroup()
+    {
+        var fixtureService = CreateFixtureServiceReady();
+
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        var groups = _groupRepository.GetAll().ToList();
+        Assert.IsTrue(groups.All(g => g.Matches.Count == 6));
+    }
 }
