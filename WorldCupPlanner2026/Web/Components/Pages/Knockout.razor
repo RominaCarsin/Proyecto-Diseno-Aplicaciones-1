@@ -1,5 +1,8 @@
 ﻿@using Web.Components.Shared
+@using DTOs
+@using IServices
 @page "/knockout"
+@inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
     
@@ -15,12 +18,12 @@
                        class="form-control border-custom-input" />
             </div>
             <div class="col-auto">
-                <button @onclick="GenerateBracket" class="btn btn-wc-blue px-4">
+                <button @onclick="GenerateBracket" class="btn btn-wc-blue px-4" disabled="@(!IsEditor)">
                     Generar Cruces
                 </button>
             </div>
             <div class="col-auto">
-                <button @onclick="SimulatePhase" class="btn btn-wc-green px-4 d-flex align-items-center gap-2">
+                <button @onclick="SimulatePhase" class="btn btn-wc-green px-4 d-flex align-items-center gap-2" disabled="@(!IsEditor)">
                     <i class="bi bi-shuffle"></i> Simular Fase
                 </button>
             </div>
@@ -29,77 +32,88 @@
 
     <!-- BRACKET VISUAL -->
     <div class="bg-white border-custom p-4 diagonal-corners overflow-auto">
-        <div class="d-flex gap-4 min-w-max pb-4">
-            
-            @* --- LADO IZQUIERDO --- *@
-            
-            @* Dieciseisavos Izq *@
-            <div class="bracket-column">
-                <div class="bracket-header bg-wc-blue">Dieciseisavos</div>
-                <div class="d-flex flex-column gap-3">
-                    @foreach (var m in roundOf32.Take(4)) { @RenderMatch(m) }
-                </div>
-            </div>
-
-            @* Octavos Izq *@
-            <div class="bracket-column">
-                <div class="bracket-header bg-wc-blue">Octavos</div>
-                <div class="d-flex flex-column gap-5 mt-5">
-                    @foreach (var m in roundOf16.Take(2)) { @RenderMatch(m) }
-                </div>
-            </div>
-
-            @* Cuartos Izq *@
-            <div class="bracket-column">
-                <div class="bracket-header bg-wc-blue">Cuartos</div>
-                <div class="d-flex flex-column gap-5 mt-10">
-                    @foreach (var m in quarterFinals.Take(1)) { @RenderMatch(m) }
-                </div>
-            </div>
-
-            @* --- CENTRO (FINAL) --- *@
-            
-            <div class="bracket-column mx-4">
-                <div class="bracket-header bg-wc-red">Final</div>
-                <div class="d-flex flex-column justify-content-center h-100">
-                    <div class="final-card-wrapper">
-                        @RenderMatch(finalMatch, true)
+        @if (!HasBracket)
+        {
+            <div class="text-muted">No hay cruces generados.</div>
+        }
+        else
+        {
+            <div class="d-flex gap-4 min-w-max pb-4">
+                
+                @* --- LADO IZQUIERDO --- *@
+                
+                @* Dieciseisavos Izq *@
+                <div class="bracket-column">
+                    <div class="bracket-header bg-wc-blue">Dieciseisavos</div>
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var m in roundOf32.Take(4)) { @RenderMatch(m) }
                     </div>
                 </div>
-            </div>
 
-            @* --- LADO DERECHO --- *@
-
-            @* Cuartos Der *@
-            <div class="bracket-column">
-                <div class="bracket-header bg-wc-blue">Cuartos</div>
-                <div class="d-flex flex-column gap-5 mt-10">
-                    @foreach (var m in quarterFinals.Skip(1)) { @RenderMatch(m) }
+                @* Octavos Izq *@
+                <div class="bracket-column">
+                    <div class="bracket-header bg-wc-blue">Octavos</div>
+                    <div class="d-flex flex-column gap-5 mt-5">
+                        @foreach (var m in roundOf16.Take(2)) { @RenderMatch(m) }
+                    </div>
                 </div>
-            </div>
 
-            @* Octavos Der *@
-            <div class="bracket-column">
-                <div class="bracket-header bg-wc-blue">Octavos</div>
-                <div class="d-flex flex-column gap-5 mt-5">
-                    @foreach (var m in roundOf16.Skip(2)) { @RenderMatch(m) }
+                @* Cuartos Izq *@
+                <div class="bracket-column">
+                    <div class="bracket-header bg-wc-blue">Cuartos</div>
+                    <div class="d-flex flex-column gap-5 mt-10">
+                        @foreach (var m in quarterFinals.Take(1)) { @RenderMatch(m) }
+                    </div>
                 </div>
-            </div>
 
-            @* Dieciseisavos Der *@
-            <div class="bracket-column">
-                <div class="bracket-header bg-wc-blue">Dieciseisavos</div>
-                <div class="d-flex flex-column gap-3">
-                    @foreach (var m in roundOf32.Skip(4)) { @RenderMatch(m) }
+                @* --- CENTRO (FINAL) --- *@
+                
+                <div class="bracket-column mx-4">
+                    <div class="bracket-header bg-wc-red">Final</div>
+                    <div class="d-flex flex-column justify-content-center h-100">
+                        <div class="final-card-wrapper">
+                            @if (finalMatch != null)
+                            {
+                                @RenderMatch(finalMatch, true)
+                            }
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-        </div>
+                @* --- LADO DERECHO --- *@
+
+                @* Cuartos Der *@
+                <div class="bracket-column">
+                    <div class="bracket-header bg-wc-blue">Cuartos</div>
+                    <div class="d-flex flex-column gap-5 mt-10">
+                        @foreach (var m in quarterFinals.Skip(1)) { @RenderMatch(m) }
+                    </div>
+                </div>
+
+                @* Octavos Der *@
+                <div class="bracket-column">
+                    <div class="bracket-header bg-wc-blue">Octavos</div>
+                    <div class="d-flex flex-column gap-5 mt-5">
+                        @foreach (var m in roundOf16.Skip(2)) { @RenderMatch(m) }
+                    </div>
+                </div>
+
+                @* Dieciseisavos Der *@
+                <div class="bracket-column">
+                    <div class="bracket-header bg-wc-blue">Dieciseisavos</div>
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var m in roundOf32.Skip(4)) { @RenderMatch(m) }
+                    </div>
+                </div>
+
+            </div>
+        }
     </div>
 </div>
 
 @code {
     private string seedValue = "";
+    private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
 
     // Fragmento de Renderizado para las Cards
     private RenderFragment RenderMatch(MatchModel match, bool isFinal = false) => __builder => {
@@ -115,10 +129,12 @@
         </div>
     };
 
-    private List<MatchModel> roundOf32 = Enumerable.Range(1, 8).Select(i => new MatchModel { Id = i.ToString(), HomeTeam = "TBD", AwayTeam = "TBD" }).ToList();
-    private List<MatchModel> roundOf16 = Enumerable.Range(9, 4).Select(i => new MatchModel { Id = i.ToString(), HomeTeam = "TBD", AwayTeam = "TBD" }).ToList();
-    private List<MatchModel> quarterFinals = Enumerable.Range(13, 2).Select(i => new MatchModel { Id = i.ToString(), HomeTeam = "TBD", AwayTeam = "TBD" }).ToList();
-    private MatchModel finalMatch = new() { Id = "16", HomeTeam = "TBD", AwayTeam = "TBD" };
+    private List<MatchModel> roundOf32 = new();
+    private List<MatchModel> roundOf16 = new();
+    private List<MatchModel> quarterFinals = new();
+    private MatchModel? finalMatch;
+
+    private bool HasBracket => roundOf32.Any() || roundOf16.Any() || quarterFinals.Any() || finalMatch != null;
 
     private void GenerateBracket() { /* Lógica de generación */ }
     private void SimulatePhase() { /* Lógica de simulación */ }

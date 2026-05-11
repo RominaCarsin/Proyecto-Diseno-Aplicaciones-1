@@ -1,5 +1,9 @@
 ﻿@using Web.Components.Shared
+@using DTOs
+@using IServices
 @page "/matches"
+@inject IMatchService MatchService
+@inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
     
@@ -9,6 +13,11 @@
             <i class="bi bi-funnel"></i> Filtros
         </h3>
         <GeometricDivider />
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
+        }
 
         <div class="row g-3 mt-2">
             <div class="col-md-3">
@@ -49,53 +58,62 @@
 
     <!-- LISTA DE PARTIDOS -->
     <div class="space-y-4">
-        @foreach (var match in FilteredMatches)
+        @if (!FilteredMatches.Any())
         {
-            <div class="bg-white border-custom p-4 diagonal-corners position-relative">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="d-flex gap-3 text-muted small fw-bold">
-                        <span><i class="bi bi-calendar3 me-1"></i> @match.Date</span>
-                        <span><i class="bi bi-clock me-1"></i> @match.Time</span>
-                        <span><i class="bi bi-geo-alt me-1"></i> @match.Stadium</span>
-                        <span class="badge bg-wc-blue">Grupo @match.Group</span>
-                    </div>
-
-                    <button @onclick="() => SimulateMatch(match)" 
-                            class="btn btn-sm btn-wc-green d-flex align-items-center gap-2 px-3">
-                        <i class="bi bi-shuffle"></i> Simular
-                    </button>
-                </div>
-
-                <div class="row align-items-center text-center">
-                    <div class="col">
-                        <div class="h4 mb-0 fw-bold text-end pe-4">@match.HomeTeam</div>
-                    </div>
-
-                    <div class="col-auto d-flex align-items-center gap-3">
-                        <input type="number" class="form-control text-center fw-bold h3 mb-0 border-custom-input score-input"
-                               value="@match.HomeScore" 
-                               @onchange="@(e => HandleScoreChange(match, "home", e.Value?.ToString()))"
-                               placeholder="-" />
-
-                        <span class="h3 mb-0 opacity-25">:</span>
-
-                        <input type="number" class="form-control text-center fw-bold h3 mb-0 border-custom-input score-input"
-                               value="@match.AwayScore"
-                               @onchange="@(e => HandleScoreChange(match, "away", e.Value?.ToString()))"
-                               placeholder="-" />
-                    </div>
-
-                    <div class="col">
-                        <div class="h4 mb-0 fw-bold text-start ps-4">@match.AwayTeam</div>
-                    </div>
-                </div>
-
-                <div class="mt-4 d-flex justify-content-end">
-                    <span class="badge @GetStatusClass(match.Status)">
-                        @GetStatusLabel(match.Status)
-                    </span>
-                </div>
+            <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+                No hay partidos para mostrar.
             </div>
+        }
+        else
+        {
+            @foreach (var match in FilteredMatches)
+            {
+                <div class="bg-white border-custom p-4 diagonal-corners position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex gap-3 text-muted small fw-bold">
+                            <span><i class="bi bi-calendar3 me-1"></i> @match.Date.ToString("dd/MM/yyyy")</span>
+                            <span><i class="bi bi-clock me-1"></i> @match.Date.ToString("HH:mm")</span>
+                            <span><i class="bi bi-geo-alt me-1"></i> @match.Stadium.Name</span>
+                            @if (match.Group.HasValue)
+                            {
+                                <span class="badge bg-wc-blue">Grupo @match.Group</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center text-center">
+                        <div class="col">
+                            <div class="h4 mb-0 fw-bold text-end pe-4">@match.HomeTeam.Name</div>
+                        </div>
+
+                        <div class="col-auto d-flex align-items-center gap-3">
+                            <input type="number" class="form-control text-center fw-bold h3 mb-0 border-custom-input score-input"
+                                   value="@match.HomeGoals"
+                                   disabled="@(!IsEditor || match.IsLocked)"
+                                   @onchange="@(e => HandleScoreChange(match, "home", e.Value?.ToString()))"
+                                   placeholder="-" />
+
+                            <span class="h3 mb-0 opacity-25">:</span>
+
+                            <input type="number" class="form-control text-center fw-bold h3 mb-0 border-custom-input score-input"
+                                   value="@match.AwayGoals"
+                                   disabled="@(!IsEditor || match.IsLocked)"
+                                   @onchange="@(e => HandleScoreChange(match, "away", e.Value?.ToString()))"
+                                   placeholder="-" />
+                        </div>
+
+                        <div class="col">
+                            <div class="h4 mb-0 fw-bold text-start ps-4">@match.AwayTeam.Name</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end">
+                        <span class="badge @GetStatusClass(match)">
+                            @GetStatusLabel(match)
+                        </span>
+                    </div>
+                </div>
+            }
         }
     </div>
 </div>
@@ -114,40 +132,61 @@
 
 @code {
 
-    private List<MatchModel> matches = new()
-    {
-        new() { Id = "1", Date = "2026-06-11", Time = "16:00", Stadium = "Estadio Azteca", Group = "A", HomeTeam = "México", AwayTeam = "Camerún", Status = "scheduled" },
-        new() { Id = "2", Date = "2026-06-12", Time = "13:00", Stadium = "MetLife Stadium", Group = "B", HomeTeam = "Argentina", AwayTeam = "Canadá", HomeScore = 2, AwayScore = 1, Status = "completed" }
-    };
-
+    private IEnumerable<MatchResponse> matches = Enumerable.Empty<MatchResponse>();
     private DateTime? filterDate;
     private string filterStadium = "";
     private string filterGroup = "";
+    private string errorMessage = "";
 
-    private string[] availableStadiums = { "Estadio Azteca", "MetLife Stadium", "AT&T Stadium", "BMO Field" };
-    private string[] groups = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
+    private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
 
-    private IEnumerable<MatchModel> FilteredMatches => matches.Where(m =>
-        (string.IsNullOrEmpty(filterStadium) || m.Stadium == filterStadium) &&
-        (string.IsNullOrEmpty(filterGroup) || m.Group == filterGroup)
-    );
-
-    private void HandleScoreChange(MatchModel match, string team, string? value)
+    protected override void OnInitialized()
     {
-        int? score = int.TryParse(value, out int result) ? result : null;
-        
-        if (team == "home") match.HomeScore = score;
-        else match.AwayScore = score;
-
-        match.Status = (match.HomeScore.HasValue && match.AwayScore.HasValue) ? "completed" : "scheduled";
+        RefreshUI();
     }
 
-    private void SimulateMatch(MatchModel match)
+    private IEnumerable<string> availableStadiums => matches
+        .Select(m => m.Stadium.Name)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct()
+        .OrderBy(name => name);
+
+    private IEnumerable<string> groups => matches
+        .Where(m => m.Group.HasValue)
+        .Select(m => m.Group!.Value.ToString())
+        .Distinct()
+        .OrderBy(g => g);
+
+    private IEnumerable<MatchResponse> FilteredMatches => matches.Where(m =>
+        (!filterDate.HasValue || m.Date.Date == filterDate.Value.Date) &&
+        (string.IsNullOrEmpty(filterStadium) || m.Stadium.Name == filterStadium) &&
+        (string.IsNullOrEmpty(filterGroup) || (m.Group.HasValue && m.Group.Value.ToString() == filterGroup))
+    );
+
+    private void HandleScoreChange(MatchResponse match, string team, string? value)
     {
-        var random = new Random();
-        match.HomeScore = random.Next(0, 5);
-        match.AwayScore = random.Next(0, 5);
-        match.Status = "completed";
+        if (!IsEditor || match.IsLocked)
+        {
+            return;
+        }
+
+        int? score = int.TryParse(value, out int result) ? result : null;
+
+        if (team == "home") match.HomeGoals = score;
+        else match.AwayGoals = score;
+
+        if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+        {
+            try
+            {
+                MatchService.SetMatchResult(match.Id, match.HomeGoals.Value, match.AwayGoals.Value);
+                RefreshUI();
+            }
+            catch (ArgumentException ex)
+            {
+                errorMessage = ex.Message;
+            }
+        }
     }
 
     private void ClearFilters()
@@ -156,31 +195,28 @@
         filterGroup = "";
     }
 
-    private string GetStatusClass(string status) => status switch
+    private void RefreshUI()
     {
-        "completed" => "bg-success-light",
-        "in_progress" => "bg-warning-light",
-        _ => "bg-gray-light"
-    };
+        matches = MatchService.GetMatches();
+    }
 
-    private string GetStatusLabel(string status) => status switch
+    private string GetStatusClass(MatchResponse match)
     {
-        "completed" => "Finalizado",
-        "in_progress" => "En Progreso",
-        _ => "Programado"
-    };
+        if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+        {
+            return "bg-success-light";
+        }
 
-    public class MatchModel
+        return match.IsLocked ? "bg-warning-light" : "bg-gray-light";
+    }
+
+    private string GetStatusLabel(MatchResponse match)
     {
-        public string Id { get; set; } = "";
-        public string Date { get; set; } = "";
-        public string Time { get; set; } = "";
-        public string Stadium { get; set; } = "";
-        public string Group { get; set; } = "";
-        public string HomeTeam { get; set; } = "";
-        public string AwayTeam { get; set; } = "";
-        public int? HomeScore { get; set; }
-        public int? AwayScore { get; set; }
-        public string Status { get; set; } = "scheduled";
+        if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+        {
+            return "Finalizado";
+        }
+
+        return match.IsLocked ? "Bloqueado" : "Programado";
     }
 }

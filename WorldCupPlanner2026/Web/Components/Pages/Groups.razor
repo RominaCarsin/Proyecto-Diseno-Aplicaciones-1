@@ -2,9 +2,17 @@
 @page "/groups"
 
 <div class="container-fluid p-0">
-    <div class="groups-grid">
-        @foreach (var group in groups)
-        {
+    @if (!groups.Any())
+    {
+        <div class="bg-white border-custom diagonal-corners p-4 text-muted">
+            No hay grupos para mostrar.
+        </div>
+    }
+    else
+    {
+        <div class="groups-grid">
+            @foreach (var group in groups)
+            {
             bool isExpanded = expandedGroupName == group.Name;
             
             <div @onclick="() => ToggleGroup(group.Name)"
@@ -77,8 +85,9 @@
                     }
                 </div>
             </div>
-        }
-    </div>
+            }
+        </div>
+    }
 </div>
 
 <style>
@@ -123,39 +132,7 @@
         expandedGroupName = (expandedGroupName == name) ? null : name;
     }
 
-    private List<GroupModel> groups = new()
-    {
-        new() { 
-            Name = "A", 
-            Teams = new() {"México", "Camerún", "Polonia", "Arabia Saudita"},
-            Standings = new() {
-                new() { Team = "México", Played = 3, Won = 2, Drawn = 1, Lost = 0, GoalsFor = 5, GoalsAgainst = 2, GoalDifference = 3, Points = 7 },
-                new() { Team = "Polonia", Played = 3, Won = 1, Drawn = 2, Lost = 0, GoalsFor = 4, GoalsAgainst = 2, GoalDifference = 2, Points = 5 },
-                new() { Team = "Camerún", Played = 3, Won = 1, Drawn = 0, Lost = 2, GoalsFor = 3, GoalsAgainst = 5, GoalDifference = -2, Points = 3 },
-                new() { Team = "Arabia Saudita", Played = 3, Won = 0, Drawn = 1, Lost = 2, GoalsFor = 2, GoalsAgainst = 5, GoalDifference = -3, Points = 1 }
-            }
-        },
-        new() { 
-            Name = "B", 
-            Teams = new() {"Argentina", "Canadá", "Suecia", "Nigeria"},
-            Standings = new() {
-                new() { Team = "Argentina", Played = 3, Won = 3, Drawn = 0, Lost = 0, GoalsFor = 7, GoalsAgainst = 1, GoalDifference = 6, Points = 9 },
-                new() { Team = "Canadá", Played = 3, Won = 2, Drawn = 0, Lost = 1, GoalsFor = 5, GoalsAgainst = 3, GoalDifference = 2, Points = 6 },
-                new() { Team = "Suecia", Played = 3, Won = 1, Drawn = 0, Lost = 2, GoalsFor = 3, GoalsAgainst = 5, GoalDifference = -2, Points = 3 },
-                new() { Team = "Nigeria", Played = 3, Won = 0, Drawn = 0, Lost = 3, GoalsFor = 1, GoalsAgainst = 7, GoalDifference = -6, Points = 0 }
-            }
-        },
-        new() { Name = "C", Teams = new() {"Brasil", "Japón", "Serbia", "Suiza"} },
-        new() { Name = "D", Teams = new() {"Francia", "Australia", "Dinamarca", "Túnez"} },
-        new() { Name = "E", Teams = new() {"España", "Corea del Sur", "Croacia", "Ghana"} },
-        new() { Name = "F", Teams = new() {"Alemania", "Costa Rica", "Marruecos", "Bélgica"} },
-        new() { Name = "G", Teams = new() {"Inglaterra", "Irán", "Gales", "Estados Unidos"} },
-        new() { Name = "H", Teams = new() {"Portugal", "Uruguay", "Senegal", "Ecuador"} },
-        new() { Name = "I", Teams = new() {"Países Bajos", "Qatar", "Italia", "Colombia"} },
-        new() { Name = "J", Teams = new() {"Noruega", "Jamaica", "Chile", "Perú"} },
-        new() { Name = "K", Teams = new() {"Austria", "Egipto", "Escocia", "Venezuela"} },
-        new() { Name = "L", Teams = new() {"Turquía", "Argelia", "Irlanda", "Finlandia"} }
-    };
+    private List<GroupModel> groups = new();
 
     public class GroupModel
     {

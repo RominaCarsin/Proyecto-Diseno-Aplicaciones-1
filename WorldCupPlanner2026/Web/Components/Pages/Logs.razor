@@ -1,79 +1,100 @@
 ﻿@using Web.Components.Shared
+@using DTOs
+@using IServices
 @page "/logs"
+@inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
     
-    @* --- FILTROS DE AUDITORÍA --- *@
-    <div class="bg-white border-custom p-6 diagonal-corners">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <h3 class="mb-0">Filtros de Auditoría</h3>
-            <div class="d-flex gap-2">
-                <span class="badge bg-success-soft text-success px-3 py-2 cursor-pointer">Success</span>
-                <span class="badge bg-info-soft text-info px-3 py-2 cursor-pointer">Info</span>
-                <span class="badge bg-warning-soft text-warning px-3 py-2 cursor-pointer">Warning</span>
-                <span class="badge bg-danger-soft text-danger px-3 py-2 cursor-pointer">Error</span>
+    @if (!IsAdmin)
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+            No tienes permisos para ver la auditoría.
+        </div>
+    }
+    else
+    {
+        @* --- FILTROS DE AUDITORÍA --- *@
+        <div class="bg-white border-custom p-6 diagonal-corners">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h3 class="mb-0">Filtros de Auditoría</h3>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-success-soft text-success px-3 py-2 cursor-pointer">Success</span>
+                    <span class="badge bg-info-soft text-info px-3 py-2 cursor-pointer">Info</span>
+                    <span class="badge bg-warning-soft text-warning px-3 py-2 cursor-pointer">Warning</span>
+                    <span class="badge bg-danger-soft text-danger px-3 py-2 cursor-pointer">Error</span>
+                </div>
+            </div>
+
+            <GeometricDivider />
+
+            <div class="row g-4 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Usuario</label>
+                    <select class="form-select border-custom-input">
+                        <option value="">Todos los usuarios</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Desde</label>
+                    <input type="datetime-local" class="form-control border-custom-input" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Hasta</label>
+                    <input type="datetime-local" class="form-control border-custom-input" />
+                </div>
             </div>
         </div>
 
-        <GeometricDivider />
-
-        <div class="row g-4 mt-2">
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Usuario</label>
-                <select class="form-select border-custom-input">
-                    <option value="">Todos los usuarios</option>
-                    <option value="admin">admin@worldcup.com</option>
-                    <option value="editor">editor@worldcup.com</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Desde</label>
-                <input type="datetime-local" class="form-control border-custom-input" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Hasta</label>
-                <input type="datetime-local" class="form-control border-custom-input" />
-            </div>
-        </div>
-    </div>
-
-    @* --- TABLA DE LOGS --- *@
-    <div class="bg-white border-custom diagonal-corners overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light">
-                    <tr class="border-bottom-2">
-                        <th class="px-4 py-3">Timestamp</th>
-                        <th class="px-4 py-3">Acción</th>
-                        <th class="px-4 py-3">Usuario</th>
-                        <th class="px-4 py-3">Severidad</th>
-                        <th class="px-4 py-3">Detalles</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var log in logs)
-                    {
-                        <tr>
-                            <td class="px-4 py-3 font-monospace text-sm">
-                                @log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")
-                            </td>
-                            <td class="px-4 py-3 fw-bold">@log.Action</td>
-                            <td class="px-4 py-3 text-muted text-sm">@log.User</td>
-                            <td class="px-4 py-3">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="@GetSeverityIcon(log.Severity) @GetSeverityTextColor(log.Severity)"></i>
-                                    <span class="badge @GetSeverityClass(log.Severity) px-2 py-1">
-                                        @log.Severity.ToString()
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 text-sm">@log.Details</td>
+        @* --- TABLA DE LOGS --- *@
+        <div class="bg-white border-custom diagonal-corners overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr class="border-bottom-2">
+                            <th class="px-4 py-3">Timestamp</th>
+                            <th class="px-4 py-3">Acción</th>
+                            <th class="px-4 py-3">Usuario</th>
+                            <th class="px-4 py-3">Severidad</th>
+                            <th class="px-4 py-3">Detalles</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @if (!logs.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="px-4 py-4 text-center text-muted">
+                                    No hay logs disponibles.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var log in logs)
+                            {
+                                <tr>
+                                    <td class="px-4 py-3 font-monospace text-sm">
+                                        @log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")
+                                    </td>
+                                    <td class="px-4 py-3 fw-bold">@log.Action</td>
+                                    <td class="px-4 py-3 text-muted text-sm">@log.User</td>
+                                    <td class="px-4 py-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="@GetSeverityIcon(log.Severity) @GetSeverityTextColor(log.Severity)"></i>
+                                            <span class="badge @GetSeverityClass(log.Severity) px-2 py-1">
+                                                @log.Severity.ToString()
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm">@log.Details</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {
@@ -89,13 +110,9 @@
         public string Details { get; set; } = "";
     }
 
-    private List<LogEntry> logs = new()
-    {
-        new() { Id = "1", Timestamp = DateTime.Now.AddMinutes(-5), Action = "Equipo Creado", User = "admin@worldcup.com", Severity = LogSeverity.Success, Details = "Nuevo equipo 'Brasil' agregado al sistema" },
-        new() { Id = "2", Timestamp = DateTime.Now.AddMinutes(-12), Action = "Partido Simulado", User = "admin@worldcup.com", Severity = LogSeverity.Info, Details = "México vs Camerún: 2-1" },
-        new() { Id = "3", Timestamp = DateTime.Now.AddMinutes(-25), Action = "Error de Validación", User = "editor@worldcup.com", Severity = LogSeverity.Error, Details = "Confederación no válida en fila 5" },
-        new() { Id = "4", Timestamp = DateTime.Now.AddHours(-1), Action = "Estadio Editado", User = "admin@worldcup.com", Severity = LogSeverity.Warning, Details = "Capacidad del Estadio Azteca actualizada" }
-    };
+    private List<LogEntry> logs = new();
+
+    private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
 
     private string GetSeverityIcon(LogSeverity severity) => severity switch
     {
