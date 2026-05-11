@@ -158,4 +158,12 @@ public class FixtureServiceTests
 
         Assert.IsFalse(fixtureService.CanGenerateFixture());
     }
+
+    [TestMethod]
+    public void CanGenerateFixture_WithLessThan4Stadiums_ShouldReturnFalse()
+    {
+        var fixtureService = CreateFixtureServiceWith48TeamsNoStadiums();
+        Assert.IsFalse(fixtureService.CanGenerateFixture());
+    }
+    
 }
