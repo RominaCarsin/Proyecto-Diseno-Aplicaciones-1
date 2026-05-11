@@ -31,5 +31,10 @@ public class FixtureService : IFixtureService
     {
         if (_teamService.GetTeams().Count() < 48)
             throw new InvalidOperationException("Se necesitan 48 equipos para generar el fixture.");
+        if (_stadiumService.GetAllStadiums().Count() < 4)
+            throw new InvalidOperationException("Se necesitan al menos 4 estadios para generar el fixture.");
+
     }
+    
+    
 }
