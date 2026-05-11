@@ -24,9 +24,7 @@ public class FixtureService : IFixtureService
         _groupRepository = groupRepository;
     }
 
-    public bool CanGenerateFixture() => throw new NotImplementedException();
-    public int GetStadiumCount() => throw new NotImplementedException();
-
+    
     public void GenerateFixture(int seed, DateTime startDate)
     {
        ValidateFixtureCanBeGenerated();
@@ -114,4 +112,13 @@ public class FixtureService : IFixtureService
         foreach (var group in groups)
             _groupRepository.Add(group);
     }
+    
+    public bool CanGenerateFixture()
+    {
+        var teamCount = _teamService.GetTeams().Count();
+
+        return teamCount >= 48;
+    }
+
+    public int GetStadiumCount() => _stadiumService.GetAllStadiums().Count();
 }
