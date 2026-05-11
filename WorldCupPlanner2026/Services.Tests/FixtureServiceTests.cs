@@ -36,4 +36,33 @@ public class FixtureServiceTests
 
         return new FixtureService(teamService, stadiumService, groupService, groupRepo);
     }
+    
+    [TestMethod]
+    public void GenerateFixture_WithLessThan4Stadiums_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureServiceWith48TeamsNoStadiums();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
+    }
+
+    private FixtureService CreateFixtureServiceWith48TeamsNoStadiums()
+    {
+        var groupRepo = new Repository<Group>();
+        _groupRepository = groupRepo;
+
+        var teamRepo = new Repository<Team>();
+        var confederationService = new ConfederationService();
+        var teamService = new TeamService(teamRepo, confederationService);
+
+        for (int i = 0; i < 48; i++)
+            teamRepo.Add(new Team($"TEAM_{i:00}", "UEFA", 1000 + i));
+
+        var stadiumRepo = new Repository<Stadium>();
+        var stadiumService = new StadiumService(stadiumRepo);
+
+        var groupService = new GroupService(groupRepo);
+
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo);
+    }
 }
