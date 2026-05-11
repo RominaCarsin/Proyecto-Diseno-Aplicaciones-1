@@ -166,4 +166,10 @@ public class FixtureServiceTests
         Assert.IsFalse(fixtureService.CanGenerateFixture());
     }
     
+    [TestMethod] public void CanGenerateFixture_WithExistingFixture_ShouldReturnFalse() 
+    { 
+        var fixtureService = CreateFixtureServiceReady(); 
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        Assert.IsFalse(fixtureService.CanGenerateFixture()); 
+    }
 }
