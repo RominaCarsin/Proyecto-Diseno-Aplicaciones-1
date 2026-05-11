@@ -38,79 +38,60 @@ public class GroupService : IGroupService
 
         _repository.Delete(group);
     }
-
-    public void AddTeamToGroup(char groupLabel, TeamRequest teamRequest)
+    
+    public GroupResponse GetGroupByLabel(char label)
     {
-        Domain.Group group = _repository
-            .GetAll()
-            .First(g => g.Label == groupLabel);
+        return GroupMapper.FromEntity(FindGroupByLabel(label));
+    }
 
-        Team team = new Team(
-            teamRequest.Name,
-            teamRequest.ConfederationName,
-            teamRequest.RankingFifa);
+    private Group FindGroupByLabel(char label)
+    {
+        return _repository.GetAll().FirstOrDefault(g => g.Label == label)
+               ?? throw new ArgumentException(GroupNotFoundErrorMessage);
+    }
 
+    public void AddTeamToGroup(char groupLabel, TeamRequest request)
+    {
+        Group group = FindGroupByLabel(groupLabel);
+        Team team = TeamMapper.ToEntity(request);
         group.AddTeam(team);
+    }
+
+    public void RemoveTeamFromGroup(char groupLabel, TeamRequest request)
+    {
+        Group group = FindGroupByLabel(groupLabel);
+        Team team = TeamMapper.ToEntity(request);
+        group.RemoveTeam(team);
     }
 
     public IEnumerable<TeamResponse> GetGroupStandings(char groupLabel)
     {
-        Domain.Group group = _repository
-            .GetAll()
-            .First(g => g.Label == groupLabel);
-
-        return group.Teams
-            .Select(t => new TeamResponse
-            {
-                Name = t.Name,
-                ConfederationName = t.ConfederationName,
-                RankingFifa = t.RankingFifa
-            });
+        throw new NotImplementedException();
     }
 
     public TeamResponse GetTeamByPosition(char groupLabel, int position)
     {
-        Domain.Group group = _repository
-            .GetAll()
-            .First(g => g.Label == groupLabel);
-
+        Group group = FindGroupByLabel(groupLabel);
         Team team = group.GetTeamByPosition(position);
-
-        return new TeamResponse
-        {
-            Name = team.Name,
-            ConfederationName = team.ConfederationName,
-            RankingFifa = team.RankingFifa
-        };
+        return TeamMapper.FromEntity(team);
     }
 
-    public IEnumerable<MatchResponse> GetGroupMatches(char groupLabel)
+    public void AddMatchToGroup(char groupLabel, MatchRequest request)
     {
-        throw new NotImplementedException();
+        Group group = FindGroupByLabel(groupLabel);
+        Match match = MatchMapper.ToEntity(request);
+        group.AddMatch(match);
     }
 
-    public IEnumerable<MatchResponse> GetPendingGroupMatches(char groupLabel)
+    public void SetMatchResult(char groupLabel, int matchId, int homeGoals, int awayGoals)
     {
-        throw new NotImplementedException();
+        Group group = FindGroupByLabel(groupLabel);
+        Match match = FindMatchById(group, matchId);
+        group.SetMatchResult(match, homeGoals, awayGoals);
     }
-    
-    public GroupResponse GetGroupByLabel(char label)
+    private static Match FindMatchById(Group group, int matchId)
     {
-        Domain.Group group = _repository
-            .GetAll()
-            .First(g => g.Label == label);
-
-        return new GroupResponse
-        {
-            Label = group.Label,
-            Teams = group.Teams
-                .Select(t => new TeamResponse
-                {
-                    Name = t.Name,
-                    ConfederationName = t.ConfederationName,
-                    RankingFifa = t.RankingFifa
-                })
-                .ToList()
-        };
+        return group.Matches.FirstOrDefault(m => m.Id == matchId)
+               ?? throw new ArgumentException("Match was not found in group.");
     }
 }
