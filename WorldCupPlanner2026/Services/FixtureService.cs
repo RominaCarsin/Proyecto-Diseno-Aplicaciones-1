@@ -31,10 +31,52 @@ public class FixtureService : IFixtureService
     {
        ValidateFixtureCanBeGenerated();
        var teams = GetTeamsOrdered(seed);
+       var stadiums = GetStadiumsNormalized();
        var groups = CreateGroups();
        AssignTeamsToGroups(teams, groups);
+       GenerateMatchesForGroups(groups, stadiums, startDate);
        SaveGroups(groups);
     }
+    
+    private List<StadiumResponse> GetStadiumsNormalized()
+    {
+        return _stadiumService.GetAllStadiums()
+            .OrderBy(s => s.Name.ToUpperInvariant())
+            .ToList();
+    }
+
+    private static void GenerateMatchesForGroups(List<Group> groups, List<StadiumResponse> stadiums, DateTime startDate)
+    {
+        int matchCounter = 0;
+
+        foreach (var group in groups)
+        {
+            var teamList = group.Teams.ToList();
+            var pairings = new List<(int, int)> { (0,3),(1,2),(0,2),(1,3),(0,1),(2,3) };
+
+            for (int round = 0; round < 3; round++)
+            {
+                var roundDate = startDate.AddDays(round * 3);
+                var roundPairings = pairings.Skip(round * 2).Take(2).ToList();
+
+                for (int i = 0; i < roundPairings.Count; i++)
+                {
+                    var (homeIndex, awayIndex) = roundPairings[i];
+                    var matchDate = round == 2
+                        ? roundDate.Date.AddHours(14)
+                        : roundDate.Date.AddHours(14).AddHours(i * 4);
+
+                    var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+                    group.AddMatch(new Match(matchDate, stadium, teamList[homeIndex], teamList[awayIndex]));
+                    matchCounter++;
+                }
+            }
+        }
+    }
+
+    private static Stadium BuildStadium(StadiumResponse r) =>
+        new Stadium(r.Name, r.City, r.Description, r.Capacity);
+    
     private List<Team> GetTeamsOrdered(int seed)
     {
         return _teamService.GetTeamsOrdered(seed)
