@@ -135,4 +135,17 @@ public class GroupServiceTests
         Assert.AreEqual("URUGUAY", standings[0].Name);
         Assert.AreEqual(3, standings[0].Points);
     }
+    
+    [TestMethod]
+    public void RemoveTeamFromGroup_WithExistingTeam_ShouldRemoveTeamFromGroup()
+    {
+        _service.AddGroup(new GroupRequest { Label = 'A' });
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
+
+        _service.RemoveTeamFromGroup('A', CreateTeamRequest("Uruguay"));
+
+        var group = _service.GetGroupByLabel('A');
+
+        Assert.AreEqual(0, group.Teams.Count);
+    }
 }
