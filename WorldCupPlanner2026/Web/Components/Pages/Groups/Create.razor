@@ -1,0 +1,282 @@
+﻿@page "/Groups/Create"
+@rendermode InteractiveServer
+@using DTOs
+@using IServices
+@inject IGroupService GroupService
+
+<div class="page-wrap">
+
+    <div class="ph">
+        <h1 class="pt">Fixture · Phase de grupos</h1>
+        <p class="ps">12 grupos · WorldCupPlanner 2026</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert-box err">@_errorMessage</div>
+    }
+
+    @if (!_groups.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <p style="color: #888;">No hay grupos generados aún. Generá el fixture primero.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="groups-grid">
+            @foreach (var group in _groups)
+            {
+                <div class="group-card @(_selectedLabel == group.Label ? "group-card--active" : "")"
+                     @onclick="() => SelectGroup(group.Label)">
+                    <div class="group-card-header">
+                        <span class="group-label">Grupo @group.Label</span>
+                        <span class="group-teams-count">@group.Teams.Count/4</span>
+                    </div>
+                    <div class="group-card-teams">
+                        @foreach (var team in group.Teams)
+                        {
+                            <span class="group-team-name">@team.Name</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (_selectedLabel.HasValue && _selectedGroup is not null)
+        {
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">
+                    <span class="card-title">Grupo @_selectedLabel — Tabla de posiciones</span>
+                </div>
+                <div class="card-body" style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Equipo</th>
+                                <th>Pts</th>
+                                <th>GF</th>
+                                <th>DG</th>
+                                <th>Confederación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var standings = _selectedGroup.Teams
+                                    .OrderByDescending(t => t.Points)
+                                    .ThenByDescending(t => t.GoalDifference)
+                                    .ThenByDescending(t => t.GoalsInFavor)
+                                    .ToList();
+                                int pos = 1;
+                            }
+                            @foreach (var team in standings)
+                            {
+                                <tr class="@(pos <= 2 ? "row-qualify" : "")">
+                                    <td>@pos</td>
+                                    <td>@team.Name</td>
+                                    <td style="font-weight: 600;">@team.Points</td>
+                                    <td>@team.GoalsInFavor</td>
+                                    <td>@(team.GoalDifference >= 0 ? "+" : "")@team.GoalDifference</td>
+                                    <td>@team.ConfederationName</td>
+                                </tr>
+                                pos++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1rem;">
+                <div class="card-header">
+                    <span class="card-title">Grupo @_selectedLabel — Partidos</span>
+                </div>
+                <div class="card-body">
+                    @if (!_selectedGroup.Matches.Any())
+                    {
+                        <p style="color: #888;">No hay partidos registrados para este grupo.</p>
+                    }
+                    else
+                    {
+                        @foreach (var match in _selectedGroup.Matches.OrderBy(m => m.Date))
+                        {
+                            <div class="match-row-group">
+                                <div class="match-teams">
+                                    <span class="match-team home">@match.HomeTeam.Name</span>
+                                    <span class="match-score">
+                                        @if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+                                        {
+                                            @($"{match.HomeGoals} - {match.AwayGoals}")
+                                        }
+                                        else
+                                        {
+                                            <span style="color: #888;">vs</span>
+                                        }
+                                    </span>
+                                    <span class="match-team away">@match.AwayTeam.Name</span>
+                                </div>
+                                <div class="match-info">
+                                    <span>@match.Date.ToString("dd/MM/yyyy HH:mm")</span>
+                                    <span>·</span>
+                                    <span>@match.Stadium.Name</span>
+                                    @if (match.Winner is not null)
+                                    {
+                                        <span>· Ganador: <strong>@match.Winner.Name</strong></span>
+                                    }
+                                    @if (match.IsLocked)
+                                    {
+                                        <span class="badge-locked">🔒</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    }
+
+</div>
+
+<style>
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .group-card {
+        background: var();
+        border: 0.5px solid var();
+        border-radius: var();
+        padding: 1rem;
+        cursor: pointer;
+        transition: border-color 0.15s;
+    }
+
+    .group-card:hover {
+        border-color: var();
+    }
+
+    .group-card--active {
+        border: 2px solid var();
+        background: var();
+    }
+
+    .group-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .group-label {
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .group-teams-count {
+        font-size: 12px;
+        color: var();
+    }
+
+    .group-card-teams {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .group-team-name {
+        font-size: 13px;
+        color: var();
+    }
+
+    .row-qualify td {
+        background: var();
+        color: var();
+    }
+
+    .match-row-group {
+        padding: 12px 0;
+        border-bottom: 0.5px solid var();
+    }
+
+    .match-row-group:last-child {
+        border-bottom: none;
+    }
+
+    .match-teams {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 4px;
+    }
+
+    .match-team {
+        font-size: 14px;
+        font-weight: 500;
+        flex: 1;
+    }
+
+    .match-team.away {
+        text-align: right;
+    }
+
+    .match-score {
+        font-size: 16px;
+        font-weight: 500;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .match-info {
+        display: flex;
+        gap: 6px;
+        font-size: 12px;
+        color: var();
+    }
+
+    .badge-locked {
+        font-size: 12px;
+    }
+</style>
+
+@code {
+    private List<GroupResponse> _groups = new();
+    private char? _selectedLabel;
+    private GroupResponse? _selectedGroup;
+    private string _errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        LoadGroups();
+    }
+
+    private void LoadGroups()
+    {
+        try
+        {
+            _groups = GroupService.GetGroups().OrderBy(g => g.Label).ToList();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void SelectGroup(char label)
+    {
+        if (_selectedLabel == label)
+        {
+            _selectedLabel = null;
+            _selectedGroup = null;
+            return;
+        }
+
+        _selectedLabel = label;
+        _selectedGroup = _groups.FirstOrDefault(g => g.Label == label);
+    }
+}
