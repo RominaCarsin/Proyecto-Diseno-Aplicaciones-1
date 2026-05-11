@@ -1,7 +1,16 @@
-﻿namespace Services.Tests;
+﻿using Domain;
+using IRepository;
+using IServices;
+using Repository;
+using Services;
 
+namespace Services.Tests;
+
+[TestClass]
 public class FixtureServiceTests
 {
+    private IRepository<Group> _groupRepository = null!;
+
     [TestMethod]
     public void GenerateFixture_WhenLessThan48Teams_ShouldThrowInvalidOperationException()
     {
@@ -9,5 +18,22 @@ public class FixtureServiceTests
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
+    }
+
+    private FixtureService CreateFixtureService()
+    {
+        var groupRepo = new Repository<Group>();
+        _groupRepository = groupRepo;
+
+        var teamRepo = new Repository<Team>();
+        var confederationService = new ConfederationService();
+        var teamService = new TeamService(teamRepo, confederationService);
+
+        var stadiumRepo = new Repository<Stadium>();
+        var stadiumService = new StadiumService(stadiumRepo);
+
+        var groupService = new GroupService(groupRepo);
+
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo);
     }
 }
