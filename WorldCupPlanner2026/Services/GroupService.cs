@@ -32,10 +32,7 @@ public class GroupService : IGroupService
 
     public void DeleteGroup(char label)
     {
-        Domain.Group group = _repository
-            .GetAll()
-            .First(g => g.Label == label);
-
+        Group group = FindGroupByLabel(label);
         _repository.Delete(group);
     }
     
