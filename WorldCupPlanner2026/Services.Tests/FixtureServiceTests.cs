@@ -172,4 +172,12 @@ public class FixtureServiceTests
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
         Assert.IsFalse(fixtureService.CanGenerateFixture()); 
     }
+    
+    [TestMethod]
+    public void GetStadiumCount_WithNoStadiums_ShouldReturnZero()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.AreEqual(0, fixtureService.GetStadiumCount());
+    }
 }
