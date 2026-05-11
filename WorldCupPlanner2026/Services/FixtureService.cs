@@ -125,5 +125,7 @@ public class FixtureService : IFixtureService
 
     public int GetStadiumCount()
     {
-        return 0;
-    }}
+        return _stadiumService.GetAllStadiums().Count();
+    }
+    
+}
