@@ -17,9 +17,8 @@ public class MatchMapper
             date: request.Date,
             stadium: StadiumMapper.ToEntity(request.Stadium),
             homeTeam: TeamMapper.ToEntity(request.HomeTeam),
-            awayTeam: TeamMapper.ToEntity(request.AwayTeam),
-            group: group,
-            phase: phase
+            awayTeam: TeamMapper.ToEntity(request.AwayTeam)
+            
         );
     }
 
@@ -32,8 +31,6 @@ public class MatchMapper
             Stadium = StadiumMapper.FromEntity(match.Stadium),
             HomeTeam = TeamMapper.FromEntity(match.HomeTeam),
             AwayTeam = TeamMapper.FromEntity(match.AwayTeam),
-            Group = match.Group?.Label,
-            Phase = match.Phase.ToString(),
             HomeGoals = match.HomeGoals,
             AwayGoals = match.AwayGoals,
             Winner = match.Winner is null ? null : TeamMapper.FromEntity(match.Winner),
