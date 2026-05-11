@@ -4,19 +4,18 @@ namespace IServices;
 
 public interface IMatchService
 {
-    void AddMatch(MatchRequest request);
+    void AddMatch(MatchRequest matchRequest);
 
-    IEnumerable<MatchResponse> GetMatches();
+    IEnumerable<MatchResponse> GetAllMatches();
 
-    MatchResponse GetMatchById(int id);
+    MatchResponse GetMatchById(int matchId);
 
-    void SetMatchResult(int id, int homeGoals, int awayGoals);
+    void SetMatchResult(int matchId, int homeGoals, int awayGoals);
 
-    void UpdateMatchDate(int id, DateTime newDate);
+    void UpdateMatchDate(int matchId, DateTime newDate);
 
-    void UpdateMatchStadium(int id, StadiumRequest newStadium);
+    void UpdateMatchStadium(int matchId, StadiumRequest newStadium);
 
-    void LockMatchEdition(int id);
-
-    void LockMatchesByPhase(string phase);
+    void LockMatchEdition(int matchId);
+    
 }

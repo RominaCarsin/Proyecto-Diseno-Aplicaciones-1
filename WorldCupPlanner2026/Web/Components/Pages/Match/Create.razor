@@ -1,4 +1,4 @@
-﻿@page "/Matches/Create"
+﻿﻿@page "/Matches/Create"
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
@@ -394,9 +394,7 @@
             Date = _date,
             Stadium = stadium,
             HomeTeam = homeTeam,
-            AwayTeam = awayTeam,
-            Group = _phase == "GroupStage" ? _group![0] : null,
-            Phase = _phase
+            AwayTeam = awayTeam
         };
     }
 
@@ -519,8 +517,8 @@
 
     private void LoadData()
     {
-        _matches = MatchService.GetMatches();
-        _stadiums = StadiumService.GetStadiums();
+        _matches = MatchService.GetAllMatches();
+        _stadiums = StadiumService.GetAllStadiums();
         _teams = TeamService.GetTeams();
     }
 

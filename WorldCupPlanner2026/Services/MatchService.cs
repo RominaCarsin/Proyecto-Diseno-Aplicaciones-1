@@ -6,7 +6,7 @@ using Services.Mappers;
 
 namespace Services;
 
-public class MatchService 
+public class MatchService : IMatchService
 {
     private const string MatchNotFoundErrorMessage = "Match was not found.";
     private const string MatchRequestRequiredErrorMessage = "Match request cannot be null.";

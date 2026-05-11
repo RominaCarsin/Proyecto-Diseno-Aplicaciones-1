@@ -20,9 +20,10 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<IRepository<Match>, Repository<Match>>();
-//builder.Services.AddScoped<IMatchService, MatchService>();
+builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();
 builder.Services.AddScoped<IGroupService, GroupService>();
+builder.Services.AddScoped<IFixtureService, FixtureService>();
 
 var app = builder.Build();
 
