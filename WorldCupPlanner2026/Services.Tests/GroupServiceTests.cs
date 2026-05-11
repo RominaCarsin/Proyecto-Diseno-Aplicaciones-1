@@ -114,4 +114,25 @@ public class GroupServiceTests
         Group = group,
         Phase = "GroupStage"
     };
+    
+    [TestMethod]
+    public void SetMatchResult_WithValidResult_ShouldUpdateTeamStats()
+    {
+        _service.AddGroup(new GroupRequest { Label = 'A' });
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina"));
+
+        var matchRequest = CreateValidMatchRequest('A');
+        _service.AddMatchToGroup('A', matchRequest);
+
+        var group = _service.GetGroupByLabel('A');
+        var matchId = group.Matches[0].Id;
+
+        _service.SetMatchResult('A', matchId, 3, 1);
+
+        var standings = _service.GetGroupStandings('A').ToList();
+
+        Assert.AreEqual("URUGUAY", standings[0].Name);
+        Assert.AreEqual(3, standings[0].Points);
+    }
 }
