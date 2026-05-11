@@ -11,17 +11,20 @@ public class FixtureService : IFixtureService
     private readonly IStadiumService _stadiumService;
     private readonly IGroupService _groupService;
     private readonly IRepository<Group> _groupRepository;
+    private readonly IRepository<Match> _matchRepository;
 
     public FixtureService(
         ITeamService teamService,
         IStadiumService stadiumService,
         IGroupService groupService,
-        IRepository<Group> groupRepository)
+        IRepository<Group> groupRepository,
+        IRepository<Match> matchRepository)
     {
         _teamService = teamService;
         _stadiumService = stadiumService;
         _groupService = groupService;
         _groupRepository = groupRepository;
+        _matchRepository = matchRepository;
     }
 
     
@@ -110,7 +113,11 @@ public class FixtureService : IFixtureService
     private void SaveGroups(List<Group> groups)
     {
         foreach (var group in groups)
+        {
             _groupRepository.Add(group);
+            foreach (var match in group.Matches)
+                _matchRepository.Add(match);
+        }
     }
     
     public bool CanGenerateFixture()

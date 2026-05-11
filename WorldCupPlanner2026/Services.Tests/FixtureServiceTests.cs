@@ -23,6 +23,7 @@ public class FixtureServiceTests
     private FixtureService CreateFixtureService()
     {
         var groupRepo = new Repository<Group>();
+        var matchRepo = new Repository<Match>();
         _groupRepository = groupRepo;
 
         var teamRepo = new Repository<Team>();
@@ -34,7 +35,7 @@ public class FixtureServiceTests
 
         var groupService = new GroupService(groupRepo);
 
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo);
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo);
     }
     
     [TestMethod]
@@ -49,6 +50,7 @@ public class FixtureServiceTests
     private FixtureService CreateFixtureServiceWith48TeamsNoStadiums()
     {
         var groupRepo = new Repository<Group>();
+        var matchRepo = new Repository<Match>();
         _groupRepository = groupRepo;
 
         var teamRepo = new Repository<Team>();
@@ -63,7 +65,7 @@ public class FixtureServiceTests
 
         var groupService = new GroupService(groupRepo);
 
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo);
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo);
     }
     
     [TestMethod]
@@ -79,6 +81,7 @@ public class FixtureServiceTests
     private FixtureService CreateFixtureServiceReady()
     {
         var groupRepo = new Repository<Group>();
+        var matchRepo = new Repository<Match>();
         _groupRepository = groupRepo;
 
         var teamRepo = new Repository<Team>();
@@ -96,7 +99,7 @@ public class FixtureServiceTests
 
         var groupService = new GroupService(groupRepo);
 
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo);
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo);
     }
     
     [TestMethod]
