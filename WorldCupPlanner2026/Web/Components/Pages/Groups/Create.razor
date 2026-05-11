@@ -141,6 +141,15 @@
                     <span class="card-title">Grupo @_selectedLabel — Partidos</span>
                 </div>
                 <div class="card-body">
+                    @if (!string.IsNullOrEmpty(_matchErrorMessage))
+                    {
+                        <div class="alert-box err" style="margin-bottom: 1rem;">@_matchErrorMessage</div>
+                    }
+                    @if (!string.IsNullOrEmpty(_matchSuccessMessage))
+                    {
+                        <div class="alert-box suc" style="margin-bottom: 1rem;">✓ @_matchSuccessMessage</div>
+                    }
+
                     @if (!_selectedGroup.Matches.Any())
                     {
                         <p style="color: #888;">No hay partidos registrados para este grupo.</p>
@@ -177,6 +186,43 @@
                                         <span>🔒</span>
                                     }
                                 </div>
+
+                                @if (!match.HomeGoals.HasValue && !match.IsLocked)
+                                {
+                                    @if (_editingMatchId == match.Id)
+                                    {
+                                        <div class="result-form">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                                                <input class="finput"
+                                                       type="number" min="0"
+                                                       style="width: 70px;"
+                                                       @bind="_editHomeGoals" />
+                                                <span style="color: #888;">-</span>
+                                                <input class="finput"
+                                                       type="number" min="0"
+                                                       style="width: 70px;"
+                                                       @bind="_editAwayGoals" />
+                                                <button class="btn-p"
+                                                        @onclick="() => SaveResult(match.Id)">
+                                                    Guardar
+                                                </button>
+                                                <button class="btn btn-g"
+                                                        @onclick="CancelEdit">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div style="margin-top: 8px;">
+                                            <button class="btn btn-s"
+                                                    @onclick="() => StartEditResult(match.Id)">
+                                                Cargar resultado
+                                            </button>
+                                        </div>
+                                    }
+                                }
                             </div>
                         }
                     }
@@ -204,9 +250,7 @@
         transition: border-color 0.15s;
     }
 
-    .group-card:hover {
-        border-color: #aaa;
-    }
+    .group-card:hover { border-color: #aaa; }
 
     .group-card--active {
         border: 2px solid #3b82f6;
@@ -220,15 +264,8 @@
         margin-bottom: 0.5rem;
     }
 
-    .group-label {
-        font-size: 16px;
-        font-weight: 500;
-    }
-
-    .group-teams-count {
-        font-size: 12px;
-        color: #888;
-    }
+    .group-label { font-size: 16px; font-weight: 500; }
+    .group-teams-count { font-size: 12px; color: #888; }
 
     .group-card-teams {
         display: flex;
@@ -236,19 +273,14 @@
         gap: 4px;
     }
 
-    .group-team-name {
-        font-size: 13px;
-        color: #555;
-    }
+    .group-team-name { font-size: 13px; color: #555; }
 
     .match-row-group {
         padding: 12px 0;
         border-bottom: 1px solid #e0e0e0;
     }
 
-    .match-row-group:last-child {
-        border-bottom: none;
-    }
+    .match-row-group:last-child { border-bottom: none; }
 
     .match-teams {
         display: flex;
@@ -257,11 +289,7 @@
         margin-bottom: 4px;
     }
 
-    .match-team {
-        font-size: 14px;
-        font-weight: 500;
-        flex: 1;
-    }
+    .match-team { font-size: 14px; font-weight: 500; flex: 1; }
 
     .match-score {
         font-size: 16px;
@@ -276,6 +304,10 @@
         font-size: 12px;
         color: #888;
     }
+
+    .result-form {
+        margin-top: 4px;
+    }
 </style>
 
 @code {
@@ -287,10 +319,16 @@
 
     private string _errorMessage = string.Empty;
     private string _successMessage = string.Empty;
+    private string _matchErrorMessage = string.Empty;
+    private string _matchSuccessMessage = string.Empty;
 
     private List<GroupResponse> _groups = new();
     private char? _selectedLabel;
     private GroupResponse? _selectedGroup;
+
+    private int? _editingMatchId;
+    private int _editHomeGoals;
+    private int _editAwayGoals;
 
     private bool CanGenerate => _teamCount >= 48 && _stadiumCount >= 4;
 
@@ -305,6 +343,9 @@
         _teamCount = TeamService.GetTeams().Count();
         _stadiumCount = FixtureService.GetStadiumCount();
         _fixtureGenerated = _groups.Any();
+
+        if (_selectedLabel.HasValue)
+            _selectedGroup = _groups.FirstOrDefault(g => g.Label == _selectedLabel);
     }
 
     private void GenerateFixture()
@@ -334,11 +375,51 @@
 
         _selectedLabel = label;
         _selectedGroup = _groups.FirstOrDefault(g => g.Label == label);
+        CancelEdit();
+        ClearMatchMessages();
+    }
+
+    private void StartEditResult(int matchId)
+    {
+        _editingMatchId = matchId;
+        _editHomeGoals = 0;
+        _editAwayGoals = 0;
+        ClearMatchMessages();
+    }
+
+    private void SaveResult(int matchId)
+    {
+        ClearMatchMessages();
+
+        try
+        {
+            GroupService.SetMatchResult(_selectedLabel!.Value, matchId, _editHomeGoals, _editAwayGoals);
+            _matchSuccessMessage = "Resultado cargado correctamente.";
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            _matchErrorMessage = ex.Message;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editingMatchId = null;
+        _editHomeGoals = 0;
+        _editAwayGoals = 0;
     }
 
     private void ClearMessages()
     {
         _errorMessage = string.Empty;
         _successMessage = string.Empty;
+    }
+
+    private void ClearMatchMessages()
+    {
+        _matchErrorMessage = string.Empty;
+        _matchSuccessMessage = string.Empty;
     }
 }
