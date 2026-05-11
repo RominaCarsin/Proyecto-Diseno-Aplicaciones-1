@@ -180,4 +180,12 @@ public class FixtureServiceTests
 
         Assert.AreEqual(0, fixtureService.GetStadiumCount());
     }
+    
+    [TestMethod]
+    public void GetStadiumCount_WithExistingStadiums_ShouldReturnCorrectCount()
+    {
+        var fixtureService = CreateFixtureServiceReady();
+
+        Assert.AreEqual(4, fixtureService.GetStadiumCount());
+    }
 }
