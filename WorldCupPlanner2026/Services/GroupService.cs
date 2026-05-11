@@ -60,7 +60,7 @@ public class GroupService : IGroupService
     public void RemoveTeamFromGroup(char groupLabel, TeamRequest request)
     {
         Group group = FindGroupByLabel(groupLabel);
-        Team team = TeamMapper.ToEntity(request);
+        Team team = FindTeamInGroup(group, request.Name);
         group.RemoveTeam(team);
     }
 
