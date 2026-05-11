@@ -12,11 +12,14 @@ public static class TeamMapper
     
     public static TeamResponse FromEntity(Team team)
     {
-        return new TeamResponse()
+        return new TeamResponse
         {
             Name = team.Name,
             ConfederationName = team.ConfederationName,
-            RankingFifa = team.RankingFifa
+            RankingFifa = team.RankingFifa,
+            Points = team.Points,
+            GoalDifference = team.GoalDifference,
+            GoalsInFavor = team.GoalsInFavor
         };
     }
 }
