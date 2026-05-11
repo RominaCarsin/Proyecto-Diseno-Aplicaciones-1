@@ -109,4 +109,15 @@ public class FixtureServiceTests
         var groups = _groupRepository.GetAll().ToList();
         Assert.AreEqual(12, groups.Count);
     }
+    
+    [TestMethod]
+    public void GenerateFixture_WithValidData_ShouldAssign4TeamsPerGroup()
+    {
+        var fixtureService = CreateFixtureServiceReady();
+
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        var groups = _groupRepository.GetAll().ToList();
+        Assert.IsTrue(groups.All(g => g.Teams.Count == 4));
+    }
 }
