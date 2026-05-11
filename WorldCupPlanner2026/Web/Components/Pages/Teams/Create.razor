@@ -1,4 +1,3 @@
-@using Web.Components.Shared
 @page "/teams"
 @rendermode InteractiveServer
 @using DTOs
@@ -11,7 +10,7 @@
     <!-- FORMULARIO DE CREACIÓN / EDICIÓN -->
     <div class="bg-white border-custom p-4 diagonal-corners">
         <h3 class="mb-3">@(editingTeamName == null ? "Crear Equipo" : "Editar Equipo")</h3>
-        <GeometricDivider />
+        <hr class="geometric-divider" />
 
         <div class="row g-3 mb-4 mt-2">
             <div class="col-md-4">
@@ -69,7 +68,7 @@
     <!-- SECCIÓN DE SIMULACIÓN -->
     <div class="bg-white border-custom p-4 diagonal-corners">
         <h3 class="mb-3">Simular / Completar Equipos</h3>
-        <GeometricDivider />
+        <hr class="geometric-divider" />
 
         <div class="row align-items-end g-3 mt-2">
             <div class="col-md-6">
