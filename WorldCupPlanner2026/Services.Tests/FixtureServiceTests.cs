@@ -131,4 +131,23 @@ public class FixtureServiceTests
         var groups = _groupRepository.GetAll().ToList();
         Assert.IsTrue(groups.All(g => g.Matches.Count == 6));
     }
+    
+    [TestMethod]
+    public void GenerateFixture_WithValidData_GroupsShouldHaveLabelsAToL()
+    {
+        var fixtureService = CreateFixtureServiceReady();
+
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        var labels = _groupRepository.GetAll()
+            .Select(g => g.Label)
+            .OrderBy(l => l)
+            .ToList();
+
+        var expected = Enumerable.Range(0, 12)
+            .Select(i => (char)('A' + i))
+            .ToList();
+
+        CollectionAssert.AreEqual(expected, labels);
+    }
 }
