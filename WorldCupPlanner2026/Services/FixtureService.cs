@@ -116,8 +116,10 @@ public class FixtureService : IFixtureService
     public bool CanGenerateFixture()
     {
         var teamCount = _teamService.GetTeams().Count();
+        var stadiumCount = _stadiumService.GetAllStadiums().Count();
 
-        return teamCount >= 48;
+
+        return teamCount >= 48  && stadiumCount >= 4;
     }
 
     public int GetStadiumCount() => _stadiumService.GetAllStadiums().Count();
