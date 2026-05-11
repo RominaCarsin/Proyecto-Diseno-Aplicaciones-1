@@ -66,7 +66,9 @@ public class GroupService : IGroupService
 
     public IEnumerable<TeamResponse> GetGroupStandings(char groupLabel)
     {
-        throw new NotImplementedException();
+        Group group = FindGroupByLabel(groupLabel);
+        return group.GetStandings().Select(TeamMapper.FromEntity);
+    
     }
 
     public TeamResponse GetTeamByPosition(char groupLabel, int position)
@@ -79,16 +81,35 @@ public class GroupService : IGroupService
     public void AddMatchToGroup(char groupLabel, MatchRequest request)
     {
         Group group = FindGroupByLabel(groupLabel);
-        Match match = MatchMapper.ToEntity(request);
+
+        Team homeTeam = FindTeamInGroup(group, request.HomeTeam.Name);
+        Team awayTeam = FindTeamInGroup(group, request.AwayTeam.Name);
+
+        Match match = new Match(
+            date: request.Date,
+            stadium: StadiumMapper.ToEntity(request.Stadium),
+            homeTeam: homeTeam,
+            awayTeam: awayTeam
+        );
+
         group.AddMatch(match);
     }
 
+    private static Team FindTeamInGroup(Group group, string teamName)
+    {
+        return group.Teams.FirstOrDefault(t => 
+                   t.Name.Equals(Team.Normalized(teamName), StringComparison.OrdinalIgnoreCase))
+               ?? throw new ArgumentException($"Team {teamName} was not found in group.");
+    }
+    
+    
     public void SetMatchResult(char groupLabel, int matchId, int homeGoals, int awayGoals)
     {
         Group group = FindGroupByLabel(groupLabel);
         Match match = FindMatchById(group, matchId);
         group.SetMatchResult(match, homeGoals, awayGoals);
     }
+
     private static Match FindMatchById(Group group, int matchId)
     {
         return group.Matches.FirstOrDefault(m => m.Id == matchId)
