@@ -242,7 +242,14 @@ public class TeamServiceTests
 
     private static TeamService CreateTeamService()
     {
-        return new TeamService(new Repository<Team>(), new ConfederationService());
+        var repository = new Repository<Team>();
+        var auditRepository = new Repository<AuditLog>();
+        var auditService = new AuditService(auditRepository);
+        var authState = new AuthStateService();
+        var sessionService = new SessionService(null!, authState);
+        var confederationService = new ConfederationService();
+
+        return new TeamService(repository, confederationService, auditService, sessionService);
     }
 
     private static int[] GetGeneratedRankings(TeamService service)
