@@ -25,6 +25,8 @@ builder.Services.AddScoped<IRepository<AuditLog>, Repository<AuditLog>>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<IRepository<Match>, Repository<Match>>();
+builder.Services.AddScoped<IMatchService, MatchService>();
 
 var app = builder.Build();
 

@@ -12,12 +12,12 @@
 
     <div class="ph">
         <h1 class="pt">WorldCupPlanner 2026</h1>
-        <p class="ps">@(_showRegister ? "Create your account" : "Sign in to continue")</p>
+        <p class="ps">@(_showRegister ? "Crea tu cuenta" : "Inicia sesion para continuar")</p>
     </div>
 
     <div class="card" style="max-width: 420px; margin: 0 auto;">
         <div class="card-header">
-            <span class="card-title">@(_showRegister ? "Register" : "Sign in")</span>
+            <span class="card-title">@(_showRegister ? "Registro" : "Iniciar sesion")</span>
         </div>
 
         <div class="card-body">
@@ -28,49 +28,49 @@
                     <label class="fl">Email <span class="req">*</span></label>
                     <input class="finput @(_emailInvalid ? "invalid" : "")"
                            type="email"
-                           placeholder="Ex: juan@gmail.com"
+                           placeholder="Correo electronico"
                            @bind="_email" @bind:event="oninput" />
                     @if (_emailInvalid)
                     {
-                        <span class="ferr">Email is required</span>
+                        <span class="ferr">El email es obligatorio</span>
                     }
                 </div>
 
                 <div class="fg">
-                    <label class="fl">Password <span class="req">*</span></label>
+                    <label class="fl">Contrasena <span class="req">*</span></label>
                     <input class="finput @(_passwordInvalid ? "invalid" : "")"
                            type="password"
-                           placeholder="Your password"
+                           placeholder="Contrasena"
                            @bind="_password" @bind:event="oninput" />
                     @if (_passwordInvalid)
                     {
-                        <span class="ferr">Password is required</span>
+                        <span class="ferr">La contrasena es obligatoria</span>
                     }
                 </div>
             }
             else
             {
                 <div class="fg">
-                    <label class="fl">Name <span class="req">*</span></label>
+                    <label class="fl">Nombre <span class="req">*</span></label>
                     <input class="finput @(_nameInvalid ? "invalid" : "")"
                            type="text"
-                           placeholder="Ex: Juan"
+                           placeholder="Nombre"
                            @bind="_name" @bind:event="oninput" />
                     @if (_nameInvalid)
                     {
-                        <span class="ferr">Name is required</span>
+                        <span class="ferr">El nombre es obligatorio</span>
                     }
                 </div>
 
                 <div class="fg">
-                    <label class="fl">Surname <span class="req">*</span></label>
+                    <label class="fl">Apellido <span class="req">*</span></label>
                     <input class="finput @(_surnameInvalid ? "invalid" : "")"
                            type="text"
-                           placeholder="Ex: Perez"
+                           placeholder="Apellido"
                            @bind="_surname" @bind:event="oninput" />
                     @if (_surnameInvalid)
                     {
-                        <span class="ferr">Surname is required</span>
+                        <span class="ferr">El apellido es obligatorio</span>
                     }
                 </div>
 
@@ -78,46 +78,46 @@
                     <label class="fl">Email <span class="req">*</span></label>
                     <input class="finput @(_emailInvalid ? "invalid" : "")"
                            type="email"
-                           placeholder="Ex: juan@gmail.com"
+                           placeholder="Correo electronico"
                            @bind="_email" @bind:event="oninput" />
                     @if (_emailInvalid)
                     {
-                        <span class="ferr">Email is required</span>
+                        <span class="ferr">El email es obligatorio</span>
                     }
                 </div>
 
                 <div class="fg">
-                    <label class="fl">Date of birth <span class="req">*</span></label>
+                    <label class="fl">Fecha de nacimiento <span class="req">*</span></label>
                     <input class="finput @(_dateInvalid ? "invalid" : "")"
                            type="date"
                            @bind="_dateOfBirth" @bind:event="oninput" />
                     @if (_dateInvalid)
                     {
-                        <span class="ferr">Date of birth is required</span>
+                        <span class="ferr">La fecha de nacimiento es obligatoria</span>
                     }
                 </div>
 
                 <div class="fg">
-                    <label class="fl">Password <span class="req">*</span></label>
+                    <label class="fl">Contrasena <span class="req">*</span></label>
                     <input class="finput @(_passwordInvalid ? "invalid" : "")"
                            type="password"
-                           placeholder="Min. 8 chars, upper, lower, number, special"
+                           placeholder="Contrasena"
                            @bind="_password" @bind:event="oninput" />
                     @if (_passwordInvalid)
                     {
-                        <span class="ferr">Password is required</span>
+                        <span class="ferr">La contrasena es obligatoria</span>
                     }
                 </div>
 
                 <div class="fg">
-                    <label class="fl">Confirm password <span class="req">*</span></label>
+                    <label class="fl">Confirmar contrasena <span class="req">*</span></label>
                     <input class="finput @(_confirmPasswordInvalid ? "invalid" : "")"
                            type="password"
-                           placeholder="Repeat your password"
+                           placeholder="Repite la contrasena"
                            @bind="_confirmPassword" @bind:event="oninput" />
                     @if (_confirmPasswordInvalid)
                     {
-                        <span class="ferr">Passwords do not match</span>
+                        <span class="ferr">Las contrasenas no coinciden</span>
                     }
                 </div>
             }
@@ -136,10 +136,10 @@
 
         <div class="card-footer" style="flex-direction: column; gap: 0.75rem;">
             <button class="btn-p" @onclick="@(_showRegister ? DoRegister : DoLogin)">
-                @(_showRegister ? "Create account" : "Sign in")
+                @(_showRegister ? "Crear cuenta" : "Iniciar sesion")
             </button>
             <button class="btn btn-g" @onclick="ToggleMode">
-                @(_showRegister ? "Already have an account? Sign in" : "Don't have an account? Register")
+                @(_showRegister ? "Ya tienes una cuenta? Inicia sesion" : "No tienes cuenta? Registrate")
             </button>
         </div>
     </div>
@@ -186,7 +186,7 @@
         }
         catch (ArgumentException)
         {
-            _errorMessage = "Invalid email or password.";
+            _errorMessage = "Email o contrasena invalidos.";
         }
     }
 
@@ -209,7 +209,7 @@
             };
 
             UserService.AddUser(request);
-            _successMessage = "Account created successfully! Redirecting...";
+            _successMessage = "Cuenta creada correctamente. Redirigiendo...";
             StateHasChanged();
 
             await Task.Delay(1200);

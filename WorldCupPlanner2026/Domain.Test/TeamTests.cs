@@ -98,4 +98,52 @@ public class TeamTests
         Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
     }
+
+    [TestMethod]
+    public void Win_ShouldIncreasePointsBy3_AndUpdateGoals()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        team.RecordWin(3, 1);
+
+        Assert.AreEqual(3, team.Points);
+        Assert.AreEqual(3, team.GoalsInFavor);
+        Assert.AreEqual(2, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void Draw_ShouldIncreasePointsBy1_AndUpdateGoals()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        team.RecordDraw(2);
+
+        Assert.AreEqual(1, team.Points);
+        Assert.AreEqual(2, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void Loss_ShouldNotIncreasePoints_AndUpdateGoals()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        team.RecordLoss(0, 4);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(-4, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void MatchResults_ShouldThrowException_WhenGoalsAreNegative()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        Assert.ThrowsException<ArgumentException>(() => team.RecordWin(-1, 0));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordWin(1, -1));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordDraw(-1));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordLoss(-1, 0));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordLoss(0, -1));
+    }
 }
