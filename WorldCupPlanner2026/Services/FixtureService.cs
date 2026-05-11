@@ -123,5 +123,7 @@ public class FixtureService : IFixtureService
         return teamCount >= 48  && stadiumCount >= 4 && groupCount == 0;
     }
 
-    public int GetStadiumCount() => _stadiumService.GetAllStadiums().Count();
-}
+    public int GetStadiumCount()
+    {
+        return 0;
+    }}
