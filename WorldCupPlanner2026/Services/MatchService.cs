@@ -6,11 +6,11 @@ using Services.Mappers;
 
 namespace Services;
 
-public class MatchService : IMatchService
+public class MatchService 
 {
-    private const string RequiredMatchError = "Match cannot be null.";
-    private const string RequiredStadiumError = "Stadium cannot be null.";
-    private const string MatchNotFoundError = "Match was not found.";
+    private const string MatchNotFoundErrorMessage = "Match was not found.";
+    private const string MatchRequestRequiredErrorMessage = "Match request cannot be null.";
+    private const string StadiumRequestRequiredErrorMessage = "Stadium request cannot be null.";
 
     private readonly IRepository<Match> _repository;
 
@@ -19,118 +19,70 @@ public class MatchService : IMatchService
         _repository = repository;
     }
 
-    public void AddMatch(MatchRequest request)
+    public void AddMatch(MatchRequest matchRequest)
     {
-        ValidateMatchRequest(request);
+        ValidateNotNull(matchRequest, MatchRequestRequiredErrorMessage);
 
-        var match = MatchMapper.ToEntity(request);
+        var match = MatchMapper.ToEntity(matchRequest);
 
         _repository.Add(match);
     }
 
-    public IEnumerable<MatchResponse> GetMatches()
+    public IEnumerable<MatchResponse> GetAllMatches()
     {
         return _repository.GetAll()
             .Select(MatchMapper.ToResponse);
     }
 
-    public MatchResponse GetMatchById(int id)
+    public MatchResponse GetMatchById(int matchId)
     {
-        var match = FindMatchById(id);
+        var match = FindMatchByIdOrThrow(matchId);
 
         return MatchMapper.ToResponse(match);
     }
 
-    public void SetMatchResult(int id, int homeGoals, int awayGoals)
+    public void SetMatchResult(int matchId, int homeGoals, int awayGoals)
     {
-        var match = FindMatchById(id);
+        var match = FindMatchByIdOrThrow(matchId);
 
-        ExecuteMatchUpdate(() => match.SetResult(homeGoals, awayGoals));
+        match.SetResult(homeGoals, awayGoals);
     }
 
-    public void UpdateMatchDate(int id, DateTime newDate)
+    public void UpdateMatchDate(int matchId, DateTime newDate)
     {
-        var match = FindMatchById(id);
+        var match = FindMatchByIdOrThrow(matchId);
 
-        ExecuteMatchUpdate(() => match.UpdateDate(newDate));
+        match.UpdateDate(newDate);
     }
 
-    public void UpdateMatchStadium(int id, StadiumRequest newStadium)
+    public void UpdateMatchStadium(int matchId, StadiumRequest newStadiumRequest)
     {
-        ValidateStadiumRequest(newStadium);
+        ValidateNotNull(newStadiumRequest, StadiumRequestRequiredErrorMessage);
 
-        var match = FindMatchById(id);
-        var stadium = StadiumMapper.ToEntity(newStadium);
+        var match = FindMatchByIdOrThrow(matchId);
+        var stadium = StadiumMapper.ToEntity(newStadiumRequest);
 
-        ExecuteMatchUpdate(() => match.UpdateStadium(stadium));
+        match.UpdateStadium(stadium);
     }
 
-    public void LockMatchEdition(int id)
+    public void LockMatchEdition(int matchId)
     {
-        var match = FindMatchById(id);
+        var match = FindMatchByIdOrThrow(matchId);
 
         match.LockEdition();
     }
+    
 
-    public void LockMatchesByPhase(string phase)
-    {
-        var tournamentPhase = ParseTournamentPhase(phase);
-
-        foreach (var match in GetMatchesByPhase(tournamentPhase))
-        {
-            match.LockEdition();
-        }
-    }
-
-    private Match FindMatchById(int id)
-    {
-        var match = _repository.GetAll()
-            .FirstOrDefault(currentMatch => currentMatch.Id == id);
-
-        if (match is null)
-        {
-            throw new ArgumentException(MatchNotFoundError);
-        }
-
-        return match;
-    }
-
-    private IEnumerable<Match> GetMatchesByPhase(TournamentPhase phase)
+    private Match FindMatchByIdOrThrow(int matchId)
     {
         return _repository.GetAll()
-            .Where(match => match.Phase == phase);
+            .FirstOrDefault(match => match.Id == matchId)
+            ?? throw new ArgumentException(MatchNotFoundErrorMessage);
     }
 
-    private static void ValidateMatchRequest(MatchRequest request)
+    private static void ValidateNotNull<T>(T? value, string errorMessage)
     {
-        if (request is null)
-        {
-            throw new ArgumentException(RequiredMatchError);
-        }
-    }
-
-    private static void ValidateStadiumRequest(StadiumRequest stadium)
-    {
-        if (stadium is null)
-        {
-            throw new ArgumentException(RequiredStadiumError);
-        }
-    }
-
-    private static TournamentPhase ParseTournamentPhase(string phase)
-    {
-        return Enum.Parse<TournamentPhase>(phase);
-    }
-
-    private static void ExecuteMatchUpdate(Action updateAction)
-    {
-        try
-        {
-            updateAction();
-        }
-        catch (Exception exception)
-        {
-            throw new ArgumentException(exception.Message);
-        }
+        if (value is null)
+            throw new ArgumentException(errorMessage);
     }
 }
