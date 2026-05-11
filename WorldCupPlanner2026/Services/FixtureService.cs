@@ -30,8 +30,22 @@ public class FixtureService : IFixtureService
     public void GenerateFixture(int seed, DateTime startDate)
     {
        ValidateFixtureCanBeGenerated();
+       var teams = GetTeamsOrdered(seed);
        var groups = CreateGroups();
+       AssignTeamsToGroups(teams, groups);
        SaveGroups(groups);
+    }
+    private List<Team> GetTeamsOrdered(int seed)
+    {
+        return _teamService.GetTeamsOrdered(seed)
+            .Select(t => new Team(t.Name, t.ConfederationName, t.RankingFifa))
+            .ToList();
+    }
+
+    private static void AssignTeamsToGroups(List<Team> teams, List<Group> groups)
+    {
+        for (int i = 0; i < teams.Count; i++)
+            groups[i % 12].AddTeam(teams[i]);
     }
     
     private void ValidateFixtureCanBeGenerated()
