@@ -1,13 +1,112 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 @using IServices
+@using Web.Components.Shared
 @inject ISessionService SessionService
 
-<PageTitle>Home · WorldCupPlanner 2026</PageTitle>
+<PageTitle>Inicio · WorldCupPlanner 2026</PageTitle>
 
-<div class="page-wrap">
-    <div class="ph">
-        <h1 class="pt">WorldCupPlanner 2026</h1>
-        <p class="ps">Welcome, @SessionService.GetCurrentUser()?.Name!</p>
+<div class="container-fluid p-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h4 fw-bold mb-1">WorldCupPlanner 2026</h1>
+            <p class="text-muted mb-0">Bienvenido, @SessionService.GetCurrentUser()?.Name!</p>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        @foreach (var stat in Stats)
+        {
+            <div class="col-md-3">
+                <div class="bg-white border-custom diagonal-corners overflow-hidden">
+                    <div class="@stat.Color p-4 d-flex align-items-center justify-content-center">
+                        <i class="bi @stat.Icon text-white fs-2"></i>
+                    </div>
+                    <GeometricDivider />
+                    <div class="p-4">
+                        <div class="text-3xl font-bold mb-1">@stat.Value</div>
+                        <div class="text-muted small text-uppercase">@stat.Label</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="bg-white border-custom diagonal-corners h-100">
+                <div class="bg-primary-custom text-white px-4 py-3">
+                    <h5 class="mb-0">Próximos Partidos</h5>
+                </div>
+                <GeometricDivider />
+                <div class="p-4">
+                    @foreach (var match in UpcomingMatches)
+                    {
+                        <div class="border-custom p-3 mb-3 diagonal-corners-sm">
+                            <div class="d-flex justify-content-between mb-3 small text-muted">
+                                <span class="badge bg-light text-dark px-3 py-2">@match.Date</span>
+                                <span>@match.Stadium</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between fw-bold">
+                                <span class="flex-fill text-end pe-3">@match.HomeTeam</span>
+                                <span class="border-custom px-3 py-1">VS</span>
+                                <span class="flex-fill ps-3">@match.AwayTeam</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="bg-white border-custom diagonal-corners">
+                <div class="bg-danger-custom text-white px-4 py-3">
+                    <h5 class="mb-0">Actividad Reciente</h5>
+                </div>
+                <GeometricDivider />
+                <div class="p-4">
+                    @for (int i = 0; i < RecentActivity.Count; i++)
+                    {
+                        var activity = RecentActivity[i];
+                        <div class="mb-3">
+                            <p class="mb-1 small">@activity.Action</p>
+                            <p class="text-muted x-small">@activity.Time</p>
+                            @if (i < RecentActivity.Count - 1)
+                            {
+                                <GeometricDivider />
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+@code {
+    private List<StatCard> Stats = new()
+    {
+        new("Equipos Registrados", "48", "bi-people", "bg-blue-custom"),
+        new("Estadios Disponibles", "16", "bi-geo-alt", "bg-red-custom"),
+        new("Partidos Programados", "104", "bi-calendar-event", "bg-green-custom"),
+        new("Fase Actual", "Grupos", "bi-trophy", "bg-blue-custom")
+    };
+
+    private List<MatchInfo> UpcomingMatches = new()
+    {
+        new("11 Jun", "México", "Camerún", "Estadio Azteca"),
+        new("12 Jun", "Argentina", "Canadá", "MetLife Stadium"),
+        new("12 Jun", "Brasil", "Japón", "AT&T Stadium")
+    };
+
+    private List<ActivityInfo> RecentActivity = new()
+    {
+        new("Equipo 'Brasil' creado", "hace 5 min"),
+        new("Partido México vs Camerún simulado", "hace 12 min"),
+        new("Estadio Azteca editado", "hace 1 hora")
+    };
+
+    public record StatCard(string Label, string Value, string Icon, string Color);
+    public record MatchInfo(string Date, string HomeTeam, string AwayTeam, string Stadium);
+    public record ActivityInfo(string Action, string Time);
+}

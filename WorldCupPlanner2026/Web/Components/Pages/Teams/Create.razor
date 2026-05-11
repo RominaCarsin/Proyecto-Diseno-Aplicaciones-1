@@ -1,4 +1,4 @@
-@page "/teams"
+@page "/teams/create"
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
@@ -6,8 +6,6 @@
 @inject IConfederationService ConfederationService
 
 <div class="container-fluid p-0 space-y-6">
-    
-    <!-- FORMULARIO DE CREACIÓN / EDICIÓN -->
     <div class="bg-white border-custom p-4 diagonal-corners">
         <h3 class="mb-3">@(editingTeamName == null ? "Crear Equipo" : "Editar Equipo")</h3>
         <hr class="geometric-divider" />
@@ -25,7 +23,6 @@
                     <option value="" disabled selected>Seleccione una confederación</option>
                     @foreach (var conf in confederations)
                     {
-                        @* Se desactiva la opción si no hay cupos, a menos que sea la confederación del equipo en edición *@
                         <option value="@conf.Name" disabled="@(conf.RemainingSlots <= 0 && formData.ConfederationName != conf.Name)">
                             @conf.Name (@conf.RemainingSlots cupos disponibles)
                         </option>
@@ -65,7 +62,6 @@
         </div>
     </div>
 
-    <!-- SECCIÓN DE SIMULACIÓN -->
     <div class="bg-white border-custom p-4 diagonal-corners">
         <h3 class="mb-3">Simular / Completar Equipos</h3>
         <hr class="geometric-divider" />
@@ -90,7 +86,6 @@
         </div>
     </div>
 
-    <!-- TABLA DE EQUIPOS -->
     <div class="bg-white border-custom diagonal-corners overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -128,12 +123,12 @@
                                         <button @onclick="() => EditTeam(team)"
                                                 disabled="@(editingTeamName == team.Name)"
                                                 class="btn btn-sm btn-light border-custom">
-                                            <i class="bi bi-pencil">Update</i>
+                                            <i class="bi bi-pencil"></i> Actualizar
                                         </button>
                                         <button @onclick="() => DeleteTeam(team.Name)"
                                                 disabled="@(editingTeamName == team.Name)"
                                                 class="btn btn-sm btn-outline-danger border-custom">
-                                            <i class="bi bi-trash">Delete</i>
+                                            <i class="bi bi-trash"></i> Eliminar
                                         </button>
                                     </div>
                                 </td>

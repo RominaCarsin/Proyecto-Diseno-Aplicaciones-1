@@ -1,33 +1,107 @@
 ﻿@using IServices
 @using DTOs
+@using IServices
+@using Microsoft.AspNetCore.Components.Routing
 @inject ISessionService SessionService
 @inject IAuthStateService AuthStateService
 @implements IDisposable
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+<div class="sidebar-container">
+
+    <div class="sidebar-header">
+        <div class="position-relative">
+
+            <div class="brand-stripe">
+
+                <div class="brand-stripe-segment bg-wc-blue"></div>
+                <div class="brand-stripe-segment bg-wc-red"></div>
+                <div class="brand-stripe-segment bg-wc-green"></div>
+
+            </div>
+
+            <h1 class="h5 mb-0 pt-4 fw-bold text-wc-text">
+                WorldCupPlanner 2026
+            </h1>
+
         </div>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Main navigation">
+
+        @foreach (var item in navItems)
+        {
+            <NavLink class="nav-item-custom"
+                     href="@item.Href"
+                     style="@($"--item-color: {item.Color};")"
+                     Match="@(item.Id == "teams" ? NavLinkMatch.Prefix : NavLinkMatch.All)">
+
+                <span class="active-indicator"></span>
+
+                <i class="@item.Icon nav-item-icon" aria-hidden="true"></i>
+
+                <span>@item.Label</span>
+
+            </NavLink>
+        }
 
         @if (SessionService.IsLoggedIn() &&
              (SessionService.CurrentUserHasRole(RoleDto.Admin) || SessionService.CurrentUserHasRole(RoleDto.Editor)))
         {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Teams/Create">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Team Management
-                </NavLink>
-                <NavLink class="nav-link" href="stadiums/create">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Stadium Management
-                </NavLink>
-            </div>
+            <NavLink class="nav-item-custom"
+                     href="/teams/create"
+                     style="--item-color: #dc0201;"
+                     Match="NavLinkMatch.All">
+
+                <span class="active-indicator"></span>
+
+                <i class="bi bi-plus-square nav-item-icon" aria-hidden="true"></i>
+
+                <span>Gestión de Equipos</span>
+
+            </NavLink>
+
+            <NavLink class="nav-item-custom"
+                     href="stadiums/create"
+                     style="--item-color: #04cf5c;"
+                     Match="NavLinkMatch.All">
+
+                <span class="active-indicator"></span>
+
+                <i class="bi bi-plus-square nav-item-icon" aria-hidden="true"></i>
+
+                <span>Gestión de Estadios</span>
+
+            </NavLink>
         }
+
     </nav>
+
+    <div class="sidebar-footer">
+
+        <div class="text-sm">
+            <p class="mb-0 fw-bold">FIFA World Cup 2026</p>
+            <p class="small mb-0 text-muted">Sistema de Gestión</p>
+        </div>
+
+    </div>
+
 </div>
 
 @code {
+
+    private List<NavigationModel> navItems = new()
+    {
+        new("home", "Inicio", "bi bi-house-door", "#1b2789", "/"),
+        new("teams", "Equipos", "bi bi-people", "#dc0201", "/teams"),
+        new("stadiums", "Estadios", "bi bi-geo-alt", "#04cf5c", "/stadiums"),
+        new("matches", "Partidos", "bi bi-calendar3", "#dc0201", "/matches"),
+        new("groups", "Grupos", "bi bi-grid-3x3-gap", "#1b2789", "/groups"),
+        new("knockout", "Segunda Fase", "bi bi-trophy", "#04cf5c", "/knockout"),
+        new("user", "Usuario", "bi bi-person", "#1b2789", "/profile"),
+        new("import", "Importar", "bi bi-cloud-upload", "#dc0201", "/import"),
+        new("logs", "Logs", "bi bi-file-earmark-text", "#04cf5c", "/logs")
+    };
+
     protected override void OnInitialized()
     {
         AuthStateService.OnChange += OnAuthStateChanged;
@@ -42,4 +116,12 @@
     {
         AuthStateService.OnChange -= OnAuthStateChanged;
     }
+
+    public record NavigationModel(
+        string Id,
+        string Label,
+        string Icon,
+        string Color,
+        string Href
+    );
 }
