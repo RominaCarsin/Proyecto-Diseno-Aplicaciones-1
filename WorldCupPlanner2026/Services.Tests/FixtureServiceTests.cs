@@ -150,4 +150,12 @@ public class FixtureServiceTests
 
         CollectionAssert.AreEqual(expected, labels);
     }
+    
+    [TestMethod]
+    public void CanGenerateFixture_WithLessThan48Teams_ShouldReturnFalse()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.IsFalse(fixtureService.CanGenerateFixture());
+    }
 }
