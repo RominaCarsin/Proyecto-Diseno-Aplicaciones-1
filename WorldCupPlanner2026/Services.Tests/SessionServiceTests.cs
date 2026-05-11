@@ -28,8 +28,11 @@ public class SessionServiceTests
     public void Setup()
     {
         _repository = new Repository<User>();
-        _userService = new UserService(_repository);
+        var auditRepo    = new Repository<AuditLog>();
+        var auditService = new AuditService(auditRepo);
         var authState = new AuthStateService();
+        _sessionService = new SessionService(null!, authState);
+        _userService = new UserService(_repository, auditService, _sessionService);
         _sessionService = new SessionService(_userService, authState);
     }
 

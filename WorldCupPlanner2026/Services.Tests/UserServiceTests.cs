@@ -10,6 +10,11 @@ public class UserServiceTests
 {
     private UserService _service;
     private IRepository<User> _repository;
+    private AuditService          _auditService;
+    private IRepository<AuditLog> _auditRepository;
+    private SessionService        _sessionService;
+    private AuthStateService      _authState;
+    
     private UserRequest _validUser = new UserRequest {
         Name = "Juan",
         Surname = "Perez",
@@ -17,6 +22,7 @@ public class UserServiceTests
         DateOfBirth = new DateTime(2000, 1, 1),
         Password = "Password1!"
     };
+    
     private UserRequest _otherUser = new UserRequest
     {
         Name = "Carlos",
@@ -30,7 +36,11 @@ public class UserServiceTests
     public void Setup()
     {
         _repository = new Repository<User>();
-        _service = new UserService(_repository);
+        _auditRepository = new Repository<AuditLog>();
+        _auditService = new AuditService(_auditRepository);
+        _authState = new AuthStateService();
+        _sessionService = new SessionService(null!, _authState);
+        _service = new UserService(_repository, _auditService, _sessionService);
     }
 
     private void CreateAdminUser(string email, string name, string surname, DateTime dob, string password)

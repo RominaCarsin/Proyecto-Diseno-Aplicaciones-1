@@ -16,12 +16,20 @@ public class TeamServiceTests
     private TeamRequest _validTeamRequest = new TeamRequest { Name = "Uruguay", ConfederationName = "CONMEBOL", RankingFifa = 500 };
     private TeamRequest _otherValidTeamRequest = new TeamRequest { Name = "Argentina", ConfederationName = "CONMEBOL", RankingFifa = 700 };
     
+    private AuditService          _auditService;
+    private IRepository<AuditLog> _auditRepository;
+    private SessionService        _sessionService;
+    
     [TestInitialize]
     public void Setup()
     {
         _repository = new Repository<Team>();
-        _confederationService = new ConfederationService();
-        _service = new TeamService(_repository, _confederationService);
+        _auditRepository = new Repository<AuditLog>(); 
+        _auditService = new AuditService(_auditRepository); 
+        var authState = new AuthStateService(); 
+        _sessionService = new SessionService(null!, authState); 
+        _confederationService = new ConfederationService(); 
+        _service = new TeamService(_repository, _confederationService, _auditService, _sessionService);
     }
 
     [TestMethod]

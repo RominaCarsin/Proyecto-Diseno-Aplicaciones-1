@@ -9,10 +9,14 @@ namespace Services;
 public class UserService : IUserService
 {
     private readonly IRepository<User> _repository;
+    private readonly IAuditService _auditService;
+    private readonly ISessionService _sessionService;
     
-    public UserService(IRepository<User> repository)
+    public UserService(IRepository<User> repository,  IAuditService auditService, ISessionService sessionService)
     {
         _repository = repository;
+        _auditService = auditService;
+        _sessionService = sessionService;
     }
     
     public UserResponse AddUser(UserRequest request)
@@ -21,6 +25,7 @@ public class UserService : IUserService
             throw new ArgumentException("User already exists");
         var user = UserMapper.ToEntity(request);
         _repository.Add(user);
+        _auditService.Log(request.Email, "User created", $"New user registered: {request.Name} {request.Surname} ({request.Email})");
         return UserMapper.FromEntity(user);
     }
 
@@ -40,6 +45,9 @@ public class UserService : IUserService
             request.Email,
             request.DateOfBirth
         );
+        _auditService.Log(email, "User updated", $"[USER UPDATE] Target: {email} | " +
+                                                 $"New Data -> Name: {request.Name}, Surname: {request.Surname}, " +
+                                                 $"Email: {request.Email}, DOB: {request.DateOfBirth:yyyy-MM-dd}");
     }
 
     private void ValidateEmailNotInUse(string currentEmail, string newEmail)
@@ -62,6 +70,7 @@ public class UserService : IUserService
         EnsureAdmin(adminEmail);
         var user = GetExistingUserOrThrowArgumentException(targetEmail);
         user.AddRole(RoleMapper.ToDomain(role));
+        _auditService.Log(adminEmail, "Role added", $"Role {role} granted to {targetEmail} by {adminEmail}");
     }
 
     public void RemoveRoleFromUser(string adminEmail, string targetEmail, RoleDto role)
@@ -70,12 +79,14 @@ public class UserService : IUserService
 
         var user = GetExistingUserOrThrowArgumentException(targetEmail);
         user.RemoveRole(RoleMapper.ToDomain(role));
+        _auditService.Log(adminEmail, "Role removed", $"Role {role} revoked from {targetEmail} by {adminEmail}");
     }
 
     public void DeleteUser(string email)
     {
         User existingUser = GetExistingUserOrThrowArgumentException(email);
         _repository.Delete(existingUser);
+        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "User deleted", $"User {email} was removed from the system");
     }
 
     public UserResponse GetUserByEmail(string email)
@@ -104,6 +115,7 @@ public class UserService : IUserService
         var targetUser = GetExistingUserOrThrowArgumentException(targetEmail);
 
         targetUser.SetPassword(newPassword);
+        _auditService.Log(adminEmail, "Password reset", $"Password of {targetEmail} was reset by {adminEmail}");
     }
 
     private void EnsureAdmin(string adminEmail)
@@ -122,5 +134,6 @@ public class UserService : IUserService
             throw new ArgumentException("Current password is incorrect");
 
         user.SetPassword(newPassword);
+        _auditService.Log(email, "Password changed", $"User {email} changed their own password");
     }
 }
