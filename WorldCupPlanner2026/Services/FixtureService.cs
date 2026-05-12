@@ -13,6 +13,10 @@ public class FixtureService : IFixtureService
     private readonly IRepository<Group> _groupRepository;
     private readonly IRepository<Match> _matchRepository;
     private readonly IPotService _potService;
+    
+    private const int MaxMatchesPerDay = 3;
+    private const int FirstMatchHour = 14;
+    private const int HoursBetweenMatches = 4;
 
     public FixtureService(
         ITeamService teamService,
@@ -71,31 +75,30 @@ public class FixtureService : IFixtureService
         foreach (var group in groups)
         {
             var teamList = group.Teams.ToList();
-            var pairings = new List<(int, int)> { (0,3),(1,2),(0,2),(1,3),(0,1),(2,3) };
+            var pairings = new List<(int, int)> { (0,3), (1,2), (0,2), (1,3), (0,1), (2,3) };
 
-            for (int round = 0; round < 3; round++)
+            foreach (var (homeIndex, awayIndex) in pairings)
             {
-                var roundDate = startDate.AddDays(round * 3);
-                var roundPairings = pairings.Skip(round * 2).Take(2).ToList();
+                int dayOffset = matchCounter / MaxMatchesPerDay;
+                int matchIndexInDay = matchCounter % MaxMatchesPerDay;
 
-                for (int i = 0; i < roundPairings.Count; i++)
-                {
-                    var (homeIndex, awayIndex) = roundPairings[i];
-                    var matchDate = round == 2
-                        ? roundDate.Date.AddHours(14)
-                        : roundDate.Date.AddHours(14).AddHours(i * 4);
+                var matchDate = startDate.Date
+                    .AddDays(dayOffset)
+                    .AddHours(FirstMatchHour)
+                    .AddHours(matchIndexInDay * HoursBetweenMatches);
 
-                    var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
-                    group.AddMatch(new Match(
-                        matchDate,
-                        stadium,
-                        teamList[homeIndex],
-                        teamList[awayIndex],
-                        group: group.Label,
-                        phase: "GroupStage"
-                    ));
-                    matchCounter++;
-                }
+                var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+
+                group.AddMatch(new Match(
+                    matchDate,
+                    stadium,
+                    teamList[homeIndex],
+                    teamList[awayIndex],
+                    group: group.Label,
+                    phase: "GroupStage"
+                ));
+
+                matchCounter++;
             }
         }
     }
