@@ -4,9 +4,8 @@ namespace IServices;
 
 public interface IStadiumService
 {
-    void AddStadium(StadiumRequest stadium);
-    IEnumerable<StadiumResponse> GetStadiums();
+    void AddStadium(StadiumRequest stadiumRequest);
+    IEnumerable<StadiumResponse> GetAllStadiums();
     void DeleteStadium(string stadiumName);
-    void UpdateStadium(string originalName, StadiumRequest stadium);
+    void UpdateStadium(string originalStadiumName, StadiumRequest updatedStadiumData);
 }
-

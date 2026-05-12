@@ -2,15 +2,25 @@
 
 public class MatchResponse
 {
-    public int Id { get; init; }
-    public DateTime Date { get; init; }
-    public StadiumResponse Stadium { get; init; } = new();
-    public TeamResponse HomeTeam { get; init; } = new();
-    public TeamResponse AwayTeam { get; init; } = new();
-    public char? Group { get; init; }
-    public string? Phase { get; init; }
-    public int? HomeGoals { get; init; }
-    public int? AwayGoals { get; init; }
-    public TeamResponse? Winner { get; init; }
-    public bool IsLocked { get; init; }
+    public int Id { get; set; }
+
+    public DateTime Date { get; set; }
+
+    public StadiumResponse Stadium { get; set; } = new();
+
+    public TeamResponse HomeTeam { get; set; } = new();
+
+    public TeamResponse AwayTeam { get; set; } = new();
+
+    public char? Group { get; set; }
+
+    public string Phase { get; set; } = "";
+
+    public int? HomeGoals { get; set; }
+
+    public int? AwayGoals { get; set; }
+
+    public TeamResponse? Winner { get; set; }
+
+    public bool IsLocked { get; set; }
 }

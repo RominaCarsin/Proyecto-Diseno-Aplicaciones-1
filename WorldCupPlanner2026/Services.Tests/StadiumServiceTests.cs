@@ -31,7 +31,7 @@ public class StadiumServiceTests
 
         _service.AddStadium(_validStadiumRequest);
 
-        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "CENTENARIO"));
+        Assert.IsNotNull(_service.GetAllStadiums().FirstOrDefault(s => s.Name == "CENTENARIO"));
     }
 
     [TestMethod]
@@ -56,7 +56,7 @@ public class StadiumServiceTests
         _service.AddStadium(_validStadiumRequest);
         _service.DeleteStadium(_validStadiumRequest.Name);
 
-        Assert.IsNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "CENTENARIO"));
+        Assert.IsNull(_service.GetAllStadiums().FirstOrDefault(s => s.Name == "CENTENARIO"));
     }
 
     [TestMethod]
@@ -72,7 +72,7 @@ public class StadiumServiceTests
         _service.AddStadium(_validStadiumRequest);
         _service.UpdateStadium("CENTENARIO", _otherValidStadiumRequestWithOtherName);
 
-        Assert.IsNotNull(_service.GetStadiums().FirstOrDefault(s => s.Name == "CAMPION"));
+        Assert.IsNotNull(_service.GetAllStadiums().FirstOrDefault(s => s.Name == "CAMPION"));
     }
 
     [TestMethod]

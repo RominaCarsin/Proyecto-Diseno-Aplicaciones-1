@@ -5,24 +5,27 @@ using IRepository;
 using Repository;
 using Blazored.LocalStorage;
 using Domain;
+using DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddScoped<IRepository<Stadium>, Repository<Stadium>>();
-builder.Services.AddScoped<IStadiumService, StadiumService>();
+builder.Services.AddSingleton<IRepository<Stadium>, Repository<Stadium>>();
+builder.Services.AddSingleton<IStadiumService, StadiumService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<IRepository<Team>, Repository<Team>>();
-builder.Services.AddScoped<ITeamService, TeamService>();
-builder.Services.AddScoped<IConfederationService, ConfederationService>();
+builder.Services.AddSingleton<IRepository<Team>, Repository<Team>>();
+builder.Services.AddSingleton<ITeamService, TeamService>();
+builder.Services.AddSingleton<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddScoped<IRepository<Match>, Repository<Match>>();
-builder.Services.AddScoped<IMatchService, MatchService>();
+builder.Services.AddSingleton<IRepository<Match>, Repository<Match>>();
+builder.Services.AddSingleton<IMatchService, MatchService>();
+builder.Services.AddSingleton<IRepository<Group>, Repository<Group>>();
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -39,5 +42,7 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+
 
 app.Run();

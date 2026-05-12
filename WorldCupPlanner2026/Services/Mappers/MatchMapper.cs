@@ -10,7 +10,9 @@ public static class MatchMapper
             date: matchRequest.Date,
             stadium: StadiumMapper.ToEntity(matchRequest.Stadium),
             homeTeam: TeamMapper.ToEntity(matchRequest.HomeTeam),
-            awayTeam: TeamMapper.ToEntity(matchRequest.AwayTeam)
+            awayTeam: TeamMapper.ToEntity(matchRequest.AwayTeam),
+            group: matchRequest.Group,
+            phase: matchRequest.Phase
         );
 
     public static MatchResponse ToResponse(Match match) =>
@@ -21,6 +23,8 @@ public static class MatchMapper
             Stadium = StadiumMapper.FromEntity(match.Stadium),
             HomeTeam = TeamMapper.FromEntity(match.HomeTeam),
             AwayTeam = TeamMapper.FromEntity(match.AwayTeam),
+            Group = match.Group,
+            Phase = match.Phase,
             HomeGoals = match.HomeGoals,
             AwayGoals = match.AwayGoals,
             Winner = match.Winner is null ? null : TeamMapper.FromEntity(match.Winner),

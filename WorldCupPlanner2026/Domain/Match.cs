@@ -1,4 +1,4 @@
-﻿namespace Domain;
+﻿﻿namespace Domain;
 
 public class Match
 {
@@ -23,12 +23,16 @@ public class Match
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
     public bool IsLocked { get; private set; }
+    public char? Group { get; private set; }
+    public string Phase { get; private set; } = "GroupStage";
 
     public Match(
         DateTime date,
         Stadium? stadium,
         Team? homeTeam,
-        Team? awayTeam)
+        Team? awayTeam,
+        char? group = null, 
+        string phase = "GroupStage")
     {
         ValidateDate(date);
         ValidateRequired(stadium, RequiredStadiumErrorMessage);
@@ -41,6 +45,8 @@ public class Match
         Stadium = stadium!;
         HomeTeam = homeTeam!;
         AwayTeam = awayTeam!;
+        Group = group;       
+        Phase = phase;
     }
 
     public void SetResult(int homeGoals, int awayGoals)

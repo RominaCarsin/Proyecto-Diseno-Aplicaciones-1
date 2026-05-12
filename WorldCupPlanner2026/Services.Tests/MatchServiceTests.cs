@@ -23,12 +23,14 @@ public class MatchServiceTests
     private static readonly DateTime UpdatedMatchDate = new(2026, 6, 10);
 
     private IMatchService _matchService = null!;
+    private IRepository<Group> _groupRepository = null!;
 
     [TestInitialize]
     public void Setup()
     {
         IRepository<Match> repository = new Repository<Match>();
-        _matchService = new MatchService(repository);
+        _groupRepository = new Repository<Group>();
+        _matchService = new MatchService(repository, _groupRepository);
     }
 
     // ─── AddMatch ─────────────────────────────────────────────────────────────
@@ -40,7 +42,7 @@ public class MatchServiceTests
 
         _matchService.AddMatch(request);
 
-        Assert.AreEqual(1, _matchService.GetAllMatches().Count());
+        Assert.AreEqual(1, _matchService.GetMatches().Count());
     }
 
     [TestMethod]
@@ -48,6 +50,62 @@ public class MatchServiceTests
     {
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.AddMatch(null!));
+    }
+
+    [TestMethod]
+    public void AddMatch_WithGroupStageAndExistingGroup_ShouldAddMatchToGroup()
+    {
+        var group = new Group('A');
+        _groupRepository.Add(group);
+
+        var request = BuildValidMatchRequest(group: 'A');
+        _matchService.AddMatch(request);
+
+        Assert.AreEqual(1, _matchService.GetMatches().Count());
+    }
+
+    [TestMethod]
+    public void AddMatch_WithGroupStageAndNonExistingGroup_ShouldThrowArgumentException()
+    {
+        var request = BuildValidMatchRequest(group: 'Z');
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.AddMatch(request));
+    }
+
+    [TestMethod]
+    public void AddMatch_WithGroupAndPhase_ShouldPersistGroupAndPhase()
+    {
+        var group = new Group('B');
+        _groupRepository.Add(group);
+
+        var request = BuildValidMatchRequest(group: 'B', phase: "GroupStage");
+        _matchService.AddMatch(request);
+
+        var result = _matchService.GetMatches().First();
+        Assert.AreEqual('B', result.Group);
+        Assert.AreEqual("GroupStage", result.Phase);
+    }
+
+    // ─── GetMatches ───────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void GetMatches_WithNoMatches_ShouldReturnEmptyList()
+    {
+        var result = _matchService.GetMatches();
+
+        Assert.AreEqual(0, result.Count());
+    }
+
+    [TestMethod]
+    public void GetMatches_WithMultipleMatches_ShouldReturnAll()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest());
+        _matchService.AddMatch(BuildValidMatchRequest(
+            homeTeamName: "FRANCE",
+            awayTeamName: "GERMANY"));
+
+        Assert.AreEqual(2, _matchService.GetMatches().Count());
     }
 
     // ─── GetMatchById ─────────────────────────────────────────────────────────
@@ -88,6 +146,28 @@ public class MatchServiceTests
     }
 
     [TestMethod]
+    public void SetMatchResult_WithAwayTeamScoringMore_ShouldSetAwayTeamAsWinner()
+    {
+        var savedMatch = AddValidMatchAndGetResponse();
+
+        _matchService.SetMatchResult(savedMatch.Id, 0, 2);
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+        Assert.AreEqual(AwayTeamName, result.Winner!.Name);
+    }
+
+    [TestMethod]
+    public void SetMatchResult_WithDraw_ShouldSetNullWinner()
+    {
+        var savedMatch = AddValidMatchAndGetResponse();
+
+        _matchService.SetMatchResult(savedMatch.Id, 1, 1);
+
+        var result = _matchService.GetMatchById(savedMatch.Id);
+        Assert.IsNull(result.Winner);
+    }
+
+    [TestMethod]
     public void SetMatchResult_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
     {
         var savedMatch = AddValidMatchAndGetResponse();
@@ -95,6 +175,13 @@ public class MatchServiceTests
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             _matchService.SetMatchResult(savedMatch.Id, 1, 0));
+    }
+
+    [TestMethod]
+    public void SetMatchResult_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.SetMatchResult(999, 1, 0));
     }
 
     // ─── UpdateMatchDate ──────────────────────────────────────────────────────
@@ -129,16 +216,20 @@ public class MatchServiceTests
             _matchService.UpdateMatchDate(savedMatch.Id, UpdatedMatchDate));
     }
 
+    [TestMethod]
+    public void UpdateMatchDate_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.UpdateMatchDate(999, UpdatedMatchDate));
+    }
+
     // ─── UpdateMatchStadium ───────────────────────────────────────────────────
 
     [TestMethod]
     public void UpdateMatchStadium_WithValidStadium_ShouldReplaceMatchStadium()
     {
         var savedMatch = AddValidMatchAndGetResponse();
-        var alternativeStadium = BuildStadiumRequest(
-            name: AlternativeStadiumName,
-            city: AlternativeStadiumCity,
-            capacity: 78000);
+        var alternativeStadium = BuildStadiumRequest(AlternativeStadiumName, AlternativeStadiumCity, capacity: 78000);
 
         _matchService.UpdateMatchStadium(savedMatch.Id, alternativeStadium);
 
@@ -159,9 +250,7 @@ public class MatchServiceTests
     [TestMethod]
     public void UpdateMatchStadium_WithNonExistingMatchId_ShouldThrowArgumentException()
     {
-        var alternativeStadium = BuildStadiumRequest(
-            name: AlternativeStadiumName,
-            city: AlternativeStadiumCity);
+        var alternativeStadium = BuildStadiumRequest(AlternativeStadiumName, AlternativeStadiumCity);
 
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.UpdateMatchStadium(999, alternativeStadium));
@@ -172,9 +261,7 @@ public class MatchServiceTests
     {
         var savedMatch = AddValidMatchAndGetResponse();
         _matchService.LockMatchEdition(savedMatch.Id);
-        var alternativeStadium = BuildStadiumRequest(
-            name: AlternativeStadiumName,
-            city: AlternativeStadiumCity);
+        var alternativeStadium = BuildStadiumRequest(AlternativeStadiumName, AlternativeStadiumCity);
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             _matchService.UpdateMatchStadium(savedMatch.Id, alternativeStadium));
@@ -193,21 +280,47 @@ public class MatchServiceTests
         Assert.IsTrue(result.IsLocked);
     }
 
+    [TestMethod]
+    public void LockMatchEdition_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.LockMatchEdition(999));
+    }
+
+    // ─── LockMatchesByPhase ───────────────────────────────────────────────────
+
+    [TestMethod]
+    public void LockMatchesByPhase_ShouldLockAllMatches()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest());
+        _matchService.AddMatch(BuildValidMatchRequest(homeTeamName: "FRANCE", awayTeamName: "GERMANY"));
+
+        _matchService.LockMatchesByPhase("GroupStage");
+
+        Assert.IsTrue(_matchService.GetMatches().All(m => m.IsLocked));
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private MatchResponse AddValidMatchAndGetResponse()
     {
         _matchService.AddMatch(BuildValidMatchRequest());
-        return _matchService.GetAllMatches().First();
+        return _matchService.GetMatches().First();
     }
 
-    private static MatchRequest BuildValidMatchRequest() =>
+    private static MatchRequest BuildValidMatchRequest(
+        string homeTeamName = HomeTeamName,
+        string awayTeamName = AwayTeamName,
+        char? group = null,
+        string phase = "GroupStage") =>
         new MatchRequest
         {
             Date = ValidMatchDate,
             Stadium = BuildStadiumRequest(MainStadiumName, MainStadiumCity),
-            HomeTeam = BuildTeamRequest(HomeTeamName),
-            AwayTeam = BuildTeamRequest(AwayTeamName)
+            HomeTeam = BuildTeamRequest(homeTeamName),
+            AwayTeam = BuildTeamRequest(awayTeamName),
+            Group = group,
+            Phase = phase
         };
 
     private static StadiumRequest BuildStadiumRequest(

@@ -12,7 +12,7 @@ public class Stadium
     public string? Description { get; private set; }
     public int Capacity { get; private set; }
 
-    public Stadium(string name, string city, string description, int capacity)
+    public Stadium(string name, string city, string? description, int capacity)
     {
         name = name?.Trim().ToUpper() ?? string.Empty;
         city = city?.Trim().ToUpper() ?? string.Empty;
