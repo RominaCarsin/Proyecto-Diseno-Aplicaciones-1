@@ -159,4 +159,9 @@ public class FixtureService : IFixtureService
     }
 
     public int GetStadiumCount() => _stadiumService.GetAllStadiums().Count();
+    
+    public void GenerateFixture(int seed)
+    {
+        GenerateFixture(seed, new DateTime(2026, 6, 1));
+    }
 }
