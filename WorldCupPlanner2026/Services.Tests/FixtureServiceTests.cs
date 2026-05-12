@@ -306,5 +306,25 @@ public class FixtureServiceTests
         Assert.IsTrue(matchesByDay.All(g => g.Count() <= 3));
     }
     
+    [TestMethod]
+    public void GenerateFixture_ShouldScheduleEachGroupRoundsWith3DaysBetweenRounds()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var startDate = new DateTime(2026, 6, 1);
+
+        fixtureService.GenerateFixture(42, startDate);
+
+        foreach (var group in _groupRepository.GetAll())
+        {
+            var matches = group.Matches.ToList();
+
+            var round1Date = matches[0].Date.Date;
+            var round2Date = matches[2].Date.Date;
+            var round3Date = matches[4].Date.Date;
+
+            Assert.AreEqual(round1Date.AddDays(3), round2Date);
+            Assert.AreEqual(round2Date.AddDays(3), round3Date);
+        }
+    }
    
 }
