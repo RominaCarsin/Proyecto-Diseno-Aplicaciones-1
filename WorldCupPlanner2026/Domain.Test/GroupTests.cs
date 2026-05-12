@@ -553,6 +553,47 @@ public class GroupTests
         Assert.AreEqual(2, match.HomeGoals);
         Assert.AreEqual(1, match.AwayGoals);
     }
+    
+    [TestMethod]
+    public void SimulateMatches_WithHigherAwayRanking_ShouldFavorAwayTeam()
+    {
+        var group = CreateValidGroup();
+
+        var homeTeam = new Team("HOME", "CONMEBOL", 300);
+        var awayTeam = new Team("AWAY", "UEFA", 2500);
+
+        group.AddTeam(homeTeam);
+        group.AddTeam(awayTeam);
+
+        var match = CreateMatch(group, homeTeam, awayTeam);
+        group.AddMatch(match);
+
+        group.SimulateMatches(42);
+
+        Assert.AreEqual(0, match.HomeGoals);
+        Assert.AreEqual(3, match.AwayGoals);
+    }
+    
+    [TestMethod]
+    public void SimulateMatches_WithEqualRankings_ShouldGenerateDraw()
+    {
+        var group = CreateValidGroup();
+
+        var homeTeam = new Team("HOME", "CONMEBOL", 1500);
+        var awayTeam = new Team("AWAY", "UEFA", 1500);
+
+        group.AddTeam(homeTeam);
+        group.AddTeam(awayTeam);
+
+        var match = CreateMatch(group, homeTeam, awayTeam);
+        group.AddMatch(match);
+
+        group.SimulateMatches(42);
+
+        Assert.AreEqual(match.HomeGoals, match.AwayGoals);
+        Assert.IsNull(match.Winner);
+    }
+    
     private static void AddFourTeams(Group group)
     {
         group.AddTeam(new Team("TEAM0", "AFC", 1000));
