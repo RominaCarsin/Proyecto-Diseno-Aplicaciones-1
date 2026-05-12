@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Text
 @inject ISessionService SessionService
+@inject IAuditService AuditService
 
 <div class="row g-4">
     @if (!IsEditor)
@@ -164,7 +165,17 @@
         validationErrors = new List<ValidationError>();
     }
 
-    private void ProcessImport() { /* Logica de guardado en DB */ }
+    private void ProcessImport()
+    {
+        if (!IsEditor)
+            return;
+
+        var actorEmail = SessionService.GetCurrentUserEmail() ?? "system";
+        var fileName = selectedFile?.Name ?? "(no file)";
+        var rowCount = previewData?.Count ?? 0;
+        AuditService.Log(actorEmail, "Teams import executed", $"File: {fileName}; Rows: {rowCount}");
+        /* Logica de guardado en DB */
+    }
 
     private void HandleDragOver() => isDragging = true;
     private void HandleDragLeave() => isDragging = false;

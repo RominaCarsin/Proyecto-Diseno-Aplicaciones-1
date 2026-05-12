@@ -3,6 +3,7 @@
 @using IServices
 @page "/knockout"
 @inject ISessionService SessionService
+@inject IAuditService AuditService
 
 <div class="container-fluid p-0 space-y-6">
     
@@ -136,8 +137,29 @@
 
     private bool HasBracket => roundOf32.Any() || roundOf16.Any() || quarterFinals.Any() || finalMatch != null;
 
-    private void GenerateBracket() { /* Lógica de generación */ }
-    private void SimulatePhase() { /* Lógica de simulación */ }
+    private void GenerateBracket()
+    {
+        if (!IsEditor)
+            return;
+
+        LogAction("Knockout bracket created", $"Seed: {(string.IsNullOrWhiteSpace(seedValue) ? "(none)" : seedValue)}");
+        /* Lógica de generación */
+    }
+
+    private void SimulatePhase()
+    {
+        if (!IsEditor)
+            return;
+
+        LogAction("Knockout phase simulated", $"Seed: {(string.IsNullOrWhiteSpace(seedValue) ? "(none)" : seedValue)}");
+        /* Lógica de simulación */
+    }
+
+    private void LogAction(string action, string details)
+    {
+        var actorEmail = SessionService.GetCurrentUserEmail() ?? "system";
+        AuditService.Log(actorEmail, action, details);
+    }
 
     public class MatchModel {
         public string Id { get; set; } = "";

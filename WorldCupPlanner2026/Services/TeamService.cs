@@ -31,7 +31,7 @@ public class TeamService : ITeamService
         var team = TeamMapper.ToEntity(request);
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
-        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "Team created", 
+        LogAction("Team created",
             $"Team '{request.Name}' added to {request.ConfederationName} with FIFA ranking {request.RankingFifa}");
 
     }
@@ -49,7 +49,7 @@ public class TeamService : ITeamService
             team.UpdateConfederationName(request.ConfederationName);
             _confederationService.UpdateTeamConfederation(team, request.ConfederationName);
         }
-        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "Team updated", 
+        LogAction("Team updated",
             $"Team '{currentName}' updated. New name: '{request.Name}', confederation: {request.ConfederationName}, ranking: {request.RankingFifa}");
     }
 
@@ -58,7 +58,7 @@ public class TeamService : ITeamService
         var team = GetExistingTeamOrThrowArgumentException(name);
         _confederationService.RemoveTeamFromConfederation(team);
         _repository.Delete(team);
-        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "Team deleted", 
+        LogAction("Team deleted",
             $"Team '{name}' was removed from the system");
     }
 
@@ -161,5 +161,11 @@ public class TeamService : ITeamService
         var teamWithNewName = FindByName(newName);
         if (teamWithNewName != null && teamWithNewName.Name != currentName)
             throw new ArgumentException("A team with this name already exists.");
+    }
+
+    private void LogAction(string action, string details)
+    {
+        var actorEmail = _sessionService.GetCurrentUserEmail() ?? "system";
+        _auditService.Log(actorEmail, action, details);
     }
 }

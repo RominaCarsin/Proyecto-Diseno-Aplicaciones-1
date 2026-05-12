@@ -30,7 +30,7 @@ public class StadiumService : IStadiumService
             throw new ArgumentException($"A stadium with the name '{stadium.Name}' already exists");
 
         _repository.Add(stadium);
-        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "Stadium created", 
+        LogAction("Stadium created",
             $"Stadium '{stadium.Name}' created in {request.City} with capacity {request.Capacity}");
     }
 
@@ -44,7 +44,7 @@ public class StadiumService : IStadiumService
             throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
 
         _repository.Delete(stadium);
-        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "Stadium deleted", 
+        LogAction("Stadium deleted",
             $"Stadium '{stadiumName}' was removed from the system");
     }
 
@@ -70,8 +70,14 @@ public class StadiumService : IStadiumService
 
         _repository.Delete(existingStadium);
         _repository.Add(updatedStadium);
-        _auditService.Log(_sessionService.GetCurrentUserEmail() ?? "system", "Stadium updated", 
+        LogAction("Stadium updated",
             $"Stadium '{originalName}' updated. New name: '{request.Name}', city: {request.City}, capacity: {request.Capacity}");
+    }
+
+    private void LogAction(string action, string details)
+    {
+        var actorEmail = _sessionService.GetCurrentUserEmail() ?? "system";
+        _auditService.Log(actorEmail, action, details);
     }
 
     public IEnumerable<StadiumResponse> GetStadiums()

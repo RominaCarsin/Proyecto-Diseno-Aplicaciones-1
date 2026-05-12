@@ -93,9 +93,8 @@ public class AuthStateServiceTests
     {
         var auditRepo    = new Repository<AuditLog>();
         var auditService = new AuditService(auditRepo);
-        var tempSession  = new SessionService(null!, _authStateService);
         var repository = new Repository<User>();
-        var userService  = new UserService(repository, auditService, tempSession);
+        var userService  = new UserService(repository, auditService);
         var sessionService = new SessionService(userService, _authStateService);
 
         AddValidUser(userService);
@@ -111,9 +110,8 @@ public class AuthStateServiceTests
     {
         var auditRepo    = new Repository<AuditLog>();
         var auditService = new AuditService(auditRepo);
-        var tempSession  = new SessionService(null!, _authStateService);
         var repository = new Repository<User>();
-        var userService  = new UserService(repository, auditService, tempSession);
+        var userService  = new UserService(repository, auditService);
         var sessionService = new SessionService(userService, _authStateService);
 
         AddValidUser(userService);
@@ -130,9 +128,8 @@ public class AuthStateServiceTests
     {
         var auditRepo    = new Repository<AuditLog>();
         var auditService = new AuditService(auditRepo);
-        var tempSession  = new SessionService(null!, _authStateService);
         var repository = new Repository<User>();
-        var userService  = new UserService(repository, auditService, tempSession);
+        var userService  = new UserService(repository, auditService);
         var sessionService = new SessionService(userService, _authStateService);
 
         AddValidUser(userService);

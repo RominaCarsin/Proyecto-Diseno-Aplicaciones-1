@@ -12,8 +12,6 @@ public class UserServiceTests
     private IRepository<User> _repository;
     private AuditService          _auditService;
     private IRepository<AuditLog> _auditRepository;
-    private SessionService        _sessionService;
-    private AuthStateService      _authState;
     
     private UserRequest _validUser = new UserRequest {
         Name = "Juan",
@@ -38,9 +36,7 @@ public class UserServiceTests
         _repository = new Repository<User>();
         _auditRepository = new Repository<AuditLog>();
         _auditService = new AuditService(_auditRepository);
-        _authState = new AuthStateService();
-        _sessionService = new SessionService(null!, _authState);
-        _service = new UserService(_repository, _auditService, _sessionService);
+        _service = new UserService(_repository, _auditService);
     }
 
     private void CreateAdminUser(string email, string name, string surname, DateTime dob, string password)
@@ -285,4 +281,3 @@ public class UserServiceTests
             _service.ResetPassword("carlos@gmail.com", "juan@gmail.com", "NewPass1!"));
     }
 }
-

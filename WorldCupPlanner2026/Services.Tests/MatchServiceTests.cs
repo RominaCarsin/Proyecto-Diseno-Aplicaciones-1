@@ -3,7 +3,6 @@ using DTOs;
 using IRepository;
 using IServices;
 using Repository;
-using IServices;
 using Services;
 
 namespace Services.Tests;
@@ -34,7 +33,12 @@ public class MatchServiceTests
     public void Setup()
     {
         IRepository<Match> repository = new Repository<Match>();
-        _matchService = new MatchService(repository);
+        IRepository<AuditLog> auditRepository = new Repository<AuditLog>();
+        IAuditService auditService = new AuditService(auditRepository);
+        var authState = new AuthStateService();
+        ISessionService sessionService = new SessionService(null!, authState);
+
+        _matchService = new MatchService(repository, auditService, sessionService);
     }
 
     [TestMethod]

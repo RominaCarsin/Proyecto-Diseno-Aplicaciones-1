@@ -31,8 +31,7 @@ public class SessionServiceTests
         var auditRepo    = new Repository<AuditLog>();
         var auditService = new AuditService(auditRepo);
         var authState = new AuthStateService();
-        _sessionService = new SessionService(null!, authState);
-        _userService = new UserService(_repository, auditService, _sessionService);
+        _userService = new UserService(_repository, auditService);
         _sessionService = new SessionService(_userService, authState);
     }
 

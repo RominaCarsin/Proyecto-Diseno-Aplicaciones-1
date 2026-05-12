@@ -1,8 +1,10 @@
 ﻿@using Web.Components.Shared
 @using DTOs
 @using IServices
+@using Domain
 @page "/logs"
 @inject ISessionService SessionService
+@inject IAuditService AuditService
 
 <div class="container-fluid p-0 space-y-6">
     
@@ -74,15 +76,15 @@
                             {
                                 <tr>
                                     <td class="px-4 py-3 font-monospace text-sm">
-                                        @log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")
+                                        @log.Timestamp.ToUniversalTime().ToString("O")
                                     </td>
                                     <td class="px-4 py-3 fw-bold">@log.Action</td>
-                                    <td class="px-4 py-3 text-muted text-sm">@log.User</td>
+                                    <td class="px-4 py-3 text-muted text-sm">@log.ActorEmail</td>
                                     <td class="px-4 py-3">
                                         <div class="d-flex align-items-center gap-2">
-                                            <i class="@GetSeverityIcon(log.Severity) @GetSeverityTextColor(log.Severity)"></i>
-                                            <span class="badge @GetSeverityClass(log.Severity) px-2 py-1">
-                                                @log.Severity.ToString()
+                                            <i class="@GetSeverityIcon(log) @GetSeverityTextColor(log)"></i>
+                                            <span class="badge @GetSeverityClass(log) px-2 py-1">
+                                                @GetSeverity(log)
                                             </span>
                                         </div>
                                     </td>
@@ -100,21 +102,37 @@
 @code {
     public enum LogSeverity { Info, Success, Warning, Error }
 
-    public class LogEntry
-    {
-        public string Id { get; set; } = "";
-        public DateTime Timestamp { get; set; }
-        public string Action { get; set; } = "";
-        public string User { get; set; } = "";
-        public LogSeverity Severity { get; set; }
-        public string Details { get; set; } = "";
-    }
-
-    private List<LogEntry> logs = new();
+    private List<AuditLog> logs = new();
 
     private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
 
-    private string GetSeverityIcon(LogSeverity severity) => severity switch
+    protected override void OnInitialized()
+    {
+        logs = AuditService.GetAll()
+            .OrderByDescending(log => log.Timestamp)
+            .ToList();
+    }
+
+    private LogSeverity GetSeverity(AuditLog log)
+    {
+        var action = (log.Action ?? string.Empty).ToLowerInvariant();
+
+        if (action.Contains("error") || action.Contains("fail") || action.Contains("invalid"))
+            return LogSeverity.Error;
+
+        if (action.Contains("delete") || action.Contains("removed") || action.Contains("revoke"))
+            return LogSeverity.Warning;
+
+        if (action.Contains("create") || action.Contains("add") || action.Contains("import") || action.Contains("simulate") || action.Contains("shuffle"))
+            return LogSeverity.Success;
+
+        if (action.Contains("update") || action.Contains("change") || action.Contains("lock") || action.Contains("result"))
+            return LogSeverity.Info;
+
+        return LogSeverity.Info;
+    }
+
+    private string GetSeverityIcon(AuditLog log) => GetSeverity(log) switch
     {
         LogSeverity.Success => "bi bi-check-circle-fill",
         LogSeverity.Info => "bi bi-info-circle-fill",
@@ -123,7 +141,7 @@
         _ => "bi bi-info-circle"
     };
 
-    private string GetSeverityClass(LogSeverity severity) => severity switch
+    private string GetSeverityClass(AuditLog log) => GetSeverity(log) switch
     {
         LogSeverity.Success => "bg-success-soft text-success",
         LogSeverity.Info => "bg-info-soft text-info",
@@ -132,7 +150,7 @@
         _ => "bg-light text-dark"
     };
 
-    private string GetSeverityTextColor(LogSeverity severity) => severity switch
+    private string GetSeverityTextColor(AuditLog log) => GetSeverity(log) switch
     {
         LogSeverity.Success => "text-success",
         LogSeverity.Info => "text-info",
