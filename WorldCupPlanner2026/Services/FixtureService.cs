@@ -95,9 +95,10 @@ public class FixtureService : IFixtureService
                 {
                     var (homeIndex, awayIndex) = roundPairings[matchIndexInRound];
 
-                    var matchDate = roundDate
-                        .AddHours(FirstMatchHour)
-                        .AddHours(matchIndexInRound * HoursBetweenMatches);
+                    var matchDate = round == 2
+                        ? roundDate.AddHours(FirstMatchHour)
+                        : roundDate.AddHours(FirstMatchHour)
+                            .AddHours(matchIndexInRound * HoursBetweenMatches);
 
                     var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
 
