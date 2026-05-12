@@ -69,7 +69,7 @@ public class GroupServiceTests
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
         _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
         _service.AddMatchToGroup('A', CreateValidMatchRequest('A'));
 
         var group = _service.GetGroupByLabel('A');
@@ -85,7 +85,7 @@ public class GroupServiceTests
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
         _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay", "CONMEBOL"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
 
         _service.AddMatchToGroup('A', CreateValidMatchRequest('A'));
 
@@ -122,7 +122,7 @@ public class GroupServiceTests
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
         _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
 
         var matchRequest = CreateValidMatchRequest('A');
         _service.AddMatchToGroup('A', matchRequest);

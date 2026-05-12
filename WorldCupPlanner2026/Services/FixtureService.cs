@@ -48,17 +48,51 @@ public class FixtureService : IFixtureService
 
     private static void AssignTeamsToGroupsFromPots(List<Pot> pots, List<Group> groups)
     {
-        // Cada pot tiene 12 equipos, uno por grupo
-        // Pot 1 → grupo A,B,...,L (posición 0 de cada grupo)
-        // Pot 2 → grupo A,B,...,L (posición 1 de cada grupo)
-        // Pot 3 → grupo A,B,...,L (posición 2 de cada grupo)
-        // Pot 4 → grupo A,B,...,L (posición 3 de cada grupo)
         foreach (var pot in pots)
         {
-            var teams = pot.Teams.ToList();
-            for (int i = 0; i < groups.Count; i++)
-                groups[i].AddTeam(teams[i]);
+            var teams = pot.Teams;
+
+            for (int i = 0; i < teams.Count; i++)
+            {
+                int bestStart = FindBestStartIndex(teams[i], groups);
+                AddTeamToNextAvailableGroup(teams[i], groups, bestStart);
+            }
         }
+    }
+
+    private static int FindBestStartIndex(Team team, List<Group> groups)
+    {
+        // Preferir el grupo con menos equipos de la misma confederación
+        // y que tenga lugar disponible
+        return groups
+            .Select((g, index) => (group: g, index))
+            .Where(x => x.group.Teams.Count < 4)
+            .OrderBy(x => x.group.Teams.Count(t => t.ConfederationName == team.ConfederationName))
+            .ThenBy(x => x.group.Teams.Count)
+            .Select(x => x.index)
+            .FirstOrDefault(0);
+    }
+
+
+    private static void AddTeamToNextAvailableGroup(Team team, List<Group> groups, int startGroupIndex)
+    {
+        int startIndex = startGroupIndex;
+        int count = groups.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            var group = groups[(startIndex + i) % count];
+            try
+            {
+                group.AddTeam(team);
+                return;
+            }
+            catch (ArgumentException)
+            {
+            }
+        }
+        
+        throw new InvalidOperationException($"No se pudo asignar el equipo {team.Name} a ningún grupo.");
     }
 
     private List<StadiumResponse> GetStadiumsNormalized()

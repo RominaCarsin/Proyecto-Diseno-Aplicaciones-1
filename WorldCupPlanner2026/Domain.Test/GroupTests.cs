@@ -13,13 +13,13 @@ public class GroupTests
         new("URUGUAY", "CONMEBOL", 1500);
 
     private Team CreateArgentinaTeam() =>
-        new("ARGENTINA", "CONMEBOL", 1700);
+        new("ARGENTINA", "UEFA", 1700);
 
     private Team CreateBrazilTeam() =>
-        new("BRAZIL", "CONMEBOL", 1800);
+        new("BRAZIL", "AFC", 1800);
 
     private Team CreateChileTeam() =>
-        new("CHILE", "CONMEBOL", 1400);
+        new("CHILE", "CAF", 1400);
 
     private Match CreateMatch(Group group, Team home, Team away) =>
         new Match(

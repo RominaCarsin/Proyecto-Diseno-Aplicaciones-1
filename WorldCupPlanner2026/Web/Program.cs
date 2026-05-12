@@ -25,6 +25,8 @@ builder.Services.AddSingleton<IMatchService, MatchService>();
 builder.Services.AddSingleton<IRepository<Group>, Repository<Group>>();
 builder.Services.AddSingleton<IGroupService, GroupService>();
 builder.Services.AddSingleton<IFixtureService, FixtureService>();
+builder.Services.AddSingleton<IRepository<Pot>, Repository<Pot>>();
+builder.Services.AddSingleton<IPotService, PotService>();
 
 var app = builder.Build();
 
