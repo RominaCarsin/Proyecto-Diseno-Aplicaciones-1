@@ -181,6 +181,17 @@ public class GroupTests
     }
     
     [TestMethod]
+    public void AddTeamsFromDifferentNonUEFAConfederationsToGroup_ShouldSucceed()
+    {
+        var group = CreateValidGroup();
+
+        group.AddTeam(new Team("URUGUAY", "CONMEBOL", 1500));
+        group.AddTeam(new Team("MEXICO", "CONCACAF", 1600));
+
+        Assert.AreEqual(2, group.Teams.Count);
+    }
+    
+    [TestMethod]
     public void AddMatch_WithValidMatch_ShouldAddMatchToGroup()
     {
         var group = CreateValidGroup();
