@@ -97,6 +97,14 @@ public class Group
             .ThenByDescending(t => t.GoalsInFavor)
             .ToList();
     }
+    
+    public void SimulateMatches(int seed)
+    {
+        foreach (var match in _matches)
+        {
+            SetMatchResult(match, 0, 0);
+        }
+    }
 
     private static char NormalizeLabel(char label) => char.ToUpperInvariant(label);
 
