@@ -12,33 +12,51 @@ public class FixtureService : IFixtureService
     private readonly IGroupService _groupService;
     private readonly IRepository<Group> _groupRepository;
     private readonly IRepository<Match> _matchRepository;
+    private readonly IPotService _potService;
 
     public FixtureService(
         ITeamService teamService,
         IStadiumService stadiumService,
         IGroupService groupService,
         IRepository<Group> groupRepository,
-        IRepository<Match> matchRepository)
+        IRepository<Match> matchRepository,
+        IPotService potService)
     {
         _teamService = teamService;
         _stadiumService = stadiumService;
         _groupService = groupService;
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
+        _potService = potService;
     }
 
-    
     public void GenerateFixture(int seed, DateTime startDate)
     {
-       ValidateFixtureCanBeGenerated();
-       var teams = GetTeamsOrdered(seed);
-       var stadiums = GetStadiumsNormalized();
-       var groups = CreateGroups();
-       AssignTeamsToGroups(teams, groups);
-       GenerateMatchesForGroups(groups, stadiums, startDate);
-       SaveGroups(groups);
+        ValidateFixtureCanBeGenerated();
+        _potService.GeneratePots(seed);
+        var pots = _potService.GetPots().ToList();
+        var stadiums = GetStadiumsNormalized();
+        var groups = CreateGroups();
+        AssignTeamsToGroupsFromPots(pots, groups);
+        GenerateMatchesForGroups(groups, stadiums, startDate);
+        SaveGroups(groups);
     }
-    
+
+    private static void AssignTeamsToGroupsFromPots(List<Pot> pots, List<Group> groups)
+    {
+        // Cada pot tiene 12 equipos, uno por grupo
+        // Pot 1 → grupo A,B,...,L (posición 0 de cada grupo)
+        // Pot 2 → grupo A,B,...,L (posición 1 de cada grupo)
+        // Pot 3 → grupo A,B,...,L (posición 2 de cada grupo)
+        // Pot 4 → grupo A,B,...,L (posición 3 de cada grupo)
+        foreach (var pot in pots)
+        {
+            var teams = pot.Teams.ToList();
+            for (int i = 0; i < groups.Count; i++)
+                groups[i].AddTeam(teams[i]);
+        }
+    }
+
     private List<StadiumResponse> GetStadiumsNormalized()
     {
         return _stadiumService.GetAllStadiums()
@@ -84,20 +102,7 @@ public class FixtureService : IFixtureService
 
     private static Stadium BuildStadium(StadiumResponse r) =>
         new Stadium(r.Name, r.City, r.Description, r.Capacity);
-    
-    private List<Team> GetTeamsOrdered(int seed)
-    {
-        return _teamService.GetTeamsOrdered(seed)
-            .Select(t => new Team(t.Name, t.ConfederationName, t.RankingFifa))
-            .ToList();
-    }
 
-    private static void AssignTeamsToGroups(List<Team> teams, List<Group> groups)
-    {
-        for (int i = 0; i < teams.Count; i++)
-            groups[i % 12].AddTeam(teams[i]);
-    }
-    
     private void ValidateFixtureCanBeGenerated()
     {
         if (_teamService.GetTeams().Count() < 48)
@@ -109,7 +114,7 @@ public class FixtureService : IFixtureService
         if (_groupService.GetGroups().Any())
             throw new InvalidOperationException("El fixture ya fue generado.");
     }
-    
+
     private static List<Group> CreateGroups()
     {
         return Enumerable.Range(0, 12)
@@ -126,20 +131,15 @@ public class FixtureService : IFixtureService
                 _matchRepository.Add(match);
         }
     }
-    
+
     public bool CanGenerateFixture()
     {
         var teamCount = _teamService.GetTeams().Count();
         var stadiumCount = _stadiumService.GetAllStadiums().Count();
         var groupCount = _groupService.GetGroups().Count();
 
-
-        return teamCount >= 48  && stadiumCount >= 4 && groupCount == 0;
+        return teamCount >= 48 && stadiumCount >= 4 && groupCount == 0;
     }
 
-    public int GetStadiumCount()
-    {
-        return _stadiumService.GetAllStadiums().Count();
-    }
-    
+    public int GetStadiumCount() => _stadiumService.GetAllStadiums().Count();
 }
