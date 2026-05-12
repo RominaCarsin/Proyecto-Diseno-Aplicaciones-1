@@ -613,4 +613,19 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         Assert.ThrowsException<InvalidOperationException>(() =>
             fixtureService.SimulateGroupStage(42));
     }
+    
+    [TestMethod]
+    public void SimulateGroupStage_ShouldSetResultOnAllMatches()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(42);
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        fixtureService.SimulateGroupStage(42);
+
+        var allMatches = _groupRepository.GetAll()
+            .SelectMany(g => g.Matches)
+            .ToList();
+
+        Assert.IsTrue(allMatches.All(m => m.HomeGoals.HasValue && m.AwayGoals.HasValue));
+    }
 }
