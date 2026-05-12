@@ -327,4 +327,18 @@ public class FixtureServiceTests
         }
     }
    
+    [TestMethod]
+    public void GenerateFixture_WithGroupStage_ShouldScheduleLastRoundMatchesAtSameDateAndTime()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        foreach (var group in _groupRepository.GetAll())
+        {
+            var matches = group.Matches.ToList();
+
+            Assert.AreEqual(matches[4].Date, matches[5].Date);
+        }
+    }
 }
