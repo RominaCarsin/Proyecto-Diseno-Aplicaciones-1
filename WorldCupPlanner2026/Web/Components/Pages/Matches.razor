@@ -1,0 +1,222 @@
+﻿@using Web.Components.Shared
+@using DTOs
+@using IServices
+@page "/matches"
+@inject IMatchService MatchService
+@inject ISessionService SessionService
+
+<div class="container-fluid p-0 space-y-6">
+    
+    <!-- FILTROS -->
+    <div class="bg-white border-custom p-4 diagonal-corners">
+        <h3 class="mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-funnel"></i> Filtros
+        </h3>
+        <GeometricDivider />
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
+        }
+
+        <div class="row g-3 mt-2">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Fecha</label>
+                <input type="date" @bind="filterDate" @bind:event="oninput"
+                       class="form-control border-custom-input" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Estadio</label>
+                <select @bind="filterStadium" class="form-select border-custom-input">
+                    <option value="">Todos</option>
+                    @foreach (var s in availableStadiums)
+                    {
+                        <option value="@s">@s</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Grupo</label>
+                <select @bind="filterGroup" class="form-select border-custom-input">
+                    <option value="">Todos</option>
+                    @foreach (var g in groups)
+                    {
+                        <option value="@g">Grupo @g</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end">
+                <button @onclick="ClearFilters" class="btn btn-outline-dark border-custom w-100">
+                    Limpiar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTA DE PARTIDOS -->
+    <div class="space-y-4">
+        @if (!FilteredMatches.Any())
+        {
+            <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+                No hay partidos para mostrar.
+            </div>
+        }
+        else
+        {
+            @foreach (var match in FilteredMatches)
+            {
+                <div class="bg-white border-custom p-4 diagonal-corners position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex gap-3 text-muted small fw-bold">
+                            <span><i class="bi bi-calendar3 me-1"></i> @match.Date.ToString("dd/MM/yyyy")</span>
+                            <span><i class="bi bi-clock me-1"></i> @match.Date.ToString("HH:mm")</span>
+                            <span><i class="bi bi-geo-alt me-1"></i> @match.Stadium.Name</span>
+                            @if (match.Group.HasValue)
+                            {
+                                <span class="badge bg-wc-blue">Grupo @match.Group</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center text-center">
+                        <div class="col">
+                            <div class="h4 mb-0 fw-bold text-end pe-4">@match.HomeTeam.Name</div>
+                        </div>
+
+                        <div class="col-auto d-flex align-items-center gap-3">
+                            <input type="number" class="form-control text-center fw-bold h3 mb-0 border-custom-input score-input"
+                                   value="@match.HomeGoals"
+                                   disabled="@(!IsEditor || match.IsLocked)"
+                                   @onchange="@(e => HandleScoreChange(match, "home", e.Value?.ToString()))"
+                                   placeholder="-" />
+
+                            <span class="h3 mb-0 opacity-25">:</span>
+
+                            <input type="number" class="form-control text-center fw-bold h3 mb-0 border-custom-input score-input"
+                                   value="@match.AwayGoals"
+                                   disabled="@(!IsEditor || match.IsLocked)"
+                                   @onchange="@(e => HandleScoreChange(match, "away", e.Value?.ToString()))"
+                                   placeholder="-" />
+                        </div>
+
+                        <div class="col">
+                            <div class="h4 mb-0 fw-bold text-start ps-4">@match.AwayTeam.Name</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-end">
+                        <span class="badge @GetStatusClass(match)">
+                            @GetStatusLabel(match)
+                        </span>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .score-input {
+        width: 70px;
+        height: 60px;
+        font-size: 1.75rem !important;
+    }
+
+    .bg-success-light { background-color: #d1e7dd; color: #0f5132; }
+    .bg-warning-light { background-color: #fff3cd; color: #664d03; }
+    .bg-gray-light { background-color: #f8f9fa; color: #212529; border: 1px solid #dee2e6; }
+</style>
+
+@code {
+
+    private IEnumerable<MatchResponse> matches = Enumerable.Empty<MatchResponse>();
+    private DateTime? filterDate;
+    private string filterStadium = "";
+    private string filterGroup = "";
+    private string errorMessage = "";
+
+    private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
+
+    protected override void OnInitialized()
+    {
+        RefreshUI();
+    }
+
+    private IEnumerable<string> availableStadiums => matches
+        .Select(m => m.Stadium.Name)
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Distinct()
+        .OrderBy(name => name);
+
+    private IEnumerable<string> groups => matches
+        .Where(m => m.Group.HasValue)
+        .Select(m => m.Group!.Value.ToString())
+        .Distinct()
+        .OrderBy(g => g);
+
+    private IEnumerable<MatchResponse> FilteredMatches => matches.Where(m =>
+        (!filterDate.HasValue || m.Date.Date == filterDate.Value.Date) &&
+        (string.IsNullOrEmpty(filterStadium) || m.Stadium.Name == filterStadium) &&
+        (string.IsNullOrEmpty(filterGroup) || (m.Group.HasValue && m.Group.Value.ToString() == filterGroup))
+    );
+
+    private void HandleScoreChange(MatchResponse match, string team, string? value)
+    {
+        if (!IsEditor || match.IsLocked)
+        {
+            return;
+        }
+
+        int? score = int.TryParse(value, out int result) ? result : null;
+
+        if (team == "home") match.HomeGoals = score;
+        else match.AwayGoals = score;
+
+        if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+        {
+            try
+            {
+                MatchService.SetMatchResult(match.Id, match.HomeGoals.Value, match.AwayGoals.Value);
+                RefreshUI();
+            }
+            catch (ArgumentException ex)
+            {
+                errorMessage = ex.Message;
+            }
+        }
+    }
+
+    private void ClearFilters()
+    {
+        filterStadium = "";
+        filterGroup = "";
+    }
+
+    private void RefreshUI()
+    {
+        matches = MatchService.GetMatches();
+    }
+
+    private string GetStatusClass(MatchResponse match)
+    {
+        if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+        {
+            return "bg-success-light";
+        }
+
+        return match.IsLocked ? "bg-warning-light" : "bg-gray-light";
+    }
+
+    private string GetStatusLabel(MatchResponse match)
+    {
+        if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+        {
+            return "Finalizado";
+        }
+
+        return match.IsLocked ? "Bloqueado" : "Programado";
+    }
+}

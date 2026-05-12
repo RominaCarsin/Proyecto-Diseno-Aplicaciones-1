@@ -1,0 +1,224 @@
+﻿@using Web.Components.Shared
+@using DTOs
+@using IServices
+@page "/import"
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Text
+@inject ISessionService SessionService
+@inject IAuditService AuditService
+
+<div class="row g-4">
+    @if (!IsEditor)
+    {
+        <div class="col-12">
+            <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+                No tienes permisos para importar equipos.
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-lg-8 space-y-6">
+            @* --- DROPZONE --- *@
+            <div class="dropzone-container @(isDragging ? "dragging" : "")"
+                 @ondragover="HandleDragOver"
+                 @ondragleave="HandleDragLeave"
+                 @ondrop="HandleDrop">
+
+                <i class="bi bi-cloud-arrow-up display-1 opacity-25 mb-3"></i>
+                <h3 class="mb-2">Importar archivo CSV</h3>
+                <p class="text-muted text-center mb-4">
+                    Arrastra y suelta tu archivo aquí o haz clic para seleccionar
+                </p>
+
+                <label class="btn btn-wc-blue px-4 py-2 position-relative cursor-pointer">
+                    Seleccionar Archivo
+                    <InputFile OnChange="HandleFileSelected" accept=".csv" class="hidden-input" />
+                </label>
+
+                @if (selectedFile != null)
+                {
+                    <div class="mt-4 d-flex align-items-center gap-2 text-primary fw-bold">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>@selectedFile.Name</span>
+                    </div>
+                }
+            </div>
+
+            @* --- PREVIEW TABLE --- *@
+            @if (previewData != null)
+            {
+                <div class="bg-white border-custom diagonal-corners">
+                    <div class="bg-light px-4 py-3">
+                        <h4 class="mb-0">Vista Previa de Datos</h4>
+                    </div>
+                    <GeometricDivider />
+
+                    <div class="p-4 overflow-auto">
+                        <table class="table table-sm text-sm">
+                            <thead>
+                                <tr class="border-bottom-2">
+                                    @foreach (var header in previewData.FirstOrDefault() ?? new string[0])
+                                    {
+                                        <th class="px-3 py-2 text-start">@header</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 1; i < previewData.Count; i++)
+                                {
+                                    var row = previewData[i];
+                                    bool hasError = validationErrors.Any(e => e.Row == i);
+                                    <tr class="@(hasError ? "bg-danger-soft" : "")">
+                                        @foreach (var cell in row)
+                                        {
+                                            <td class="px-3 py-2">@cell</td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <GeometricDivider />
+                    <div class="px-4 py-3 bg-light">
+                        <button @onclick="ProcessImport" class="btn btn-wc-green px-5">
+                            Importar Datos
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* --- SIDEBAR: ERRORES Y FORMATO --- *@
+        <div class="col-lg-4 space-y-6">
+            <div class="bg-white border-custom p-4 diagonal-corners">
+                <h4 class="mb-3">Errores de Validacion</h4>
+                <GeometricDivider />
+
+                @if (validationErrors.Any())
+                {
+                    <div class="space-y-3 mt-3">
+                        @foreach (var error in validationErrors)
+                        {
+                            <div class="d-flex gap-3 text-sm">
+                                <i class="bi bi-exclamation-circle-fill text-wc-red mt-1"></i>
+                                <div>
+                                    <p class="fw-bold mb-0">Fila @error.Row</p>
+                                    <p class="text-muted mb-0">@error.Field: @error.Message</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-items-center gap-2 text-success mt-3">
+                        <i class="bi bi-check-circle-fill h5 mb-0"></i>
+                        <span>Sin errores detectados</span>
+                    </div>
+                }
+            </div>
+
+            <div class="bg-white border-custom p-4 diagonal-corners">
+                <h4 class="mb-3">Formato de CSV</h4>
+                <GeometricDivider />
+                <div class="text-sm mt-3 space-y-3 text-muted">
+                    <p>Columnas obligatorias:</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge border text-dark">name</span>
+                        <span class="badge border text-dark">confederation</span>
+                        <span class="badge border text-dark">ranking</span>
+                        <span class="badge border text-dark">status</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private IBrowserFile? selectedFile;
+    private List<string[]>? previewData;
+    private List<ValidationError> validationErrors = new();
+    private bool isDragging = false;
+
+    private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        if (selectedFile != null) await LoadPreview();
+    }
+
+    private async Task LoadPreview()
+    {
+        if (selectedFile == null) return;
+
+        using var stream = selectedFile.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        var content = await reader.ReadToEndAsync();
+
+        var rows = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        previewData = rows.Take(11).Select(r => r.Split(',')).ToList();
+
+        validationErrors = new List<ValidationError>();
+    }
+
+    private void ProcessImport()
+    {
+        if (!IsEditor)
+            return;
+
+        var actorEmail = SessionService.GetCurrentUserEmail() ?? "system";
+        var fileName = selectedFile?.Name ?? "(no file)";
+        var rowCount = previewData?.Count ?? 0;
+        AuditService.Log(actorEmail, "Teams import executed", $"File: {fileName}; Rows: {rowCount}");
+        /* Logica de guardado en DB */
+    }
+
+    private void HandleDragOver() => isDragging = true;
+    private void HandleDragLeave() => isDragging = false;
+    private void HandleDrop() => isDragging = false;
+
+    public class ValidationError
+    {
+        public int Row { get; set; }
+        public string Field { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+}
+
+<style>
+    .dropzone-container {
+        background: white;
+        border: 4px dashed var(--wc-border);
+        padding: 4rem 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        border-radius: 0;
+    }
+
+    .dropzone-container.dragging {
+        border-color: var(--wc-blue);
+        background-color: rgba(21, 32, 102, 0.05);
+        transform: scale(1.01);
+    }
+
+    .hidden-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .bg-danger-soft {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+    }
+</style>

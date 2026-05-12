@@ -1,6 +1,47 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using IServices
+@using Microsoft.AspNetCore.Components.Web
+@inject ISessionService SessionService
+@inject NavigationManager Navigation
+@implements IDisposable
+@rendermode InteractiveServer
+
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
 </Router>
+
+@code {
+    private IDisposable? _locationHandler;
+
+    protected override void OnInitialized()
+    {
+        _locationHandler = Navigation.RegisterLocationChangingHandler(OnLocationChanging);
+        RedirectIfNotLoggedIn();
+    }
+
+    private ValueTask OnLocationChanging(LocationChangingContext context)
+    {
+        if (!IsPublicRoute(context.TargetLocation) && !SessionService.IsLoggedIn())
+            context.PreventNavigation();
+
+        return ValueTask.CompletedTask;
+    }
+
+    private void RedirectIfNotLoggedIn()
+    {
+        if (!IsPublicRoute(Navigation.Uri) && !SessionService.IsLoggedIn())
+            Navigation.NavigateTo("/login");
+    }
+
+    private bool IsPublicRoute(string uri)
+    {
+        return uri.Contains("/login");
+    }
+
+    public void Dispose()
+    {
+        _locationHandler?.Dispose();
+    }
+}

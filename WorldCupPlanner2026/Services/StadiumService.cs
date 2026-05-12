@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -9,10 +9,14 @@ namespace Services;
 public class StadiumService : IStadiumService
 {
     private readonly IRepository<Stadium> _repository;
+    private readonly IAuditService _auditService;
+    private readonly ISessionService _sessionService;
 
-    public StadiumService(IRepository<Stadium> repository)
+    public StadiumService(IRepository<Stadium> repository, IAuditService auditService, ISessionService sessionService)
     {
         _repository = repository;
+        _auditService = auditService;
+        _sessionService = sessionService;
     }
 
     public void AddStadium(StadiumRequest stadiumRequest)
@@ -22,6 +26,8 @@ public class StadiumService : IStadiumService
         EnsureStadiumNameIsNotTaken(stadium.Name);
 
         _repository.Add(stadium);
+        LogAction("Stadium created",
+            $"Stadium '{stadium.Name}' created in {stadium.City} with capacity {stadium.Capacity}");
     }
 
     public void DeleteStadium(string stadiumName)
@@ -29,6 +35,8 @@ public class StadiumService : IStadiumService
         var existingStadium = FindStadiumByNameOrThrow(stadiumName);
 
         _repository.Delete(existingStadium);
+        LogAction("Stadium deleted",
+            $"Stadium '{stadiumName}' was removed from the system");
     }
 
     public void UpdateStadium(string originalStadiumName, StadiumRequest updatedStadiumData)
@@ -37,14 +45,12 @@ public class StadiumService : IStadiumService
 
         var updatedStadium = StadiumMapper.ToEntity(updatedStadiumData);
 
-        bool isRenamingToADifferentName = !updatedStadium.Name.Equals(
-            existingStadium.Name, 
-            StringComparison.OrdinalIgnoreCase);
-        
-        if (isRenamingToADifferentName)
+        if (IsRenamingToDifferentName(existingStadium, updatedStadium))
             EnsureStadiumNameIsNotTaken(updatedStadium.Name);
 
         ReplaceStadium(existingStadium, updatedStadium);
+        LogAction("Stadium updated",
+            $"Stadium '{originalStadiumName}' updated. New name: '{updatedStadiumData.Name}', city: {updatedStadiumData.City}, capacity: {updatedStadiumData.Capacity}");
     }
 
     public IEnumerable<StadiumResponse> GetAllStadiums()
@@ -52,7 +58,13 @@ public class StadiumService : IStadiumService
         return _repository.GetAll()
             .Select(StadiumMapper.FromEntity);
     }
-    
+
+    private void LogAction(string action, string details)
+    {
+        var actorEmail = _sessionService.GetCurrentUserEmail() ?? "system";
+        _auditService.Log(actorEmail, action, details);
+    }
+
     private Stadium FindStadiumByNameOrThrow(string stadiumName)
     {
         return _repository.GetAll()
@@ -67,6 +79,11 @@ public class StadiumService : IStadiumService
 
         if (nameAlreadyExists)
             throw new ArgumentException($"A stadium with the name '{stadiumName}' already exists");
+    }
+
+    private static bool IsRenamingToDifferentName(Stadium existing, Stadium updated)
+    {
+        return !updated.Name.Equals(existing.Name, StringComparison.OrdinalIgnoreCase);
     }
 
     private void ReplaceStadium(Stadium stadiumToRemove, Stadium stadiumToAdd)

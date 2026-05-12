@@ -15,14 +15,20 @@ public class StadiumServiceTests
     private StadiumRequest _validStadiumRequest = new StadiumRequest{Name = "CENTENARIO", City = "MONTEVIDEO", Description = null, Capacity = 20000};
     private StadiumRequest _otherValidStadiumRequest = new StadiumRequest{Name = "CENTENARIO", City = "buenos aires", Description = null, Capacity = 20000};
     private StadiumRequest _otherValidStadiumRequestWithOtherName = new StadiumRequest{Name = "CAMPION", City = "buenos aires", Description = null, Capacity = 20000};
-
+    private AuditService          _auditService;
+    private IRepository<AuditLog> _auditRepository;
+    private SessionService        _sessionService;
     
 
     [TestInitialize]
     public void SetUp()
     {
         _repository = new Repository<Stadium>();
-        _service = new StadiumService(_repository);
+        _auditRepository = new Repository<AuditLog>();
+        _auditService = new AuditService(_auditRepository);
+        var authState = new AuthStateService();
+        _sessionService = new SessionService(null!, authState);
+        _service = new StadiumService(_repository, _auditService, _sessionService);
     }
 
     [TestMethod]

@@ -1,11 +1,52 @@
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #FAFAFA;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --font-size: 16px;
+    --wc-red: #dc0201;
+    --wc-blue: #1b2789;
+    --wc-green: #04cf5c;
+    --wc-bg: #f5f5f5;
+    --wc-text: #111111;
+    --wc-border: #d9d9d9;
+    --background: #f5f5f5;
+    --foreground: #111111;
+    --primary: var(--wc-red);
+    --secondary: var(--wc-blue);
+    --accent: var(--wc-green);
+    --p800: #1a237e;
+    --p700: #283593;
+    --p500: #3f51b5;
+    --p200: #9fa8da;
+    --p100: #c5cae9;
+    --p50: #e8eaf6;
+    --a700: #c62828;
+    --a600: #e53935;
+    --a50: #ffebee;
+    --g50: #fafafa;
+    --g100: #f5f5f5;
+    --g200: #eeeeee;
+    --g300: #e0e0e0;
+    --g500: #9e9e9e;
+    --g600: #757575;
+    --g700: #616161;
+    --g800: #424242;
+    --ok: #2e7d32;
+    --ok-bg: #e8f5e9;
 }
 
-a, .btn-link {
+html,
+body {
+    min-height: 100%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: var(--font-size);
+    color: var(--foreground);
+    background-color: var(--background);
+    margin: 0;
+    padding: 0;
+}
+
+a,
+.btn-link {
     color: #006bb7;
 }
 
@@ -43,39 +84,6 @@ h1:focus {
     border-color: #929292;
 }
 
-/* ───────────────────────────── */
-/* WorldCupPlanner variables     */
-/* ───────────────────────────── */
-
-:root {
-    --p800: #1A237E;
-    --p700: #283593;
-    --p500: #3F51B5;
-    --p200: #9FA8DA;
-    --p100: #C5CAE9;
-    --p50:  #E8EAF6;
-
-    --a700: #C62828;
-    --a600: #E53935;
-    --a50:  #FFEBEE;
-
-    --g50:  #FAFAFA;
-    --g100: #F5F5F5;
-    --g200: #EEEEEE;
-    --g300: #E0E0E0;
-    --g500: #9E9E9E;
-    --g600: #757575;
-    --g700: #616161;
-    --g800: #424242;
-
-    --ok:   #2E7D32;
-    --ok-bg:#E8F5E9;
-}
-
-/* ───────────────────────────── */
-/* Layout general Blazor         */
-/* ───────────────────────────── */
-
 .page {
     display: flex;
     min-height: 100vh;
@@ -109,10 +117,6 @@ main {
     padding: 1.5rem;
 }
 
-/* ───────────────────────────── */
-/* NavMenu                       */
-/* ───────────────────────────── */
-
 .navbar {
     background: var(--p800);
 }
@@ -128,13 +132,13 @@ main {
 }
 
 .nav-item {
-    margin-bottom: .35rem;
+    margin-bottom: 0.35rem;
 }
 
 .nav-link {
     color: var(--p50);
     border-radius: 6px;
-    padding: .65rem 1rem;
+    padding: 0.65rem 1rem;
     font-size: 14px;
     text-decoration: none;
     display: block;
@@ -154,10 +158,6 @@ main {
     display: none;
 }
 
-/* ───────────────────────────── */
-/* Page content                  */
-/* ───────────────────────────── */
-
 .page-wrap {
     max-width: 900px;
     margin: 2rem auto;
@@ -172,58 +172,72 @@ main {
     font-size: 26px;
     font-weight: 700;
     color: var(--p800);
-    letter-spacing: -.01em;
+    letter-spacing: -0.01em;
     margin: 0;
 }
 
-.ps {
-    font-size: 13px;
-    color: var(--g500);
-    margin-top: 3px;
+.diagonal-corners {
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 24px;
+    border-bottom-left-radius: 24px;
 }
 
-/* ───────────────────────────── */
-/* Cards                         */
-/* ───────────────────────────── */
-
-.card {
-    background: #fff;
-    border-radius: 10px;
-    border: 1px solid var(--g200);
-    overflow: hidden;
-    margin-bottom: 1.25rem;
+.diagonal-corners-sm {
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
 }
 
-.card-header {
-    padding: .85rem 1.2rem;
-    border-bottom: 1px solid var(--g200);
-    border-top: 3px solid var(--a600);
+.border-custom {
+    border: 2px solid var(--wc-border) !important;
 }
 
-.card-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--p800);
+.border-bottom-2 {
+    border-bottom: 2px solid var(--wc-border) !important;
 }
 
-.card-body {
-    padding: 1.35rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.border-custom-input {
+    border: 2px solid var(--wc-border) !important;
+    border-radius: 0 !important;
 }
 
-.card-footer {
-    padding: .9rem 1.2rem;
-    border-top: 1px solid var(--g200);
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
+.border-custom-input:focus {
+    border-color: var(--wc-blue) !important;
+    box-shadow: none;
 }
 
-/* ───────────────────────────── */
-/* Forms                         */
-/* ───────────────────────────── */
+.bg-primary-custom,
+.bg-blue-custom,
+.bg-wc-blue {
+    background-color: var(--wc-blue) !important;
+}
+
+.bg-danger-custom,
+.bg-red-custom,
+.bg-wc-red {
+    background-color: var(--wc-red) !important;
+}
+
+.bg-green-custom,
+.bg-wc-green {
+    background-color: var(--wc-green) !important;
+}
+
+.text-wc-text {
+    color: var(--wc-text) !important;
+}
+
+.text-wc-blue {
+    color: var(--wc-blue) !important;
+}
+
+.text-wc-red {
+    color: var(--wc-red) !important;
+}
+
+.text-wc-green {
+    color: var(--wc-green) !important;
+}
 
 .fg {
     display: flex;
@@ -231,26 +245,9 @@ main {
     gap: 4px;
 }
 
-.fl {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--g700);
-    text-transform: uppercase;
-    letter-spacing: .04em;
-}
-
-.req {
-    color: var(--a700);
-}
-
-.fhint {
-    font-size: 11px;
-    color: var(--g500);
-}
-
 .finput,
 .fsel {
-    padding: .52rem .85rem;
+    padding: 0.52rem 0.85rem;
     border: 1.5px solid var(--g300);
     border-radius: 6px;
     font-size: 13px;
@@ -258,7 +255,7 @@ main {
     background: #fff;
     outline: none;
     width: 100%;
-    transition: border-color .15s;
+    transition: border-color 0.15s;
     box-sizing: border-box;
 }
 
@@ -283,15 +280,11 @@ textarea.finput {
     color: var(--a700);
 }
 
-/* ───────────────────────────── */
-/* Alerts / info                 */
-/* ───────────────────────────── */
-
 .info-box {
     background: var(--p50);
     border: 1px solid var(--p200);
     border-radius: 8px;
-    padding: .75rem 1rem;
+    padding: 0.75rem 1rem;
     font-size: 12px;
     color: var(--p800);
     line-height: 1.55;
@@ -299,9 +292,9 @@ textarea.finput {
 
 .alert-box.err {
     background: var(--a50);
-    border: 1px solid #EF9A9A;
+    border: 1px solid #ef9a9a;
     border-radius: 8px;
-    padding: .7rem 1rem;
+    padding: 0.7rem 1rem;
     font-size: 12px;
     font-weight: 600;
     color: var(--a700);
@@ -309,56 +302,114 @@ textarea.finput {
 
 .alert-box.suc {
     background: var(--ok-bg);
-    border: 1px solid #A5D6A7;
+    border: 1px solid #a5d6a7;
     border-radius: 8px;
-    padding: .7rem 1rem;
+    padding: 0.7rem 1rem;
     font-size: 12px;
     font-weight: 600;
     color: var(--ok);
 }
 
-/* ───────────────────────────── */
-/* Buttons                       */
-/* ───────────────────────────── */
-
 .btn-p {
     background: var(--p700);
     color: #fff;
-    border: 1.5px solid var(--p700);
-    padding: .5rem 1.1rem;
+    border: 1px solid var(--p700);
     border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
+    padding: 0.45rem 0.9rem;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all .15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
 }
 
 .btn-p:hover {
     background: var(--p800);
-    border-color: var(--p800);
 }
 
-.btn-g {
-    background: transparent;
-    color: var(--g700);
-    border: 1.5px solid var(--g300);
-    padding: .5rem 1.1rem;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .15s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
+.btn-wc-blue,
+.btn-wc-red,
+.btn-wc-green {
+    color: #fff;
+    border: 2px solid var(--wc-border);
+    border-radius: 0;
 }
 
-.btn-g:hover {
-    background: var(--g100);
-    color: var(--g800);
+.btn-wc-blue {
+    background-color: var(--wc-blue);
+}
+
+.btn-wc-red {
+    background-color: var(--wc-red);
+}
+
+.btn-wc-green {
+    background-color: var(--wc-green);
+}
+
+.btn-wc-blue:hover,
+.btn-wc-red:hover,
+.btn-wc-green:hover {
+    color: #fff;
+    filter: brightness(0.88);
+}
+
+.badge-conf {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.conf-uefa {
+    color: #3730a3;
+    background-color: #e0e7ff;
+}
+
+.conf-conmebol {
+    color: #991b1b;
+    background-color: #fee2e2;
+}
+
+.conf-concacaf {
+    color: #854d0e;
+    background-color: #fef9c3;
+}
+
+.conf-caf {
+    color: #166534;
+    background-color: #dcfce7;
+}
+
+.conf-afc {
+    color: #1e40af;
+    background-color: #dbeafe;
+}
+
+.conf-ofc {
+    color: #6b21a8;
+    background-color: #f3e8ff;
+}
+
+.bg-success-light {
+    color: #166534;
+    background-color: #dcfce7;
+}
+
+.bg-secondary-light {
+    color: #374151;
+    background-color: #f3f4f6;
+}
+
+.space-y-6 > * + * {
+    margin-top: 1.5rem;
+}
+
+.x-small {
+    font-size: 0.75rem;
+}
+
+.text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
 }
 
 .btn-s {
@@ -401,9 +452,6 @@ textarea.finput {
     cursor: not-allowed;
 }
 
-/* ───────────────────────────── */
-/* Tables                        */
-/* ───────────────────────────── */
 
 table {
     width: 100%;
@@ -433,9 +481,6 @@ td {
     flex-wrap: wrap;
 }
 
-/* ───────────────────────────── */
-/* Matches filters               */
-/* ───────────────────────────── */
 
 .filters-grid {
     display: grid;
@@ -443,9 +488,6 @@ td {
     gap: 1rem;
 }
 
-/* ───────────────────────────── */
-/* Blazor error UI               */
-/* ───────────────────────────── */
 
 #blazor-error-ui {
     background: #b32121;
@@ -476,10 +518,6 @@ td {
 .blazor-error-boundary::after {
     content: "An error has occurred.";
 }
-
-/* ───────────────────────────── */
-/* Responsive                    */
-/* ───────────────────────────── */
 
 @media (max-width: 900px) {
     .page {

@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -30,7 +30,12 @@ public class MatchServiceTests
     {
         IRepository<Match> repository = new Repository<Match>();
         _groupRepository = new Repository<Group>();
-        _matchService = new MatchService(repository, _groupRepository);
+        IRepository<AuditLog> auditRepository = new Repository<AuditLog>();
+        IAuditService auditService = new AuditService(auditRepository);
+        var authState = new AuthStateService();
+        ISessionService sessionService = new SessionService(null!, authState);
+
+        _matchService = new MatchService(repository, _groupRepository, auditService, sessionService);
     }
 
     // ─── AddMatch ─────────────────────────────────────────────────────────────
@@ -65,11 +70,11 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void AddMatch_WithGroupStageAndNonExistingGroup_ShouldThrowArgumentException()
+    public void AddMatch_WithGroupStageAndNonExistingGroup_ShouldThrowInvalidOperationException()
     {
         var request = BuildValidMatchRequest(group: 'Z');
 
-        Assert.ThrowsException<ArgumentException>(() =>
+        Assert.ThrowsException<InvalidOperationException>(() =>
             _matchService.AddMatch(request));
     }
 
@@ -290,7 +295,7 @@ public class MatchServiceTests
     // ─── LockMatchesByPhase ───────────────────────────────────────────────────
 
     [TestMethod]
-    public void LockMatchesByPhase_ShouldLockAllMatches()
+    public void LockMatchesByPhase_ShouldLockAllMatchesInPhase()
     {
         _matchService.AddMatch(BuildValidMatchRequest());
         _matchService.AddMatch(BuildValidMatchRequest(homeTeamName: "FRANCE", awayTeamName: "GERMANY"));
