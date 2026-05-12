@@ -453,6 +453,83 @@ public class GroupTests
         Assert.IsNotNull(match.AwayGoals);
     }
     
+    [TestMethod]
+    public void SimulateMatches_WithPendingMatch_ShouldUpdateTeamStats()
+    {
+        var group = CreateValidGroup();
+        var uruguay = CreateUruguayTeam();
+        var argentina = CreateArgentinaTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        var match = CreateMatch(group, uruguay, argentina);
+        group.AddMatch(match);
+
+        group.SimulateMatches(42);
+
+        Assert.AreEqual(2, uruguay.Points + argentina.Points);
+    }
+    
+    [TestMethod]
+    public void SimulateMatches_WithMultipleMatches_ShouldSetResultForAllMatches()
+    {
+        var group = CreateValidGroup();
+
+        var uruguay = CreateUruguayTeam();
+        var argentina = CreateArgentinaTeam();
+        var brazil = CreateBrazilTeam();
+        var chile = CreateChileTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+        group.AddTeam(brazil);
+        group.AddTeam(chile);
+
+        var firstMatch = CreateMatch(group, uruguay, argentina);
+        var secondMatch = CreateMatch(group, brazil, chile);
+
+        group.AddMatch(firstMatch);
+        group.AddMatch(secondMatch);
+
+        group.SimulateMatches(42);
+
+        Assert.IsNotNull(firstMatch.HomeGoals);
+        Assert.IsNotNull(firstMatch.AwayGoals);
+        Assert.IsNotNull(secondMatch.HomeGoals);
+        Assert.IsNotNull(secondMatch.AwayGoals);
+    }
+    
+    [TestMethod]
+    public void SimulateMatches_WithSameSeed_ShouldGenerateSameResult()
+    {
+        var firstGroup = CreateValidGroup();
+        var secondGroup = CreateValidGroup();
+
+        var firstHome = CreateUruguayTeam();
+        var firstAway = CreateArgentinaTeam();
+
+        var secondHome = CreateUruguayTeam();
+        var secondAway = CreateArgentinaTeam();
+
+        firstGroup.AddTeam(firstHome);
+        firstGroup.AddTeam(firstAway);
+
+        secondGroup.AddTeam(secondHome);
+        secondGroup.AddTeam(secondAway);
+
+        var firstMatch = CreateMatch(firstGroup, firstHome, firstAway);
+        var secondMatch = CreateMatch(secondGroup, secondHome, secondAway);
+
+        firstGroup.AddMatch(firstMatch);
+        secondGroup.AddMatch(secondMatch);
+
+        firstGroup.SimulateMatches(42);
+        secondGroup.SimulateMatches(42);
+
+        Assert.AreEqual(firstMatch.HomeGoals, secondMatch.HomeGoals);
+        Assert.AreEqual(firstMatch.AwayGoals, secondMatch.AwayGoals);
+    }
 
     private static void AddFourTeams(Group group)
     {
