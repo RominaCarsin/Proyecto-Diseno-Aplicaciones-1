@@ -68,7 +68,14 @@ public class FixtureService : IFixtureService
                         : roundDate.Date.AddHours(14).AddHours(i * 4);
 
                     var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
-                    group.AddMatch(new Match(matchDate, stadium, teamList[homeIndex], teamList[awayIndex]));
+                    group.AddMatch(new Match(
+                        matchDate,
+                        stadium,
+                        teamList[homeIndex],
+                        teamList[awayIndex],
+                        group: group.Label,
+                        phase: "GroupStage"
+                    ));
                     matchCounter++;
                 }
             }

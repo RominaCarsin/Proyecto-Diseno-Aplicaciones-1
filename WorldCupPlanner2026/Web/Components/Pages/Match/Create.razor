@@ -17,68 +17,45 @@
         <div class="card-header">
             <span class="card-title">New match</span>
         </div>
-
         <div class="card-body">
-
             <div class="fg">
                 <label class="fl">Date <span class="req">*</span></label>
-                <input class="finput @(_dateInvalid ? "invalid" : "")"
-                       type="datetime-local"
-                       @bind="_date" />
-                @if (_dateInvalid)
-                {
-                    <span class="ferr">Date is required.</span>
-                }
+                <input class="finput @(_dateInvalid ? "invalid" : "")" type="datetime-local" @bind="_date" />
+                @if (_dateInvalid) { <span class="ferr">Date is required.</span> }
             </div>
-
             <div class="fg">
                 <label class="fl">Stadium <span class="req">*</span></label>
-                <select class="finput @(_stadiumInvalid ? "invalid" : "")"
-                        @bind="_selectedStadiumName">
+                <select class="finput @(_stadiumInvalid ? "invalid" : "")" @bind="_selectedStadiumName">
                     <option value="">Select stadium</option>
                     @foreach (var stadium in _stadiums)
                     {
                         <option value="@stadium.Name">@stadium.Name - @stadium.City</option>
                     }
                 </select>
-                @if (_stadiumInvalid)
-                {
-                    <span class="ferr">Stadium is required.</span>
-                }
+                @if (_stadiumInvalid) { <span class="ferr">Stadium is required.</span> }
             </div>
-
             <div class="fg">
                 <label class="fl">Home team <span class="req">*</span></label>
-                <select class="finput @(_homeTeamInvalid ? "invalid" : "")"
-                        @bind="_selectedHomeTeamName">
+                <select class="finput @(_homeTeamInvalid ? "invalid" : "")" @bind="_selectedHomeTeamName">
                     <option value="">Select home team</option>
                     @foreach (var team in _teams)
                     {
                         <option value="@team.Name">@team.Name</option>
                     }
                 </select>
-                @if (_homeTeamInvalid)
-                {
-                    <span class="ferr">Home team is required.</span>
-                }
+                @if (_homeTeamInvalid) { <span class="ferr">Home team is required.</span> }
             </div>
-
             <div class="fg">
                 <label class="fl">Away team <span class="req">*</span></label>
-                <select class="finput @(_awayTeamInvalid ? "invalid" : "")"
-                        @bind="_selectedAwayTeamName">
+                <select class="finput @(_awayTeamInvalid ? "invalid" : "")" @bind="_selectedAwayTeamName">
                     <option value="">Select away team</option>
                     @foreach (var team in _teams)
                     {
                         <option value="@team.Name">@team.Name</option>
                     }
                 </select>
-                @if (_awayTeamInvalid)
-                {
-                    <span class="ferr">Away team is required and must be different from home team.</span>
-                }
+                @if (_awayTeamInvalid) { <span class="ferr">Away team is required and must be different from home team.</span> }
             </div>
-
             <div class="fg">
                 <label class="fl">Phase <span class="req">*</span></label>
                 <select class="finput" @bind="_phase">
@@ -90,38 +67,23 @@
                     <option value="Final">Final</option>
                 </select>
             </div>
-
             @if (_phase == "GroupStage")
             {
                 <div class="fg">
                     <label class="fl">Group <span class="req">*</span></label>
-                    <select class="finput @(_groupInvalid ? "invalid" : "")"
-                            @bind="_group">
+                    <select class="finput @(_groupInvalid ? "invalid" : "")" @bind="_group">
                         <option value="">Select group</option>
                         @foreach (var group in _groups)
                         {
                             <option value="@group">@group</option>
                         }
                     </select>
-                    @if (_groupInvalid)
-                    {
-                        <span class="ferr">Group is required for group stage matches.</span>
-                    }
+                    @if (_groupInvalid) { <span class="ferr">Group is required for group stage matches.</span> }
                 </div>
             }
-
-            @if (!string.IsNullOrEmpty(_successMessage))
-            {
-                <div class="alert-box suc">✓ @_successMessage</div>
-            }
-
-            @if (!string.IsNullOrEmpty(_errorMessage))
-            {
-                <div class="alert-box err">@_errorMessage</div>
-            }
-
+            @if (!string.IsNullOrEmpty(_successMessage)) { <div class="alert-box suc">✓ @_successMessage</div> }
+            @if (!string.IsNullOrEmpty(_errorMessage)) { <div class="alert-box err">@_errorMessage</div> }
         </div>
-
         <div class="card-footer">
             <button class="btn-p" @onclick="SaveMatch">Save match</button>
         </div>
@@ -131,14 +93,12 @@
         <div class="card-header">
             <span class="card-title">Filters</span>
         </div>
-
         <div class="card-body">
             <div class="filters-grid">
                 <div class="fg">
                     <label class="fl">Date</label>
                     <input class="finput" type="date" @bind="_filterDate" />
                 </div>
-
                 <div class="fg">
                     <label class="fl">Stadium</label>
                     <select class="finput" @bind="_filterStadium">
@@ -149,7 +109,6 @@
                         }
                     </select>
                 </div>
-
                 <div class="fg">
                     <label class="fl">Group</label>
                     <select class="finput" @bind="_filterGroup">
@@ -160,7 +119,6 @@
                         }
                     </select>
                 </div>
-
                 <div class="fg">
                     <label class="fl">Phase</label>
                     <select class="finput" @bind="_filterPhase">
@@ -174,7 +132,6 @@
                     </select>
                 </div>
             </div>
-
             <button class="btn btn-g" @onclick="ClearFilters">Clear filters</button>
         </div>
     </div>
@@ -183,7 +140,6 @@
         <div class="card-header">
             <span class="card-title">Registered matches (@FilteredMatches.Count())</span>
         </div>
-
         <div class="card-body" style="overflow-x: auto;">
             @if (!FilteredMatches.Any())
             {
@@ -193,123 +149,99 @@
             {
                 <table>
                     <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Date</th>
-                        <th>Stadium</th>
-                        <th>Home</th>
-                        <th>Away</th>
-                        <th>Group</th>
-                        <th>Phase</th>
-                        <th>Result</th>
-                        <th>Winner</th>
-                        <th>Locked</th>
-                        <th>Actions</th>
-                    </tr>
+                        <tr>
+                            <th>Id</th>
+                            <th>Date</th>
+                            <th>Stadium</th>
+                            <th>Home</th>
+                            <th>Away</th>
+                            <th>Group</th>
+                            <th>Phase</th>
+                            <th>Result</th>
+                            <th>Winner</th>
+                            <th>Locked</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    @foreach (var match in FilteredMatches)
-                    {
-                        <tr>
-                            <td>@match.Id</td>
-                            <td>@match.Date.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@match.Stadium.Name</td>
-                            <td>@match.HomeTeam.Name</td>
-                            <td>@match.AwayTeam.Name</td>
-                            <td>@(match.Group?.ToString() ?? "-")</td>
-                            <td>@match.Phase</td>
-                            <td>@FormatResult(match)</td>
-                            <td>@(match.Winner?.Name ?? "-")</td>
-                            <td>@(match.IsLocked ? "Yes" : "No")</td>
-                            <td>
-                                <div class="actions-cell">
-                                    <button class="btn btn-s"
-                                            disabled="@match.IsLocked"
-                                            @onclick="() => StartEditDate(match)">
-                                        Date
-                                    </button>
-
-                                    <button class="btn btn-s"
-                                            disabled="@match.IsLocked"
-                                            @onclick="() => StartEditStadium(match)">
-                                        Stadium
-                                    </button>
-
-                                    <button class="btn btn-s"
-                                            disabled="@match.IsLocked"
-                                            @onclick="() => StartEditResult(match)">
-                                        Result
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
+                        @foreach (var match in FilteredMatches)
+                        {
+                            <tr style="@(_editingMatchId == match.Id ? "background: #f0f7ff;" : "")">
+                                <td>@match.Id</td>
+                                <td>
+                                    @if (_editingMatchId == match.Id)
+                                    {
+                                        <input class="finput" type="datetime-local" @bind="_editDate" style="min-width: 180px;" />
+                                    }
+                                    else
+                                    {
+                                        @match.Date.ToString("yyyy-MM-dd HH:mm")
+                                    }
+                                </td>
+                                <td>
+                                    @if (_editingMatchId == match.Id)
+                                    {
+                                        <select class="finput" @bind="_editStadiumName" style="min-width: 140px;">
+                                            @foreach (var stadium in _stadiums)
+                                            {
+                                                <option value="@stadium.Name">@stadium.Name</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        @match.Stadium.Name
+                                    }
+                                </td>
+                                <td style="color: @(_editingMatchId == match.Id ? "#aaa" : "inherit");">@match.HomeTeam.Name</td>
+                                <td style="color: @(_editingMatchId == match.Id ? "#aaa" : "inherit");">@match.AwayTeam.Name</td>
+                                <td style="color: @(_editingMatchId == match.Id ? "#aaa" : "inherit");">@(match.Group?.ToString() ?? "-")</td>
+                                <td style="color: @(_editingMatchId == match.Id ? "#aaa" : "inherit");">@match.Phase</td>
+                                <td>
+                                    @if (_editingMatchId == match.Id)
+                                    {
+                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                            <input class="finput" type="number" min="0" @bind="_editHomeGoals" style="width: 55px;" />
+                                            <span>-</span>
+                                            <input class="finput" type="number" min="0" @bind="_editAwayGoals" style="width: 55px;" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @FormatResult(match)
+                                    }
+                                </td>
+                                <td style="color: @(_editingMatchId == match.Id ? "#aaa" : "inherit");">@(match.Winner?.Name ?? "-")</td>
+                                <td>@(match.IsLocked ? "🔒" : "No")</td>
+                                <td>
+                                    @if (_editingMatchId == match.Id)
+                                    {
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="btn-p" @onclick="SaveEdit">Save</button>
+                                            <button class="btn btn-g" @onclick="CancelEdit">Cancel</button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-s"
+                                                disabled="@match.IsLocked"
+                                                @onclick="() => StartEdit(match)">
+                                            Edit
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             }
         </div>
     </div>
 
-    @if (_editingMatchId != null)
-    {
-        <div class="card" style="margin-top: 1.5rem;">
-            <div class="card-header">
-                <span class="card-title">@_editTitle</span>
-            </div>
-
-            <div class="card-body">
-                @if (_editMode == EditMode.Date)
-                {
-                    <div class="fg">
-                        <label class="fl">New date</label>
-                        <input class="finput" type="datetime-local" @bind="_editDate" />
-                    </div>
-                }
-
-                @if (_editMode == EditMode.Stadium)
-                {
-                    <div class="fg">
-                        <label class="fl">New stadium</label>
-                        <select class="finput" @bind="_editStadiumName">
-                            @foreach (var stadium in _stadiums)
-                            {
-                                <option value="@stadium.Name">@stadium.Name - @stadium.City</option>
-                            }
-                        </select>
-                    </div>
-                }
-
-                @if (_editMode == EditMode.Result)
-                {
-                    <div class="fg">
-                        <label class="fl">Home goals</label>
-                        <input class="finput" type="number" min="0" @bind="_editHomeGoals" />
-                    </div>
-
-                    <div class="fg">
-                        <label class="fl">Away goals</label>
-                        <input class="finput" type="number" min="0" @bind="_editAwayGoals" />
-                    </div>
-                }
-            </div>
-
-            <div class="card-footer">
-                <button class="btn btn-g" @onclick="CancelEdit">Cancel</button>
-                <button class="btn-p" @onclick="SaveEdit">Save changes</button>
-            </div>
-        </div>
-    }
-
 </div>
 
 @code {
-    private enum EditMode
-    {
-        None,
-        Date,
-        Stadium,
-        Result
-    }
+    private enum EditMode { None, Date, Stadium, Result }
 
     private DateTime _date = new(2026, 6, 1, 14, 0, 0);
     private string _selectedStadiumName = string.Empty;
@@ -341,8 +273,6 @@
     private string _filterPhase = string.Empty;
 
     private int? _editingMatchId;
-    private EditMode _editMode = EditMode.None;
-    private string _editTitle = string.Empty;
     private DateTime _editDate;
     private string _editStadiumName = string.Empty;
     private int _editHomeGoals;
@@ -361,14 +291,57 @@
         LoadData();
     }
 
+    private void StartEdit(MatchResponse match)
+    {
+        _editingMatchId = match.Id;
+        _editDate = match.Date;
+        _editStadiumName = match.Stadium.Name;
+        _editHomeGoals = match.HomeGoals ?? 0;
+        _editAwayGoals = match.AwayGoals ?? 0;
+        ClearMessages();
+    }
+
+    private void SaveEdit()
+    {
+        if (_editingMatchId is null) return;
+        ClearMessages();
+
+        try
+        {
+            var current = _matches.First(m => m.Id == _editingMatchId);
+
+            if (_editDate != current.Date)
+                MatchService.UpdateMatchDate(_editingMatchId.Value, _editDate);
+
+            if (_editStadiumName != current.Stadium.Name)
+                MatchService.UpdateMatchStadium(_editingMatchId.Value, FindStadiumRequest(_editStadiumName));
+
+            if (_editHomeGoals != (current.HomeGoals ?? -1) || _editAwayGoals != (current.AwayGoals ?? -1))
+                MatchService.SetMatchResult(_editingMatchId.Value, _editHomeGoals, _editAwayGoals);
+
+            _successMessage = "Match updated successfully!";
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _editingMatchId = null;
+        _editDate = default;
+        _editStadiumName = string.Empty;
+        _editHomeGoals = 0;
+        _editAwayGoals = 0;
+    }
+
     private void SaveMatch()
     {
         ClearMessages();
-
-        if (!ValidateForm())
-        {
-            return;
-        }
+        if (!ValidateForm()) return;
 
         try
         {
@@ -385,16 +358,14 @@
 
     private MatchRequest BuildMatchRequest()
     {
-        var stadium = FindStadiumRequest(_selectedStadiumName);
-        var homeTeam = FindTeamRequest(_selectedHomeTeamName);
-        var awayTeam = FindTeamRequest(_selectedAwayTeamName);
-
         return new MatchRequest
         {
             Date = _date,
-            Stadium = stadium,
-            HomeTeam = homeTeam,
-            AwayTeam = awayTeam
+            Stadium = FindStadiumRequest(_selectedStadiumName),
+            HomeTeam = FindTeamRequest(_selectedHomeTeamName),
+            AwayTeam = FindTeamRequest(_selectedAwayTeamName),
+            Group = _phase == "GroupStage" && !string.IsNullOrEmpty(_group) ? _group![0] : null,
+            Phase = _phase
         };
     }
 
@@ -407,82 +378,7 @@
                            || _selectedAwayTeamName == _selectedHomeTeamName;
         _groupInvalid = _phase == "GroupStage" && string.IsNullOrWhiteSpace(_group);
 
-        return !_dateInvalid
-               && !_stadiumInvalid
-               && !_homeTeamInvalid
-               && !_awayTeamInvalid
-               && !_groupInvalid;
-    }
-
-    private void StartEditDate(MatchResponse match)
-    {
-        _editingMatchId = match.Id;
-        _editMode = EditMode.Date;
-        _editTitle = $"Edit date · Match {match.Id}";
-        _editDate = match.Date;
-        ClearMessages();
-    }
-
-    private void StartEditStadium(MatchResponse match)
-    {
-        _editingMatchId = match.Id;
-        _editMode = EditMode.Stadium;
-        _editTitle = $"Edit stadium · Match {match.Id}";
-        _editStadiumName = match.Stadium.Name;
-        ClearMessages();
-    }
-
-    private void StartEditResult(MatchResponse match)
-    {
-        _editingMatchId = match.Id;
-        _editMode = EditMode.Result;
-        _editTitle = $"Load result · Match {match.Id}";
-        _editHomeGoals = match.HomeGoals ?? 0;
-        _editAwayGoals = match.AwayGoals ?? 0;
-        ClearMessages();
-    }
-
-    private void SaveEdit()
-    {
-        if (_editingMatchId is null)
-        {
-            return;
-        }
-
-        ClearMessages();
-
-        try
-        {
-            if (_editMode == EditMode.Date)
-            {
-                MatchService.UpdateMatchDate(_editingMatchId.Value, _editDate);
-            }
-
-            if (_editMode == EditMode.Stadium)
-            {
-                MatchService.UpdateMatchStadium(_editingMatchId.Value, FindStadiumRequest(_editStadiumName));
-            }
-
-            if (_editMode == EditMode.Result)
-            {
-                MatchService.SetMatchResult(_editingMatchId.Value, _editHomeGoals, _editAwayGoals);
-            }
-
-            _successMessage = "Match updated successfully!";
-            CancelEdit();
-            LoadData();
-        }
-        catch (ArgumentException ex)
-        {
-            _errorMessage = ex.Message;
-        }
-    }
-
-    private void CancelEdit()
-    {
-        _editingMatchId = null;
-        _editMode = EditMode.None;
-        _editTitle = string.Empty;
+        return !_dateInvalid && !_stadiumInvalid && !_homeTeamInvalid && !_awayTeamInvalid && !_groupInvalid;
     }
 
     private void ClearFilters()
@@ -501,7 +397,6 @@
         _selectedAwayTeamName = string.Empty;
         _phase = "GroupStage";
         _group = "A";
-
         _dateInvalid = false;
         _stadiumInvalid = false;
         _homeTeamInvalid = false;
@@ -524,56 +419,28 @@
 
     private StadiumRequest FindStadiumRequest(string stadiumName)
     {
-        var stadium = _stadiums.First(stadium => stadium.Name == stadiumName);
-
-        return new StadiumRequest
-        {
-            Name = stadium.Name,
-            City = stadium.City,
-            Description = stadium.Description,
-            Capacity = stadium.Capacity
-        };
+        var stadium = _stadiums.First(s => s.Name == stadiumName);
+        return new StadiumRequest { Name = stadium.Name, City = stadium.City, Description = stadium.Description, Capacity = stadium.Capacity };
     }
 
     private TeamRequest FindTeamRequest(string teamName)
     {
-        var team = _teams.First(team => team.Name == teamName);
-
-        return new TeamRequest
-        {
-            Name = team.Name,
-            ConfederationName = team.ConfederationName,
-            RankingFifa = team.RankingFifa
-        };
+        var team = _teams.First(t => t.Name == teamName);
+        return new TeamRequest { Name = team.Name, ConfederationName = team.ConfederationName, RankingFifa = team.RankingFifa };
     }
 
-    private bool MatchesDateFilter(MatchResponse match)
-    {
-        return _filterDate is null || match.Date.Date == _filterDate.Value.Date;
-    }
+    private bool MatchesDateFilter(MatchResponse match) =>
+        _filterDate is null || match.Date.Date == _filterDate.Value.Date;
 
-    private bool MatchesStadiumFilter(MatchResponse match)
-    {
-        return string.IsNullOrWhiteSpace(_filterStadium) || match.Stadium.Name == _filterStadium;
-    }
+    private bool MatchesStadiumFilter(MatchResponse match) =>
+        string.IsNullOrWhiteSpace(_filterStadium) || match.Stadium.Name == _filterStadium;
 
-    private bool MatchesGroupFilter(MatchResponse match)
-    {
-        return string.IsNullOrWhiteSpace(_filterGroup) || match.Group?.ToString() == _filterGroup;
-    }
+    private bool MatchesGroupFilter(MatchResponse match) =>
+        string.IsNullOrWhiteSpace(_filterGroup) || match.Group?.ToString() == _filterGroup;
 
-    private bool MatchesPhaseFilter(MatchResponse match)
-    {
-        return string.IsNullOrWhiteSpace(_filterPhase) || match.Phase == _filterPhase;
-    }
+    private bool MatchesPhaseFilter(MatchResponse match) =>
+        string.IsNullOrWhiteSpace(_filterPhase) || match.Phase == _filterPhase;
 
-    private static string FormatResult(MatchResponse match)
-    {
-        if (match.HomeGoals is null || match.AwayGoals is null)
-        {
-            return "-";
-        }
-
-        return $"{match.HomeGoals} - {match.AwayGoals}";
-    }
+    private static string FormatResult(MatchResponse match) =>
+        match.HomeGoals is null || match.AwayGoals is null ? "-" : $"{match.HomeGoals} - {match.AwayGoals}";
 }
