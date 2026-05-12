@@ -7,6 +7,7 @@ public class Group
     private const int MaxTeams = 4;
     private const int MaxUEFATeamsPerGroup = 2;
     private const int MaxOtherConfederationTeamsPerGroup = 1;
+    private const double DrawZone = 0.10;
     
     private const string TooManyTeamsFromSameConfederationErrorMessage = "Group cannot have more than 2 teams from the same confederation.";
     private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
@@ -104,11 +105,37 @@ public class Group
 
         foreach (var match in _matches)
         {
-            int homeGoals = random.Next(0, 5);
-            int awayGoals = random.Next(0, 5);
+            var (homeGoals, awayGoals) = SimulateResult(
+                match.HomeTeam.RankingFifa,
+                match.AwayTeam.RankingFifa,
+                random);
 
             SetMatchResult(match, homeGoals, awayGoals);
         }
+    }
+    
+    private static (int homeGoals, int awayGoals) SimulateResult(
+        int homeRanking,
+        int awayRanking,
+        Random random)
+    {
+        int total = homeRanking + awayRanking;
+        double homeProbability = (double)homeRanking / total;
+
+        double roll = random.NextDouble();
+
+        if (roll < homeProbability - DrawZone)
+            return (SimulateGoals(random, 2, 4), SimulateGoals(random, 0, 2));
+
+        if (roll > homeProbability + DrawZone)
+            return (SimulateGoals(random, 0, 2), SimulateGoals(random, 2, 4));
+
+        return (SimulateGoals(random, 0, 2), SimulateGoals(random, 0, 2));
+    }
+    
+    private static int SimulateGoals(Random random, int min, int max)
+    {
+        return random.Next(min, max + 1);
     }
 
     private static char NormalizeLabel(char label) => char.ToUpperInvariant(label);
@@ -125,6 +152,7 @@ public class Group
             throw new ArgumentException(NullTeamErrorMessage);
     }
 
+    
     private void ValidateGroupHasAvailableSlot()
     {
         if (_teams.Count >= MaxTeams)
