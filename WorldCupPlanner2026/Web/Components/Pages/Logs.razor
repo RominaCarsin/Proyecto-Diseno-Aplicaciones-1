@@ -33,20 +33,30 @@
             <div class="row g-4 mt-2">
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Usuario</label>
-                    <select class="form-select border-custom-input">
+                    <select class="form-select border-custom-input" @bind="filterUser" @bind:after="ApplyFilters">
                         <option value="">Todos los usuarios</option>
+                        @foreach (var email in allUsers)
+                        {
+                            <option value="@email">@email</option>
+                        }
                     </select>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Desde</label>
-                    <input type="datetime-local" class="form-control border-custom-input" />
+                    <input type="datetime-local" class="form-control border-custom-input"
+                           @bind="filterFrom" @bind:after="ApplyFilters" />
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Hasta</label>
-                    <input type="datetime-local" class="form-control border-custom-input" />
+                    <input type="datetime-local" class="form-control border-custom-input"
+                           @bind="filterTo" @bind:after="ApplyFilters" />
                 </div>
             </div>
-        </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-outline-secondary border-custom btn-sm" @onclick="ClearFilters">
+                    <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+                </button>
+            </div>        </div>
 
         @* --- TABLA DE LOGS --- *@
         <div class="bg-white border-custom diagonal-corners overflow-hidden">
@@ -76,7 +86,7 @@
                             {
                                 <tr>
                                     <td class="px-4 py-3 font-monospace text-sm">
-                                        @log.Timestamp.ToUniversalTime().ToString("O")
+                                        @log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
                                     </td>
                                     <td class="px-4 py-3 fw-bold">@log.Action</td>
                                     <td class="px-4 py-3 text-muted text-sm">@log.ActorEmail</td>
@@ -102,15 +112,57 @@
 @code {
     public enum LogSeverity { Info, Success, Warning, Error }
 
+    private List<AuditLog> allLogs = new();
     private List<AuditLog> logs = new();
+    private List<string> allUsers = new();
+
+    private string filterUser = string.Empty;
+    private DateTime? filterFrom;
+    private DateTime? filterTo;
 
     private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
 
     protected override void OnInitialized()
     {
-        logs = AuditService.GetAll()
+        if (!IsAdmin) return;
+
+        allLogs = AuditService.GetAll()
             .OrderByDescending(log => log.Timestamp)
             .ToList();
+
+        allUsers = allLogs
+            .Select(l => l.ActorEmail)
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Distinct()
+            .OrderBy(e => e)
+            .ToList();
+
+        logs = allLogs;
+    }
+
+    private void ApplyFilters()
+    {
+        var fromUtc = filterFrom.HasValue
+            ? DateTime.SpecifyKind(filterFrom.Value, DateTimeKind.Local).ToUniversalTime()
+            : (DateTime?)null;
+
+        var toUtc = filterTo.HasValue
+            ? DateTime.SpecifyKind(filterTo.Value, DateTimeKind.Local).ToUniversalTime()
+            : (DateTime?)null;
+
+        logs = allLogs
+            .Where(l => string.IsNullOrEmpty(filterUser) || l.ActorEmail == filterUser)
+            .Where(l => fromUtc == null || l.Timestamp >= fromUtc.Value)
+            .Where(l => toUtc == null || l.Timestamp <= toUtc.Value)
+            .ToList();
+    }
+
+    private void ClearFilters()
+    {
+        filterUser = string.Empty;
+        filterFrom = null;
+        filterTo   = null;
+        logs       = allLogs;
     }
 
     private LogSeverity GetSeverity(AuditLog log)
