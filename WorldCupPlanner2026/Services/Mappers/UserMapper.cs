@@ -22,7 +22,9 @@ public class UserMapper
         return new UserResponse
         {
             Name = user.Name,
+            Surname = user.Surname,
             Email = user.Email,
+            DateOfBirth = user.DateOfBirth,
             Roles = RoleMapper.ToDto(user.Roles)
         };
     }

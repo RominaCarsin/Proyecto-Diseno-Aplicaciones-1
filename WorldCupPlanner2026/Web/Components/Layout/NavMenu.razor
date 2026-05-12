@@ -61,6 +61,7 @@
     private List<NavigationModel> navItems = new()
     {
         new("home", "Inicio", "bi bi-house-door", "#1b2789", "/"),
+        new("users", "Usuarios", "bi bi-people-fill", "#1b2789", "/users", RequiresLogin: true, RequiredRole: RoleDto.Admin),
         new("teams", "Equipos", "bi bi-people", "#dc0201", "/teams/create", RequiresLogin: true, RequiredRole: RoleDto.Admin),
         new("stadiums", "Estadios", "bi bi-geo-alt", "#04cf5c", "/stadiums", RequiresLogin: true, RequiredRole: RoleDto.Admin),
         new("matches", "Partidos", "bi bi-calendar3", "#dc0201", "/matches", RequiresLogin: true),
