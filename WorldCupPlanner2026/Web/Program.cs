@@ -11,14 +11,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddScoped<IRepository<Stadium>, Repository<Stadium>>();
 builder.Services.AddScoped<IStadiumService, StadiumService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<IRepository<Team>, Repository<Team>>();
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IAuthStateService, AuthStateService>();
+builder.Services.AddScoped<IRepository<AuditLog>, Repository<AuditLog>>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<IRepository<Match>, Repository<Match>>();
+builder.Services.AddScoped<IMatchService, MatchService>();
 
 var app = builder.Build();
 

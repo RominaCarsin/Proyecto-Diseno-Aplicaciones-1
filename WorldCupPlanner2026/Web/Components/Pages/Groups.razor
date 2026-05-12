@@ -1,0 +1,156 @@
+﻿@using Web.Components.Shared
+@page "/groups"
+
+<div class="container-fluid p-0">
+    @if (!groups.Any())
+    {
+        <div class="bg-white border-custom diagonal-corners p-4 text-muted">
+            No hay grupos para mostrar.
+        </div>
+    }
+    else
+    {
+        <div class="groups-grid">
+            @foreach (var group in groups)
+            {
+            bool isExpanded = expandedGroupName == group.Name;
+            
+            <div @onclick="() => ToggleGroup(group.Name)"
+                 class="group-card bg-white border-custom diagonal-corners transition-all @(isExpanded ? "expanded" : "")">
+                
+                <div class="bg-wc-blue text-white px-4 py-3 d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Grupo @group.Name</h3>
+                    @if(isExpanded) {
+                        <i class="bi bi-fullscreen-exit"></i>
+                    }
+                </div>
+                
+                <GeometricDivider />
+
+                <div class="p-4">
+                    @if (isExpanded && group.Standings.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover text-sm">
+                                <thead>
+                                    <tr class="border-bottom-2">
+                                        <th class="text-start">Equipo</th>
+                                        <th class="text-center">PJ</th>
+                                        <th class="text-center">PG</th>
+                                        <th class="text-center">PE</th>
+                                        <th class="text-center">PP</th>
+                                        <th class="text-center">GF</th>
+                                        <th class="text-center">GC</th>
+                                        <th class="text-center">DG</th>
+                                        <th class="text-center bg-light">Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < group.Standings.Count; i++)
+                                    {
+                                        var s = group.Standings[i];
+                                        <tr class="@(i < 2 ? "bg-success-light" : "")">
+                                            <td class="fw-bold">@s.Team</td>
+                                            <td class="text-center">@s.Played</td>
+                                            <td class="text-center">@s.Won</td>
+                                            <td class="text-center">@s.Drawn</td>
+                                            <td class="text-center">@s.Lost</td>
+                                            <td class="text-center">@s.GoalsFor</td>
+                                            <td class="text-center">@s.GoalsAgainst</td>
+                                            <td class="text-center">@s.GoalDifference</td>
+                                            <td class="text-center fw-bold bg-light">@s.Points</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var team in group.Teams)
+                            {
+                                <li class="py-2 border-bottom border-custom-light last-no-border">
+                                    <i class="bi bi-shield-fill me-2 text-wc-blue"></i> @team
+                                </li>
+                            }
+                        </ul>
+                    }
+
+                    @if (isExpanded && !group.Standings.Any())
+                    {
+                        <div class="mt-4 text-center opacity-50 small">
+                            <i class="bi bi-info-circle me-1"></i> No hay resultados disponibles
+                        </div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    .group-card {
+        cursor: pointer;
+        height: fit-content;
+    }
+
+    .group-card.expanded {
+        grid-column: span 2;
+        grid-row: span 2;
+    }
+
+    .bg-success-light {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+    }
+
+    .border-custom-light {
+        border-color: #eee !important;
+    }
+
+    .last-no-border:last-child {
+        border-bottom: none !important;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease-in-out;
+    }
+</style>
+
+@code {
+    private string? expandedGroupName = null;
+
+    private void ToggleGroup(string name)
+    {
+        expandedGroupName = (expandedGroupName == name) ? null : name;
+    }
+
+    private List<GroupModel> groups = new();
+
+    public class GroupModel
+    {
+        public string Name { get; set; } = "";
+        public List<string> Teams { get; set; } = new();
+        public List<TeamStanding> Standings { get; set; } = new();
+    }
+
+    public class TeamStanding
+    {
+        public string Team { get; set; } = "";
+        public int Played { get; set; }
+        public int Won { get; set; }
+        public int Drawn { get; set; }
+        public int Lost { get; set; }
+        public int GoalsFor { get; set; }
+        public int GoalsAgainst { get; set; }
+        public int GoalDifference { get; set; }
+        public int Points { get; set; }
+    }
+}
