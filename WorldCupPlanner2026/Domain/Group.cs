@@ -119,6 +119,12 @@ public class Group
         int awayRanking,
         Random random)
     {
+        if (homeRanking == awayRanking)
+        {
+            int drawGoals = SimulateGoals(random, 0, 2);
+            return (drawGoals, drawGoals);
+        }
+        
         int total = homeRanking + awayRanking;
         double homeProbability = (double)homeRanking / total;
 
@@ -130,7 +136,9 @@ public class Group
         if (roll > homeProbability + DrawZone)
             return (SimulateGoals(random, 0, 2), SimulateGoals(random, 2, 4));
 
-        return (SimulateGoals(random, 0, 2), SimulateGoals(random, 0, 2));
+        //empate
+        int finalDrawGoals = SimulateGoals(random, 0, 2);
+        return (finalDrawGoals, finalDrawGoals);
     }
     
     private static int SimulateGoals(Random random, int min, int max)
