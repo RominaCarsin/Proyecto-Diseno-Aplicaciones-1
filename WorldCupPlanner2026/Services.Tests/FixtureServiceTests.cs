@@ -191,4 +191,23 @@ public class FixtureServiceTests
 
         Assert.AreEqual(4, fixtureService.GetStadiumCount());
     }
+    
+    
+    [TestMethod]
+    public void GeneratePots_WithSameSeed_ShouldProduceSameOrder()
+    {
+        var teamRepo1 = CreateTeamRepo();
+        var potRepo1 = new Repository<Pot>();
+        var potService1 = new PotService(teamRepo1, potRepo1, new ShuffleService(42));
+        potService1.GeneratePots();
+        var order1 = potRepo1.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
+
+        var teamRepo2 = CreateTeamRepo();
+        var potRepo2 = new Repository<Pot>();
+        var potService2 = new PotService(teamRepo2, potRepo2, new ShuffleService(42));
+        potService2.GeneratePots();
+        var order2 = potRepo2.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
+
+        CollectionAssert.AreEqual(order1, order2);
+    }
 }
