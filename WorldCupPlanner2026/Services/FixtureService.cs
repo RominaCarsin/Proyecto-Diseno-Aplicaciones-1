@@ -72,33 +72,46 @@ public class FixtureService : IFixtureService
     {
         int matchCounter = 0;
 
-        foreach (var group in groups)
+        for (int groupIndex = 0; groupIndex < groups.Count; groupIndex++)
         {
+            var group = groups[groupIndex];
             var teamList = group.Teams.ToList();
-            var pairings = new List<(int, int)> { (0,3), (1,2), (0,2), (1,3), (0,1), (2,3) };
 
-            foreach (var (homeIndex, awayIndex) in pairings)
+            var pairings = new List<(int, int)>
             {
-                int dayOffset = matchCounter / MaxMatchesPerDay;
-                int matchIndexInDay = matchCounter % MaxMatchesPerDay;
+                (0, 3), (1, 2),
+                (0, 2), (1, 3),
+                (0, 1), (2, 3)
+            };
 
-                var matchDate = startDate.Date
-                    .AddDays(dayOffset)
-                    .AddHours(FirstMatchHour)
-                    .AddHours(matchIndexInDay * HoursBetweenMatches);
+            for (int round = 0; round < 3; round++)
+            {
+                var groupStartDate = startDate.Date.AddDays(groupIndex);
+                var roundDate = groupStartDate.AddDays(round * 3);
 
-                var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+                var roundPairings = pairings.Skip(round * 2).Take(2).ToList();
 
-                group.AddMatch(new Match(
-                    matchDate,
-                    stadium,
-                    teamList[homeIndex],
-                    teamList[awayIndex],
-                    group: group.Label,
-                    phase: "GroupStage"
-                ));
+                for (int matchIndexInRound = 0; matchIndexInRound < roundPairings.Count; matchIndexInRound++)
+                {
+                    var (homeIndex, awayIndex) = roundPairings[matchIndexInRound];
 
-                matchCounter++;
+                    var matchDate = roundDate
+                        .AddHours(FirstMatchHour)
+                        .AddHours(matchIndexInRound * HoursBetweenMatches);
+
+                    var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+
+                    group.AddMatch(new Match(
+                        matchDate,
+                        stadium,
+                        teamList[homeIndex],
+                        teamList[awayIndex],
+                        group: group.Label,
+                        phase: "GroupStage"
+                    ));
+
+                    matchCounter++;
+                }
             }
         }
     }
