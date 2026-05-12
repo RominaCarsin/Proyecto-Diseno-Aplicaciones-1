@@ -35,7 +35,7 @@ public class FixtureServiceTests
 
         var groupService = new GroupService(groupRepo);
 
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo);
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, null);
     }
     
     [TestMethod]
@@ -65,47 +65,23 @@ public class FixtureServiceTests
 
         var groupService = new GroupService(groupRepo);
 
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo);
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, null);
     }
     
     [TestMethod]
     public void GenerateFixture_WithExistingFixture_ShouldThrowInvalidOperationException()
     {
-        var fixtureService = CreateFixtureServiceReady();
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
     }
-
-    private FixtureService CreateFixtureServiceReady()
-    {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        _groupRepository = groupRepo;
-
-        var teamRepo = new Repository<Team>();
-        var confederationService = new ConfederationService();
-        var teamService = new TeamService(teamRepo, confederationService);
-
-        for (int i = 0; i < 48; i++)
-            teamRepo.Add(new Team($"TEAM_{i:00}", "UEFA", 1000 + i));
-
-        var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = new StadiumService(stadiumRepo);
-
-        for (int i = 0; i < 4; i++)
-            stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
-
-        var groupService = new GroupService(groupRepo);
-
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo);
-    }
     
     [TestMethod]
     public void GenerateFixture_WithValidData_ShouldCreate12Groups()
     {
-        var fixtureService = CreateFixtureServiceReady();
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
 
@@ -116,7 +92,7 @@ public class FixtureServiceTests
     [TestMethod]
     public void GenerateFixture_WithValidData_ShouldAssign4TeamsPerGroup()
     {
-        var fixtureService = CreateFixtureServiceReady();
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
 
@@ -127,7 +103,7 @@ public class FixtureServiceTests
     [TestMethod]
     public void GenerateFixture_WithValidData_ShouldCreate6MatchesPerGroup()
     {
-        var fixtureService = CreateFixtureServiceReady();
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
 
@@ -138,7 +114,7 @@ public class FixtureServiceTests
     [TestMethod]
     public void GenerateFixture_WithValidData_GroupsShouldHaveLabelsAToL()
     {
-        var fixtureService = CreateFixtureServiceReady();
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
 
@@ -171,7 +147,7 @@ public class FixtureServiceTests
     
     [TestMethod] public void CanGenerateFixture_WithExistingFixture_ShouldReturnFalse() 
     { 
-        var fixtureService = CreateFixtureServiceReady(); 
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
         Assert.IsFalse(fixtureService.CanGenerateFixture()); 
     }
@@ -187,7 +163,7 @@ public class FixtureServiceTests
     [TestMethod]
     public void GetStadiumCount_WithExistingStadiums_ShouldReturnCorrectCount()
     {
-        var fixtureService = CreateFixtureServiceReady();
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
         Assert.AreEqual(4, fixtureService.GetStadiumCount());
     }
@@ -314,4 +290,21 @@ public class FixtureServiceTests
 
         return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, potService);
     }
+    
+    [TestMethod]
+    public void GenerateFixture_ShouldNotCreateMoreThan3MatchesPerDay()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var startDate = new DateTime(2026, 6, 1);
+
+        fixtureService.GenerateFixture(42, startDate);
+
+        var matchesByDay = _groupRepository.GetAll()
+            .SelectMany(g => g.Matches)
+            .GroupBy(m => m.Date.Date);
+
+        Assert.IsTrue(matchesByDay.All(g => g.Count() <= 3));
+    }
+    
+   
 }
