@@ -434,6 +434,25 @@ public class GroupTests
             group.GetTeamByPosition(5));
     }
     
+    [TestMethod]
+    public void SimulateMatches_WithPendingMatch_ShouldSetMatchResult()
+    {
+        var group = CreateValidGroup();
+        var uruguay = CreateUruguayTeam();
+        var argentina = CreateArgentinaTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        var match = CreateMatch(group, uruguay, argentina);
+        group.AddMatch(match);
+
+        group.SimulateMatches(42);
+
+        Assert.IsNotNull(match.HomeGoals);
+        Assert.IsNotNull(match.AwayGoals);
+    }
+    
 
     private static void AddFourTeams(Group group)
     {
