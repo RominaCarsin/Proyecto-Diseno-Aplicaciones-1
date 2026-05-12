@@ -5,12 +5,12 @@ public class Group
     private const char MinLabel = 'A';
     private const char MaxLabel = 'L';
     private const int MaxTeams = 4;
-    private const int MaxTeamsPerConfederation = 2;
+    private const int MaxUEFATeamsPerGroup = 2;
+    private const int MaxOtherConfederationTeamsPerGroup = 1;
     
     private const string TooManyTeamsFromSameConfederationErrorMessage = "Group cannot have more than 2 teams from the same confederation.";
     private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
     private const string NullTeamErrorMessage = "Team cannot be null.";
-    private const string DuplicatedTeamErrorMessage = "Team already exists in group.";
     private const string FullGroupErrorMessage = "Group cannot have more than 4 teams.";
     private const string TeamNotFoundErrorMessage = "Team does not exist in group.";
     private const string InvalidPositionErrorMessage = "Position is invalid.";
@@ -44,12 +44,19 @@ public class Group
         _teams.Add(team!);
     }
     
+    
     private void ValidateConfederationLimit(Team team)
     {
         int teamsFromSameConfederation = _teams.Count(t =>
             t.ConfederationName == team.ConfederationName);
 
-        if (teamsFromSameConfederation >= MaxTeamsPerConfederation)
+        bool isUefa = team.ConfederationName == "UEFA";
+
+        int limit = isUefa
+            ? MaxUEFATeamsPerGroup
+            : MaxOtherConfederationTeamsPerGroup;
+
+        if (teamsFromSameConfederation >= limit)
             throw new ArgumentException(TooManyTeamsFromSameConfederationErrorMessage);
     }
 
