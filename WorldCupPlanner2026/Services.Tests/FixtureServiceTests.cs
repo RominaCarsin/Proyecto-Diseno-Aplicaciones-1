@@ -216,4 +216,102 @@ public class FixtureServiceTests
 
         CollectionAssert.AreEqual(order1, order2);
     }
+    
+    [TestMethod]
+    public void GeneratePots_WithDifferentSeeds_ShouldProduceDifferentOrder_WhenRankingsAreTied()
+    {
+        var teamRepo1 = CreateTeamRepoWithTiedRankings();
+
+        var potRepo1 = new Repository<Pot>();
+        var potService1 = new PotService(teamRepo1, potRepo1);
+
+        potService1.GeneratePots(48);
+
+        var order1 = potRepo1.GetAll()
+            .SelectMany(p => p.Teams.Select(t => t.Name))
+            .ToList();
+
+        var teamRepo2 = CreateTeamRepoWithTiedRankings();
+
+        var potRepo2 = new Repository<Pot>();
+        var potService2 = new PotService(teamRepo2, potRepo2);
+
+        potService2.GeneratePots(99);
+
+        var order2 = potRepo2.GetAll()
+            .SelectMany(p => p.Teams.Select(t => t.Name))
+            .ToList();
+
+        CollectionAssert.AreNotEqual(order1, order2);
+    }
+    
+    private Repository<Team> CreateTeamRepoWithTiedRankings()
+    {
+        var repo = new Repository<Team>();
+
+        for (int i = 1; i <= 48; i++)
+        {
+            repo.Add(new Team(
+                $"Team {i}",
+                "CONMEBOL",
+                1000
+            ));
+        }
+
+        return repo;
+    }
+    
+    [TestMethod]
+    public void GenerateFixture_WithSameSeed_ShouldProduceSameGroupAssignment()
+    {
+        var service1 = CreateFixtureServiceReadyWithPots(42);
+        service1.GenerateFixture(42, new DateTime(2026, 6, 1));
+        var teams1 = _groupRepository.GetAll()
+            .OrderBy(g => g.Label)
+            .SelectMany(g => g.Teams.Select(t => t.Name))
+            .ToList();
+
+        var service2 = CreateFixtureServiceReadyWithPots(42);
+        service2.GenerateFixture(42, new DateTime(2026, 6, 1));
+        var teams2 = _groupRepository.GetAll()
+            .OrderBy(g => g.Label)
+            .SelectMany(g => g.Teams.Select(t => t.Name))
+            .ToList();
+
+        CollectionAssert.AreEqual(teams1, teams2);
+    }
+    
+
+    private FixtureService CreateFixtureServiceReadyWithPots(int seed = 42)
+    {
+        var groupRepo = new Repository<Group>();
+        var matchRepo = new Repository<Match>();
+        var potRepo = new Repository<Pot>();
+        _groupRepository = groupRepo;
+
+        var teamRepo = new Repository<Team>();
+        var confederationService = new ConfederationService();
+        var teamService = new TeamService(teamRepo, confederationService);
+
+        var slots = new Dictionary<string, int>
+        {
+            { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
+            { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
+        };
+
+        int ranking = 1500;
+        foreach (var (conf, count) in slots)
+            for (int i = 1; i <= count; i++)
+                teamRepo.Add(new Team($"{conf}_{i:00}", conf, ranking--));
+
+        var stadiumRepo = new Repository<Stadium>();
+        var stadiumService = new StadiumService(stadiumRepo);
+        for (int i = 0; i < 4; i++)
+            stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
+
+        var groupService = new GroupService(groupRepo);
+        var potService = new PotService(teamRepo, potRepo);
+
+        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, potService);
+    }
 }
