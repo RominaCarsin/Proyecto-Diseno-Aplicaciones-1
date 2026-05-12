@@ -87,20 +87,30 @@ public class GroupTests
         Assert.ThrowsException<ArgumentException>(() =>
             group.AddTeam(null));
     }
-
+    
     [TestMethod]
-    public void AddTeam_WithDuplicatedTeam_ShouldThrowArgumentException()
+    public void Add2UEFATeamsToGroup_ShouldSucced()
     {
         var group = CreateValidGroup();
-        var team = CreateBrazilTeam();
-        var duplicatedTeam = CreateBrazilTeam();
 
-        group.AddTeam(team);
+        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
+        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
 
-        Assert.ThrowsException<ArgumentException>(() =>
-            group.AddTeam(duplicatedTeam));
+        Assert.AreEqual(2, group.Teams.Count);
     }
 
+    [TestMethod]
+    public void Add3UEFATeamsToGroup_ShouldThrowException()
+    {
+        var group = CreateValidGroup();
+
+        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
+        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            group.AddTeam(new Team("BOLIVIA", "UEFA", 1400)));
+    }
+    
     [TestMethod]
     public void AddTeam_WhenGroupIsFull_ShouldThrowArgumentException()
     {
