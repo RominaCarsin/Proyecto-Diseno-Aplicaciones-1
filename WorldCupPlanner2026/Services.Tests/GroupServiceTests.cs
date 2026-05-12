@@ -51,11 +51,11 @@ public class GroupServiceTests
     }
 
     [TestMethod]
-    public void AddTeamToGroup_ShouldAddTeamToGroup()
+    public void AddValidTeamToGroup_ShouldAddTeamToGroup()
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
 
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
 
         var group = _service.GetGroupByLabel('A');
 
@@ -63,11 +63,32 @@ public class GroupServiceTests
     }
 
     [TestMethod]
+    public void Add2UEFATeamsToGroup_ShouldSucced()
+    {
+        _service.AddGroup(new GroupRequest { Label = 'A' });
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","UEFA"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
+        
+        Assert.AreEqual(2, _service.GetGroups().First(g => g.Label == 'A').Teams.Count);
+    }
+    
+    [TestMethod]
+    public void Add3UEFATeamsToGroup_ShouldThrowException()
+    {
+        _service.AddGroup(new GroupRequest { Label = 'A' });
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","UEFA"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddTeamToGroup('A', CreateTeamRequest("Bolivia", "UEFA")));
+    }
+
+    [TestMethod]
     public void GetTeamByPosition_ShouldReturnTeamInGivenPosition()
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","CONMEBOL"));
         _service.AddMatchToGroup('A', CreateValidMatchRequest('A'));
 
         var group = _service.GetGroupByLabel('A');
@@ -82,8 +103,8 @@ public class GroupServiceTests
     public void AddMatchToGroup_WithValidMatch_ShouldAddMatchToGroup()
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay", "CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","CONMEBOL"));
 
         _service.AddMatchToGroup('A', CreateValidMatchRequest('A'));
 
@@ -92,10 +113,10 @@ public class GroupServiceTests
         Assert.AreEqual(1, group.Matches.Count);
     }
 
-    private static TeamRequest CreateTeamRequest(string name) => new()
+    private static TeamRequest CreateTeamRequest(string name, string confederation) => new()
     {
         Name = name,
-        ConfederationName = "CONMEBOL",
+        ConfederationName = confederation,
         RankingFifa = 1500
     };
 
@@ -109,8 +130,8 @@ public class GroupServiceTests
             Description = "Historic stadium",
             Capacity = 60000
         },
-        HomeTeam = CreateTeamRequest("Uruguay"),
-        AwayTeam = CreateTeamRequest("Argentina"),
+        HomeTeam = CreateTeamRequest("Uruguay","CONMEBOL"),
+        AwayTeam = CreateTeamRequest("Argentina","CONMEBOL"),
         Group = group,
         Phase = "GroupStage"
     };
@@ -119,8 +140,8 @@ public class GroupServiceTests
     public void SetMatchResult_WithValidResult_ShouldUpdateTeamStats()
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","CONMEBOL"));
 
         var matchRequest = CreateValidMatchRequest('A');
         _service.AddMatchToGroup('A', matchRequest);
@@ -140,9 +161,9 @@ public class GroupServiceTests
     public void RemoveTeamFromGroup_WithExistingTeam_ShouldRemoveTeamFromGroup()
     {
         _service.AddGroup(new GroupRequest { Label = 'A' });
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
 
-        _service.RemoveTeamFromGroup('A', CreateTeamRequest("Uruguay"));
+        _service.RemoveTeamFromGroup('A', CreateTeamRequest("Uruguay","CONMEBOL"));
 
         var group = _service.GetGroupByLabel('A');
 
