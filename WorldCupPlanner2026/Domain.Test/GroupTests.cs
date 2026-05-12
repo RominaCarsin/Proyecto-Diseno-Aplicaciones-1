@@ -170,6 +170,17 @@ public class GroupTests
     }
 
     [TestMethod]
+    public void Add2NonUEFATeamsFromSameConfederationToGroup_ShouldThrowException()
+    {
+        var group = CreateValidGroup();
+
+        group.AddTeam(new Team("URUGUAY", "CONMEBOL", 1500));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            group.AddTeam(new Team("ARGENTINA", "CONMEBOL", 1700)));
+    }
+    
+    [TestMethod]
     public void AddMatch_WithValidMatch_ShouldAddMatchToGroup()
     {
         var group = CreateValidGroup();
