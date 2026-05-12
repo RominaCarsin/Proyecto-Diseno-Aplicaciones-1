@@ -573,36 +573,44 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
 }
 
-private FixtureService CreateFixtureServiceReadyWithPotsWithTiedRankings()
-{
-    var groupRepo = new Repository<Group>();
-    var matchRepo = new Repository<Match>();
-    var potRepo = new Repository<Pot>();
-    _groupRepository = groupRepo;
-
-    var teamRepo = new Repository<Team>();
-    var confederationService = new ConfederationService();
-
-    var slots = new Dictionary<string, int>
+    private FixtureService CreateFixtureServiceReadyWithPotsWithTiedRankings()
     {
-        { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
-        { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
-    };
+        var groupRepo = new Repository<Group>();
+        var matchRepo = new Repository<Match>();
+        var potRepo = new Repository<Pot>();
+        _groupRepository = groupRepo;
 
-    foreach (var (conf, count) in slots)
-        for (int i = 1; i <= count; i++)
-            teamRepo.Add(new Team($"{conf}_{i:00}", conf, 1000));
+        var teamRepo = new Repository<Team>();
+        var confederationService = new ConfederationService();
 
-    var stadiumRepo = new Repository<Stadium>();
-    var stadiumService = new StadiumService(stadiumRepo);
-    for (int i = 0; i < 4; i++)
-        stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
+        var slots = new Dictionary<string, int>
+        {
+            { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
+            { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
+        };
 
-    var groupService = new GroupService(groupRepo);
-    var potService = new PotService(teamRepo, potRepo);
+        foreach (var (conf, count) in slots)
+            for (int i = 1; i <= count; i++)
+                teamRepo.Add(new Team($"{conf}_{i:00}", conf, 1000));
 
-    return new FixtureService(
-        new TeamService(teamRepo, confederationService),
-        stadiumService, groupService, groupRepo, matchRepo, potService);
-}
+        var stadiumRepo = new Repository<Stadium>();
+        var stadiumService = new StadiumService(stadiumRepo);
+        for (int i = 0; i < 4; i++)
+            stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
+
+        var groupService = new GroupService(groupRepo);
+        var potService = new PotService(teamRepo, potRepo);
+
+        return new FixtureService(
+            new TeamService(teamRepo, confederationService),
+            stadiumService, groupService, groupRepo, matchRepo, potService);
+    }
+    [TestMethod]
+    public void SimulateGroupStage_WithNoFixtureGenerated_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.SimulateGroupStage(42));
+    }
 }
