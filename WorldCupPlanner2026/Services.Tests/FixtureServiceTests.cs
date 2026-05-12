@@ -196,16 +196,22 @@ public class FixtureServiceTests
     [TestMethod]
     public void GeneratePots_WithSameSeed_ShouldProduceSameOrder()
     {
-        var teamRepo1 = CreateTeamRepo();
+        var teamRepo1 = new  Repository<Team>();
+        var teamService = new  TeamService(teamRepo1, new ConfederationService());
+        teamService.AutoCompleteTeams(48);
+        
         var potRepo1 = new Repository<Pot>();
-        var potService1 = new PotService(teamRepo1, potRepo1, new ShuffleService(42));
-        potService1.GeneratePots();
+        var potService1 = new PotService(teamRepo1, potRepo1);
+        potService1.GeneratePots(48);
         var order1 = potRepo1.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
 
-        var teamRepo2 = CreateTeamRepo();
+        var teamRepo2 = new  Repository<Team>();
+        var teamService2 = new  TeamService(teamRepo2, new ConfederationService());
+        teamService2.AutoCompleteTeams(48);
+        
         var potRepo2 = new Repository<Pot>();
-        var potService2 = new PotService(teamRepo2, potRepo2, new ShuffleService(42));
-        potService2.GeneratePots();
+        var potService2 = new PotService(teamRepo2, potRepo2);
+        potService2.GeneratePots(48);
         var order2 = potRepo2.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
 
         CollectionAssert.AreEqual(order1, order2);
