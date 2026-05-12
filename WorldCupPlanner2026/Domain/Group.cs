@@ -100,9 +100,14 @@ public class Group
     
     public void SimulateMatches(int seed)
     {
+        var random = new Random(seed + Label);
+
         foreach (var match in _matches)
         {
-            SetMatchResult(match, 0, 0);
+            int homeGoals = random.Next(0, 5);
+            int awayGoals = random.Next(0, 5);
+
+            SetMatchResult(match, homeGoals, awayGoals);
         }
     }
 
