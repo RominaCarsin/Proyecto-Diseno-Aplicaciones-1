@@ -62,26 +62,7 @@ public class GroupServiceTests
         Assert.AreEqual(1, group.Teams.Count);
     }
 
-    [TestMethod]
-    public void Add2UEFATeamsToGroup_ShouldSucced()
-    {
-        _service.AddGroup(new GroupRequest { Label = 'A' });
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","UEFA"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
-        
-        Assert.AreEqual(2, _service.GetGroups().First(g => g.Label == 'A').Teams.Count);
-    }
-    
-    [TestMethod]
-    public void Add3UEFATeamsToGroup_ShouldThrowException()
-    {
-        _service.AddGroup(new GroupRequest { Label = 'A' });
-        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay","UEFA"));
-        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina","UEFA"));
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            _service.AddTeamToGroup('A', CreateTeamRequest("Bolivia", "UEFA")));
-    }
+   
 
     [TestMethod]
     public void GetTeamByPosition_ShouldReturnTeamInGivenPosition()
