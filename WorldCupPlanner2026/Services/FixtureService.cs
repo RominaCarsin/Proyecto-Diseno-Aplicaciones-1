@@ -198,4 +198,11 @@ public class FixtureService : IFixtureService
     {
         GenerateFixture(seed, new DateTime(2026, 6, 1));
     }
+    
+    
+    
+    public void SimulateGroupStage(int seed)
+    {
+        throw new InvalidOperationException("No se ha generado el fixture todavía.");
+    }
 }
