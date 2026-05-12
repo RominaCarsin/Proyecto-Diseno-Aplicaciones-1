@@ -341,4 +341,20 @@ public class FixtureServiceTests
             Assert.AreEqual(matches[4].Date, matches[5].Date);
         }
     }
+    
+    [TestMethod]
+    public void GenerateFixture_WithNoStartDate_ShouldUseDefaultStartDate()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+
+        fixtureService.GenerateFixture(42);
+
+        var firstMatchDate = _groupRepository.GetAll()
+            .SelectMany(g => g.Matches)
+            .Min(m => m.Date);
+
+        Assert.AreEqual(new DateTime(2026, 6, 1, 14, 0, 0), firstMatchDate);
+    }
+    
+    
 }
