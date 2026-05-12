@@ -86,7 +86,7 @@ public class FixtureService : IFixtureService
 
             for (int round = 0; round < 3; round++)
             {
-                var groupStartDate = startDate.Date.AddDays(groupIndex);
+                var groupStartDate = startDate.Date.AddDays(groupIndex*7);
                 var roundDate = groupStartDate.AddDays(round * 3);
 
                 var roundPairings = pairings.Skip(round * 2).Take(2).ToList();
