@@ -98,4 +98,18 @@ public class TeamTests
         Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
     }
+    
+    [TestMethod]
+    public void RevertWin_WithPreviousWin_ShouldRemoveWinStats()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        team.RecordWin(3, 1);
+
+        team.RevertWin(3, 1);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalDifference);
+        Assert.AreEqual(0, team.GoalsInFavor);
+    }
 }
