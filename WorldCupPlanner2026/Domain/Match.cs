@@ -23,6 +23,7 @@ public class Match
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
     public bool IsLocked { get; private set; }
+    public MatchStatus Status { get; private set; }
     public char? Group { get; private set; }
     public string Phase { get; private set; } = "GroupStage";
 
@@ -47,6 +48,7 @@ public class Match
         AwayTeam = awayTeam!;
         Group = group;       
         Phase = phase;
+        Status = MatchStatus.NotFinished;
     }
 
     public void SetResult(int homeGoals, int awayGoals)
