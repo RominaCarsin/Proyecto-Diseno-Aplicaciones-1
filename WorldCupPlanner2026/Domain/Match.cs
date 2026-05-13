@@ -56,7 +56,7 @@ public class Match
 
     public void SetResult(int homeGoals, int awayGoals)
     {
-        ValidateIsNotLocked();
+        ValidateIsNotFinished();
         ValidateGoals(homeGoals, awayGoals);
 
         if (HasResult)
