@@ -125,9 +125,166 @@ public class MatchServiceTests
         Assert.AreEqual(initialLogCount + 1, logs.Count());
         Assert.AreEqual("Match created", logs.Last().Action);
     }
+    
+    [TestMethod]
+    public void GetMatches_WithNoMatches_ShouldReturnEmptyList()
+    {
+        var result = _matchService.GetMatches();
+
+        Assert.AreEqual(0, result.Count());
+    }
+
+    [TestMethod]
+    public void GetMatches_WithMultipleMatches_ShouldReturnAll()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest());
+        _matchService.AddMatch(BuildValidMatchRequest(
+            homeTeamName: "FRANCE",
+            awayTeamName: "GERMANY",
+            date: ValidMatchDate.AddHours(5)));
+
+        Assert.AreEqual(2, _matchService.GetMatches().Count());
+    }
+
+    // ─── GetMatchById ─────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void GetMatchById_WithExistingId_ShouldReturnMatchWithExpectedProperties()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        var result = _matchService.GetMatchById(saved.Id);
+
+        Assert.AreEqual(saved.Id,    result.Id);
+        Assert.AreEqual(HomeTeamName, result.HomeTeam.Name);
+        Assert.AreEqual(AwayTeamName, result.AwayTeam.Name);
+        Assert.AreEqual(ValidMatchDate, result.Date);
+    }
+
+    [TestMethod]
+    public void GetMatchById_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.GetMatchById(999));
+    }
+
+    // ─── SetMatchResult ───────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void SetMatchResult_WithHomeTeamScoringMore_ShouldSetHomeTeamAsWinner()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        _matchService.SetMatchResult(saved.Id, homeGoals: 3, awayGoals: 1);
+
+        var result = _matchService.GetMatchById(saved.Id);
+        Assert.AreEqual(3, result.HomeGoals);
+        Assert.AreEqual(1, result.AwayGoals);
+        Assert.AreEqual(HomeTeamName, result.Winner!.Name);
+    }
+
+    [TestMethod]
+    public void SetMatchResult_WithAwayTeamScoringMore_ShouldSetAwayTeamAsWinner()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        _matchService.SetMatchResult(saved.Id, homeGoals: 0, awayGoals: 2);
+
+        var result = _matchService.GetMatchById(saved.Id);
+        Assert.AreEqual(AwayTeamName, result.Winner!.Name);
+    }
+
+    [TestMethod]
+    public void SetMatchResult_WithDraw_ShouldSetNullWinner()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        _matchService.SetMatchResult(saved.Id, homeGoals: 1, awayGoals: 1);
+
+        var result = _matchService.GetMatchById(saved.Id);
+        Assert.IsNull(result.Winner);
+    }
+
+    [TestMethod]
+    public void SetMatchResult_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.SetMatchResult(999, homeGoals: 1, awayGoals: 0));
+    }
+
+    [TestMethod]
+    public void SetMatchResult_ShouldLogResultInAuditService()
+    {
+        var saved = AddValidMatchAndGetResponse();
+        var initialLogCount = _auditRepository.GetAll().Count();
+
+        _matchService.SetMatchResult(saved.Id, homeGoals: 2, awayGoals: 0);
+
+        var logs = _auditRepository.GetAll();
+        Assert.AreEqual(initialLogCount + 1, logs.Count());
+        Assert.AreEqual("Match result set", logs.Last().Action);
+    }
+
+    // ─── UpdateMatchDate ──────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void UpdateMatchDate_WithValidDate_ShouldReplaceMatchDate()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        _matchService.UpdateMatchDate(saved.Id, UpdatedMatchDate);
+
+        var result = _matchService.GetMatchById(saved.Id);
+        Assert.AreEqual(UpdatedMatchDate, result.Date);
+    }
+
+    [TestMethod]
+    public void UpdateMatchDate_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.UpdateMatchDate(999, UpdatedMatchDate));
+    }
+
+    [TestMethod]
+    public void UpdateMatchDate_WhenNewDateConflictsWithSameStadium_ShouldThrowInvalidOperationException()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate));
+        var secondMatch = AddMatchAndGetResponse(BuildValidMatchRequest(
+            date: ValidMatchDate.AddDays(1),
+            homeTeamName: "FRANCE",
+            awayTeamName: "GERMANY"));
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _matchService.UpdateMatchDate(secondMatch.Id, ValidMatchDate.AddHours(2)));
+    }
+
+    [TestMethod]
+    public void UpdateMatchDate_ShouldLogUpdateInAuditService()
+    {
+        var saved = AddValidMatchAndGetResponse();
+        var initialLogCount = _auditRepository.GetAll().Count();
+
+        _matchService.UpdateMatchDate(saved.Id, UpdatedMatchDate);
+
+        var logs = _auditRepository.GetAll();
+        Assert.AreEqual(initialLogCount + 1, logs.Count());
+        Assert.AreEqual("Match date updated", logs.Last().Action);
+    }
 
     
     // Helpers ──────────────────────────────────────────────────────────────
+    private MatchResponse AddValidMatchAndGetResponse()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest());
+        return _matchService.GetMatches().Last();
+    }
+
+    private MatchResponse AddMatchAndGetResponse(MatchRequest request)
+    {
+        _matchService.AddMatch(request);
+        return _matchService.GetMatches().Last();
+    }
+    
     private static MatchRequest BuildValidMatchRequest(
         string          homeTeamName   = HomeTeamName,
         string          awayTeamName   = AwayTeamName,
