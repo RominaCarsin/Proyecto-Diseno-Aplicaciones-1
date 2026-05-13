@@ -270,6 +270,57 @@ public class MatchServiceTests
         Assert.AreEqual(initialLogCount + 1, logs.Count());
         Assert.AreEqual("Match date updated", logs.Last().Action);
     }
+    
+    // GetAvailableStadiumsForMatch ─────────────────────────────────────────────────
+    
+    [TestMethod]
+    public void GetAvailableStadiumsForMatch_WhenAllCandidatesAreFree_ShouldReturnAllCandidates()
+    {
+        var saved = AddValidMatchAndGetResponse();
+        var candidates = new[]
+        {
+            BuildStadiumRequest(AlternativeStadiumName, AlternativeStadiumCity),
+            BuildStadiumRequest("AZTECA", "CIUDAD DE MEXICO")
+        };
+
+        var result = _matchService.GetAvailableStadiumsForMatch(saved.Id, candidates).ToList();
+
+        Assert.AreEqual(2, result.Count);
+    }
+
+    [TestMethod]
+    public void GetAvailableStadiumsForMatch_WhenSomeCandidatesConflict_ShouldReturnOnlyAvailableOnes()
+    {
+        var altStadium = BuildStadiumRequest(AlternativeStadiumName, AlternativeStadiumCity);
+        _matchService.AddMatch(BuildValidMatchRequest(
+            date: ValidMatchDate.AddHours(2),
+            stadiumRequest: altStadium,
+            homeTeamName: "FRANCE",
+            awayTeamName: "GERMANY"));
+
+        var matchToCheck = AddMatchAndGetResponse(BuildValidMatchRequest(
+            date: ValidMatchDate,
+            homeTeamName: "URUGUAY",
+            awayTeamName: "CHILE"));
+
+        var candidates = new[]
+        {
+            altStadium,
+            BuildStadiumRequest("AZTECA", "CIUDAD DE MEXICO")
+        };
+
+        var result = _matchService.GetAvailableStadiumsForMatch(matchToCheck.Id, candidates).ToList();
+
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("AZTECA", result[0].Name);
+    }
+
+    [TestMethod]
+    public void GetAvailableStadiumsForMatch_WithNonExistingMatchId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.GetAvailableStadiumsForMatch(999, Enumerable.Empty<StadiumRequest>()).ToList());
+    }
 
     
     // Helpers ──────────────────────────────────────────────────────────────
