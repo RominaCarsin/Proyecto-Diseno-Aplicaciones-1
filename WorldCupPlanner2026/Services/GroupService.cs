@@ -68,6 +68,14 @@ public class GroupService : IGroupService
     
     }
 
+    
+    public void FinishMatch(char groupLabel, int matchId)
+    {
+        Group group = FindGroupByLabel(groupLabel);
+        Match match = FindMatchById(group, matchId);
+        group.FinishMatch(match);
+    }
+    
     public TeamResponse GetTeamByPosition(char groupLabel, int position)
     {
         Group group = FindGroupByLabel(groupLabel);
