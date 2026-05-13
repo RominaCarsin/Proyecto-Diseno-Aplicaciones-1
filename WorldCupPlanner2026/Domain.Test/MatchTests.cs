@@ -109,6 +109,18 @@ public class MatchTests
         Assert.AreEqual(1, match.AwayGoals);
         Assert.AreEqual(match.HomeTeam, match.Winner);
     }
+    
+    [TestMethod]
+    public void UpdateDate_WhenMatchIsLockedButNotFinished_ShouldReplaceMatchDate()
+    {
+        Match match = CreateValidMatch();
+
+        match.LockEdition();
+
+        match.UpdateDate(AnotherValidDate);
+
+        Assert.AreEqual(AnotherValidDate, match.Date);
+    }
 
     [TestMethod]
     public void CreateMatch_ShouldGenerateIncrementalId()
