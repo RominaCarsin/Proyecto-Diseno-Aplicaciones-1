@@ -594,6 +594,148 @@ public class GroupTests
         Assert.IsNull(match.Winner);
     }
     
+    
+    
+    [TestMethod]
+    public void SimulateMatches_WithEqualRankings_ShouldSetWinnerAsNull()
+    {
+        var group = CreateValidGroup();
+
+        var homeTeam = new Team("HOME", "CONMEBOL", 1500);
+        var awayTeam = new Team("AWAY", "UEFA", 1500);
+
+        group.AddTeam(homeTeam);
+        group.AddTeam(awayTeam);
+
+        var match = CreateMatch(group, homeTeam, awayTeam);
+        group.AddMatch(match);
+
+        group.SimulateMatches(42);
+
+        Assert.IsNull(match.Winner);
+    }
+    
+    [TestMethod]
+    public void SimulateMatches_WithCloseRankings_ShouldGenerateDraw()
+    {
+        var group = CreateValidGroup();
+
+        var homeTeam = new Team("HOME", "CONMEBOL", 1800);
+        var awayTeam = new Team("AWAY", "UEFA", 1750);
+
+        group.AddTeam(homeTeam);
+        group.AddTeam(awayTeam);
+
+        var match = CreateMatch(group, homeTeam, awayTeam);
+        group.AddMatch(match);
+
+        group.SimulateMatches(0);
+
+        Assert.AreEqual(match.HomeGoals, match.AwayGoals);
+    }
+    
+    [TestMethod]
+public void SimulateMatches_WithEqualRankings_ShouldGenerateDrawResult()
+{
+    var group = CreateValidGroup();
+
+    var homeTeam = new Team("HOME", "CONMEBOL", 1500);
+    var awayTeam = new Team("AWAY", "UEFA", 1500);
+
+    group.AddTeam(homeTeam);
+    group.AddTeam(awayTeam);
+
+    var match = CreateMatch(group, homeTeam, awayTeam);
+    group.AddMatch(match);
+
+    group.SimulateMatches(42);
+
+    Assert.AreEqual(match.HomeGoals, match.AwayGoals);
+    Assert.IsNull(match.Winner);
+}
+
+[TestMethod]
+public void SimulateMatches_WithEqualRankings_ShouldUpdateBothTeamsWithOnePoint()
+{
+    var group = CreateValidGroup();
+
+    var homeTeam = new Team("HOME", "CONMEBOL", 1500);
+    var awayTeam = new Team("AWAY", "UEFA", 1500);
+
+    group.AddTeam(homeTeam);
+    group.AddTeam(awayTeam);
+
+    var match = CreateMatch(group, homeTeam, awayTeam);
+    group.AddMatch(match);
+
+    group.SimulateMatches(42);
+
+    Assert.AreEqual(1, homeTeam.Points);
+    Assert.AreEqual(1, awayTeam.Points);
+    Assert.AreEqual(0, homeTeam.GoalDifference);
+    Assert.AreEqual(0, awayTeam.GoalDifference);
+}
+
+[TestMethod]
+public void SimulateMatches_WithDifferentCloseRankings_ShouldGenerateDrawResult()
+{
+    var group = CreateValidGroup();
+
+    var homeTeam = new Team("HOME", "CONMEBOL", 1800);
+    var awayTeam = new Team("AWAY", "UEFA", 1750);
+
+    group.AddTeam(homeTeam);
+    group.AddTeam(awayTeam);
+
+    var match = CreateMatch(group, homeTeam, awayTeam);
+    group.AddMatch(match);
+
+    group.SimulateMatches(0);
+
+    Assert.AreEqual(match.HomeGoals, match.AwayGoals);
+    Assert.IsNull(match.Winner);
+}
+
+[TestMethod]
+public void SimulateMatches_WithHigherHomeRanking_ShouldGenerateHomeWin()
+{
+    var group = CreateValidGroup();
+
+    var homeTeam = new Team("HOME", "CONMEBOL", 2500);
+    var awayTeam = new Team("AWAY", "UEFA", 300);
+
+    group.AddTeam(homeTeam);
+    group.AddTeam(awayTeam);
+
+    var match = CreateMatch(group, homeTeam, awayTeam);
+    group.AddMatch(match);
+
+    group.SimulateMatches(42);
+
+    Assert.IsTrue(match.HomeGoals > match.AwayGoals);
+    Assert.AreEqual(homeTeam, match.Winner);
+}
+
+[TestMethod]
+public void SimulateMatches_WithHigherAwayRanking_ShouldGenerateAwayWin()
+{
+    var group = CreateValidGroup();
+
+    var homeTeam = new Team("HOME", "CONMEBOL", 300);
+    var awayTeam = new Team("AWAY", "UEFA", 2500);
+
+    group.AddTeam(homeTeam);
+    group.AddTeam(awayTeam);
+
+    var match = CreateMatch(group, homeTeam, awayTeam);
+    group.AddMatch(match);
+
+    group.SimulateMatches(42);
+
+    Assert.IsTrue(match.AwayGoals > match.HomeGoals);
+    Assert.AreEqual(awayTeam, match.Winner);
+}
+    
     private static void AddFourTeams(Group group)
     {
         group.AddTeam(new Team("TEAM0", "AFC", 1000));
