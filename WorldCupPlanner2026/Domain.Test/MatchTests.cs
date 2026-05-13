@@ -70,6 +70,31 @@ public class MatchTests
         Assert.ThrowsException<InvalidOperationException>(() =>
             match.Finish());
     }
+    
+    [TestMethod]
+    public void SetResult_WithExistingResult_ShouldRevertPreviousTeamStats()
+    {
+        Team homeTeam = BuildTeam(name: "URUGUAY");
+        Team awayTeam = BuildTeam(name: "ARGENTINA");
+
+        Match match = CreateValidMatch(
+            homeTeam: homeTeam,
+            awayTeam: awayTeam);
+
+        match.SetResult(2, 0);
+        match.SetResult(0, 1);
+
+        Assert.AreEqual(0, homeTeam.Points);
+        Assert.AreEqual(3, awayTeam.Points);
+
+        Assert.AreEqual(-1, homeTeam.GoalDifference);
+        Assert.AreEqual(1, awayTeam.GoalDifference);
+
+        Assert.AreEqual(0, homeTeam.GoalsInFavor);
+        Assert.AreEqual(1, awayTeam.GoalsInFavor);
+
+        Assert.AreEqual(awayTeam, match.Winner);
+    }
 
     [TestMethod]
     public void CreateMatch_ShouldGenerateIncrementalId()
