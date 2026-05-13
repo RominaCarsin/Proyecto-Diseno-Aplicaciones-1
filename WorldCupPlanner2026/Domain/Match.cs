@@ -86,6 +86,7 @@ public class Match
     public void Finish()
     {
         Status = MatchStatus.Finished;
+        IsLocked = true;
     }
 
     public void UpdateDate(DateTime newDate)
