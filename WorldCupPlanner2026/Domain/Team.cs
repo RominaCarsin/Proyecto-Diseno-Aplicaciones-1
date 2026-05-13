@@ -113,4 +113,10 @@ public class Team
         GoalDifference -= goalsScored - goalsConceded;
     }
     
+    public void RevertDraw(int goalsScored)
+    {
+        Points -= 1;
+        GoalsInFavor -= goalsScored;
+    }
+    
 }
