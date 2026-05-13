@@ -1,0 +1,271 @@
+﻿@page "/Stadiums/Create"
+@rendermode InteractiveServer
+@using DTOs
+@using IServices
+@inject IStadiumService StadiumService
+
+<div class="page-wrap">
+
+  <div class="ph">
+    <h1 class="pt">Stadiums</h1>
+    <p class="ps">Create new stadium · WorldCupPlanner 2026</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">@(_editingStadiumName != null ? "Edit stadium" : "New stadium")</span>
+    </div>
+
+    <div class="card-body">
+
+      <div class="fg">
+        <label class="fl">Name <span class="req">*</span></label>
+        <input class="finput @(_nameInvalid ? "invalid" : "")"
+               type="text" maxlength="80"
+               placeholder="Ex: Estadio Centenario"
+               @bind="_name" @bind:event="oninput" />
+        @if (_nameInvalid)
+        {
+          <span class="ferr">Name is required (1–80 characters)</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">City <span class="req">*</span></label>
+        <input class="finput @(_cityInvalid ? "invalid" : "")"
+               type="text" maxlength="60"
+               placeholder="Ex: Montevideo"
+               @bind="_city" @bind:event="oninput" />
+        @if (_cityInvalid)
+        {
+          <span class="ferr">City is required (1–60 characters)</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">Description</label>
+        <textarea class="finput @(_descInvalid ? "invalid" : "")"
+                  maxlength="400"
+                  placeholder="Optional description..."
+                  @bind="_description" @bind:event="oninput"></textarea>
+        @if (_descInvalid)
+        {
+          <span class="ferr">Description cannot exceed 400 characters</span>
+        }
+      </div>
+
+      <div class="fg">
+        <label class="fl">Capacity <span class="req">*</span></label>
+        <input class="finput @(_capacityInvalid ? "invalid" : "")"
+               type="number" min="20000"
+               placeholder="Ex: 60000"
+               @bind="_capacity" @bind:event="oninput" />
+        <span class="fhint">Minimum 20,000 spectators</span>
+        @if (_capacityInvalid)
+        {
+          <span class="ferr">Capacity must be at least 20,000</span>
+        }
+      </div>
+
+      @if (!string.IsNullOrEmpty(_successMessage))
+      {
+        <div class="alert-box suc">✓ @_successMessage</div>
+      }
+
+      @if (!string.IsNullOrEmpty(_errorMessage))
+      {
+        <div class="alert-box err">@_errorMessage</div>
+      }
+
+    </div>
+
+    <div class="card-footer">
+      @if (_editingStadiumName != null)
+      {
+        <button class="btn btn-g" @onclick="CancelEdit">Cancel edit</button>
+      }
+      <button class="btn-p" @onclick="Save">
+        @(_editingStadiumName != null ? "Update stadium" : "Save stadium")
+      </button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+      <span class="card-title">Registered stadiums (@_stadiums.Count())</span>
+    </div>
+    <div class="card-body" style="overflow-x: auto;">
+      @if (!_stadiums.Any())
+      {
+        <p style="color: #888;">No stadiums registered yet.</p>
+      }
+      else
+      {
+        <table>
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>City</th>
+            <th>Capacity</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          @foreach (var stadium in _stadiums)
+          {
+            <tr>
+              <td title="@stadium.Name">@stadium.Name</td>
+              <td title="@stadium.City">@stadium.City</td>
+              <td>@stadium.Capacity.ToString("N0")</td>
+              <td title="@stadium.Description">@(stadium.Description ?? "-")</td>
+              <td>
+                <div class="actions-cell">
+                  <button class="btn btn-s" 
+                          disabled="@(_editingStadiumName == stadium.Name)"
+                          @onclick="() => EditStadium(stadium)">Edit</button>
+                  <button class="btn btn-d"
+                          disabled="@(_editingStadiumName == stadium.Name)"
+                          @onclick="() => DeleteStadium(stadium.Name)">Delete</button>
+                </div>
+              </td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+</div>
+
+@code {
+    private string  _name        = string.Empty;
+    private string  _city        = string.Empty;
+    private string? _description;
+    private int     _capacity;
+
+    private string _errorMessage   = string.Empty;
+    private string _successMessage = string.Empty;
+
+    private string? _editingStadiumName;
+
+    private bool _nameInvalid;
+    private bool _cityInvalid;
+    private bool _descInvalid;
+    private bool _capacityInvalid;
+
+    private IEnumerable<StadiumResponse> _stadiums = Enumerable.Empty<StadiumResponse>();
+
+    protected override void OnInitialized()
+    {
+        LoadStadiums();
+    }
+
+    private void Save()
+    {
+        _errorMessage   = string.Empty;
+        _successMessage = string.Empty;
+
+        if (!ValidateForm()) return;
+
+        try
+        {
+            var request = BuildRequest();
+
+            if (_editingStadiumName != null)
+                StadiumService.UpdateStadium(_editingStadiumName, request);
+            else
+                StadiumService.AddStadium(request);
+
+            var message = _editingStadiumName != null
+                ? $"Stadium '{_name}' updated successfully!"
+                : $"Stadium '{_name}' created successfully!";
+
+            ClearForm();
+            LoadStadiums();
+            _successMessage = message;
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void EditStadium(StadiumResponse stadium)
+    {
+        _editingStadiumName = stadium.Name;
+        _name               = stadium.Name;
+        _city               = stadium.City;
+        _description        = stadium.Description;
+        _capacity           = stadium.Capacity;
+        _errorMessage       = string.Empty;
+        _successMessage     = string.Empty;
+        _nameInvalid        = false;
+        _cityInvalid        = false;
+        _descInvalid        = false;
+        _capacityInvalid    = false;
+    }
+
+    private void CancelEdit()
+    {
+        ClearForm();
+    }
+
+    private void DeleteStadium(string stadiumName)
+    {
+        try
+        {
+            if (_editingStadiumName == stadiumName)
+                ClearForm();
+
+            StadiumService.DeleteStadium(stadiumName);
+
+            var message = $"Stadium '{stadiumName}' deleted successfully!";
+            LoadStadiums();
+            _successMessage = message;
+        }
+        catch (ArgumentException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private void ClearForm()
+    {
+        _name               = string.Empty;
+        _city               = string.Empty;
+        _description        = null;
+        _capacity           = 0;
+        _editingStadiumName = null;
+        _nameInvalid        = false;
+        _cityInvalid        = false;
+        _descInvalid        = false;
+        _capacityInvalid    = false;
+        _errorMessage       = string.Empty;
+        _successMessage     = string.Empty;
+    }
+
+    private bool ValidateForm()
+    {
+        _nameInvalid     = string.IsNullOrWhiteSpace(_name) || _name.Length > 80;
+        _cityInvalid     = string.IsNullOrWhiteSpace(_city) || _city.Length > 60;
+        _descInvalid     = _description != null && _description.Length > 400;
+        _capacityInvalid = _capacity < 20000;
+
+        return !_nameInvalid && !_cityInvalid && !_descInvalid && !_capacityInvalid;
+    }
+
+    private StadiumRequest BuildRequest() => new()
+    {
+        Name        = _name,
+        City        = _city,
+        Description = _description,
+        Capacity    = _capacity
+    };
+
+    private void LoadStadiums()
+    {
+        _stadiums = StadiumService.GetAllStadiums();
+    }
+}
