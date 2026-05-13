@@ -1,0 +1,25 @@
+name: .NET tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore WorldCupPlanner2026.sln
+
+      - name: Test
+        run: dotnet test WorldCupPlanner2026.sln --no-restore --configuration Release

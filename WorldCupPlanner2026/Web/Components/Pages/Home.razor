@@ -1,10 +1,15 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
 @using IServices
 @using Web.Components.Shared
 @inject ISessionService SessionService
+@inject ITeamService TeamService
+@inject IStadiumService StadiumService
+@inject IGroupService GroupService
+@inject IMatchService MatchService
+@inject IAuditService AuditService
 
-<PageTitle>Inicio · WorldCupPlanner 2026</PageTitle>
+<PageTitle>Inicio - WorldCupPlanner 2026</PageTitle>
 
 <div class="container-fluid p-4">
     <div class="d-flex align-items-center justify-content-between mb-4">
@@ -15,29 +20,18 @@
     </div>
 
     <div class="row g-4 mb-4">
-        @if (Stats.Any())
+        @foreach (var stat in Stats)
         {
-            @foreach (var stat in Stats)
-            {
-                <div class="col-md-3">
-                    <div class="bg-white border-custom diagonal-corners overflow-hidden">
-                        <div class="@stat.Color p-4 d-flex align-items-center justify-content-center">
-                            <i class="bi @stat.Icon text-white fs-2"></i>
-                        </div>
-                        <GeometricDivider />
-                        <div class="p-4">
-                            <div class="text-3xl font-bold mb-1">@stat.Value</div>
-                            <div class="text-muted small text-uppercase">@stat.Label</div>
-                        </div>
+            <div class="col-md-3">
+                <div class="bg-white border-custom diagonal-corners overflow-hidden">
+                    <div class="@stat.Color p-4 d-flex align-items-center justify-content-center">
+                        <i class="bi @stat.Icon text-white fs-2"></i>
                     </div>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="col-12">
-                <div class="bg-white border-custom diagonal-corners p-4 text-muted">
-                    No hay métricas disponibles.
+                    <GeometricDivider />
+                    <div class="p-4">
+                        <div class="text-3xl font-bold mb-1">@stat.Value</div>
+                        <div class="text-muted small text-uppercase">@stat.Label</div>
+                    </div>
                 </div>
             </div>
         }
@@ -47,7 +41,7 @@
         <div class="col-lg-8">
             <div class="bg-white border-custom diagonal-corners h-100">
                 <div class="bg-primary-custom text-white px-4 py-3">
-                    <h5 class="mb-0">Próximos Partidos</h5>
+                    <h5 class="mb-0">Proximos Partidos</h5>
                 </div>
                 <GeometricDivider />
                 <div class="p-4">
@@ -70,7 +64,7 @@
                     }
                     else
                     {
-                        <div class="text-muted">No hay partidos próximos cargados.</div>
+                        <div class="text-muted">No hay partidos proximos cargados.</div>
                     }
                 </div>
             </div>
@@ -85,13 +79,13 @@
                 <div class="p-4">
                     @if (RecentActivity.Any())
                     {
-                        @for (int i = 0; i < RecentActivity.Count; i++)
+                        @for (var index = 0; index < RecentActivity.Count; index++)
                         {
-                            var activity = RecentActivity[i];
+                            var activity = RecentActivity[index];
                             <div class="mb-3">
                                 <p class="mb-1 small">@activity.Action</p>
                                 <p class="text-muted x-small">@activity.Time</p>
-                                @if (i < RecentActivity.Count - 1)
+                                @if (index < RecentActivity.Count - 1)
                                 {
                                     <GeometricDivider />
                                 }
@@ -110,10 +104,48 @@
 
 @code {
     private List<StatCard> Stats = new();
-
     private List<MatchInfo> UpcomingMatches = new();
-
     private List<ActivityInfo> RecentActivity = new();
+
+    protected override void OnInitialized()
+    {
+        LoadDashboard();
+    }
+
+    private void LoadDashboard()
+    {
+        var teams = TeamService.GetTeams().Count();
+        var stadiums = StadiumService.GetAllStadiums().Count();
+        var groups = GroupService.GetGroups().Count();
+        var matches = MatchService.GetMatches().ToList();
+
+        Stats =
+        [
+            new("Equipos", teams.ToString(), "bi-people-fill", "bg-wc-red"),
+            new("Estadios", stadiums.ToString(), "bi-geo-alt-fill", "bg-wc-green"),
+            new("Grupos", groups.ToString(), "bi-grid-3x3-gap-fill", "bg-wc-blue"),
+            new("Partidos", matches.Count.ToString(), "bi-calendar3", "bg-danger-custom")
+        ];
+
+        UpcomingMatches = matches
+            .Where(match => !match.HasResult)
+            .OrderBy(match => match.Date)
+            .Take(5)
+            .Select(match => new MatchInfo(
+                match.Date.ToString("dd/MM/yyyy HH:mm"),
+                match.HomeTeam.Name,
+                match.AwayTeam.Name,
+                match.Stadium.Name))
+            .ToList();
+
+        RecentActivity = AuditService.GetAll()
+            .OrderByDescending(log => log.Timestamp)
+            .Take(5)
+            .Select(log => new ActivityInfo(
+                $"{log.Action}: {log.Details}",
+                log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm")))
+            .ToList();
+    }
 
     public record StatCard(string Label, string Value, string Icon, string Color);
     public record MatchInfo(string Date, string HomeTeam, string AwayTeam, string Stadium);

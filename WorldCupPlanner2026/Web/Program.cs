@@ -16,6 +16,7 @@ builder.Services.AddScoped<IStadiumService, StadiumService>();
 
 builder.Services.AddScoped<IRepository<Team>, Repository<Team>>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<ITeamImportService, TeamImportService>();
 builder.Services.AddScoped<IConfederationService, ConfederationService>();
 
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
