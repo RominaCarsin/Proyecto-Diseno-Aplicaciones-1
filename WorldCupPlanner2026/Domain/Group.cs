@@ -45,6 +45,10 @@ public class Group
         _teams.Add(team!);
     }
     
+    public void FinishMatch(Match match)
+    {
+        match.Finish();
+    }
     
     private void ValidateConfederationLimit(Team team)
     {
