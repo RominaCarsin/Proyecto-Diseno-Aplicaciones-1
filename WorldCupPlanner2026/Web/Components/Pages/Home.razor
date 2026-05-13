@@ -7,7 +7,6 @@
 @inject IStadiumService StadiumService
 @inject IGroupService GroupService
 @inject IMatchService MatchService
-@inject IAuditService AuditService
 
 <PageTitle>Inicio - WorldCupPlanner 2026</PageTitle>
 
@@ -38,7 +37,7 @@
     </div>
 
     <div class="row g-4">
-        <div class="col-lg-8">
+        <div class="col-12">
             <div class="bg-white border-custom diagonal-corners h-100">
                 <div class="bg-primary-custom text-white px-4 py-3">
                     <h5 class="mb-0">Proximos Partidos</h5>
@@ -69,43 +68,12 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-4">
-            <div class="bg-white border-custom diagonal-corners">
-                <div class="bg-danger-custom text-white px-4 py-3">
-                    <h5 class="mb-0">Actividad Reciente</h5>
-                </div>
-                <GeometricDivider />
-                <div class="p-4">
-                    @if (RecentActivity.Any())
-                    {
-                        @for (var index = 0; index < RecentActivity.Count; index++)
-                        {
-                            var activity = RecentActivity[index];
-                            <div class="mb-3">
-                                <p class="mb-1 small">@activity.Action</p>
-                                <p class="text-muted x-small">@activity.Time</p>
-                                @if (index < RecentActivity.Count - 1)
-                                {
-                                    <GeometricDivider />
-                                }
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="text-muted">No hay actividad reciente.</div>
-                    }
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
 @code {
     private List<StatCard> Stats = new();
     private List<MatchInfo> UpcomingMatches = new();
-    private List<ActivityInfo> RecentActivity = new();
 
     protected override void OnInitialized()
     {
@@ -138,16 +106,8 @@
                 match.Stadium.Name))
             .ToList();
 
-        RecentActivity = AuditService.GetAll()
-            .OrderByDescending(log => log.Timestamp)
-            .Take(5)
-            .Select(log => new ActivityInfo(
-                $"{log.Action}: {log.Details}",
-                log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm")))
-            .ToList();
     }
 
     public record StatCard(string Label, string Value, string Icon, string Color);
     public record MatchInfo(string Date, string HomeTeam, string AwayTeam, string Stadium);
-    public record ActivityInfo(string Action, string Time);
 }
