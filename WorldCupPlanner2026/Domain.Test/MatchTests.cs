@@ -31,6 +31,14 @@ public class MatchTests
         Assert.IsNull(match.Winner);
         Assert.IsFalse(match.IsLocked);
     }
+    
+    [TestMethod]
+    public void CreateMatch_WithValidData_ShouldSetStatusAsNotFinished()
+    {
+        var match = CreateValidMatch();
+
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+    }
 
     [TestMethod]
     public void CreateMatch_ShouldGenerateIncrementalId()
