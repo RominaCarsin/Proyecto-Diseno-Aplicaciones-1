@@ -12,5 +12,6 @@ public interface IMatchService
     void UpdateMatchStadium(int matchId, StadiumRequest newStadium);
     void LockMatchEdition(int matchId);
     void LockMatchesByPhase(string phase);
+    void FinishMatch(int matchId);
     
 }
