@@ -27,6 +27,8 @@ public class Match
     public MatchStatus Status { get; private set; }
     public char? Group { get; private set; }
     public string Phase { get; private set; } = "GroupStage";
+    
+    public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
 
     public Match(
         DateTime date,
@@ -57,12 +59,34 @@ public class Match
         ValidateIsNotLocked();
         ValidateGoals(homeGoals, awayGoals);
 
+        if (HasResult)
+            RevertPreviousResult();
+        
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
         Winner = DetermineWinner(homeGoals, awayGoals);
 
         NotifyTeams();
         
+    }
+    
+    private void RevertPreviousResult()
+    {
+        if (HomeGoals > AwayGoals)
+        {
+            HomeTeam.RevertWin(HomeGoals.Value, AwayGoals.Value);
+            AwayTeam.RevertLoss(AwayGoals.Value, HomeGoals.Value);
+        }
+        else if (AwayGoals > HomeGoals)
+        {
+            AwayTeam.RevertWin(AwayGoals.Value, HomeGoals.Value);
+            HomeTeam.RevertLoss(HomeGoals.Value, AwayGoals.Value);
+        }
+        else
+        {
+            HomeTeam.RevertDraw(HomeGoals.Value);
+            AwayTeam.RevertDraw(AwayGoals.Value);
+        }
     }
     
     private void NotifyTeams()
