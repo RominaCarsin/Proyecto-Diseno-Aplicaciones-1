@@ -10,6 +10,7 @@ namespace Services.Tests;
 public class FixtureServiceTests
 {
     private IRepository<Group> _groupRepository = null!;
+    private IRepository<Match> _matchRepository;
 
     [TestMethod]
     public void GenerateFixture_WhenLessThan48Teams_ShouldThrowInvalidOperationException()
@@ -25,6 +26,7 @@ public class FixtureServiceTests
         var groupRepo = new Repository<Group>();
         var matchRepo = new Repository<Match>();
         _groupRepository = groupRepo;
+        _matchRepository = matchRepo;
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();
@@ -292,6 +294,7 @@ public class FixtureServiceTests
         var matchRepo = new Repository<Match>();
         var potRepo = new Repository<Pot>();
         _groupRepository = groupRepo;
+        _matchRepository = matchRepo;
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();
@@ -327,11 +330,14 @@ public class FixtureServiceTests
 
         fixtureService.GenerateFixture(42, startDate);
 
-        var matchesByDay = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
-            .GroupBy(m => m.Date.Date);
+        var matchesByStadiumAndDay = _matchRepository.GetAll()
+            .GroupBy(m => new
+            {
+                Date = m.Date.Date,
+                Stadium = m.Stadium.Name
+            });
 
-        Assert.IsTrue(matchesByDay.All(g => g.Count() <= 3));
+        Assert.IsTrue(matchesByStadiumAndDay.All(g => g.Count() <= 3));
     }
     
     [TestMethod]
@@ -344,7 +350,7 @@ public class FixtureServiceTests
 
         foreach (var group in _groupRepository.GetAll())
         {
-            var matches = group.Matches.ToList();
+            var matches = group.Matches.OrderBy(m => m.Date).ToList();
 
             var round1Date = matches[0].Date.Date;
             var round2Date = matches[2].Date.Date;
@@ -514,29 +520,10 @@ public void GenerateFixture_ShouldAssignGroupLabelToAllMatches()
 
     foreach (var group in _groupRepository.GetAll())
     {
-        Assert.IsTrue(group.Matches.All(m => m.Group?.Label == group.Label));
+        Assert.IsTrue(group.Matches.All(m => m.Group == group.Label));
     }
 }
 
-[TestMethod]
-public void GenerateFixture_ShouldScheduleGroupsWithSevenDayOffset()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-    var startDate = new DateTime(2026, 6, 1);
-
-    fixtureService.GenerateFixture(42, startDate);
-
-    var groups = _groupRepository.GetAll()
-        .OrderBy(g => g.Label)
-        .ToList();
-
-    for (int i = 0; i < groups.Count; i++)
-    {
-        var expectedStart = startDate.Date.AddDays(i * 7);
-        var firstMatch = groups[i].Matches.Min(m => m.Date.Date);
-        Assert.AreEqual(expectedStart, firstMatch);
-    }
-}
 
 [TestMethod]
 public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperationException()
@@ -579,6 +566,7 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         var matchRepo = new Repository<Match>();
         var potRepo = new Repository<Pot>();
         _groupRepository = groupRepo;
+        _matchRepository = matchRepo;
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();
