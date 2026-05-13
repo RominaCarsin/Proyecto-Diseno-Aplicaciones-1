@@ -57,6 +57,12 @@ public class MatchService : IMatchService
         var match = FindMatchByIdOrThrow(matchId);
         match.UpdateDate(newDate);
     }
+    
+    public void FinishMatch(int matchId)
+    {
+        var match = FindMatchByIdOrThrow(matchId);
+        match.Finish();
+    }
 
     public void UpdateMatchStadium(int matchId, StadiumRequest newStadiumRequest)
     {
