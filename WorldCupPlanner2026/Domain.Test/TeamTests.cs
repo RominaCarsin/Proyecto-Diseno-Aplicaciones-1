@@ -112,4 +112,18 @@ public class TeamTests
         Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
     }
+    
+    [TestMethod]
+    public void RevertDraw_WithPreviousDraw_ShouldRemoveDrawStats()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        team.RecordDraw(2);
+
+        team.RevertDraw(2);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalDifference);
+        Assert.AreEqual(0, team.GoalsInFavor);
+    }
 }
