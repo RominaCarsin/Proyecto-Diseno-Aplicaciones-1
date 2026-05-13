@@ -112,11 +112,24 @@ public class Team
         GoalsInFavor -= goalsScored;
         GoalDifference -= goalsScored - goalsConceded;
     }
+
+    public void RevertLoss(int goalsScored, int goalsConceded)
+    {
+        RevertStats(0, goalsScored, goalsConceded);
+    }
+
+    private void RevertStats(int points, int goalsScored, int goalsConceded)
+    {
+        Points -= points;
+        GoalsInFavor -= goalsScored;
+        GoalDifference -= goalsScored - goalsConceded;
+    }
     
     public void RevertDraw(int goalsScored)
     {
         Points -= 1;
         GoalsInFavor -= goalsScored;
+        GoalDifference -= goalsScored - goalsScored;
     }
     
 }
