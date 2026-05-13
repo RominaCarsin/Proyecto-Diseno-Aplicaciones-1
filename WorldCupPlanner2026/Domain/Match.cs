@@ -11,7 +11,8 @@ public class Match
     private const string SameTeamsErrorMessage = "Home team and away team must be different.";
     private const string LockedMatchErrorMessage = "Locked matches cannot be edited.";
     private const string NegativeGoalsErrorMessage = "Goals cannot be negative.";
-
+    private const string FinishedMatchErrorMessage = "Finished matches cannot be edited.";
+    
     private static int _nextId = 1;
 
     public int Id { get; private set; }
@@ -85,8 +86,15 @@ public class Match
     
     public void Finish()
     {
+        ValidateIsNotFinished();
         Status = MatchStatus.Finished;
         IsLocked = true;
+    }
+    
+    private void ValidateIsNotFinished()
+    {
+        if (Status == MatchStatus.Finished)
+            throw new InvalidOperationException(FinishedMatchErrorMessage);
     }
 
     public void UpdateDate(DateTime newDate)
