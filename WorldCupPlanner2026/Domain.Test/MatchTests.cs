@@ -59,6 +59,17 @@ public class MatchTests
 
         Assert.IsTrue(match.IsLocked);
     }
+    
+    [TestMethod]
+    public void Finish_WithFinishedMatch_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateValidMatch();
+
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.Finish());
+    }
 
     [TestMethod]
     public void CreateMatch_ShouldGenerateIncrementalId()
