@@ -82,6 +82,11 @@ public class Match
             AwayTeam.RecordDraw(AwayGoals.Value);
         }
     }
+    
+    public void Finish()
+    {
+        Status = MatchStatus.Finished;
+    }
 
     public void UpdateDate(DateTime newDate)
     {
