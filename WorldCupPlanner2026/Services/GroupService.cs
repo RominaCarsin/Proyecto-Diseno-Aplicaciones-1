@@ -94,7 +94,9 @@ public class GroupService : IGroupService
             date: request.Date,
             stadium: StadiumMapper.ToEntity(request.Stadium),
             homeTeam: homeTeam,
-            awayTeam: awayTeam
+            awayTeam: awayTeam,
+            group: group,
+            phase: TournamentPhase.GroupStage
         );
 
         group.AddMatch(match);

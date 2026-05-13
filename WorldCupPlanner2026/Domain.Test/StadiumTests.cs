@@ -4,255 +4,268 @@ namespace Domain.Test;
 public class StadiumTests
 {
     private const string ValidName = "CENTENARIO";
-    private const string ValidCity = "MONTEVIDO";
+    private const string ValidCity = "MONTEVIDEO";
     private const string ValidDescription = "Historic stadium";
     private const int ValidCapacity = 60000;
 
+
     [TestMethod]
-    public void CreateStadium_WithValidData_ShouldSucceed()
+    public void CreateStadium_WithValidData_ShouldCreateStadiumWithExpectedProperties()
     {
         var stadium = CreateValidStadium();
 
-        Assert.IsNotNull(stadium);
         Assert.AreEqual(ValidName, stadium.Name);
         Assert.AreEqual(ValidCity, stadium.City);
         Assert.AreEqual(ValidDescription, stadium.Description);
         Assert.AreEqual(ValidCapacity, stadium.Capacity);
     }
 
+
     [TestMethod]
-    public void CreateStadium_WithSpacesInNameAndCity_ShouldSucceed()
+    public void CreateStadium_WithLowercaseName_ShouldStoreNameInUpperCase()
     {
-        var stadium = new Stadium(" CENTENARIO", " MONTEVIDEO", ValidDescription, ValidCapacity);
-        
+        var stadium = new Stadium("centenario", ValidCity, ValidDescription, ValidCapacity);
+
         Assert.AreEqual("CENTENARIO", stadium.Name);
-        Assert.AreEqual("MONTEVIDEO", stadium.City);
     }
-    
+
     [TestMethod]
-    public void CreateStadium_WithLowerCaseNameAndCity_ShouldStoreInUpperCase()
+    public void CreateStadium_WithMixedCaseName_ShouldStoreNameInUpperCase()
     {
-        var stadium = new Stadium("Centenario", " Montevideo", ValidDescription, ValidCapacity);
-        
+        var stadium = new Stadium("cenTENario", ValidCity, ValidDescription, ValidCapacity);
+
         Assert.AreEqual("CENTENARIO", stadium.Name);
-        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithLeadingAndTrailingSpacesInName_ShouldStoreTrimmedName()
+    {
+        var stadium = new Stadium("  CENTENARIO  ", ValidCity, ValidDescription, ValidCapacity);
+
+        Assert.AreEqual("CENTENARIO", stadium.Name);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithNameExactlyAtMaxLength_ShouldStoreNameSuccessfully()
+    {
+        var nameWithMaxLength = new string('A', 80);
+
+        var stadium = new Stadium(nameWithMaxLength, ValidCity, ValidDescription, ValidCapacity);
+
+        Assert.AreEqual(nameWithMaxLength, stadium.Name);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithNameOneBelowMaxLength_ShouldStoreNameSuccessfully()
+    {
+        var nameOneBelowMaxLength = new string('A', 79);
+
+        var stadium = new Stadium(nameOneBelowMaxLength, ValidCity, ValidDescription, ValidCapacity);
+
+        Assert.AreEqual(nameOneBelowMaxLength, stadium.Name);
     }
 
     [TestMethod]
     public void CreateStadium_WithEmptyName_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() => new Stadium("", ValidCity, ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium("", ValidCity, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
     public void CreateStadium_WithNullName_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() => new Stadium(null, ValidCity, ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(null, ValidCity, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
-    public void CreateStadium_WithWhitespaceName_ShouldThrowException()
+    public void CreateStadium_WithWhitespaceOnlyName_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() => new Stadium("   ", ValidCity, ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium("   ", ValidCity, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
-    public void CreateStadium_WithNameLongerThan80Characters_ShouldThrowException()
+    public void CreateStadium_WithNameOneAboveMaxLength_ShouldThrowException()
     {
-        var longName = new string('A', 81);
+        var nameOneAboveMaxLength = new string('A', 81);
 
-        Assert.ThrowsException<Exception>(() => new Stadium(longName, ValidCity, ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(nameOneAboveMaxLength, ValidCity, ValidDescription, ValidCapacity));
+    }
+
+
+    [TestMethod]
+    public void CreateStadium_WithLowercaseCity_ShouldStoreCityInUpperCase()
+    {
+        var stadium = new Stadium(ValidName, "montevideo", ValidDescription, ValidCapacity);
+
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
     }
 
     [TestMethod]
-    public void CreateStadium_WithNameExactly80Characters_ShouldSucceed()
+    public void CreateStadium_WithMixedCaseCity_ShouldStoreCityInUpperCase()
     {
-        var nameWith80Chars = new string('A', 80);
+        var stadium = new Stadium(ValidName, "monTeVidEo", ValidDescription, ValidCapacity);
 
-        var stadium = new Stadium(nameWith80Chars, ValidCity, ValidDescription, ValidCapacity);
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
 
-        Assert.IsNotNull(stadium);
-        Assert.AreEqual(nameWith80Chars, stadium.Name);
+    [TestMethod]
+    public void CreateStadium_WithLeadingAndTrailingSpacesInCity_ShouldStoreTrimmedCity()
+    {
+        var stadium = new Stadium(ValidName, "  MONTEVIDEO  ", ValidDescription, ValidCapacity);
+
+        Assert.AreEqual("MONTEVIDEO", stadium.City);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithCityExactlyAtMaxLength_ShouldStoreCitySuccessfully()
+    {
+        var cityWithMaxLength = new string('A', 60);
+
+        var stadium = new Stadium(ValidName, cityWithMaxLength, ValidDescription, ValidCapacity);
+
+        Assert.AreEqual(cityWithMaxLength, stadium.City);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithCityOneBelowMaxLength_ShouldStoreCitySuccessfully()
+    {
+        var cityOneBelowMaxLength = new string('A', 59);
+
+        var stadium = new Stadium(ValidName, cityOneBelowMaxLength, ValidDescription, ValidCapacity);
+
+        Assert.AreEqual(cityOneBelowMaxLength, stadium.City);
     }
 
     [TestMethod]
     public void CreateStadium_WithEmptyCity_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, "", ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, "", ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
     public void CreateStadium_WithNullCity_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, null, ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, null, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
-    public void CreateStadium_WithWhitespaceCity_ShouldThrowException()
+    public void CreateStadium_WithWhitespaceOnlyCity_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, "   ", ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, "   ", ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
-    public void CreateStadium_WithCityLongerThan60Characters_ShouldThrowException()
+    public void CreateStadium_WithCityOneAboveMaxLength_ShouldThrowException()
     {
-        var longCity = new string('A', 61);
+        var cityOneAboveMaxLength = new string('A', 61);
 
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, longCity, ValidDescription, ValidCapacity));
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, cityOneAboveMaxLength, ValidDescription, ValidCapacity));
     }
+    
 
     [TestMethod]
-    public void CreateStadium_WithCityExactly60Characters_ShouldSucceed()
-    {
-        var cityWith60Chars = new string('A', 60);
-
-        var stadium = new Stadium(ValidName, cityWith60Chars, ValidDescription, ValidCapacity);
-
-        Assert.IsNotNull(stadium);
-        Assert.AreEqual(cityWith60Chars, stadium.City);
-    }
-
-    [TestMethod]
-    public void CreateStadium_WithCapacityLowerThan20000_ShouldThrowException()
-    {
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, ValidCity, ValidDescription, 19999));
-    }
-
-    [TestMethod]
-    public void CreateStadium_WithCapacityOf1_ShouldThrowException()
-    {
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, ValidCity, ValidDescription, 1));
-    }
-
-    [TestMethod]
-    public void CreateStadium_WithCapacityExactly20000_ShouldSucceed()
-    {
-        var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 20000);
-
-        Assert.IsNotNull(stadium);
-        Assert.AreEqual(20000, stadium.Capacity);
-    }
-
-    [TestMethod]
-    public void CreateStadium_WithNullDescription_ShouldSucceed()
+    public void CreateStadium_WithNullDescription_ShouldStoreNullDescription()
     {
         var stadium = new Stadium(ValidName, ValidCity, null, ValidCapacity);
 
-        Assert.IsNotNull(stadium);
         Assert.IsNull(stadium.Description);
     }
 
     [TestMethod]
-    public void CreateStadium_WithEmptyDescription_ShouldSucceed()
+    public void CreateStadium_WithEmptyDescription_ShouldStoreEmptyDescription()
     {
         var stadium = new Stadium(ValidName, ValidCity, "", ValidCapacity);
 
-        Assert.IsNotNull(stadium);
         Assert.AreEqual("", stadium.Description);
     }
 
     [TestMethod]
-    public void CreateStadium_WithDescriptionLongerThan400Characters_ShouldThrowException()
+    public void CreateStadium_WithDescriptionExactlyAtMaxLength_ShouldStoreDescriptionSuccessfully()
     {
-        var longDescription = new string('A', 401);
+        var descriptionWithMaxLength = new string('A', 400);
 
-        Assert.ThrowsException<Exception>(() => new Stadium(ValidName, ValidCity, longDescription, ValidCapacity));
+        var stadium = new Stadium(ValidName, ValidCity, descriptionWithMaxLength, ValidCapacity);
+
+        Assert.AreEqual(descriptionWithMaxLength, stadium.Description);
     }
 
     [TestMethod]
-    public void CreateStadium_WithDescriptionExactly400Characters_ShouldSucceed()
+    public void CreateStadium_WithDescriptionOneBelowMaxLength_ShouldStoreDescriptionSuccessfully()
     {
-        var description = new string('A', 400);
+        var descriptionOneBelowMaxLength = new string('A', 399);
 
-        var stadium = new Stadium(ValidName, ValidCity, description, ValidCapacity);
+        var stadium = new Stadium(ValidName, ValidCity, descriptionOneBelowMaxLength, ValidCapacity);
 
-        Assert.IsNotNull(stadium);
-        Assert.AreEqual(description, stadium.Description);
-    }
-
-    private static Stadium CreateValidStadium()
-    {
-        return new Stadium(ValidName, ValidCity, ValidDescription, ValidCapacity);
+        Assert.AreEqual(descriptionOneBelowMaxLength, stadium.Description);
     }
 
     [TestMethod]
-    public void CreateStadium_WithDifferentCases_ShouldConvertToUpperCase()
+    public void CreateStadium_WithDescriptionOneAboveMaxLength_ShouldThrowException()
     {
-        var stadium = new Stadium("cenTENario", "monTeVidEo", ValidDescription, ValidCapacity);
-        
-        Assert.AreEqual("CENTENARIO", stadium.Name);
-        Assert.AreEqual("MONTEVIDEO", stadium.City);
+        var descriptionOneAboveMaxLength = new string('A', 401);
+
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, ValidCity, descriptionOneAboveMaxLength, ValidCapacity));
+    }
+    
+
+    [TestMethod]
+    public void CreateStadium_WithCapacityExactlyAtMinimum_ShouldStoreCapacitySuccessfully()
+    {
+        var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 20000);
+
+        Assert.AreEqual(20000, stadium.Capacity);
     }
 
     [TestMethod]
-    public void CreateStadium_WithTrailingAndLeadingWhitespace_ShouldBeTrimmed()
-    {
-        var stadium = new Stadium("  CENTENARIO  ", "  MONTEVIDEO  ", ValidDescription, ValidCapacity);
-        
-        Assert.AreEqual("CENTENARIO", stadium.Name);
-        Assert.AreEqual("MONTEVIDEO", stadium.City);
-    }
-
-    [TestMethod]
-    public void CreateStadium_WithVeryHighCapacity_ShouldSucceed()
-    {
-        var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 200000);
-        
-        Assert.AreEqual(200000, stadium.Capacity);
-    }
-
-    [TestMethod]
-    public void Stadium_Properties_ShouldBeReadable()
-    {
-        var stadium = CreateValidStadium();
-        
-        Assert.AreEqual(ValidName, stadium.Name);
-        Assert.AreEqual(ValidCity, stadium.City);
-        Assert.AreEqual(ValidDescription, stadium.Description);
-        Assert.AreEqual(ValidCapacity, stadium.Capacity);
-    }
-
-    [TestMethod]
-    public void CreateStadium_NameWith79Characters_ShouldSucceed()
-    {
-        var nameWith79Chars = new string('A', 79);
-        var stadium = new Stadium(nameWith79Chars, ValidCity, ValidDescription, ValidCapacity);
-        
-        Assert.IsNotNull(stadium);
-    }
-
-    [TestMethod]
-    public void CreateStadium_CityWith59Characters_ShouldSucceed()
-    {
-        var cityWith59Chars = new string('B', 59);
-        var stadium = new Stadium(ValidName, cityWith59Chars, ValidDescription, ValidCapacity);
-        
-        Assert.IsNotNull(stadium);
-    }
-
-    [TestMethod]
-    public void CreateStadium_DescriptionWith399Characters_ShouldSucceed()
-    {
-        var descriptionWith399Chars = new string('C', 399);
-        var stadium = new Stadium(ValidName, ValidCity, descriptionWith399Chars, ValidCapacity);
-        
-        Assert.IsNotNull(stadium);
-    }
-
-    [TestMethod]
-    public void CreateStadium_WithCapacity20001_ShouldSucceed()
+    public void CreateStadium_WithCapacityOneAboveMinimum_ShouldStoreCapacitySuccessfully()
     {
         var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 20001);
-        
+
         Assert.AreEqual(20001, stadium.Capacity);
     }
 
     [TestMethod]
-    public void CreateStadium_WithLowercaseAndSpaces_ShouldBeNormalized()
+    public void CreateStadium_WithVeryHighCapacity_ShouldStoreCapacitySuccessfully()
+    {
+        var stadium = new Stadium(ValidName, ValidCity, ValidDescription, 200000);
+
+        Assert.AreEqual(200000, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithCapacityOneBelowMinimum_ShouldThrowException()
+    {
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, ValidCity, ValidDescription, 19999));
+    }
+
+    [TestMethod]
+    public void CreateStadium_WithCapacityOfOne_ShouldThrowException()
+    {
+        Assert.ThrowsException<Exception>(() =>
+            new Stadium(ValidName, ValidCity, ValidDescription, 1));
+    }
+    
+
+    [TestMethod]
+    public void CreateStadium_WithLowercaseAndSpacesInNameAndCity_ShouldNormalizeBothFields()
     {
         var stadium = new Stadium("  san juan  ", "  buenos aires  ", ValidDescription, ValidCapacity);
-        
+
         Assert.AreEqual("SAN JUAN", stadium.Name);
         Assert.AreEqual("BUENOS AIRES", stadium.City);
     }
+    
+
+    private static Stadium CreateValidStadium() =>
+        new Stadium(ValidName, ValidCity, ValidDescription, ValidCapacity);
 }

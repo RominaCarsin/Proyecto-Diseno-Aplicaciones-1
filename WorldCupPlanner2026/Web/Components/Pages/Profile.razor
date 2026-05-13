@@ -1,0 +1,191 @@
+﻿@using Web.Components.Shared
+@using DTOs
+@using IServices
+@page "/profile"
+@inject ISessionService SessionService
+@inject IUserService UserService
+
+<div class="container-fluid p-0 space-y-6">
+
+    @if (currentUser == null)
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+            Debes iniciar sesión para ver tu perfil.
+        </div>
+    }
+    else
+    {
+        @* --- INFORMACIÓN GENERAL --- *@
+        <div class="bg-white border-custom p-6 diagonal-corners">
+            <div class="d-flex align-items-center gap-4 mb-4">
+                <div class="avatar-box bg-wc-blue text-white d-flex align-items-center justify-content-center">
+                    <i class="bi bi-person-fill h1 mb-0"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0">@currentUser.Name</h3>
+                    <p class="text-muted mb-0">@currentUser.Email</p>
+                </div>
+            </div>
+
+            <GeometricDivider />
+
+            <div class="row g-4 mt-2">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Nombre</label>
+                    <input type="text" value="@currentUser.Name" class="form-control border-custom-input" disabled />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Email</label>
+                    <input type="email" value="@currentUser.Email" class="form-control border-custom-input" disabled />
+                </div>
+            </div>
+        </div>
+
+        @* --- ROL Y PERMISOS --- *@
+        <div class="bg-white border-custom p-6 diagonal-corners">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-shield-check text-wc-blue h4 mb-0"></i>
+                <h3 class="mb-0">Rol y Permisos</h3>
+            </div>
+            <GeometricDivider />
+
+            <div class="row g-4 mt-2">
+                <div class="col-md-12">
+                    <label class="form-label fw-bold d-block mb-3">Roles asignados</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (currentUser.Roles.HasFlag(RoleDto.Admin))
+                        {
+                            <span class="badge bg-success-soft text-success px-3 py-2">Administrador</span>
+                        }
+                        @if (currentUser.Roles.HasFlag(RoleDto.Editor))
+                        {
+                            <span class="badge bg-success-soft text-success px-3 py-2">Editor</span>
+                        }
+                        @if (!currentUser.Roles.HasFlag(RoleDto.Admin) && !currentUser.Roles.HasFlag(RoleDto.Editor))
+                        {
+                            <span class="badge bg-secondary text-white px-3 py-2">Sin roles asignados</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* --- SEGURIDAD --- *@
+        <div class="bg-white border-custom p-6 diagonal-corners">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-key text-wc-red h4 mb-0"></i>
+                <h3 class="mb-0">Cambiar Contraseña</h3>
+            </div>
+            <GeometricDivider />
+
+            <div class="max-w-md mt-4 space-y-4">
+                @if (!string.IsNullOrWhiteSpace(successMessage))
+                {
+                    <div class="alert alert-success border-custom py-2">@successMessage</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="alert alert-danger border-custom py-2">@errorMessage</div>
+                }
+
+                <div>
+                    <label class="form-label fw-bold">Contraseña Actual</label>
+                    <input type="password" @bind="currentPassword" class="form-control border-custom-input" placeholder="••••••••" />
+                </div>
+                <div>
+                    <label class="form-label fw-bold">Nueva Contraseña</label>
+                    <input type="password" @bind="newPassword" class="form-control border-custom-input" placeholder="••••••••" />
+                </div>
+                <div>
+                    <label class="form-label fw-bold">Confirmar Nueva Contraseña</label>
+                    <input type="password" @bind="confirmPassword" class="form-control border-custom-input" placeholder="••••••••" />
+                </div>
+
+                <button @onclick="ResetPassword" class="btn btn-wc-red px-4 mt-2">
+                    Actualizar Contraseña
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private UserResponse? currentUser;
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string confirmPassword = "";
+    private string successMessage = "";
+    private string errorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        currentUser = SessionService.GetCurrentUser();
+    }
+
+    private void ResetPassword()
+    {
+        ClearMessages();
+
+        if (currentUser == null)
+        {
+            errorMessage = "Sesión no disponible.";
+            return;
+        }
+
+        if (newPassword != confirmPassword)
+        {
+            errorMessage = "Las contraseñas no coinciden.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            errorMessage = "Completa todos los campos de contraseña.";
+            return;
+        }
+
+        try
+        {
+            UserService.ChangePassword(currentUser.Email, currentPassword, newPassword);
+            successMessage = "Contraseña actualizada correctamente.";
+            currentPassword = newPassword = confirmPassword = "";
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void ClearMessages()
+    {
+        successMessage = "";
+        errorMessage = "";
+    }
+}
+
+<style>
+    .avatar-box {
+        width: 80px;
+        height: 80px;
+        border-radius: 4px; /* Manteniendo la estética geométrica */
+    }
+
+    .bg-success-soft {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    .max-w-md {
+        max-width: 500px;
+    }
+
+    .border-custom-input {
+        border: 2px solid var(--wc-border);
+        border-radius: 0;
+        padding: 0.6rem 1rem;
+    }
+
+    .border-custom-input:focus {
+        border-color: var(--wc-blue);
+        box-shadow: none;
+    }
+</style>

@@ -141,8 +141,8 @@ public class FixtureService : IFixtureService
                         stadium,
                         teamList[homeIndex],
                         teamList[awayIndex],
-                        group: group.Label,
-                        phase: "GroupStage"
+                        group: group,
+                        phase: TournamentPhase.GroupStage
                     ));
 
                     matchCounter++;

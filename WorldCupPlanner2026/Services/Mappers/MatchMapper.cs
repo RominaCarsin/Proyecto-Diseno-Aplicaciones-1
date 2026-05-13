@@ -1,30 +1,31 @@
-﻿using Domain;
+using Domain;
 using DTOs;
+using IRepository;
 
 namespace Services.Mappers;
 
 public static class MatchMapper
 {
-    public static Match ToEntity(MatchRequest matchRequest) =>
-        new Match(
+    public static Match ToEntity(MatchRequest matchRequest, IRepository<Group>? groupRepository = null) =>
+        new(
             date: matchRequest.Date,
             stadium: StadiumMapper.ToEntity(matchRequest.Stadium),
             homeTeam: TeamMapper.ToEntity(matchRequest.HomeTeam),
             awayTeam: TeamMapper.ToEntity(matchRequest.AwayTeam),
-            group: matchRequest.Group,
-            phase: matchRequest.Phase
+            group: ResolveGroup(matchRequest.Group, groupRepository),
+            phase: ResolvePhase(matchRequest.Phase)
         );
 
     public static MatchResponse ToResponse(Match match) =>
-        new MatchResponse
+        new()
         {
             Id = match.Id,
             Date = match.Date,
             Stadium = StadiumMapper.FromEntity(match.Stadium),
             HomeTeam = TeamMapper.FromEntity(match.HomeTeam),
             AwayTeam = TeamMapper.FromEntity(match.AwayTeam),
-            Group = match.Group,
-            Phase = match.Phase,
+            Group = match.Group?.Label,
+            Phase = match.Phase.ToString(),
             HomeGoals = match.HomeGoals,
             AwayGoals = match.AwayGoals,
             Winner = match.Winner is null ? null : TeamMapper.FromEntity(match.Winner),
@@ -32,4 +33,26 @@ public static class MatchMapper
             Status = match.Status.ToString(),
             HasResult = match.HasResult
         };
+
+    private static Group? ResolveGroup(char? groupLabel, IRepository<Group>? groupRepository)
+    {
+        if (!groupLabel.HasValue)
+            return null;
+
+        var group = groupRepository?.GetAll()
+            .FirstOrDefault(g => g.Label == char.ToUpperInvariant(groupLabel.Value));
+
+        return group ?? throw new InvalidOperationException("Group was not found.");
+    }
+
+    private static TournamentPhase ResolvePhase(string phase)
+    {
+        if (string.IsNullOrWhiteSpace(phase))
+            return TournamentPhase.GroupStage;
+
+        if (Enum.TryParse<TournamentPhase>(phase, ignoreCase: true, out var result))
+            return result;
+
+        throw new ArgumentException($"Invalid tournament phase: '{phase}'.");
+    }
 }

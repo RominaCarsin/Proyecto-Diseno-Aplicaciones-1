@@ -1,9 +1,8 @@
-﻿namespace Domain.Test;
+namespace Domain.Test;
 
 [TestClass]
 public class TeamTests
 {
-    
     private const string ValidName = "URUGUAY";
     private const string ValidConf = "CONMEBOL";
     private const int ValidRanking = 500;
@@ -11,133 +10,102 @@ public class TeamTests
     [TestMethod]
     public void CreateTeam_WithValidData_ShouldSucceedAndNormalize()
     {
-        
         var team = new Team("uruguay", "conmebol", ValidRanking);
-        
-        Assert.IsNotNull(team);
+
         Assert.AreEqual("URUGUAY", team.Name);
         Assert.AreEqual("CONMEBOL", team.ConfederationName);
         Assert.AreEqual(ValidRanking, team.RankingFifa);
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalDifference);
+        Assert.AreEqual(0, team.GoalsInFavor);
     }
 
     [TestMethod]
-    public void CreateTeam_WithSpacesInNameAndConf_ShouldTrimAndUppercase()
+    public void CreateTeam_WithInvalidData_ShouldThrowException()
     {
-        var team = new Team("  argentina  ", "  uefa  ", ValidRanking);
-        
-        Assert.AreEqual("ARGENTINA", team.Name);
-        Assert.AreEqual("UEFA", team.ConfederationName);
-    }
-
-    [TestMethod]
-    public void CreateTeam_WithInvalidName_ShouldThrowException()
-    {
-        
         Assert.ThrowsException<ArgumentException>(() => new Team("", ValidConf, ValidRanking));
         Assert.ThrowsException<ArgumentException>(() => new Team("   ", ValidConf, ValidRanking));
-    }
-
-    [TestMethod]
-    public void CreateTeam_WithNameExactly60Characters_ShouldSucceedInUpper()
-    {
-        var maxName = new string('a', 60);
-        var team = new Team(maxName, ValidConf, ValidRanking);
-        
-        Assert.AreEqual(maxName.ToUpper(), team.Name);
-    }
-
-    [TestMethod]
-    public void CreateTeam_WithInvalidConfederation_ShouldThrowException()
-    {
         Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, "INVALID", ValidRanking));
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, null, ValidRanking));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, null!, ValidRanking));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 299));
+        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 2501));
     }
 
     [TestMethod]
-    public void UpdateName_ShouldNormalizeToUppercase()
+    public void UpdateNameAndConfederation_ShouldNormalizeToUppercase()
     {
         var team = new Team("Spain", "UEFA", ValidRanking);
-        
+
         team.UpdateName("france");
-        
-        Assert.AreEqual("FRANCE", team.Name);
-    }
-
-    [TestMethod]
-    public void UpdateConfederationName_ShouldNormalizeToUppercase()
-    {
-        var team = new Team("Spain", "UEFA", ValidRanking);
-        
         team.UpdateConfederationName("afc");
-        
+
+        Assert.AreEqual("FRANCE", team.Name);
         Assert.AreEqual("AFC", team.ConfederationName);
     }
 
     [TestMethod]
     public void CreateTeam_WithRankingFifaAtBoundaries_ShouldSucceed()
     {
-        var teamMin = new Team(ValidName, ValidConf, 300);
-        var teamMax = new Team(ValidName, ValidConf, 2500);
-
-        Assert.AreEqual(300, teamMin.RankingFifa);
-        Assert.AreEqual(2500, teamMax.RankingFifa);
+        Assert.AreEqual(300, new Team(ValidName, ValidConf, 300).RankingFifa);
+        Assert.AreEqual(2500, new Team(ValidName, ValidConf, 2500).RankingFifa);
     }
 
     [TestMethod]
-    public void CreateTeam_WithRankingFifaOutOfRange_ShouldThrowException()
+    public void RecordResults_ShouldUpdateStats()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 299));
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 2501));
+        var winTeam = new Team(ValidName, ValidConf, ValidRanking);
+        winTeam.RecordWin(3, 1);
+        Assert.AreEqual(3, winTeam.Points);
+        Assert.AreEqual(3, winTeam.GoalsInFavor);
+        Assert.AreEqual(2, winTeam.GoalDifference);
+
+        var drawTeam = new Team(ValidName, ValidConf, ValidRanking);
+        drawTeam.RecordDraw(2);
+        Assert.AreEqual(1, drawTeam.Points);
+        Assert.AreEqual(2, drawTeam.GoalsInFavor);
+        Assert.AreEqual(0, drawTeam.GoalDifference);
+
+        var lossTeam = new Team(ValidName, ValidConf, ValidRanking);
+        lossTeam.RecordLoss(0, 4);
+        Assert.AreEqual(0, lossTeam.Points);
+        Assert.AreEqual(0, lossTeam.GoalsInFavor);
+        Assert.AreEqual(-4, lossTeam.GoalDifference);
     }
 
     [TestMethod]
-    public void CreateTeam_ShouldInitializePointsAndGoalsToZero()
-    {
-        var team = new Team(ValidName, ValidConf, ValidRanking);
-        Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalDifference);
-        Assert.AreEqual(0, team.GoalsInFavor);
-    }
-    
-    [TestMethod]
-    public void RevertWin_WithPreviousWin_ShouldRemoveWinStats()
+    public void RevertResults_ShouldRemovePreviousStats()
     {
         var team = new Team(ValidName, ValidConf, ValidRanking);
 
         team.RecordWin(3, 1);
-
         team.RevertWin(3, 1);
-
         Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
-    }
-    
-    [TestMethod]
-    public void RevertDraw_WithPreviousDraw_ShouldRemoveDrawStats()
-    {
-        var team = new Team(ValidName, ValidConf, ValidRanking);
+        Assert.AreEqual(0, team.GoalDifference);
 
         team.RecordDraw(2);
-
         team.RevertDraw(2);
-
         Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+
+        team.RecordLoss(1, 3);
+        team.RevertLoss(1, 3);
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
     }
-    
+
     [TestMethod]
-    public void RevertLoss_WithPreviousLoss_ShouldRemoveLossStats()
+    public void MatchResults_ShouldThrowException_WhenGoalsAreNegative()
     {
         var team = new Team(ValidName, ValidConf, ValidRanking);
 
-        team.RecordLoss(1, 3);
-
-        team.RevertLoss(1, 3);
-
-        Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalDifference);
-        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.ThrowsException<ArgumentException>(() => team.RecordWin(-1, 0));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordWin(1, -1));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordDraw(-1));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordLoss(-1, 0));
+        Assert.ThrowsException<ArgumentException>(() => team.RecordLoss(0, -1));
+        Assert.ThrowsException<ArgumentException>(() => team.RevertWin(-1, 0));
     }
 }

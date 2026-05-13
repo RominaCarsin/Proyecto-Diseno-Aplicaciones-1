@@ -5,37 +5,47 @@ using IRepository;
 using Repository;
 using Blazored.LocalStorage;
 using Domain;
-using DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddSingleton<IRepository<Stadium>, Repository<Stadium>>();
-builder.Services.AddSingleton<IStadiumService, StadiumService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<IRepository<Team>, Repository<Team>>();
-builder.Services.AddSingleton<ITeamService, TeamService>();
-builder.Services.AddSingleton<IConfederationService, ConfederationService>();
+builder.Services.AddScoped<IRepository<Stadium>, Repository<Stadium>>();
+builder.Services.AddScoped<IStadiumService, StadiumService>();
+
+builder.Services.AddScoped<IRepository<Team>, Repository<Team>>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IConfederationService, ConfederationService>();
+
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthStateService, AuthStateService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
+
+builder.Services.AddScoped<IRepository<AuditLog>, Repository<AuditLog>>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+
+builder.Services.AddScoped<IRepository<Match>, Repository<Match>>();
+builder.Services.AddScoped<IMatchService, MatchService>();
+
+builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();
+builder.Services.AddScoped<IGroupService, GroupService>();
+
+builder.Services.AddScoped<IRepository<Pot>, Repository<Pot>>();
+builder.Services.AddScoped<IPotService, PotService>();
+
+builder.Services.AddScoped<IFixtureService, FixtureService>();
+builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
+builder.Services.AddScoped<IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
+
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddSingleton<IRepository<Match>, Repository<Match>>();
-builder.Services.AddSingleton<IMatchService, MatchService>();
-builder.Services.AddSingleton<IRepository<Group>, Repository<Group>>();
-builder.Services.AddSingleton<IGroupService, GroupService>();
-builder.Services.AddSingleton<IFixtureService, FixtureService>();
-builder.Services.AddSingleton<IRepository<Pot>, Repository<Pot>>();
-builder.Services.AddSingleton<IPotService, PotService>();
 
 var app = builder.Build();
 
-
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -46,7 +56,5 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-
 
 app.Run();

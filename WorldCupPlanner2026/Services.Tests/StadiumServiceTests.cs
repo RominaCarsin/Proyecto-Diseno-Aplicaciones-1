@@ -9,22 +9,23 @@ namespace Services.Tests;
 public class StadiumServiceTests
 {
     private StadiumService _service = null!;
-    private IRepository<Stadium> _repository = null!;
 
     [TestInitialize]
     public void SetUp()
     {
-        _repository = new Repository<Stadium>();
-        _service = new StadiumService(_repository);
+        IRepository<Stadium> repository = new Repository<Stadium>();
+        IRepository<AuditLog> auditRepository = new Repository<AuditLog>();
+        var auditService = new AuditService(auditRepository);
+        var authState = new AuthStateService();
+        var sessionService = new SessionService(null!, authState);
+
+        _service = new StadiumService(repository, auditService, sessionService);
     }
-    
 
     [TestMethod]
     public void AddStadium_WithValidRequest_ShouldPersistStadiumWithExpectedName()
     {
-        var request = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-
-        _service.AddStadium(request);
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
 
         var addedStadium = GetStadiumByName("CENTENARIO");
         Assert.IsNotNull(addedStadium);
@@ -34,31 +35,16 @@ public class StadiumServiceTests
     [TestMethod]
     public void AddStadium_WithDuplicateName_ShouldThrowArgumentException()
     {
-        var firstRequest = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-        var duplicateRequest = BuildStadiumRequest(name: "CENTENARIO", city: "BUENOS AIRES");
-        _service.AddStadium(firstRequest);
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.AddStadium(duplicateRequest));
+            _service.AddStadium(BuildStadiumRequest("centenario", "BUENOS AIRES")));
     }
-
-    [TestMethod]
-    public void AddStadium_WithDuplicateNameInDifferentCase_ShouldThrowArgumentException()
-    {
-        var firstRequest = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-        var duplicateWithDifferentCase = BuildStadiumRequest(name: "centenario", city: "BUENOS AIRES");
-        _service.AddStadium(firstRequest);
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            _service.AddStadium(duplicateWithDifferentCase));
-    }
-    
 
     [TestMethod]
     public void DeleteStadium_WithExistingStadium_ShouldRemoveStadiumFromRepository()
     {
-        var request = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-        _service.AddStadium(request);
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
 
         _service.DeleteStadium("CENTENARIO");
 
@@ -71,16 +57,13 @@ public class StadiumServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _service.DeleteStadium("NON EXISTING STADIUM"));
     }
-    
 
     [TestMethod]
     public void UpdateStadium_WithValidData_ShouldReplaceOldStadiumWithUpdatedOne()
     {
-        var originalRequest = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-        var updatedRequest = BuildStadiumRequest(name: "CAMPEON", city: "BUENOS AIRES");
-        _service.AddStadium(originalRequest);
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
 
-        _service.UpdateStadium("CENTENARIO", updatedRequest);
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest("CAMPEON", "BUENOS AIRES"));
 
         Assert.IsNull(GetStadiumByName("CENTENARIO"));
         Assert.IsNotNull(GetStadiumByName("CAMPEON"));
@@ -89,23 +72,19 @@ public class StadiumServiceTests
     [TestMethod]
     public void UpdateStadium_WithNameAlreadyTakenByAnotherStadium_ShouldThrowArgumentException()
     {
-        var centenarioRequest = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-        var campeonRequest = BuildStadiumRequest(name: "CAMPEON", city: "BUENOS AIRES");
-        _service.AddStadium(centenarioRequest);
-        _service.AddStadium(campeonRequest);
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
+        _service.AddStadium(BuildStadiumRequest("CAMPEON", "BUENOS AIRES"));
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.UpdateStadium("CAMPEON", centenarioRequest));
+            _service.UpdateStadium("CAMPEON", BuildStadiumRequest("CENTENARIO", "MONTEVIDEO")));
     }
 
     [TestMethod]
     public void UpdateStadium_WithSameNameAsOriginal_ShouldUpdateRemainingDataSuccessfully()
     {
-        var originalRequest = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-        var sameNameUpdatedRequest = BuildStadiumRequest(name: "CENTENARIO", city: "BUENOS AIRES");
-        _service.AddStadium(originalRequest);
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
 
-        _service.UpdateStadium("CENTENARIO", sameNameUpdatedRequest);
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest("CENTENARIO", "BUENOS AIRES"));
 
         var updatedStadium = GetStadiumByName("CENTENARIO");
         Assert.IsNotNull(updatedStadium);
@@ -115,27 +94,22 @@ public class StadiumServiceTests
     [TestMethod]
     public void UpdateStadium_WithNonExistingOriginalName_ShouldThrowArgumentException()
     {
-        var request = BuildStadiumRequest(name: "CENTENARIO", city: "MONTEVIDEO");
-
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.UpdateStadium("NON EXISTING STADIUM", request));
+            _service.UpdateStadium("NON EXISTING STADIUM", BuildStadiumRequest("CENTENARIO", "MONTEVIDEO")));
     }
-    
 
     private static StadiumRequest BuildStadiumRequest(
         string name,
         string city,
         string? description = null,
-        int capacity = 60000)
-    {
-        return new StadiumRequest
+        int capacity = 60000) =>
+        new()
         {
             Name = name,
             City = city,
             Description = description,
             Capacity = capacity
         };
-    }
 
     private StadiumResponse? GetStadiumByName(string name) =>
         _service.GetAllStadiums().FirstOrDefault(s => s.Name == name);

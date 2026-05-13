@@ -28,10 +28,10 @@ public class FixtureServiceTests
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();
-        var teamService = new TeamService(teamRepo, confederationService);
+        var teamService = CreateTeamService(teamRepo, confederationService);
 
         var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = new StadiumService(stadiumRepo);
+        var stadiumService = CreateStadiumService(stadiumRepo);
 
         var groupService = new GroupService(groupRepo);
 
@@ -55,13 +55,13 @@ public class FixtureServiceTests
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();
-        var teamService = new TeamService(teamRepo, confederationService);
+        var teamService = CreateTeamService(teamRepo, confederationService);
 
         for (int i = 0; i < 48; i++)
             teamRepo.Add(new Team($"TEAM_{i:00}", "UEFA", 1000 + i));
 
         var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = new StadiumService(stadiumRepo);
+        var stadiumService = CreateStadiumService(stadiumRepo);
 
         var groupService = new GroupService(groupRepo);
 
@@ -173,7 +173,7 @@ public class FixtureServiceTests
     public void GeneratePots_WithSameSeed_ShouldProduceSameOrder()
     {
         var teamRepo1 = new  Repository<Team>();
-        var teamService = new  TeamService(teamRepo1, new ConfederationService());
+        var teamService = CreateTeamService(teamRepo1, new ConfederationService());
         teamService.AutoCompleteTeams(48);
         
         var potRepo1 = new Repository<Pot>();
@@ -182,7 +182,7 @@ public class FixtureServiceTests
         var order1 = potRepo1.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
 
         var teamRepo2 = new  Repository<Team>();
-        var teamService2 = new  TeamService(teamRepo2, new ConfederationService());
+        var teamService2 = CreateTeamService(teamRepo2, new ConfederationService());
         teamService2.AutoCompleteTeams(48);
         
         var potRepo2 = new Repository<Pot>();
@@ -295,7 +295,7 @@ public class FixtureServiceTests
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();
-        var teamService = new TeamService(teamRepo, confederationService);
+        var teamService = CreateTeamService(teamRepo, confederationService);
 
         var slots = new Dictionary<string, int>
         {
@@ -309,7 +309,7 @@ public class FixtureServiceTests
                 teamRepo.Add(new Team($"{conf}_{i:00}", conf, ranking--));
 
         var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = new StadiumService(stadiumRepo);
+        var stadiumService = CreateStadiumService(stadiumRepo);
         for (int i = 0; i < 4; i++)
             stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
 
@@ -502,7 +502,7 @@ public void GenerateFixture_ShouldAssignPhaseGroupStageToAllMatches()
         .SelectMany(g => g.Matches)
         .ToList();
 
-    Assert.IsTrue(allMatches.All(m => m.Phase == "GroupStage"));
+    Assert.IsTrue(allMatches.All(m => m.Phase == TournamentPhase.GroupStage));
 }
 
 [TestMethod]
@@ -514,7 +514,7 @@ public void GenerateFixture_ShouldAssignGroupLabelToAllMatches()
 
     foreach (var group in _groupRepository.GetAll())
     {
-        Assert.IsTrue(group.Matches.All(m => m.Group == group.Label));
+        Assert.IsTrue(group.Matches.All(m => m.Group?.Label == group.Label));
     }
 }
 
@@ -557,7 +557,7 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         teamRepo.Add(new Team($"AFC_{i:00}", "AFC", 1000 - i));
 
     var stadiumRepo = new Repository<Stadium>();
-    var stadiumService = new StadiumService(stadiumRepo);
+    var stadiumService = CreateStadiumService(stadiumRepo);
     for (int i = 0; i < 4; i++)
         stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
 
@@ -566,7 +566,7 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
     var potService = new PotService(teamRepo, potRepo);
 
     var fixtureService = new FixtureService(
-        new TeamService(teamRepo, confederationService),
+        CreateTeamService(teamRepo, confederationService),
         stadiumService, groupService, groupRepo, matchRepo, potService);
 
     Assert.ThrowsException<InvalidOperationException>(() =>
@@ -594,7 +594,7 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
                 teamRepo.Add(new Team($"{conf}_{i:00}", conf, 1000));
 
         var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = new StadiumService(stadiumRepo);
+        var stadiumService = CreateStadiumService(stadiumRepo);
         for (int i = 0; i < 4; i++)
             stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
 
@@ -602,8 +602,24 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         var potService = new PotService(teamRepo, potRepo);
 
         return new FixtureService(
-            new TeamService(teamRepo, confederationService),
+            CreateTeamService(teamRepo, confederationService),
             stadiumService, groupService, groupRepo, matchRepo, potService);
+    }
+
+    private static TeamService CreateTeamService(
+        IRepository<Team> teamRepository,
+        IConfederationService confederationService)
+    {
+        var auditService = new AuditService(new Repository<AuditLog>());
+        var sessionService = new SessionService(null!, new AuthStateService());
+        return new TeamService(teamRepository, confederationService, auditService, sessionService);
+    }
+
+    private static StadiumService CreateStadiumService(IRepository<Stadium> stadiumRepository)
+    {
+        var auditService = new AuditService(new Repository<AuditLog>());
+        var sessionService = new SessionService(null!, new AuthStateService());
+        return new StadiumService(stadiumRepository, auditService, sessionService);
     }
     [TestMethod]
     public void SimulateGroupStage_WithNoFixtureGenerated_ShouldThrowInvalidOperationException()

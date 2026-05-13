@@ -1,149 +1,154 @@
-﻿@page "/Teams/Create"
+@page "/teams/create"
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
 @inject ITeamService TeamService
 @inject IConfederationService ConfederationService
+@inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
-    
-    <!-- FORMULARIO DE CREACIÓN / EDICIÓN -->
-    <div class="bg-white border-custom p-4 diagonal-corners">
-        <h3 class="mb-3">@(editingTeamName == null ? "Crear Equipo" : "Editar Equipo")</h3>
-        <hr class="geometric-divider" />
+    @if (!IsAdmin)
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+            No tienes permisos para gestionar equipos.
+        </div>
+    }
+    else
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners">
+            <h3 class="mb-3">@(editingTeamName == null ? "Crear Equipo" : "Editar Equipo")</h3>
+            <hr class="geometric-divider" />
 
-        <div class="row g-3 mb-4 mt-2">
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Nombre</label>
-                <input type="text" @bind="formData.Name" maxlength="60" placeholder="Nombre del equipo"
-                       class="form-control border-custom-input" />
+            <div class="row g-3 mb-4 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Nombre</label>
+                    <input type="text" @bind="formData.Name" maxlength="60" placeholder="Nombre del equipo"
+                           class="form-control border-custom-input" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Confederacion</label>
+                    <select @bind="formData.ConfederationName" class="form-select border-custom-input">
+                        <option value="" disabled selected>Seleccione una confederacion</option>
+                        @foreach (var conf in confederations)
+                        {
+                            <option value="@conf.Name" disabled="@(conf.RemainingSlots <= 0 && formData.ConfederationName != conf.Name)">
+                                @conf.Name (@conf.RemainingSlots cupos disponibles)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Ranking FIFA</label>
+                    <input type="number" @bind="formData.RankingFifa" min="300" max="2500"
+                           class="form-control border-custom-input" />
+                </div>
             </div>
 
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Confederación</label>
-                <select @bind="formData.ConfederationName" class="form-select border-custom-input">
-                    <option value="" disabled selected>Seleccione una confederación</option>
-                    @foreach (var conf in confederations)
-                    {
-                        @* Se desactiva la opción si no hay cupos, a menos que sea la confederación del equipo en edición *@
-                        <option value="@conf.Name" disabled="@(conf.RemainingSlots <= 0 && formData.ConfederationName != conf.Name)">
-                            @conf.Name (@conf.RemainingSlots cupos disponibles)
-                        </option>
-                    }
-                </select>
-            </div>
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success border-custom py-2">@successMessage</div>
+            }
 
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Ranking FIFA</label>
-                <input type="number" @bind="formData.RankingFifa" min="300" max="2500"
-                       class="form-control border-custom-input" />
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger border-custom py-2">@errorMessage</div>
+            }
+
+            <div class="d-flex gap-2">
+                @if (editingTeamName != null)
+                {
+                    <button @onclick="UpdateTeam" class="btn btn-wc-blue px-4">Actualizar</button>
+                    <button @onclick="CancelEdit" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
+                }
+                else
+                {
+                    <button @onclick="CreateTeam" class="btn btn-wc-red px-4 d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i> Crear
+                    </button>
+                }
             </div>
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            <div class="alert alert-success border-custom py-2">@successMessage</div>
-        }
+        <div class="bg-white border-custom p-4 diagonal-corners">
+            <h3 class="mb-3">Simular / Completar Equipos</h3>
+            <hr class="geometric-divider" />
 
-        @if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            <div class="alert alert-danger border-custom py-2">@errorMessage</div>
-        }
-
-        <div class="d-flex gap-2">
-            @if (editingTeamName != null)
-            {
-                <button @onclick="UpdateTeam" class="btn btn-wc-blue px-4">Actualizar</button>
-                <button @onclick="CancelEdit" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
-            }
-            else
-            {
-                <button @onclick="CreateTeam" class="btn btn-wc-red px-4 d-flex align-items-center gap-2">
-                    <i class="bi bi-plus-lg"></i> Crear
-                </button>
-            }
-        </div>
-    </div>
-
-    <!-- SECCIÓN DE SIMULACIÓN -->
-    <div class="bg-white border-custom p-4 diagonal-corners">
-        <h3 class="mb-3">Simular / Completar Equipos</h3>
-        <hr class="geometric-divider" />
-
-        <div class="row align-items-end g-3 mt-2">
-            <div class="col-md-6">
-                <label class="form-label fw-bold">Semilla (opcional)</label>
-                <input type="text" @bind="simulationSeed" @bind:event="oninput" placeholder="Semilla para simulación"
-                       class="form-control border-custom-input" />
-            </div>
-            <div class="col-md-4">
-                <button @onclick="SimulateTeams"
-                        class="btn btn-wc-green w-100 d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-shuffle"></i> Autocompletar hasta 48
-                </button>
-            </div>
-            <div class="col-md-2">
-                <div class="status-counter text-center p-2 border-custom bg-light fw-bold">
-                    @teams.Count() / 48
+            <div class="row align-items-end g-3 mt-2">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Semilla (opcional)</label>
+                    <input type="text" @bind="simulationSeed" @bind:event="oninput" placeholder="Semilla para simulacion"
+                           class="form-control border-custom-input" />
+                </div>
+                <div class="col-md-4">
+                    <button @onclick="SimulateTeams"
+                            class="btn btn-wc-green w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-shuffle"></i> Autocompletar hasta 48
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <div class="status-counter text-center p-2 border-custom bg-light fw-bold">
+                        @teams.Count() / 48
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- TABLA DE EQUIPOS -->
-    <div class="bg-white border-custom diagonal-corners overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light border-bottom-2">
-                    <tr>
-                        <th class="px-4 py-3">Nombre</th>
-                        <th class="px-4 py-3">Confederación</th>
-                        <th class="px-4 py-3">Ranking</th>
-                        <th class="px-4 py-3 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!teams.Any())
-                    {
+        <div class="bg-white border-custom diagonal-corners overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light border-bottom-2">
                         <tr>
-                            <td colspan="4" class="px-4 py-4 text-center text-muted">
-                                No hay equipos registrados.
-                            </td>
+                            <th class="px-4 py-3">Nombre</th>
+                            <th class="px-4 py-3">Confederacion</th>
+                            <th class="px-4 py-3">Ranking</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
                         </tr>
-                    }
-                    else
-                    {
-                        @foreach (var team in teams)
+                    </thead>
+                    <tbody>
+                        @if (!teams.Any())
                         {
                             <tr>
-                                <td class="px-4 py-3 align-middle fw-medium">@team.Name</td>
-                                <td class="px-4 py-3 align-middle">
-                                    <span class="badge-conf @GetConfColor(team.ConfederationName)">
-                                        @team.ConfederationName
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 align-middle">@team.RankingFifa</td>
-                                <td class="px-4 py-3 align-middle">
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <button @onclick="() => EditTeam(team)"
-                                                disabled="@(editingTeamName == team.Name)"
-                                                class="btn btn-sm btn-light border-custom">
-                                            <i class="bi bi-pencil">Update</i>
-                                        </button>
-                                        <button @onclick="() => DeleteTeam(team.Name)"
-                                                disabled="@(editingTeamName == team.Name)"
-                                                class="btn btn-sm btn-outline-danger border-custom">
-                                            <i class="bi bi-trash">Delete</i>
-                                        </button>
-                                    </div>
+                                <td colspan="4" class="px-4 py-4 text-center text-muted">
+                                    No hay equipos registrados.
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
+                        else
+                        {
+                            @foreach (var team in teams)
+                            {
+                                <tr>
+                                    <td class="px-4 py-3 align-middle fw-medium">@team.Name</td>
+                                    <td class="px-4 py-3 align-middle">
+                                        <span class="badge-conf @GetConfColor(team.ConfederationName)">
+                                            @team.ConfederationName
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 align-middle">@team.RankingFifa</td>
+                                    <td class="px-4 py-3 align-middle">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button @onclick="() => EditTeam(team)"
+                                                    disabled="@(editingTeamName == team.Name)"
+                                                    class="btn btn-sm btn-light border-custom">
+                                                <i class="bi bi-pencil"></i> Actualizar
+                                            </button>
+                                            <button @onclick="() => DeleteTeam(team.Name)"
+                                                    disabled="@(editingTeamName == team.Name)"
+                                                    class="btn btn-sm btn-outline-danger border-custom">
+                                                <i class="bi bi-trash"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {
@@ -154,10 +159,14 @@
     private string simulationSeed = "";
     private string errorMessage = "";
     private string successMessage = "";
+    private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
 
     protected override void OnInitialized()
     {
-        RefreshUI();
+        if (IsAdmin)
+        {
+            RefreshUI();
+        }
     }
 
     private void CreateTeam() => SaveTeam();

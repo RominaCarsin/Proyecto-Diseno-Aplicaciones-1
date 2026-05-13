@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using IRepository;
 using IServices;
 
@@ -34,22 +34,29 @@ public class PotService : IPotService
     private static void SortByFifaRankingDescending(List<Team> teams)
     {
         for (int i = 0; i < teams.Count - 1; i++)
-        for (int j = 0; j < teams.Count - 1 - i; j++)
-            if (teams[j].RankingFifa < teams[j + 1].RankingFifa)
-                (teams[j], teams[j + 1]) = (teams[j + 1], teams[j]);
+        {
+            for (int j = 0; j < teams.Count - 1 - i; j++)
+            {
+                if (teams[j].RankingFifa < teams[j + 1].RankingFifa)
+                    (teams[j], teams[j + 1]) = (teams[j + 1], teams[j]);
+            }
+        }
     }
 
     private static void ShuffleTiedGroups(List<Team> teams, int seed)
     {
         var shuffleService = new ShuffleService(seed);
         int start = 0;
+
         while (start < teams.Count)
         {
             int end = start;
             while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
                 end++;
+
             if (end - start > 1)
                 shuffleService.ShuffleRange(teams, start, end);
+
             start = end;
         }
     }

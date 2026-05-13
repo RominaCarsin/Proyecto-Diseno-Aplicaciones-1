@@ -1,4 +1,4 @@
-﻿using DTOs;
+using DTOs;
 
 namespace IServices;
 
@@ -13,5 +13,4 @@ public interface IMatchService
     void LockMatchEdition(int matchId);
     void LockMatchesByPhase(string phase);
     void FinishMatch(int matchId);
-    
 }

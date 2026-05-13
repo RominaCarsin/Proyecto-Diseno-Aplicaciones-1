@@ -1,38 +1,114 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Web</a>
+@using IServices
+@using DTOs
+@using Microsoft.AspNetCore.Components.Routing
+@inject ISessionService SessionService
+@inject IAuthStateService AuthStateService
+@implements IDisposable
+
+<div class="sidebar-container">
+
+    <div class="sidebar-header">
+        <div class="position-relative">
+
+            <div class="brand-stripe">
+
+                <div class="brand-stripe-segment bg-wc-blue"></div>
+                <div class="brand-stripe-segment bg-wc-red"></div>
+                <div class="brand-stripe-segment bg-wc-green"></div>
+
+            </div>
+
+            <h1 class="h5 mb-0 pt-4 fw-bold text-wc-text">
+                WorldCupPlanner 2026
+            </h1>
+
+        </div>
     </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+    <nav class="sidebar-nav" aria-label="Main navigation">
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+        @foreach (var item in navItems.Where(CanShowNavItem))
+        {
+            <NavLink class="nav-item-custom"
+                     href="@item.Href"
+                     style="@($"--item-color: {item.Color};")"
+                     Match="@(item.Id == "teams" ? NavLinkMatch.Prefix : NavLinkMatch.All)">
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href= "Teams/Create">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Teams
-            </NavLink>
-            <NavLink class="nav-link" href="Stadiums/create">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Stadiums
-            </NavLink>
-            <NavLink class="nav-link" href="Matches/Create">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Matches
-            </NavLink>
-            <NavLink class="nav-link" href="Groups/Create">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Groups
-            </NavLink>
-        </div>
+                <span class="active-indicator"></span>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+                <i class="@item.Icon nav-item-icon" aria-hidden="true"></i>
+
+                <span>@item.Label</span>
+
             </NavLink>
-        </div>
+        }
+
     </nav>
+
+    <div class="sidebar-footer">
+
+        <div class="text-sm">
+            <p class="mb-0 fw-bold">FIFA World Cup 2026</p>
+            <p class="small mb-0 text-muted">Sistema de Gestion</p>
+        </div>
+
+    </div>
+
 </div>
+
+@code {
+
+    private List<NavigationModel> navItems = new()
+    {
+        new("home", "Inicio", "bi bi-house-door", "#1b2789", "/"),
+        new("users", "Usuarios", "bi bi-people-fill", "#1b2789", "/users", RequiresLogin: true, RequiredRole: RoleDto.Admin),
+        new("teams", "Equipos", "bi bi-people", "#dc0201", "/teams/create", RequiresLogin: true, RequiredRole: RoleDto.Admin),
+        new("stadiums", "Estadios", "bi bi-geo-alt", "#04cf5c", "/stadiums", RequiresLogin: true, RequiredRole: RoleDto.Admin),
+        new("matches", "Partidos", "bi bi-calendar3", "#dc0201", "/matches", RequiresLogin: true),
+        new("groups", "Grupos", "bi bi-grid-3x3-gap", "#1b2789", "/groups", RequiresLogin: true),
+        new("knockout", "Segunda Fase", "bi bi-trophy", "#04cf5c", "/knockout", RequiresLogin: true),
+        new("user", "Mi cuenta", "bi bi-person", "#1b2789", "/profile", RequiresLogin: true),
+        new("import", "Importar", "bi bi-cloud-upload", "#dc0201", "/import", RequiresLogin: true, RequiredRole: RoleDto.Editor),
+        new("logs", "Logs", "bi bi-file-earmark-text", "#04cf5c", "/logs", RequiresLogin: true, RequiredRole: RoleDto.Admin)
+    };
+
+    protected override void OnInitialized()
+    {
+        AuthStateService.OnChange += OnAuthStateChanged;
+    }
+
+    private void OnAuthStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthStateService.OnChange -= OnAuthStateChanged;
+    }
+
+    private bool CanShowNavItem(NavigationModel item)
+    {
+        if (item.RequiresLogin && !SessionService.IsLoggedIn())
+        {
+            return false;
+        }
+
+        if (item.RequiredRole.HasValue && !SessionService.CurrentUserHasRole(item.RequiredRole.Value))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public record NavigationModel(
+        string Id,
+        string Label,
+        string Icon,
+        string Color,
+        string Href,
+        bool RequiresLogin = false,
+        RoleDto? RequiredRole = null
+    );
+}

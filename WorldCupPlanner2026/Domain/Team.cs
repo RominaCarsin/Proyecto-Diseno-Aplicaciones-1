@@ -1,4 +1,4 @@
-﻿namespace Domain;
+namespace Domain;
 
 public class Team
 {
@@ -23,10 +23,10 @@ public class Team
         UpdateName(name);
         UpdateConfederationName(confederationName);
         UpdateRankingFifa(rankingFifa);
-        
-        Points            = 0;
-        GoalDifference    = 0;
-        GoalsInFavor      = 0;
+
+        Points = 0;
+        GoalDifference = 0;
+        GoalsInFavor = 0;
     }
 
     public void UpdateName(string name)
@@ -75,6 +75,21 @@ public class Team
         UpdateStats(0, goalsScored, goalsConceded);
     }
 
+    public void RevertWin(int goalsScored, int goalsConceded)
+    {
+        RevertStats(3, goalsScored, goalsConceded);
+    }
+
+    public void RevertDraw(int goalsScored)
+    {
+        RevertStats(1, goalsScored, goalsScored);
+    }
+
+    public void RevertLoss(int goalsScored, int goalsConceded)
+    {
+        RevertStats(0, goalsScored, goalsConceded);
+    }
+
     private void UpdateStats(int points, int goalsScored, int goalsConceded)
     {
         GuardAgainstNegativeGoals(goalsScored, goalsConceded);
@@ -84,53 +99,33 @@ public class Team
         GoalDifference += goalsScored - goalsConceded;
     }
 
-    private void GuardAgainstNegativeGoals(params int[] goals)
-    {
-        if (goals.Any(goal => goal < 0))
-            throw new ArgumentException("Goals cannot be negative.");
-    }
-    
-    private static bool InvalidNameLength(string normalized)
-    {
-        return string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength;
-    }
-    
-    private static bool InvalidRankingFifa(int rankingFifa)
-    {
-        return rankingFifa < MinRanking || rankingFifa > MaxRanking;
-    }
-    
-    public static string Normalized(string name)
-    {
-        return name?.Trim().ToUpper() ?? string.Empty;
-        
-    }
-    
-    public void RevertWin(int goalsScored, int goalsConceded)
-    {
-        Points -= 3;
-        GoalsInFavor -= goalsScored;
-        GoalDifference -= goalsScored - goalsConceded;
-    }
-
-    public void RevertLoss(int goalsScored, int goalsConceded)
-    {
-        RevertStats(0, goalsScored, goalsConceded);
-    }
-
     private void RevertStats(int points, int goalsScored, int goalsConceded)
     {
+        GuardAgainstNegativeGoals(goalsScored, goalsConceded);
+
         Points -= points;
         GoalsInFavor -= goalsScored;
         GoalDifference -= goalsScored - goalsConceded;
     }
-    
-    public void RevertDraw(int goalsScored)
+
+    private static void GuardAgainstNegativeGoals(params int[] goals)
     {
-        Points -= 1;
-        GoalsInFavor -= goalsScored;
-        GoalDifference -= goalsScored - goalsScored;
+        if (goals.Any(goal => goal < 0))
+            throw new ArgumentException("Goals cannot be negative.");
     }
-    
-    
+
+    private static bool InvalidNameLength(string normalized)
+    {
+        return string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength;
+    }
+
+    private static bool InvalidRankingFifa(int rankingFifa)
+    {
+        return rankingFifa < MinRanking || rankingFifa > MaxRanking;
+    }
+
+    public static string Normalized(string name)
+    {
+        return name?.Trim().ToUpper() ?? string.Empty;
+    }
 }

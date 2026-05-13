@@ -1,0 +1,209 @@
+@using Web.Components.Shared
+@using DTOs
+@using IServices
+@page "/stadiums"
+@inject IStadiumService StadiumService
+@inject ISessionService SessionService
+
+<div class="container-fluid p-0 space-y-6">
+
+    @if (!IsAdmin)
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+            No tienes permisos para gestionar estadios.
+        </div>
+    }
+    else
+    {
+        <!-- FORMULARIO DE ESTADIOS -->
+        <div class="bg-white border-custom p-4 diagonal-corners">
+            <h3 class="mb-3">@(editingStadiumName == null ? "Crear Estadio" : "Editar Estadio")</h3>
+            <GeometricDivider />
+
+            <div class="row g-3 mb-4 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Nombre</label>
+                    <input type="text" @bind="formData.Name" maxlength="80" placeholder="Nombre del estadio"
+                           class="form-control border-custom-input" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Ciudad</label>
+                    <input type="text" @bind="formData.City" placeholder="Ciudad"
+                           class="form-control border-custom-input" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Capacidad</label>
+                    <input type="number" @bind="formData.Capacity" min="1"
+                           class="form-control border-custom-input" placeholder="Capacidad" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success border-custom py-2">@successMessage</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger border-custom py-2">@errorMessage</div>
+            }
+
+            <div class="d-flex gap-2">
+                @if (editingStadiumName != null)
+                {
+                    <button @onclick="UpdateStadium" class="btn btn-wc-blue px-4">Actualizar</button>
+                    <button @onclick="CancelEdit" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
+                }
+                else
+                {
+                    <button @onclick="CreateStadium" class="btn btn-wc-red px-4 d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i> Crear
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- TABLA DE ESTADIOS -->
+        <div class="bg-white border-custom diagonal-corners overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light border-bottom-2">
+                        <tr>
+                            <th class="px-6 py-3 text-left">Nombre</th>
+                            <th class="px-6 py-3 text-left">Ciudad</th>
+                            <th class="px-6 py-3 text-left">Capacidad</th>
+                            <th class="px-6 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!stadiums.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-center text-muted">
+                                    No hay estadios registrados.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var stadium in stadiums)
+                            {
+                                <tr class="hover-bg-custom">
+                                    <td class="px-6 py-3 align-middle fw-medium">@stadium.Name</td>
+                                    <td class="px-6 py-3 align-middle">@stadium.City</td>
+                                    <td class="px-6 py-3 align-middle font-monospace">@stadium.Capacity.ToString("N0")</td>
+                                    <td class="px-6 py-3 align-middle">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button @onclick="() => EditStadium(stadium)" class="btn btn-sm btn-light border-custom">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button @onclick="() => DeleteStadium(stadium.Name)" class="btn btn-sm btn-outline-danger border-custom">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<StadiumResponse> stadiums = Enumerable.Empty<StadiumResponse>();
+    private StadiumRequest formData = new();
+    private string? editingStadiumName;
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
+
+    protected override void OnInitialized()
+    {
+        if (IsAdmin)
+        {
+            RefreshUI();
+        }
+    }
+
+    private void CreateStadium() => SaveStadium();
+
+    private void EditStadium(StadiumResponse stadium)
+    {
+        editingStadiumName = stadium.Name;
+        formData = new StadiumRequest
+        {
+            Name = stadium.Name,
+            City = stadium.City,
+            Capacity = stadium.Capacity,
+            Description = stadium.Description
+        };
+        ClearMessages();
+    }
+
+    private void UpdateStadium() => SaveStadium();
+
+    private void CancelEdit()
+    {
+        editingStadiumName = null;
+        formData = new StadiumRequest();
+        ClearMessages();
+    }
+
+    private void DeleteStadium(string name)
+    {
+        ClearMessages();
+        try
+        {
+            StadiumService.DeleteStadium(name);
+            RefreshUI();
+            successMessage = $"Estadio '{name}' eliminado.";
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void SaveStadium()
+    {
+        ClearMessages();
+        try
+        {
+            if (editingStadiumName == null)
+            {
+                StadiumService.AddStadium(formData);
+                successMessage = $"Estadio '{formData.Name}' creado.";
+            }
+            else
+            {
+                StadiumService.UpdateStadium(editingStadiumName, formData);
+                successMessage = $"Estadio '{formData.Name}' actualizado.";
+            }
+
+            editingStadiumName = null;
+            formData = new StadiumRequest();
+            RefreshUI();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void RefreshUI()
+    {
+        stadiums = StadiumService.GetAllStadiums();
+    }
+
+    private void ClearMessages()
+    {
+        errorMessage = "";
+        successMessage = "";
+    }
+}
