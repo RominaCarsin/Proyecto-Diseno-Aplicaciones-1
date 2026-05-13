@@ -39,6 +39,16 @@ public class MatchTests
 
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
     }
+    
+    [TestMethod]
+    public void Finish_WithValidMatch_ShouldSetStatusAsFinished()
+    {
+        var match = CreateValidMatch();
+
+        match.Finish();
+
+        Assert.AreEqual(MatchStatus.Finished, match.Status);
+    }
 
     [TestMethod]
     public void CreateMatch_ShouldGenerateIncrementalId()
