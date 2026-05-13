@@ -271,6 +271,74 @@ public class MatchServiceTests
         Assert.AreEqual("Match date updated", logs.Last().Action);
     }
     
+    // --- UpdateMatchStadium ---
+
+[TestMethod]
+public void UpdateMatchStadium_WithValidRequest_ShouldUpdateStadiumAndLog()
+{
+    var saved = AddValidMatchAndGetResponse();
+    var newStadium = BuildStadiumRequest("WEMBLEY", "LONDON");
+    var initialLogCount = _auditRepository.GetAll().Count();
+
+    _matchService.UpdateMatchStadium(saved.Id, newStadium);
+
+    var result = _matchService.GetMatchById(saved.Id);
+    Assert.AreEqual("WEMBLEY", result.Stadium.Name);
+    
+    var logs = _auditRepository.GetAll();
+    Assert.AreEqual(initialLogCount + 1, logs.Count());
+    Assert.AreEqual("Match stadium updated", logs.Last().Action);
+}
+
+[TestMethod]
+public void UpdateMatchStadium_WithNullRequest_ShouldThrowArgumentException()
+{
+    Assert.ThrowsException<ArgumentException>(() =>
+        _matchService.UpdateMatchStadium(1, null!));
+}
+
+[TestMethod]
+public void UpdateMatchStadium_WhenNewStadiumConflicts_ShouldThrowInvalidOperationException()
+{
+    // Creamos un partido en el estadio B
+    var stadiumB = BuildStadiumRequest("CENTENARIO", "MONTEVIDEO");
+    _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate, stadiumRequest: stadiumB));
+
+    // Intentamos mover otro partido al mismo estadio y hora
+    var matchToMove = AddMatchAndGetResponse(BuildValidMatchRequest(
+        date: ValidMatchDate, 
+        stadiumRequest: BuildStadiumRequest("OTRO", "LUGAR")));
+
+    Assert.ThrowsException<InvalidOperationException>(() =>
+        _matchService.UpdateMatchStadium(matchToMove.Id, stadiumB));
+}
+
+// --- FinishMatch ---
+
+[TestMethod]
+public void FinishMatch_WithExistingId_ShouldMarkAsFinishedAndLog()
+{
+    var saved = AddValidMatchAndGetResponse();
+    var initialLogCount = _auditRepository.GetAll().Count();
+
+    _matchService.FinishMatch(saved.Id);
+
+    var result = _matchService.GetMatchById(saved.Id);
+    // Nota: Necesitas que MatchResponse exponga la propiedad Status o IsFinished si quieres asertar esto en el Service
+    // O verificar que no se puede editar más.
+    
+    var logs = _auditRepository.GetAll();
+    Assert.AreEqual(initialLogCount + 1, logs.Count());
+    Assert.AreEqual("Match finished", logs.Last().Action);
+}
+
+[TestMethod]
+public void FinishMatch_WithNonExistingId_ShouldThrowArgumentException()
+{
+    Assert.ThrowsException<ArgumentException>(() =>
+        _matchService.FinishMatch(999));
+}
+    
     // GetAvailableStadiumsForMatch ─────────────────────────────────────────────────
     
     [TestMethod]

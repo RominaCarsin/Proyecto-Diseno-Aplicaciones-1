@@ -1,4 +1,4 @@
-using Domain;
+﻿using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -8,20 +8,17 @@ namespace Services;
 
 public class MatchService : IMatchService
 {
-    private const string MatchNotFoundError = "Match was not found.";
-    private const string MatchRequestRequiredError = "Match request cannot be null.";
-    private const string StadiumRequestRequiredError = "Stadium request cannot be null.";
+    private const string MatchNotFoundErrorMessage = "Match was not found.";
+    private const string MatchRequestRequiredErrorMessage = "Match request cannot be null.";
+    private const string StadiumRequestRequiredErrorMessage = "Stadium request cannot be null.";
+    private const string GroupNotFoundErrorMessage = "Group was not found.";
 
     private readonly IRepository<Match> _repository;
     private readonly IRepository<Group> _groupRepository;
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;
 
-    public MatchService(
-        IRepository<Match> repository,
-        IRepository<Group> groupRepository,
-        IAuditService auditService,
-        ISessionService sessionService)
+    public MatchService(IRepository<Match> repository, IRepository<Group> groupRepository, IAuditService auditService, ISessionService sessionService)
     {
         _repository = repository;
         _groupRepository = groupRepository;
@@ -31,21 +28,23 @@ public class MatchService : IMatchService
 
     public void AddMatch(MatchRequest matchRequest)
     {
-        ValidateNotNull(matchRequest, MatchRequestRequiredError);
+        ValidateNotNull(matchRequest, MatchRequestRequiredErrorMessage);
 
-        var match = MatchMapper.ToEntity(matchRequest, _groupRepository);
+        var match = MatchMapper.ToEntity(matchRequest);
+        ValidateStadiumAvailability(null, match.Stadium, match.Date);
 
         _repository.Add(match);
-        match.Group?.AddMatch(match);
 
-        LogAction("Match created",
-            $"Match {match.Id} created: {match.HomeTeam.Name} vs {match.AwayTeam.Name} on {match.Date:O} at {match.Stadium.Name}");
+        if (matchRequest.Group.HasValue)
+            AddMatchToGroup(match, matchRequest.Group.Value);
+
+        LogAction("Match created", 
+            $"Match added: {match.HomeTeam.Name} vs {match.AwayTeam.Name} at {match.Stadium.Name} on {match.Date}");
     }
 
     public IEnumerable<MatchResponse> GetMatches()
     {
-        return _repository.GetAll()
-            .Select(MatchMapper.ToResponse);
+        return _repository.GetAll().Select(MatchMapper.ToResponse);
     }
 
     public MatchResponse GetMatchById(int matchId)
@@ -57,92 +56,115 @@ public class MatchService : IMatchService
     public void SetMatchResult(int matchId, int homeGoals, int awayGoals)
     {
         var match = FindMatchByIdOrThrow(matchId);
-
         match.SetResult(homeGoals, awayGoals);
-        LogAction("Match result updated",
-            $"Match {match.Id} result set to {match.HomeTeam.Name} {homeGoals}-{awayGoals} {match.AwayTeam.Name}");
+        
+        LogAction("Match result set", 
+            $"Result for match {matchId} ({match.HomeTeam.Name} vs {match.AwayTeam.Name}) set to {homeGoals}-{awayGoals}");
     }
 
     public void UpdateMatchDate(int matchId, DateTime newDate)
     {
         var match = FindMatchByIdOrThrow(matchId);
 
+        ValidateStadiumAvailability(matchId, match.Stadium, newDate);
+
+        var oldDate = match.Date;
         match.UpdateDate(newDate);
-        LogAction("Match date updated",
-            $"Match {match.Id} date updated to {newDate:O}");
+        
+        LogAction("Match date updated", 
+            $"Match {matchId} date changed from {oldDate} to {newDate}");
     }
 
     public void FinishMatch(int matchId)
     {
         var match = FindMatchByIdOrThrow(matchId);
-
         match.Finish();
-        LogAction("Match finished", $"Match {match.Id} was finished");
+        
+        LogAction("Match finished", $"Match {matchId} has been marked as finished");
     }
 
     public void UpdateMatchStadium(int matchId, StadiumRequest newStadiumRequest)
     {
-        ValidateNotNull(newStadiumRequest, StadiumRequestRequiredError);
+        ValidateNotNull(newStadiumRequest, StadiumRequestRequiredErrorMessage);
 
         var match = FindMatchByIdOrThrow(matchId);
         var stadium = StadiumMapper.ToEntity(newStadiumRequest);
 
-        match.UpdateStadium(stadium);
-        LogAction("Match stadium updated",
-            $"Match {match.Id} stadium updated to {stadium.Name} ({stadium.City})");
-    }
+        ValidateStadiumAvailability(matchId, stadium, match.Date);
 
-    public void LockMatchEdition(int matchId)
+        var oldStadiumName = match.Stadium.Name;
+        match.UpdateStadium(stadium);
+        
+        LogAction("Match stadium updated", 
+            $"Match {matchId} stadium changed from {oldStadiumName} to {stadium.Name}");
+    }
+    
+
+    public IEnumerable<StadiumRequest> GetAvailableStadiumsForMatch(int matchId, IEnumerable<StadiumRequest> candidateStadiums)
     {
         var match = FindMatchByIdOrThrow(matchId);
 
-        match.LockEdition();
-        LogAction("Match locked", $"Match {match.Id} edition was locked");
-    }
-
-    public void LockMatchesByPhase(string phase)
-    {
-        var tournamentPhase = ParseTournamentPhase(phase);
-
-        foreach (var match in GetMatchesByPhase(tournamentPhase))
+        return candidateStadiums.Where(stadiumRequest =>
         {
-            match.LockEdition();
-        }
-
-        LogAction("Matches locked by phase", $"Matches in phase {tournamentPhase} were locked");
+            try
+            {
+                var stadium = StadiumMapper.ToEntity(stadiumRequest);
+                ValidateStadiumAvailability(matchId, stadium, match.Date);
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        });
     }
 
-    private void LogAction(string action, string details)
+    private void AddMatchToGroup(Match match, char groupLabel)
     {
-        var actorEmail = _sessionService.GetCurrentUserEmail() ?? "system";
-        _auditService.Log(actorEmail, action, details);
-    }
+        var group = _groupRepository.GetAll()
+            .FirstOrDefault(g => g.Label == groupLabel)
+            ?? throw new ArgumentException(GroupNotFoundErrorMessage);
 
-    private static TournamentPhase ParseTournamentPhase(string phase)
-    {
-        if (!Enum.TryParse<TournamentPhase>(phase, ignoreCase: true, out var tournamentPhase))
-        {
-            throw new ArgumentException($"Invalid tournament phase: '{phase}'.");
-        }
-
-        return tournamentPhase;
-    }
-
-    private IEnumerable<Match> GetMatchesByPhase(TournamentPhase phase)
-    {
-        return _repository.GetAll().Where(m => m.Phase == phase);
+        group.AddMatch(match);
     }
 
     private Match FindMatchByIdOrThrow(int matchId)
     {
         return _repository.GetAll()
             .FirstOrDefault(match => match.Id == matchId)
-            ?? throw new ArgumentException(MatchNotFoundError);
+            ?? throw new ArgumentException(MatchNotFoundErrorMessage);
     }
+
+    private void ValidateStadiumAvailability(int? excludeMatchId, Stadium  stadium, DateTime matchDate)
+    {
+        var matchesInSameStadiumAndDay = _repository.GetAll()
+            .Where(m => excludeMatchId == null || m.Id != excludeMatchId.Value)
+            .Where(m => m.Stadium.Name == stadium.Name)
+            .Where(m => m.Date.Date    == matchDate.Date)
+            .ToList();
+
+        if (matchesInSameStadiumAndDay.Count >= 3)
+            throw new InvalidOperationException(
+                "Stadium cannot have more than 3 matches per day.");
+
+        bool tooClose = matchesInSameStadiumAndDay.Any(m =>
+            Math.Abs((m.Date - matchDate).TotalHours) < 4);
+
+        if (tooClose)
+            throw new InvalidOperationException(
+                "Matches in the same stadium must be at least 4 hours apart.");
+    }
+
 
     private static void ValidateNotNull<T>(T? value, string errorMessage)
     {
         if (value is null)
             throw new ArgumentException(errorMessage);
+    }
+
+    private void LogAction(string action, string details)
+    {
+        var actorEmail = _sessionService.GetCurrentUserEmail() ?? "system";
+        _auditService.Log(actorEmail, action, details);
     }
 }
