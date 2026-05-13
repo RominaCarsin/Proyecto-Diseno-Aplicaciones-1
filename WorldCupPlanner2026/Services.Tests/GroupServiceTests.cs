@@ -171,4 +171,20 @@ public class GroupServiceTests
             group.Matches[0].Status);
         Assert.IsTrue(group.Matches[0].IsLocked);
     }
+    
+    [TestMethod]
+    public void FinishMatch_WithNonExistingGroup_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.FinishMatch('Z', 1));
+    }
+    
+    [TestMethod]
+    public void FinishMatch_WithNonExistingMatch_ShouldThrowArgumentException()
+    {
+        _service.AddGroup(new GroupRequest { Label = 'A' });
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.FinishMatch('A', 999));
+    }
 }
