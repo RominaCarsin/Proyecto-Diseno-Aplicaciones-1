@@ -1,6 +1,8 @@
-﻿namespace Services;
+using IServices;
 
-public class ShuffleService
+namespace Services;
+
+public class ShuffleService : IShuffleService
 {
     private readonly Random _random;
 

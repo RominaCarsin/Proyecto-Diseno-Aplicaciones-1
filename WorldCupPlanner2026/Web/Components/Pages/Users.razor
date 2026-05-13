@@ -1,0 +1,319 @@
+﻿@page "/users"
+@rendermode InteractiveServer
+@using DTOs
+@using IServices
+@using Web.Components.Shared
+@inject IUserService UserService
+@inject ISessionService SessionService
+
+<div class="container-fluid p-0 space-y-6">
+
+    @if (!IsAdmin)
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+            No tienes permisos para gestionar usuarios.
+        </div>
+    }
+    else
+    {
+        @* --- FORMULARIO --- *@
+        <div class="bg-white border-custom p-4 diagonal-corners">
+            <h3 class="mb-3">@(editingEmail == null ? "Crear Usuario" : "Editar Usuario")</h3>
+            <GeometricDivider />
+
+            <div class="row g-3 mb-4 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Nombre</label>
+                    <input type="text" @bind="formData.Name" maxlength="60"
+                           placeholder="Nombre"
+                           class="form-control border-custom-input" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Apellido</label>
+                    <input type="text" @bind="formData.Surname" maxlength="60"
+                           placeholder="Apellido"
+                           class="form-control border-custom-input" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Email</label>
+                    <input type="email" @bind="formData.Email"
+                           placeholder="correo@ejemplo.com"
+                           class="form-control border-custom-input" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha de nacimiento</label>
+                    <input type="date" @bind="formData.DateOfBirth"
+                           class="form-control border-custom-input" />
+                </div>
+
+                @if (editingEmail == null)
+                {
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <input type="password" @bind="formData.Password"
+                               placeholder="Mín. 8 chars, mayúscula, número, especial"
+                               class="form-control border-custom-input" />
+                    </div>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success border-custom py-2">@successMessage</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger border-custom py-2">@errorMessage</div>
+            }
+
+            <div class="d-flex gap-2">
+                @if (editingEmail != null)
+                {
+                    <button @onclick="SaveUser" class="btn btn-wc-blue px-4">Actualizar</button>
+                    <button @onclick="CancelEdit" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
+                }
+                else
+                {
+                    <button @onclick="SaveUser" class="btn btn-wc-red px-4 d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i> Crear
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* --- RESET PASSWORD --- *@
+        @if (resettingEmail != null)
+        {
+            <div class="bg-white border-custom p-4 diagonal-corners">
+                <h3 class="mb-3">Resetear contraseña de @resettingEmail</h3>
+                <GeometricDivider />
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Nueva contraseña</label>
+                        <input type="password" @bind="newPassword"
+                               placeholder="Nueva contraseña"
+                               class="form-control border-custom-input" />
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button @onclick="ConfirmResetPassword" class="btn btn-wc-red px-4">Confirmar</button>
+                    <button @onclick="() => resettingEmail = null" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
+                </div>
+            </div>
+        }
+
+        @* --- TABLA DE USUARIOS --- *@
+        <div class="bg-white border-custom diagonal-corners overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr class="border-bottom-2">
+                            <th class="px-4 py-3">Nombre</th>
+                            <th class="px-4 py-3">Apellido</th>
+                            <th class="px-4 py-3">Email</th>
+                            <th class="px-4 py-3">Fecha de nacimiento</th>
+                            <th class="px-4 py-3">Roles</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!users.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="px-4 py-4 text-center text-muted">
+                                    No hay usuarios registrados.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var user in users)
+                            {
+                                <tr>
+                                    <td class="px-4 py-3 align-middle fw-medium">@user.Name</td>
+                                    <td class="px-4 py-3 align-middle">@user.Surname</td>
+                                    <td class="px-4 py-3 align-middle text-muted">@user.Email</td>
+                                    <td class="px-4 py-3 align-middle">@user.DateOfBirth.ToString("dd/MM/yyyy")</td>
+                                    <td class="px-4 py-3 align-middle">
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            @{
+                                                var isSelf = user.Email == AdminEmail;
+                                            }
+                                            <button @onclick="() => ToggleRole(user, RoleDto.Admin)"
+                                                    disabled="@isSelf"
+                                                    title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Admin) ? "Quitar rol Admin" : "Asignar rol Admin"))"
+                                                    class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Admin) ? "btn-success" : "btn-outline-secondary") border-custom">
+                                                Admin
+                                            </button>
+                                            <button @onclick="() => ToggleRole(user, RoleDto.Editor)"
+                                                    disabled="@isSelf"
+                                                    title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Editor) ? "Quitar rol Editor" : "Asignar rol Editor"))"
+                                                    class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Editor) ? "btn-success" : "btn-outline-secondary") border-custom">
+                                                Editor
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 align-middle">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button @onclick="() => EditUser(user)"
+                                                    title="Editar datos del usuario"
+                                                    class="btn btn-sm btn-light border-custom d-flex align-items-center gap-1">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span class="d-none d-lg-inline">Editar</span>
+                                            </button>
+                                            <button @onclick="() => StartResetPassword(user.Email)"
+                                                    title="Resetear contraseña"
+                                                    class="btn btn-sm btn-outline-warning border-custom d-flex align-items-center gap-1">
+                                                <i class="bi bi-key"></i>
+                                                <span class="d-none d-lg-inline">Contraseña</span>
+                                            </button>
+                                            <button @onclick="() => DeleteUser(user.Email)"
+                                                    disabled="@(user.Email == AdminEmail)"
+                                                    title="@(user.Email == AdminEmail ? "No podés eliminar tu propio usuario" : "Eliminar usuario")"
+                                                    class="btn btn-sm btn-outline-danger border-custom d-flex align-items-center gap-1">
+                                                <i class="bi bi-trash3"></i>
+                                                <span class="d-none d-lg-inline">Eliminar</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private IEnumerable<UserResponse> users = Enumerable.Empty<UserResponse>();
+    private UserRequest formData = new() { DateOfBirth = DateTime.Today.AddYears(-18) };
+    private string? editingEmail;
+    private string? resettingEmail;
+    private string newPassword = string.Empty;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
+    private string AdminEmail => SessionService.GetCurrentUserEmail() ?? string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (IsAdmin) RefreshUI();
+    }
+
+    private void SaveUser()
+    {
+        ClearMessages();
+        try
+        {
+            if (editingEmail == null)
+            {
+                UserService.AddUser(formData);
+                successMessage = $"Usuario '{formData.Email}' creado.";
+            }
+            else
+            {
+                UserService.UpdateUser(editingEmail, formData);
+                successMessage = $"Usuario '{formData.Email}' actualizado.";
+            }
+
+            editingEmail = null;
+            formData = new() { DateOfBirth = DateTime.Today.AddYears(-18) };
+            RefreshUI();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void EditUser(UserResponse user)
+    {
+        editingEmail = user.Email;
+        formData = new UserRequest
+        {
+            Name        = user.Name,
+            Surname     = user.Surname,
+            Email       = user.Email,
+            DateOfBirth = user.DateOfBirth,
+            Password    = "Placeholder1!"
+        };
+        ClearMessages();
+    }
+
+    private void DeleteUser(string email)
+    {
+        ClearMessages();
+        try
+        {
+            UserService.DeleteUser(email);
+            successMessage = $"Usuario '{email}' eliminado.";
+            RefreshUI();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void ToggleRole(UserResponse user, RoleDto role)
+    {
+        ClearMessages();
+        try
+        {
+            if (user.Roles.HasFlag(role))
+                UserService.RemoveRoleFromUser(AdminEmail, user.Email, role);
+            else
+                UserService.AddRoleToUser(AdminEmail, user.Email, role);
+
+            RefreshUI();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void StartResetPassword(string email)
+    {
+        resettingEmail = email;
+        newPassword    = string.Empty;
+        ClearMessages();
+    }
+
+    private void ConfirmResetPassword()
+    {
+        ClearMessages();
+        try
+        {
+            UserService.ResetPassword(AdminEmail, resettingEmail!, newPassword);
+            successMessage  = $"Contraseña de '{resettingEmail}' reseteada.";
+            resettingEmail  = null;
+            newPassword     = string.Empty;
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void CancelEdit()
+    {
+        editingEmail = null;
+        formData     = new() { DateOfBirth = DateTime.Today.AddYears(-18) };
+        ClearMessages();
+    }
+
+    private void RefreshUI() => users = UserService.GetUsers();
+
+    private void ClearMessages()
+    {
+        errorMessage   = string.Empty;
+        successMessage = string.Empty;
+    }
+}

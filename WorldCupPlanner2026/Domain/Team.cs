@@ -1,4 +1,4 @@
-﻿namespace Domain;
+﻿﻿namespace Domain;
 
 public class Team
 {
@@ -59,6 +59,36 @@ public class Team
 
         ConfederationName = normalized;
     }
+
+    public void RecordWin(int goalsScored, int goalsConceded)
+    {
+        UpdateStats(3, goalsScored, goalsConceded);
+    }
+
+    public void RecordDraw(int goalsScored)
+    {
+        UpdateStats(1, goalsScored, goalsScored);
+    }
+
+    public void RecordLoss(int goalsScored, int goalsConceded)
+    {
+        UpdateStats(0, goalsScored, goalsConceded);
+    }
+
+    private void UpdateStats(int points, int goalsScored, int goalsConceded)
+    {
+        GuardAgainstNegativeGoals(goalsScored, goalsConceded);
+
+        Points += points;
+        GoalsInFavor += goalsScored;
+        GoalDifference += goalsScored - goalsConceded;
+    }
+
+    private void GuardAgainstNegativeGoals(params int[] goals)
+    {
+        if (goals.Any(goal => goal < 0))
+            throw new ArgumentException("Goals cannot be negative.");
+    }
     
     private static bool InvalidNameLength(string normalized)
     {
@@ -73,6 +103,7 @@ public class Team
     public static string Normalized(string name)
     {
         return name?.Trim().ToUpper() ?? string.Empty;
+        
     }
     
 }
