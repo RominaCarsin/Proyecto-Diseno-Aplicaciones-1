@@ -106,4 +106,11 @@ public class Team
         
     }
     
+    public void RevertWin(int goalsScored, int goalsConceded)
+    {
+        Points -= 3;
+        GoalsInFavor -= goalsScored;
+        GoalDifference -= goalsScored - goalsConceded;
+    }
+    
 }
