@@ -150,4 +150,25 @@ public class GroupServiceTests
 
         Assert.AreEqual(0, group.Teams.Count);
     }
+    
+    [TestMethod]
+    public void FinishMatch_WithValidMatch_ShouldFinishMatch()
+    {
+        _service.AddGroup(new GroupRequest { Label = 'A' });
+        _service.AddTeamToGroup('A', CreateTeamRequest("Uruguay", "CONMEBOL"));
+        _service.AddTeamToGroup('A', CreateTeamRequest("Argentina", "UEFA"));
+        _service.AddMatchToGroup('A', CreateValidMatchRequest('A'));
+
+        var group = _service.GetGroupByLabel('A');
+        var matchId = group.Matches[0].Id;
+
+        _service.FinishMatch('A', matchId);
+
+        group = _service.GetGroupByLabel('A');
+
+        Assert.AreEqual(
+            MatchStatus.Finished.ToString(),
+            group.Matches[0].Status);
+        Assert.IsTrue(group.Matches[0].IsLocked);
+    }
 }
