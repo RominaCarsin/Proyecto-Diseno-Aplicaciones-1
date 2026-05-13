@@ -207,7 +207,7 @@ public class FixtureService : IFixtureService
             throw new InvalidOperationException("No se ha generado el fixture todavía.");
 
         foreach (var group in groups)
-        foreach (var match in group.Matches)
-            group.SetMatchResult(match, 0, 0); // hardcoded — solo para que pase
+            group.SimulateMatches(seed);
     }
+    
 }
