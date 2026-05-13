@@ -126,4 +126,18 @@ public class TeamTests
         Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
     }
+    
+    [TestMethod]
+    public void RevertLoss_WithPreviousLoss_ShouldRemoveLossStats()
+    {
+        var team = new Team(ValidName, ValidConf, ValidRanking);
+
+        team.RecordLoss(1, 3);
+
+        team.RevertLoss(1, 3);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalDifference);
+        Assert.AreEqual(0, team.GoalsInFavor);
+    }
 }
