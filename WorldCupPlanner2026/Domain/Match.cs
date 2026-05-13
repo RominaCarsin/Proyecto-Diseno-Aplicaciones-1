@@ -27,7 +27,7 @@ public class Match
     public Team? Winner { get; private set; }
     public bool IsLocked { get; private set; }
     public MatchStatus Status { get; private set; }
-    public Group? Group { get; private set; }
+    public char? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
@@ -37,7 +37,7 @@ public class Match
         Stadium? stadium,
         Team? homeTeam,
         Team? awayTeam,
-        Group? group = null,
+        char? group = null,
         TournamentPhase phase = TournamentPhase.GroupStage)
     {
         ValidateDate(date);
@@ -174,9 +174,9 @@ public class Match
             throw new ArgumentException(SameTeamsError);
     }
 
-    private static void ValidateGroupForPhase(Group? group, TournamentPhase phase)
+    private static void ValidateGroupForPhase(char? group, TournamentPhase phase)
     {
-        if (phase != TournamentPhase.GroupStage && group is not null)
+        if (phase != TournamentPhase.GroupStage && group.HasValue)
             throw new InvalidOperationException(KnockoutGroupError);
     }
 

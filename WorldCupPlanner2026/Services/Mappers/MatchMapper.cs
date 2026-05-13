@@ -12,7 +12,7 @@ public static class MatchMapper
             stadium: StadiumMapper.ToEntity(matchRequest.Stadium),
             homeTeam: TeamMapper.ToEntity(matchRequest.HomeTeam),
             awayTeam: TeamMapper.ToEntity(matchRequest.AwayTeam),
-            group: ResolveGroup(matchRequest.Group, groupRepository),
+            group: matchRequest.Group.HasValue ? char.ToUpperInvariant(matchRequest.Group.Value) : null,
             phase: ResolvePhase(matchRequest.Phase)
         );
 
@@ -24,7 +24,7 @@ public static class MatchMapper
             Stadium = StadiumMapper.FromEntity(match.Stadium),
             HomeTeam = TeamMapper.FromEntity(match.HomeTeam),
             AwayTeam = TeamMapper.FromEntity(match.AwayTeam),
-            Group = match.Group?.Label,
+            Group = match.Group,
             Phase = match.Phase.ToString(),
             HomeGoals = match.HomeGoals,
             AwayGoals = match.AwayGoals,
@@ -33,17 +33,7 @@ public static class MatchMapper
             Status = match.Status.ToString(),
             HasResult = match.HasResult
         };
-
-    private static Group? ResolveGroup(char? groupLabel, IRepository<Group>? groupRepository)
-    {
-        if (!groupLabel.HasValue)
-            return null;
-
-        var group = groupRepository?.GetAll()
-            .FirstOrDefault(g => g.Label == char.ToUpperInvariant(groupLabel.Value));
-
-        return group ?? throw new InvalidOperationException("Group was not found.");
-    }
+    
 
     private static TournamentPhase ResolvePhase(string phase)
     {

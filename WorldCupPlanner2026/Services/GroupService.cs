@@ -95,7 +95,7 @@ public class GroupService : IGroupService
             stadium: StadiumMapper.ToEntity(request.Stadium),
             homeTeam: homeTeam,
             awayTeam: awayTeam,
-            group: group,
+            group: groupLabel,
             phase: TournamentPhase.GroupStage
         );
 

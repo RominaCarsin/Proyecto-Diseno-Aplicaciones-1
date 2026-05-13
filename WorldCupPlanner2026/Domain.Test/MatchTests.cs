@@ -9,14 +9,13 @@ public class MatchTests
     [TestMethod]
     public void CreateGroupStageMatch_WithValidData_ShouldCreateMatchWithExpectedProperties()
     {
-        var group = new Group('A');
-        var match = CreateMatch(group: group);
+        var match = CreateMatch(group: 'A');
 
         Assert.AreEqual(ValidDate, match.Date);
         Assert.AreEqual("CENTENARIO", match.Stadium.Name);
         Assert.AreEqual("ARGENTINA", match.HomeTeam.Name);
         Assert.AreEqual("BRAZIL", match.AwayTeam.Name);
-        Assert.AreEqual(group, match.Group);
+        Assert.AreEqual('A', match.Group);
         Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
         Assert.IsFalse(match.HasResult);
@@ -26,7 +25,7 @@ public class MatchTests
     [TestMethod]
     public void CreateKnockoutMatch_WithValidData_ShouldCreateMatchWithoutGroup()
     {
-        var match = CreateMatch(phase: TournamentPhase.RoundOf32);
+        var match = CreateMatch(group: null, phase: TournamentPhase.RoundOf32);
 
         Assert.IsNull(match.Group);
         Assert.AreEqual(TournamentPhase.RoundOf32, match.Phase);
@@ -36,7 +35,7 @@ public class MatchTests
     public void CreateKnockoutMatch_WithGroupAssigned_ShouldThrowInvalidOperationException()
     {
         Assert.ThrowsException<InvalidOperationException>(() =>
-            CreateMatch(group: new Group('A'), phase: TournamentPhase.RoundOf32));
+            CreateMatch(group: 'A', phase: TournamentPhase.RoundOf32));
     }
 
     [TestMethod]
@@ -97,8 +96,50 @@ public class MatchTests
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => match.SetResult(-1, 0));
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => match.SetResult(0, -1));
 
-        var knockout = CreateMatch(phase: TournamentPhase.RoundOf32);
+        var knockout = CreateMatch(group: null, phase: TournamentPhase.RoundOf32);
         Assert.ThrowsException<InvalidOperationException>(() => knockout.SetResult(1, 1));
+    }
+    
+    [TestMethod]
+    public void SetResult_RevertingAwayWin_ShouldUpdateTeamStatsCorrectly()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        // 1. Seteamos victoria visitante (0-2)
+        match.SetResult(0, 2); 
+    
+        // 2. Cambiamos a victoria local (1-0). Debe revertir la victoria de Argentina.
+        match.SetResult(1, 0);
+
+        Assert.AreEqual(3, homeTeam.Points);
+        Assert.AreEqual(0, awayTeam.Points);
+        Assert.AreEqual(1, homeTeam.GoalDifference);
+        Assert.AreEqual(-1, awayTeam.GoalDifference);
+        Assert.AreEqual(homeTeam, match.Winner);
+    }
+
+    [TestMethod]
+    public void SetResult_RevertingDraw_ShouldUpdateTeamStatsCorrectly()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        // 1. Seteamos empate (1-1)
+        match.SetResult(1, 1); 
+        Assert.AreEqual(1, homeTeam.Points);
+        Assert.AreEqual(1, awayTeam.Points);
+
+        // 2. Cambiamos a victoria visitante (0-3). Debe revertir el punto del empate.
+        match.SetResult(0, 3);
+
+        Assert.AreEqual(0, homeTeam.Points);
+        Assert.AreEqual(3, awayTeam.Points);
+        Assert.AreEqual(-3, homeTeam.GoalDifference);
+        Assert.AreEqual(3, awayTeam.GoalDifference);
+        Assert.AreEqual(awayTeam, match.Winner);
     }
 
     [TestMethod]
@@ -142,7 +183,7 @@ public class MatchTests
         Stadium? stadium = null,
         Team? homeTeam = null,
         Team? awayTeam = null,
-        Group? group = null,
+        char? group = 'A',
         TournamentPhase phase = TournamentPhase.GroupStage) =>
         new(
             date: date ?? ValidDate,
