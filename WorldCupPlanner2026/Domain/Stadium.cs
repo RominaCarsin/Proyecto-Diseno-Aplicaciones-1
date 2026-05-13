@@ -25,10 +25,10 @@ public class Stadium
         var normalized = Normalize(name);
 
         if (string.IsNullOrWhiteSpace(normalized))
-            throw new Exception("Stadium name cannot be empty");
+            throw new ArgumentException("Stadium name cannot be empty");
 
         if (normalized.Length > MaxNameLength)
-            throw new Exception($"Stadium name cannot exceed {MaxNameLength} characters");
+            throw new ArgumentException($"Stadium name cannot exceed {MaxNameLength} characters");
 
         return normalized;
     }
@@ -38,10 +38,10 @@ public class Stadium
         var normalized = Normalize(city);
 
         if (string.IsNullOrWhiteSpace(normalized))
-            throw new Exception("Stadium city cannot be empty");
+            throw new ArgumentException("Stadium city cannot be empty");
 
         if (normalized.Length > MaxCityLength)
-            throw new Exception($"Stadium city cannot exceed {MaxCityLength} characters");
+            throw new ArgumentException($"Stadium city cannot exceed {MaxCityLength} characters");
 
         return normalized;
     }
@@ -52,7 +52,7 @@ public class Stadium
             return null;
 
         if (description.Length > MaxDescriptionLength)
-            throw new Exception($"Stadium description cannot exceed {MaxDescriptionLength} characters");
+            throw new ArgumentException($"Stadium description cannot exceed {MaxDescriptionLength} characters");
 
         return description;
     }
@@ -60,7 +60,7 @@ public class Stadium
     private static int ValidatedCapacity(int capacity)
     {
         if (capacity < MinCapacity)
-            throw new Exception($"Stadium capacity must be at least {MinCapacity}");
+            throw new ArgumentException($"Stadium capacity must be at least {MinCapacity}");
 
         return capacity;
     }

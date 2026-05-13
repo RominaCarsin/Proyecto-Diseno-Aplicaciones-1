@@ -68,21 +68,21 @@ public class StadiumTests
     [TestMethod]
     public void CreateStadium_WithEmptyName_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium("", ValidCity, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
     public void CreateStadium_WithNullName_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(null, ValidCity, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
     public void CreateStadium_WithWhitespaceOnlyName_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium("   ", ValidCity, ValidDescription, ValidCapacity));
     }
 
@@ -91,7 +91,7 @@ public class StadiumTests
     {
         var nameOneAboveMaxLength = new string('A', 81);
 
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(nameOneAboveMaxLength, ValidCity, ValidDescription, ValidCapacity));
     }
 
@@ -143,21 +143,21 @@ public class StadiumTests
     [TestMethod]
     public void CreateStadium_WithEmptyCity_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, "", ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
     public void CreateStadium_WithNullCity_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, null, ValidDescription, ValidCapacity));
     }
 
     [TestMethod]
     public void CreateStadium_WithWhitespaceOnlyCity_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, "   ", ValidDescription, ValidCapacity));
     }
 
@@ -166,7 +166,7 @@ public class StadiumTests
     {
         var cityOneAboveMaxLength = new string('A', 61);
 
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, cityOneAboveMaxLength, ValidDescription, ValidCapacity));
     }
     
@@ -212,7 +212,7 @@ public class StadiumTests
     {
         var descriptionOneAboveMaxLength = new string('A', 401);
 
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, ValidCity, descriptionOneAboveMaxLength, ValidCapacity));
     }
     
@@ -244,14 +244,14 @@ public class StadiumTests
     [TestMethod]
     public void CreateStadium_WithCapacityOneBelowMinimum_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, ValidCity, ValidDescription, 19999));
     }
 
     [TestMethod]
     public void CreateStadium_WithCapacityOfOne_ShouldThrowException()
     {
-        Assert.ThrowsException<Exception>(() =>
+        Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, ValidCity, ValidDescription, 1));
     }
     
