@@ -123,7 +123,7 @@ public class Match
 
     public void UpdateDate(DateTime newDate)
     {
-        ValidateIsNotLocked();
+        ValidateIsNotFinished();
         ValidateDate(newDate);
 
         Date = newDate;
