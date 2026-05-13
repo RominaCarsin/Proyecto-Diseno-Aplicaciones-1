@@ -628,4 +628,44 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
 
         Assert.IsTrue(allMatches.All(m => m.HomeGoals.HasValue && m.AwayGoals.HasValue));
     }
+    
+    [TestMethod]
+    public void SimulateGroupStage_ShouldProduceWinsNotOnlyDraws()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(42);
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        fixtureService.SimulateGroupStage(42);
+
+        // Con 0,0 hardcoded todos tienen puntos múltiplos de 1 (solo empates)
+        // Con simulación real debe haber al menos un partido con ganador
+        var anyMatchWithWinner = _groupRepository.GetAll()
+            .SelectMany(g => g.Matches)
+            .Any(m => m.Winner != null);
+
+        Assert.IsTrue(anyMatchWithWinner);
+    }
+    
+    
+    [TestMethod]
+    public void SimulateGroupStage_WithSameSeed_ShouldProduceSameWinners()
+    {
+        var service1 = CreateFixtureServiceReadyWithPots(42);
+        service1.GenerateFixture(42, new DateTime(2026, 6, 1));
+        service1.SimulateGroupStage(42);
+        var winners1 = _groupRepository.GetAll()
+            .SelectMany(g => g.Matches)
+            .Select(m => m.Winner?.Name)
+            .ToList();
+
+        var service2 = CreateFixtureServiceReadyWithPots(42);
+        service2.GenerateFixture(42, new DateTime(2026, 6, 1));
+        service2.SimulateGroupStage(42);
+        var winners2 = _groupRepository.GetAll()
+            .SelectMany(g => g.Matches)
+            .Select(m => m.Winner?.Name)
+            .ToList();
+
+        CollectionAssert.AreEqual(winners1, winners2);
+    }
 }
