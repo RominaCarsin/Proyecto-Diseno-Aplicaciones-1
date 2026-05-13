@@ -131,7 +131,7 @@ public class Match
 
     public void UpdateStadium(Stadium? newStadium)
     {
-        ValidateIsNotLocked();
+        ValidateIsNotFinished();
         ValidateRequired(newStadium, RequiredStadiumErrorMessage);
 
         Stadium = newStadium!;
