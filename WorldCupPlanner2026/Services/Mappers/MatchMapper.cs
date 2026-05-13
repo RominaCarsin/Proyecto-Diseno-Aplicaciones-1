@@ -28,6 +28,8 @@ public static class MatchMapper
             HomeGoals = match.HomeGoals,
             AwayGoals = match.AwayGoals,
             Winner = match.Winner is null ? null : TeamMapper.FromEntity(match.Winner),
-            IsLocked = match.IsLocked
+            IsLocked = match.IsLocked,
+            Status = match.Status.ToString(),
+            HasResult = match.HasResult
         };
 }
