@@ -63,6 +63,35 @@
         </div>
     }
 
+    @if (_fixtureGenerated)
+    {
+        <div class="card" style="margin-top: 1rem;">
+            <div class="card-header">
+                <span class="card-title">Simular fase de grupos</span>
+            </div>
+            <div class="card-body">
+                <div class="fg">
+                    <label class="fl">Semilla (SemillaSimulation) <span class="req">*</span></label>
+                    <input class="finput" type="number" @bind="_simulationSeed" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(_simulationErrorMessage))
+                {
+                    <div class="alert-box err" style="margin-top: 1rem;">@_simulationErrorMessage</div>
+                }
+                @if (!string.IsNullOrEmpty(_simulationSuccessMessage))
+                {
+                    <div class="alert-box suc" style="margin-top: 1rem;">✓ @_simulationSuccessMessage</div>
+                }
+            </div>
+            <div class="card-footer">
+                <button class="btn-p" @onclick="SimulateGroupStage">
+                    Simular fase de grupos
+                </button>
+            </div>
+        </div>
+    }
+
     @if (!_groups.Any())
     {
         <div class="card" style="margin-top: 1rem;">
@@ -137,101 +166,101 @@
             </div>
 
             <div class="card" style="margin-top: 1rem;">
-    <div class="card-header">
-        <span class="card-title">Grupo @_selectedLabel — Partidos</span>
-    </div>
-    <div class="card-body" style="overflow-x: auto;">
-        @if (!string.IsNullOrEmpty(_matchErrorMessage))
-        {
-            <div class="alert-box err" style="margin-bottom: 1rem;">@_matchErrorMessage</div>
-        }
-        @if (!string.IsNullOrEmpty(_matchSuccessMessage))
-        {
-            <div class="alert-box suc" style="margin-bottom: 1rem;">✓ @_matchSuccessMessage</div>
-        }
-
-        @if (!_selectedGroup.Matches.Any())
-        {
-            <p style="color: #888;">No hay partidos registrados para este grupo.</p>
-        }
-        else
-        {
-            <table>
-                <thead>
-                    <tr>
-                        <th>Local</th>
-                        <th>Resultado</th>
-                        <th>Visitante</th>
-                        <th>Fecha</th>
-                        <th>Estadio</th>
-                        <th>Ganador</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var match in _selectedGroup.Matches.OrderBy(m => m.Date))
+                <div class="card-header">
+                    <span class="card-title">Grupo @_selectedLabel — Partidos</span>
+                </div>
+                <div class="card-body" style="overflow-x: auto;">
+                    @if (!string.IsNullOrEmpty(_matchErrorMessage))
                     {
-                        <tr>
-                            <td>@match.HomeTeam.Name</td>
-                            <td style="text-align: center; font-weight: 600;">
-                                @if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
-                                {
-                                    @($"{match.HomeGoals} - {match.AwayGoals}")
-                                }
-                                else
-                                {
-                                    <span style="color: #888;">vs</span>
-                                }
-                            </td>
-                            <td>@match.AwayTeam.Name</td>
-                            <td>@match.Date.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@match.Stadium.Name</td>
-                            <td>@(match.Winner?.Name ?? "-")</td>
-                            <td>
-                                @if (!match.HomeGoals.HasValue && !match.IsLocked)
-                                {
-                                    @if (_editingMatchId == match.Id)
-                                    {
-                                        <div style="display: flex; align-items: center; gap: 6px;">
-                                            <input class="finput"
-                                                   type="number" min="0"
-                                                   style="width: 60px;"
-                                                   @bind="_editHomeGoals" />
-                                            <span>-</span>
-                                            <input class="finput"
-                                                   type="number" min="0"
-                                                   style="width: 60px;"
-                                                   @bind="_editAwayGoals" />
-                                            <button class="btn-p"
-                                                    @onclick="() => SaveResult(match.Id)">
-                                                Guardar
-                                            </button>
-                                            <button class="btn btn-g"
-                                                    @onclick="CancelEdit">
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-s"
-                                                @onclick="() => StartEditResult(match.Id)">
-                                            Cargar resultado
-                                        </button>
-                                    }
-                                }
-                                @if (match.IsLocked)
-                                {
-                                    <span>🔒</span>
-                                }
-                            </td>
-                        </tr>
+                        <div class="alert-box err" style="margin-bottom: 1rem;">@_matchErrorMessage</div>
                     }
-                </tbody>
-            </table>
-        }
-    </div>
-</div>
+                    @if (!string.IsNullOrEmpty(_matchSuccessMessage))
+                    {
+                        <div class="alert-box suc" style="margin-bottom: 1rem;">✓ @_matchSuccessMessage</div>
+                    }
+
+                    @if (!_selectedGroup.Matches.Any())
+                    {
+                        <p style="color: #888;">No hay partidos registrados para este grupo.</p>
+                    }
+                    else
+                    {
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Local</th>
+                                    <th>Resultado</th>
+                                    <th>Visitante</th>
+                                    <th>Fecha</th>
+                                    <th>Estadio</th>
+                                    <th>Ganador</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var match in _selectedGroup.Matches.OrderBy(m => m.Date))
+                                {
+                                    <tr>
+                                        <td>@match.HomeTeam.Name</td>
+                                        <td style="text-align: center; font-weight: 600;">
+                                            @if (match.HomeGoals.HasValue && match.AwayGoals.HasValue)
+                                            {
+                                                @($"{match.HomeGoals} - {match.AwayGoals}")
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #888;">vs</span>
+                                            }
+                                        </td>
+                                        <td>@match.AwayTeam.Name</td>
+                                        <td>@match.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@match.Stadium.Name</td>
+                                        <td>@(match.Winner?.Name ?? "-")</td>
+                                        <td>
+                                            @if (!match.HomeGoals.HasValue && !match.IsLocked)
+                                            {
+                                                @if (_editingMatchId == match.Id)
+                                                {
+                                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                                        <input class="finput"
+                                                               type="number" min="0"
+                                                               style="width: 60px;"
+                                                               @bind="_editHomeGoals" />
+                                                        <span>-</span>
+                                                        <input class="finput"
+                                                               type="number" min="0"
+                                                               style="width: 60px;"
+                                                               @bind="_editAwayGoals" />
+                                                        <button class="btn-p"
+                                                                @onclick="() => SaveResult(match.Id)">
+                                                            Guardar
+                                                        </button>
+                                                        <button class="btn btn-g"
+                                                                @onclick="CancelEdit">
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-s"
+                                                            @onclick="() => StartEditResult(match.Id)">
+                                                        Cargar resultado
+                                                    </button>
+                                                }
+                                            }
+                                            @if (match.IsLocked)
+                                            {
+                                                <span>🔒</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
         }
     }
 
@@ -278,40 +307,6 @@
     }
 
     .group-team-name { font-size: 13px; color: #555; }
-
-    .match-row-group {
-        padding: 12px 0;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .match-row-group:last-child { border-bottom: none; }
-
-    .match-teams {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 4px;
-    }
-
-    .match-team { font-size: 14px; font-weight: 500; flex: 1; }
-
-    .match-score {
-        font-size: 16px;
-        font-weight: 500;
-        min-width: 60px;
-        text-align: center;
-    }
-
-    .match-info {
-        display: flex;
-        gap: 6px;
-        font-size: 12px;
-        color: #888;
-    }
-
-    .result-form {
-        margin-top: 4px;
-    }
 </style>
 
 @code {
@@ -325,7 +320,10 @@
     private string _successMessage = string.Empty;
     private string _matchErrorMessage = string.Empty;
     private string _matchSuccessMessage = string.Empty;
+    private string _simulationErrorMessage = string.Empty;
+    private string _simulationSuccessMessage = string.Empty;
 
+    private int _simulationSeed = 42;
     private List<GroupResponse> _groups = new();
     private char? _selectedLabel;
     private GroupResponse? _selectedGroup;
@@ -355,7 +353,6 @@
     private void GenerateFixture()
     {
         ClearMessages();
-
         try
         {
             FixtureService.GenerateFixture(_seed, _startDate);
@@ -365,6 +362,21 @@
         catch (Exception ex)
         {
             _errorMessage = ex.Message;
+        }
+    }
+
+    private void SimulateGroupStage()
+    {
+        ClearMessages();
+        try
+        {
+            FixtureService.SimulateGroupStage(_simulationSeed);
+            _simulationSuccessMessage = "Resultados simulados correctamente.";
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            _simulationErrorMessage = ex.Message;
         }
     }
 
@@ -394,7 +406,6 @@
     private void SaveResult(int matchId)
     {
         ClearMatchMessages();
-
         try
         {
             GroupService.SetMatchResult(_selectedLabel!.Value, matchId, _editHomeGoals, _editAwayGoals);
@@ -419,6 +430,8 @@
     {
         _errorMessage = string.Empty;
         _successMessage = string.Empty;
+        _simulationErrorMessage = string.Empty;
+        _simulationSuccessMessage = string.Empty;
     }
 
     private void ClearMatchMessages()
