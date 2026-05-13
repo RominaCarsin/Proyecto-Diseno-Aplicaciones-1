@@ -684,4 +684,28 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
 
         CollectionAssert.AreEqual(winners1, winners2);
     }
+    
+    [TestMethod]
+    public void GenerateFixture_ShouldScheduleGroupsWithThreeDayOffset()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var startDate = new DateTime(2026, 6, 1);
+
+        fixtureService.GenerateFixture(42, startDate);
+
+        var groups = _groupRepository.GetAll()
+            .OrderBy(g => g.Label)
+            .ToList();
+
+        for (int i = 0; i < groups.Count; i++)
+        {
+            var expectedStart = startDate.Date.AddDays(i * 3);
+
+            var firstMatchDate = groups[i]
+                .Matches
+                .Min(m => m.Date.Date);
+
+            Assert.AreEqual(expectedStart, firstMatchDate);
+        }
+    }
 }
