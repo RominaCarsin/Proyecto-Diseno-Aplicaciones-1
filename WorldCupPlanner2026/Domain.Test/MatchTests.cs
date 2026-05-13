@@ -121,6 +121,20 @@ public class MatchTests
 
         Assert.AreEqual(AnotherValidDate, match.Date);
     }
+    
+    [TestMethod]
+    public void UpdateStadium_WhenMatchIsLockedButNotFinished_ShouldReplaceMatchStadium()
+    {
+        Match match = CreateValidMatch();
+        Stadium newStadium = BuildStadium(name: "MARACANA", city: "RIO DE JANEIRO");
+
+        match.LockEdition();
+
+        match.UpdateStadium(newStadium);
+
+        Assert.AreEqual("MARACANA", match.Stadium.Name);
+        Assert.AreEqual("RIO DE JANEIRO", match.Stadium.City);
+    }
 
     [TestMethod]
     public void CreateMatch_ShouldGenerateIncrementalId()
