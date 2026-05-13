@@ -55,6 +55,78 @@ public class MatchServiceTests
         Assert.AreEqual(1, _matchService.GetMatches().Count());
     }
     
+        [TestMethod]
+    public void AddMatch_WithNullRequest_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.AddMatch(null!));
+    }
+ 
+    [TestMethod]
+    public void AddMatch_WithExistingGroup_ShouldAddMatchToGroup()
+    {
+        var group = new Group('A');
+        _groupRepository.Add(group);
+ 
+        _matchService.AddMatch(BuildValidMatchRequest(group: 'A'));
+ 
+        Assert.AreEqual(1, _matchService.GetMatches().Count());
+    }
+ 
+    [TestMethod]
+    public void AddMatch_WithNonExistingGroup_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.AddMatch(BuildValidMatchRequest(group: 'Z')));
+    }
+ 
+    [TestMethod]
+    public void AddMatch_WhenStadiumAlreadyHasThreeMatchesThatDay_ShouldThrowInvalidOperationException()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate.AddHours(-8)));
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate.AddHours(-4),
+            homeTeamName: "FRANCE", awayTeamName: "GERMANY"));
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate.AddHours(4),
+            homeTeamName: "SPAIN",  awayTeamName: "PORTUGAL"));
+ 
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate,
+                homeTeamName: "URUGUAY", awayTeamName: "CHILE")));
+    }
+ 
+    [TestMethod]
+    public void AddMatch_WhenStadiumHasMatchLessThanFourHoursApart_ShouldThrowInvalidOperationException()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate));
+ 
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate.AddHours(2),
+                homeTeamName: "FRANCE", awayTeamName: "GERMANY")));
+    }
+    
+    [TestMethod]
+    public void AddMatch_WhenStadiumHasMatchExactlyFourHoursApart_ShouldPersistBothMatches()
+    {
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate));
+        _matchService.AddMatch(BuildValidMatchRequest(date: ValidMatchDate.AddHours(4),
+            homeTeamName: "FRANCE", awayTeamName: "GERMANY"));
+ 
+        Assert.AreEqual(2, _matchService.GetMatches().Count());
+    }
+ 
+    [TestMethod]
+    public void AddMatch_ShouldLogCreationInAuditService()
+    {
+        var initialLogCount = _auditRepository.GetAll().Count();
+
+        _matchService.AddMatch(BuildValidMatchRequest());
+
+        var logs = _auditRepository.GetAll();
+        Assert.AreEqual(initialLogCount + 1, logs.Count());
+        Assert.AreEqual("Match created", logs.Last().Action);
+    }
+
+    
     // Helpers ──────────────────────────────────────────────────────────────
     private static MatchRequest BuildValidMatchRequest(
         string          homeTeamName   = HomeTeamName,
@@ -91,5 +163,7 @@ public class MatchServiceTests
             ConfederationName = "CONMEBOL",
             RankingFifa       = 1800
         };
+    
+
 
 }
