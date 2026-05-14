@@ -13,15 +13,15 @@ public class ShuffleService : IShuffleService
 
     public void Shuffle<T>(IList<T> list)
     {
-        ShuffleRange(list, 0, list.Count);
+        ShuffleRange(list, startIndex: 0, endIndex: list.Count);
     }
 
-    public void ShuffleRange<T>(IList<T> list, int start, int end)
+    public void ShuffleRange<T>(IList<T> list, int startIndex, int endIndex)
     {
-        for (int i = end - 1; i > start; i--)
+        for (int i = endIndex - 1; i > startIndex; i--)
         {
-            int j = _random.Next(start, i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
+            int randomIndex = _random.Next(startIndex, i + 1);
+            (list[i], list[randomIndex]) = (list[randomIndex], list[i]);
         }
     }
 }

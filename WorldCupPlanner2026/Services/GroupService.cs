@@ -8,8 +8,10 @@ namespace Services;
 
 public class GroupService : IGroupService
 {
+    private const string GroupNotFoundErrorMessage = "No se encontró el grupo.";
+    private const string MatchNotFoundErrorMessage = "No se encontró el partido en el grupo.";
+
     private readonly IRepository<Group> _repository;
-    private const string GroupNotFoundErrorMessage = "Group was not found.";
 
     public GroupService(IRepository<Group> repository)
     {
@@ -18,81 +20,63 @@ public class GroupService : IGroupService
 
     public void AddGroup(GroupRequest request)
     {
-        Group group = GroupMapper.ToEntity(request);
-
+        var group = GroupMapper.ToEntity(request);
         _repository.Add(group);
     }
 
     public IEnumerable<GroupResponse> GetGroups()
     {
-        return _repository
-            .GetAll()
+        return _repository.GetAll()
             .Select(GroupMapper.FromEntity);
+    }
+
+    public GroupResponse GetGroupByLabel(char label)
+    {
+        return GroupMapper.FromEntity(FindGroupByLabelOrThrow(label));
     }
 
     public void DeleteGroup(char label)
     {
-        Group group = FindGroupByLabel(label);
+        var group = FindGroupByLabelOrThrow(label);
         _repository.Delete(group);
     }
-    
-    public GroupResponse GetGroupByLabel(char label)
-    {
-        return GroupMapper.FromEntity(FindGroupByLabel(label));
-    }
 
-    private Group FindGroupByLabel(char label)
+    public void AddTeamToGroup(char groupLabel, TeamRequest teamRequest)
     {
-        return _repository.GetAll().FirstOrDefault(g => g.Label == label)
-               ?? throw new ArgumentException(GroupNotFoundErrorMessage);
-    }
-
-    public void AddTeamToGroup(char groupLabel, TeamRequest request)
-    {
-        Group group = FindGroupByLabel(groupLabel);
-        Team team = TeamMapper.ToEntity(request);
+        var group = FindGroupByLabelOrThrow(groupLabel);
+        var team = TeamMapper.ToEntity(teamRequest);
         group.AddTeam(team);
     }
 
-    public void RemoveTeamFromGroup(char groupLabel, TeamRequest request)
+    public void RemoveTeamFromGroup(char groupLabel, TeamRequest teamRequest)
     {
-        Group group = FindGroupByLabel(groupLabel);
-        Team team = FindTeamInGroup(group, request.Name);
+        var group = FindGroupByLabelOrThrow(groupLabel);
+        var team = FindTeamInGroupOrThrow(group, teamRequest.Name);
         group.RemoveTeam(team);
     }
 
     public IEnumerable<TeamResponse> GetGroupStandings(char groupLabel)
     {
-        Group group = FindGroupByLabel(groupLabel);
+        var group = FindGroupByLabelOrThrow(groupLabel);
         return group.GetStandings().Select(TeamMapper.FromEntity);
-    
     }
 
-    
-    public void FinishMatch(char groupLabel, int matchId)
-    {
-        Group group = FindGroupByLabel(groupLabel);
-        Match match = FindMatchById(group, matchId);
-        group.FinishMatch(match);
-    }
-    
     public TeamResponse GetTeamByPosition(char groupLabel, int position)
     {
-        Group group = FindGroupByLabel(groupLabel);
-        Team team = group.GetTeamByPosition(position);
+        var group = FindGroupByLabelOrThrow(groupLabel);
+        var team = group.GetTeamByPosition(position);
         return TeamMapper.FromEntity(team);
     }
 
-    public void AddMatchToGroup(char groupLabel, MatchRequest request)
+    public void AddMatchToGroup(char groupLabel, MatchRequest matchRequest)
     {
-        Group group = FindGroupByLabel(groupLabel);
+        var group = FindGroupByLabelOrThrow(groupLabel);
+        var homeTeam = FindTeamInGroupOrThrow(group, matchRequest.HomeTeam.Name);
+        var awayTeam = FindTeamInGroupOrThrow(group, matchRequest.AwayTeam.Name);
 
-        Team homeTeam = FindTeamInGroup(group, request.HomeTeam.Name);
-        Team awayTeam = FindTeamInGroup(group, request.AwayTeam.Name);
-
-        Match match = new Match(
-            date: request.Date,
-            stadium: StadiumMapper.ToEntity(request.Stadium),
+        var match = new Match(
+            date: matchRequest.Date,
+            stadium: StadiumMapper.ToEntity(matchRequest.Stadium),
             homeTeam: homeTeam,
             awayTeam: awayTeam,
             group: groupLabel,
@@ -102,24 +86,40 @@ public class GroupService : IGroupService
         group.AddMatch(match);
     }
 
-    private static Team FindTeamInGroup(Group group, string teamName)
-    {
-        return group.Teams.FirstOrDefault(t => 
-                   t.Name.Equals(Team.Normalized(teamName), StringComparison.OrdinalIgnoreCase))
-               ?? throw new ArgumentException($"Team {teamName} was not found in group.");
-    }
-    
-    
     public void SetMatchResult(char groupLabel, int matchId, int homeGoals, int awayGoals)
     {
-        Group group = FindGroupByLabel(groupLabel);
-        Match match = FindMatchById(group, matchId);
+        var group = FindGroupByLabelOrThrow(groupLabel);
+        var match = FindMatchInGroupOrThrow(group, matchId);
         group.SetMatchResult(match, homeGoals, awayGoals);
     }
 
-    private static Match FindMatchById(Group group, int matchId)
+    public void FinishMatch(char groupLabel, int matchId)
     {
-        return group.Matches.FirstOrDefault(m => m.Id == matchId)
-               ?? throw new ArgumentException("Match was not found in group.");
+        var group = FindGroupByLabelOrThrow(groupLabel);
+        var match = FindMatchInGroupOrThrow(group, matchId);
+        group.FinishMatch(match);
+    }
+    
+    private Group FindGroupByLabelOrThrow(char label)
+    {
+        return _repository.GetAll()
+            .FirstOrDefault(g => g.Label == label)
+            ?? throw new ArgumentException(GroupNotFoundErrorMessage);
+    }
+
+    private static Team FindTeamInGroupOrThrow(Group group, string teamName)
+    {
+        return group.Teams
+            .FirstOrDefault(t => t.Name.Equals(
+                Team.Normalize(teamName),
+                StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException($"Team '{teamName}' was not found in group.");
+    }
+
+    private static Match FindMatchInGroupOrThrow(Group group, int matchId)
+    {
+        return group.Matches
+            .FirstOrDefault(m => m.Id == matchId)
+            ?? throw new ArgumentException(MatchNotFoundErrorMessage);
     }
 }

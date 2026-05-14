@@ -1,13 +1,11 @@
 ﻿using Domain;
-using DTOs;
-using Services;
 
 namespace Services.Tests;
 
 [TestClass]
 public class ConfederationServiceTest
 {
-    private ConfederationService _service;
+    private ConfederationService _service = null!;
 
     [TestInitialize]
     public void Setup()
@@ -18,123 +16,124 @@ public class ConfederationServiceTest
     [TestMethod]
     public void GetAll_ShouldContainAllConfederations()
     {
-        var expected = new Dictionary<string, int>
+        var expectedSlotsByConfederation = new Dictionary<string, int>
         {
-            { "UEFA",     16 },
-            { "CAF",       9 },
-            { "AFC",       8 },
-            { "CONCACAF",  7 },
-            { "CONMEBOL",  7 },
-            { "OFC",       1 },
+            { "UEFA", 16 },
+            { "CAF", 9 },
+            { "AFC", 8 },
+            { "CONCACAF", 7 },
+            { "CONMEBOL", 7 },
+            { "OFC", 1 },
         };
-        
-        var result = _service.GetAll();
-        var resultData = result.ToDictionary(c => c.Name, c => c.Slots);
-        
-        foreach (var key in expected.Keys)
+
+        var confederations = _service
+            .GetAll()
+            .ToDictionary(confederation => confederation.Name, confederation => confederation.Slots);
+
+        foreach (var expectedConfederation in expectedSlotsByConfederation)
         {
-            Assert.IsTrue(resultData.ContainsKey(key));
-            Assert.AreEqual(expected[key], resultData[key]);
+            Assert.IsTrue(confederations.ContainsKey(expectedConfederation.Key));
+            Assert.AreEqual(expectedConfederation.Value, confederations[expectedConfederation.Key]);
         }
     }
-    
-    
+
     [TestMethod]
-    public void AddTeam_NotFullConfederation_ShouldAddTeamToConfederation()
+    public void AddTeamToConfederation_WhenConfederationHasAvailableSlots_ShouldAddTeam()
     {
-        var team = new Team("Spain", "UEFA", 500);
+        var team = CreateTeam("Spain", "UEFA");
 
         _service.AddTeamToConfederation(team);
 
-        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
-        Assert.AreEqual(15, uefa.RemainingSlots);
+        AssertRemainingSlots("UEFA", 15);
     }
 
     [TestMethod]
-    public void AddTeam_FullConfederation_ShouldThrowException()
+    public void AddTeamToConfederation_WhenConfederationIsFull_ShouldThrowException()
     {
-        var firstTeam = new Team("NewZealand", "OFC", 500);
-        _service.AddTeamToConfederation(firstTeam);
+        _service.AddTeamToConfederation(CreateTeam("NewZealand", "OFC"));
 
-        var secondTeam = new Team("Fiji", "OFC", 600);
-        Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(secondTeam));
+        var team = CreateTeam("Fiji", "OFC", 600);
+
+        Assert.ThrowsException<ArgumentException>(() => _service.AddTeamToConfederation(team));
     }
 
     [TestMethod]
     public void UpdateTeamConfederation_ShouldRemoveTeamFromOldConfederation()
     {
-        var team = new Team("Spain", "UEFA", 500);
-        _service.AddTeamToConfederation(team);
+        var team = AddTeam("Spain", "UEFA");
 
         _service.UpdateTeamConfederation(team, "CONMEBOL");
 
-        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
-        Assert.AreEqual(16, uefa.RemainingSlots);
+        AssertRemainingSlots("UEFA", 16);
     }
 
     [TestMethod]
     public void UpdateTeamConfederation_ShouldAddTeamToNewConfederation()
     {
-        var team = new Team("Spain", "UEFA", 500);
-        _service.AddTeamToConfederation(team);
+        var team = AddTeam("Spain", "UEFA");
 
         _service.UpdateTeamConfederation(team, "CONMEBOL");
 
-        var conmebol = _service.GetAll().First(c => c.Name == "CONMEBOL");
-        Assert.AreEqual(6, conmebol.RemainingSlots);
+        AssertRemainingSlots("CONMEBOL", 6);
     }
 
     [TestMethod]
-    public void UpdateTeamConfederation_WhenNewConfederationIsFull_ShouldThrowAndNotMove()
+    public void UpdateTeamConfederation_WhenNewConfederationIsFull_ShouldThrowExceptionAndKeepTeamInOldConfederation()
     {
-        var existing = new Team("NewZealand", "OFC", 500);
-        _service.AddTeamToConfederation(existing);
-
-        var team = new Team("Spain", "UEFA", 500);
-        _service.AddTeamToConfederation(team);
+        AddTeam("NewZealand", "OFC");
+        var team = AddTeam("Spain", "UEFA");
 
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "OFC"));
 
-        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
-        Assert.AreEqual(15, uefa.RemainingSlots);
+        AssertRemainingSlots("UEFA", 15);
     }
 
     [TestMethod]
-    public void UpdateTeamConfederation_WhenNewConfederationNotFound_ShouldThrowException()
+    public void UpdateTeamConfederation_WhenNewConfederationDoesNotExist_ShouldThrowException()
     {
-        var team = new Team("Spain", "UEFA", 500);
-        _service.AddTeamToConfederation(team);
+        var team = AddTeam("Spain", "UEFA");
 
         Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeamConfederation(team, "INVALID"));
     }
-    
 
     [TestMethod]
-    public void UpdateTeamConfederation_WhenSameConfederation_ShouldNotMoveTeam()
+    public void UpdateTeamConfederation_WhenNewConfederationIsSameAsCurrent_ShouldNotMoveTeam()
     {
-        var team = new Team("Spain", "UEFA", 500);
-        _service.AddTeamToConfederation(team);
+        var team = AddTeam("Spain", "UEFA");
 
         _service.UpdateTeamConfederation(team, "UEFA");
 
-        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
-        Assert.AreEqual(15, uefa.RemainingSlots);
+        AssertRemainingSlots("UEFA", 15);
     }
-    
-    
+
     [TestMethod]
-    public void RemoveTeamFromConfederation_WhenTeamExists_ShouldOnlyRemoveThatTeam()
+    public void RemoveTeamFromConfederation_WhenTeamExists_ShouldRemoveOnlyThatTeam()
     {
-        var team  = new Team("Spain",  "UEFA", 500);
-        var team2 = new Team("Bosnia", "UEFA", 600);
-        _service.AddTeamToConfederation(team);
-        _service.AddTeamToConfederation(team2);
+        var team = AddTeam("Spain", "UEFA");
+        AddTeam("Bosnia", "UEFA", 600);
 
         _service.RemoveTeamFromConfederation(team);
 
-        var uefa = _service.GetAll().First(c => c.Name == "UEFA");
-        Assert.AreEqual(15, uefa.RemainingSlots);
+        AssertRemainingSlots("UEFA", 15);
     }
-    
-    
+
+    private Team AddTeam(string name, string confederationName, int ranking = 500)
+    {
+        var team = CreateTeam(name, confederationName, ranking);
+        _service.AddTeamToConfederation(team);
+
+        return team;
+    }
+
+    private static Team CreateTeam(string name, string confederationName, int ranking = 500)
+    {
+        return new Team(name, confederationName, ranking);
+    }
+
+    private void AssertRemainingSlots(string confederationName, int expectedRemainingSlots)
+    {
+        var confederation = _service.GetAll().First(c => c.Name == confederationName);
+
+        Assert.AreEqual(expectedRemainingSlots, confederation.RemainingSlots);
+    }
 }

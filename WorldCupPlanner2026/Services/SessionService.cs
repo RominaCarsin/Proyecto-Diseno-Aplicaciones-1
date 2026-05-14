@@ -7,6 +7,7 @@ public class SessionService : ISessionService
 {
     private readonly IUserService _userService;
     private readonly IAuthStateService _authState;
+
     private UserResponse? _currentUser;
 
     public SessionService(IUserService userService, IAuthStateService authState)
@@ -27,12 +28,18 @@ public class SessionService : ISessionService
         _authState.NotifyStateChanged();
     }
 
-    public bool IsLoggedIn() => _currentUser != null;
+    public bool IsLoggedIn() => _currentUser is not null;
 
     public string? GetCurrentUserEmail() => _currentUser?.Email;
 
     public UserResponse? GetCurrentUser() => _currentUser;
 
-    public bool CurrentUserHasRole(RoleDto role) =>
-        _currentUser != null && (_currentUser.Roles & role) == role;
+    public bool CurrentUserHasRole(RoleDto role)
+    {
+        if (_currentUser is null)
+            return false;
+
+        bool userHasRole = (_currentUser.Roles & role) == role;
+        return userHasRole;
+    }
 }

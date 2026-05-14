@@ -3,45 +3,79 @@
 [TestClass]
 public class AuditLogTests
 {
-    [TestMethod]
-    public void CreateAuditLog_WithValidData_ShouldSucceed()
-    {
-        var log = new AuditLog("admin@test.com", "user created", "juan@test.com");
-        
-        Assert.IsNotNull(log);
-        Assert.AreEqual("admin@test.com",log.ActorEmail);
-        Assert.AreEqual("user created",log.Action);
-        Assert.AreEqual("juan@test.com", log.Details);
-    }
-
-    [TestMethod]
-    public void CreateAuditLog_WithEmptyActorEmail_ShouldThrowException()
-    {
-        Assert.ThrowsException<ArgumentException>(() => new AuditLog("", "user created", "juan@test.com"));
-    }
+    private const string ValidActorEmail = "admin@test.com";
+    private const string ValidAction = "User created";
+    private const string ValidDetails = "juan@test.com";
     
     [TestMethod]
-    public void CreateAuditLog_WithEmptyAction_ShouldThrowException()
+    public void CreateAuditLog_WithValidData_ShouldCreateLogWithExpectedProperties()
     {
-        Assert.ThrowsException<ArgumentException>(() => new AuditLog("admin@test.com", "", "juan@test.com"));
+        var log = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
+
+        Assert.AreEqual(ValidActorEmail, log.ActorEmail);
+        Assert.AreEqual(ValidAction, log.Action);
+        Assert.AreEqual(ValidDetails, log.Details);
     }
 
     [TestMethod]
-    public void CreateAuditLog_Timestamp_ShouldBeCloseToNow()
+    public void CreateAuditLog_ShouldSetTimestampCloseToUtcNow()
     {
         var before = DateTime.UtcNow;
-        var log = new AuditLog("admin@test.com", "User created", "juan@test.com");
-        var after = DateTime.UtcNow;
 
+        var log = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
+
+        var after = DateTime.UtcNow;
         Assert.IsTrue(log.Timestamp >= before && log.Timestamp <= after);
     }
 
     [TestMethod]
-    public void CreateAuditLog_Id_ShouldBeIncresing()
+    public void CreateAuditLog_ShouldGenerateIncrementalId()
     {
-        var firstLog = new AuditLog("admin@test.com", "User created", "juan@test.com");
-        var secondLog = new AuditLog("admin@test.com", "User created", "pedro@test.com");
+        var firstLog = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
+        var secondLog = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
 
-        Assert.IsTrue(secondLog.Id > firstLog.Id);
+        Assert.AreEqual(firstLog.Id + 1, secondLog.Id);
+    }
+
+    [TestMethod]
+    public void CreateAuditLog_WithEmptyActorEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new AuditLog("", ValidAction, ValidDetails));
+    }
+
+    [TestMethod]
+    public void CreateAuditLog_WithNullActorEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new AuditLog(null!, ValidAction, ValidDetails));
+    }
+
+    [TestMethod]
+    public void CreateAuditLog_WithWhitespaceOnlyActorEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new AuditLog("   ", ValidAction, ValidDetails));
+    }
+    
+    [TestMethod]
+    public void CreateAuditLog_WithEmptyAction_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new AuditLog(ValidActorEmail, "", ValidDetails));
+    }
+
+    [TestMethod]
+    public void CreateAuditLog_WithNullAction_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new AuditLog(ValidActorEmail, null!, ValidDetails));
+    }
+
+    [TestMethod]
+    public void CreateAuditLog_WithWhitespaceOnlyAction_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new AuditLog(ValidActorEmail, "   ", ValidDetails));
     }
 }

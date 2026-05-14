@@ -439,7 +439,4 @@ public void FinishMatch_WithNonExistingId_ShouldThrowArgumentException()
             ConfederationName = "CONMEBOL",
             RankingFifa       = 1800
         };
-    
-
-
 }

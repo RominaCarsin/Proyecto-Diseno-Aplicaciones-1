@@ -1,276 +1,274 @@
 using Domain;
 using DTOs;
-using IServices;
 using IRepository;
+using IServices;
 using Repository;
+using Services;
 
 namespace Services.Tests;
 
 [TestClass]
 public class TeamServiceTests
 {
-    private TeamService _service;
-    private  IRepository<Team> _repository;
-    private IConfederationService _confederationService;
-    
-    private TeamRequest _validTeamRequest = new TeamRequest { Name = "Uruguay", ConfederationName = "CONMEBOL", RankingFifa = 500 };
-    private TeamRequest _otherValidTeamRequest = new TeamRequest { Name = "Argentina", ConfederationName = "CONMEBOL", RankingFifa = 700 };
-    
-    private AuditService          _auditService;
-    private IRepository<AuditLog> _auditRepository;
-    private SessionService        _sessionService;
-    
+    private const string ValidTeamName = "URUGUAY";
+    private const string OtherTeamName = "ARGENTINA";
+    private const string ValidConfederation = "CONMEBOL";
+    private const int ValidRanking = 500;
+    private const int OtherRanking = 700;
+
+    private TeamService _service = null!;
+    private IRepository<Team> _repository = null!;
+    private IConfederationService _confederationService = null!;
+
     [TestInitialize]
     public void Setup()
     {
         _repository = new Repository<Team>();
-        _auditRepository = new Repository<AuditLog>(); 
-        _auditService = new AuditService(_auditRepository); 
-        var authState = new AuthStateService(); 
-        _sessionService = new SessionService(null!, authState); 
-        _confederationService = new ConfederationService(); 
-        _service = new TeamService(_repository, _confederationService, _auditService, _sessionService);
-    }
+        _confederationService = new ConfederationService();
+        var auditService = new AuditService(new Repository<AuditLog>());
+        var sessionService = new SessionService(null!, new AuthStateService());
 
-    [TestMethod]
-    public void AddTeam_WithValidTeamRequest_ShouldAddTeamNormalized()
-    {
-        _service.AddTeam(_validTeamRequest);
-        
-        var team = _repository.GetAll().FirstOrDefault(t => t.Name == "URUGUAY");
-        Assert.AreEqual("URUGUAY", team.Name);
-        
-    }
-    
-
-    [TestMethod]
-    public void UpdateTeam_WhithInvalidTeamRequest_ShouldThrowArgumentExceptionTeamNotFound()
-    {
-        _service.AddTeam(_validTeamRequest);
-        
-        Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeam("Inexistente", _validTeamRequest));
+        _service = new TeamService(_repository, _confederationService, auditService, sessionService);
     }
     
     [TestMethod]
-    public void AddTeam_WithAlreadyExistingName_ShouldThrowException()
+    public void AddTeam_WithValidRequest_ShouldPersistTeamNormalized()
     {
-        _service.AddTeam(_validTeamRequest);
-        
-        var duplicate = new TeamRequest { Name = "URUGUAY", ConfederationName = "CONMEBOL", RankingFifa = 600 };
-        
-        Assert.ThrowsException<ArgumentException>(() => _service.AddTeam(duplicate));
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        var team = FindTeamByName(ValidTeamName);
+        Assert.IsNotNull(team);
+        Assert.AreEqual(ValidTeamName, team.Name);
     }
-    
 
     [TestMethod]
-    public void UpdateTeam_WithValidData_ShouldUpdateAndCallConfederationService()
+    public void AddTeam_WithAlreadyExistingName_ShouldThrowArgumentException()
     {
-        _service.AddTeam(_validTeamRequest);
-        var request = new TeamRequest { Name = "Uruguay", ConfederationName = "UEFA", RankingFifa = 600 };
-        
-        _service.UpdateTeam("URUGUAY", request);
-        var updatedTeam = _repository.GetAll().FirstOrDefault(t => t.Name == "URUGUAY");
-        
-        Assert.AreEqual(600, updatedTeam.RankingFifa);
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation, ranking: 600)));
+    }
+    
+    [TestMethod]
+    public void UpdateTeam_WithValidData_ShouldUpdateRankingAndConfederation()
+    {
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        _service.UpdateTeam(ValidTeamName, BuildTeamRequest(ValidTeamName, "UEFA", ranking: 600));
+
+        var updatedTeam = FindTeamByName(ValidTeamName);
+        Assert.AreEqual(600, updatedTeam!.RankingFifa);
         Assert.AreEqual("UEFA", updatedTeam.ConfederationName);
     }
-    
-    [TestMethod]
-    public void UpdateTeam_WhenNewNameAlreadyTakenByAnotherTeam_ShouldThrowArgumentException()
-    {
-        _service.AddTeam(_validTeamRequest);
-        _service.AddTeam(_otherValidTeamRequest);
-        
-        var request = new TeamRequest { Name = "ARGENTINA", ConfederationName = "CONMEBOL", RankingFifa = 500 };
-        
-        Assert.ThrowsException<ArgumentException>(() => _service.UpdateTeam("URUGUAY", request));
-    }
-    
+
     [TestMethod]
     public void UpdateTeam_WhenConfederationChanged_ShouldUpdateTeamConfederation()
     {
-        _service.AddTeam(_validTeamRequest);
-        var request = new TeamRequest { Name = "URUGUAY", ConfederationName = "UEFA", RankingFifa = 600 };
-        
-        _service.UpdateTeam("URUGUAY", request);
-        
-        var updatedTeam = _repository.GetAll().FirstOrDefault(t => t.Name == "URUGUAY");
-        
-        Assert.AreEqual(600, updatedTeam.RankingFifa);
-        Assert.AreEqual("UEFA", updatedTeam.ConfederationName);
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        _service.UpdateTeam(ValidTeamName, BuildTeamRequest(ValidTeamName, "UEFA", ranking: 600));
+
+        var updatedTeam = FindTeamByName(ValidTeamName);
+        Assert.AreEqual("UEFA", updatedTeam!.ConfederationName);
     }
 
     [TestMethod]
-    public void DeleteTeam_WhenTeamExists_ShouldRemoveAndFreeSlot()
+    public void UpdateTeam_WithNonExistingName_ShouldThrowArgumentException()
     {
-        _service.AddTeam(_validTeamRequest);
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
 
-        _service.DeleteTeam("URUGUAY");
-
-        var team = _repository.GetAll().FirstOrDefault(t => t.Name == "URUGUAY");
-        Assert.IsNull(team);
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.UpdateTeam("NONEXISTENT", BuildTeamRequest(ValidTeamName, ValidConfederation)));
     }
-    
+
     [TestMethod]
-    public void DeleteTeam_WhenTeamNotFound_ShouldThrowArgumentException()
+    public void UpdateTeam_WhenNewNameAlreadyTakenByAnotherTeam_ShouldThrowArgumentException()
     {
-        
-        Assert.ThrowsException<ArgumentException>(() => _service.DeleteTeam("INEXISTENTE"));
-        
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+        _service.AddTeam(BuildTeamRequest(OtherTeamName, ValidConfederation, ranking: OtherRanking));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.UpdateTeam(ValidTeamName, BuildTeamRequest(OtherTeamName, ValidConfederation)));
     }
     
     [TestMethod]
-    public void GetTeams_ShouldReturnAllTeamsFromRepository()
+    public void DeleteTeam_WithExistingTeam_ShouldRemoveTeamFromRepository()
     {
-        _service.AddTeam(_validTeamRequest);
-        _service.AddTeam(_otherValidTeamRequest);
-        
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        _service.DeleteTeam(ValidTeamName);
+
+        Assert.IsNull(FindTeamByName(ValidTeamName));
+    }
+
+    [TestMethod]
+    public void DeleteTeam_WithNonExistingName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.DeleteTeam("NONEXISTENT"));
+    }
+    
+    [TestMethod]
+    public void GetTeams_WithMultipleTeams_ShouldReturnAllTeams()
+    {
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+        _service.AddTeam(BuildTeamRequest(OtherTeamName, ValidConfederation, ranking: OtherRanking));
+
         var result = _service.GetTeams().ToList();
-        
+
         Assert.AreEqual(2, result.Count);
-        Assert.AreEqual("URUGUAY", result[0].Name);
-        Assert.AreEqual("ARGENTINA", result[1].Name);
+        Assert.AreEqual(ValidTeamName, result[0].Name);
+        Assert.AreEqual(OtherTeamName, result[1].Name);
     }
-
+    
     [TestMethod]
-    public void AutoCompleteTeams_WhenCalled_FillsExactly48Teams()
+    public void AutoCompleteTeams_ShouldFillExactly48TeamsWithCorrectConfederationDistribution()
     {
-        AddTeamsToService(
-            ("Uruguay", "CONMEBOL", 500),
-            ("Argentina", "CONMEBOL", 700),
-            ("Brazil", "CONMEBOL", 800),
-            ("France", "UEFA", 900),
-            ("Spain", "UEFA", 1000),
-            ("Germany", "UEFA", 1100),
-            ("Morocco", "CAF", 1200),
-            ("Japan", "AFC", 1300),
-            ("Mexico", "CONCACAF", 1400),
-            ("New Zealand", "OFC", 1500));
+        AddInitialTeams();
 
-        _service.AutoCompleteTeams(10);
+        _service.AutoCompleteTeams(seed: 10);
 
         var result = _service.GetTeams().ToList();
         Assert.AreEqual(48, result.Count);
-        Assert.AreEqual(16, result.Count(team => team.ConfederationName == "UEFA"));
-        Assert.AreEqual(9, result.Count(team => team.ConfederationName == "CAF"));
-        Assert.AreEqual(8, result.Count(team => team.ConfederationName == "AFC"));
-        Assert.AreEqual(7, result.Count(team => team.ConfederationName == "CONCACAF"));
-        Assert.AreEqual(7, result.Count(team => team.ConfederationName == "CONMEBOL"));
-        Assert.AreEqual(1, result.Count(team => team.ConfederationName == "OFC"));
+        Assert.AreEqual(16, result.Count(t => t.ConfederationName == "UEFA"));
+        Assert.AreEqual(9, result.Count(t => t.ConfederationName == "CAF"));
+        Assert.AreEqual(8, result.Count(t => t.ConfederationName == "AFC"));
+        Assert.AreEqual(7, result.Count(t => t.ConfederationName == "CONCACAF"));
+        Assert.AreEqual(7, result.Count(t => t.ConfederationName == "CONMEBOL"));
+        Assert.AreEqual(1, result.Count(t => t.ConfederationName == "OFC"));
     }
 
     [TestMethod]
-    public void AutoCompleteTeams_GeneratesDeterministicNames()
+    public void AutoCompleteTeams_ShouldGenerateDeterministicNames()
     {
-        _service.AutoCompleteTeams(10);
+        _service.AutoCompleteTeams(seed: 10);
 
         var firstGeneratedUefaTeam = _service.GetTeams()
-            .FirstOrDefault(team => team.ConfederationName == "UEFA" && team.Name.StartsWith("UEFA_"));
+            .FirstOrDefault(t => t.ConfederationName == "UEFA" && t.Name.StartsWith("UEFA_"));
 
         Assert.IsNotNull(firstGeneratedUefaTeam);
         Assert.AreEqual("UEFA_01", firstGeneratedUefaTeam.Name);
     }
 
     [TestMethod]
-    public void AutoCompleteTeams_WithSameSeed_GeneratesIdenticalRankings()
+    public void AutoCompleteTeams_WithSameSeed_ShouldGenerateIdenticalRankings()
     {
-        var firstService = CreateTeamService();
-        var secondService = CreateTeamService();
+        var firstService = BuildTeamService();
+        var secondService = BuildTeamService();
 
-        firstService.AutoCompleteTeams(123);
-        secondService.AutoCompleteTeams(123);
+        firstService.AutoCompleteTeams(seed: 123);
+        secondService.AutoCompleteTeams(seed: 123);
 
-        var firstRankings = GetGeneratedRankings(firstService);
-        var secondRankings = GetGeneratedRankings(secondService);
+        var firstRankings = GetGeneratedTeamRankings(firstService);
+        var secondRankings = GetGeneratedTeamRankings(secondService);
 
         CollectionAssert.AreEqual(firstRankings, secondRankings);
     }
-
+    
     [TestMethod]
-    public void GetTeamsOrdered_WithoutTies_ReturnsRankingsDescending()
+    public void GetTeamsOrdered_WithoutTies_ShouldReturnTeamsOrderedByRankingDescending()
     {
-        AddTeamsToService(
-            ("Uruguay", "CONMEBOL", 1700),
-            ("France", "UEFA", 2100),
-            ("Japan", "AFC", 1300),
-            ("Morocco", "CAF", 1600));
+        AddTeams(
+            ("URUGUAY", "CONMEBOL", 1700),
+            ("FRANCE", "UEFA", 2100),
+            ("JAPAN", "AFC", 1300),
+            ("MOROCCO", "CAF", 1600));
 
-        var result = _service.GetTeamsOrdered(5).ToList();
+        var result = _service.GetTeamsOrdered(seed: 5).ToList();
 
         CollectionAssert.AreEqual(
             new[] { 2100, 1700, 1600, 1300 },
-            result.Select(team => team.RankingFifa).ToArray());
+            result.Select(t => t.RankingFifa).ToArray());
     }
 
     [TestMethod]
-    public void GetTeamsOrdered_WithTies_ShufflesTiedTeamsDeterministically()
+    public void GetTeamsOrdered_WithTies_ShouldShuffleTiedTeamsDeterministically()
     {
-        AddTeamsToService(
-            ("Alpha", "UEFA", 1800),
-            ("Beta", "UEFA", 1800),
-            ("Gamma", "UEFA", 1800),
-            ("Delta", "CAF", 1500));
+        AddTeams(
+            ("ALPHA", "UEFA", 1800),
+            ("BETA", "UEFA", 1800),
+            ("GAMMA", "UEFA", 1800),
+            ("DELTA", "CAF", 1500));
 
-        var firstResult = _service.GetTeamsOrdered(7).ToList();
-        var secondResult = _service.GetTeamsOrdered(7).ToList();
+        var firstResult = _service.GetTeamsOrdered(seed: 7).ToList();
+        var secondResult = _service.GetTeamsOrdered(seed: 7).ToList();
+
         var expectedTiedNames = new List<string> { "ALPHA", "BETA", "GAMMA" };
-        new ShuffleService(7).ShuffleRange(expectedTiedNames, 0, expectedTiedNames.Count);
+        new ShuffleService(seed: 7).ShuffleRange(expectedTiedNames, 0, expectedTiedNames.Count);
 
         CollectionAssert.AreEqual(
-            firstResult.Select(team => team.Name).ToArray(),
-            secondResult.Select(team => team.Name).ToArray());
+            firstResult.Select(t => t.Name).ToArray(),
+            secondResult.Select(t => t.Name).ToArray());
         CollectionAssert.AreEqual(
             expectedTiedNames.ToArray(),
-            firstResult.Take(3).Select(team => team.Name).ToArray());
+            firstResult.Take(3).Select(t => t.Name).ToArray());
         Assert.AreEqual("DELTA", firstResult[3].Name);
     }
 
     [TestMethod]
-    public void GetTeamsOrdered_WithDifferentSeeds_ProducesDifferentTieBreaks()
+    public void GetTeamsOrdered_WithDifferentSeeds_ShouldProduceDifferentTieBreakOrder()
     {
-        AddTeamsToService(
-            ("Alpha", "UEFA", 1800),
-            ("Beta", "UEFA", 1800),
-            ("Gamma", "UEFA", 1800),
-            ("Delta", "UEFA", 1800));
+        AddTeams(
+            ("ALPHA", "UEFA", 1800),
+            ("BETA", "UEFA", 1800),
+            ("GAMMA", "UEFA", 1800),
+            ("DELTA", "UEFA", 1800));
 
-        var firstOrder = _service.GetTeamsOrdered(1).Select(team => team.Name).ToArray();
-        var secondOrder = _service.GetTeamsOrdered(2).Select(team => team.Name).ToArray();
+        var firstOrder = _service.GetTeamsOrdered(seed: 1).Select(t => t.Name).ToArray();
+        var secondOrder = _service.GetTeamsOrdered(seed: 2).Select(t => t.Name).ToArray();
 
         CollectionAssert.AreNotEqual(firstOrder, secondOrder);
     }
+    
+    private static TeamRequest BuildTeamRequest(
+        string name,
+        string confederationName,
+        int ranking = ValidRanking) =>
+        new TeamRequest
+        {
+            Name = name,
+            ConfederationName = confederationName,
+            RankingFifa = ranking
+        };
 
-    private static TeamService CreateTeamService()
+    private static TeamService BuildTeamService()
     {
         var repository = new Repository<Team>();
-        var auditRepository = new Repository<AuditLog>();
-        var auditService = new AuditService(auditRepository);
-        var authState = new AuthStateService();
-        var sessionService = new SessionService(null!, authState);
+        var auditService = new AuditService(new Repository<AuditLog>());
+        var sessionService = new SessionService(null!, new AuthStateService());
         var confederationService = new ConfederationService();
-
         return new TeamService(repository, confederationService, auditService, sessionService);
     }
 
-    private static int[] GetGeneratedRankings(TeamService service)
+    private Team? FindTeamByName(string name) =>
+        _repository.GetAll().FirstOrDefault(t => t.Name == name);
+
+    private void AddTeams(params (string Name, string Confederation, int Ranking)[] teams)
     {
-        return service.GetTeams()
-            .Where(team => team.Name.Contains('_'))
-            .OrderBy(team => team.Name)
-            .Select(team => team.RankingFifa)
-            .ToArray();
+        foreach (var (name, confederation, ranking) in teams)
+            _service.AddTeam(BuildTeamRequest(name, confederation, ranking));
     }
 
-    private void AddTeamsToService(params (string Name, string ConfederationName, int RankingFifa)[] teams)
+    private void AddInitialTeams()
     {
-        foreach (var team in teams)
-        {
-            _service.AddTeam(new TeamRequest
-            {
-                Name = team.Name,
-                ConfederationName = team.ConfederationName,
-                RankingFifa = team.RankingFifa
-            });
-        }
+        AddTeams(
+            ("URUGUAY",      "CONMEBOL",  500),
+            ("ARGENTINA",    "CONMEBOL",  700),
+            ("BRAZIL",       "CONMEBOL",  800),
+            ("FRANCE",       "UEFA",      900),
+            ("SPAIN",        "UEFA",     1000),
+            ("GERMANY",      "UEFA",     1100),
+            ("MOROCCO",      "CAF",      1200),
+            ("JAPAN",        "AFC",      1300),
+            ("MEXICO",       "CONCACAF", 1400),
+            ("NEW ZEALAND",  "OFC",      1500));
     }
+
+    private static int[] GetGeneratedTeamRankings(TeamService service) =>
+        service.GetTeams()
+            .Where(t => t.Name.Contains('_'))
+            .OrderBy(t => t.Name)
+            .Select(t => t.RankingFifa)
+            .ToArray();
 }

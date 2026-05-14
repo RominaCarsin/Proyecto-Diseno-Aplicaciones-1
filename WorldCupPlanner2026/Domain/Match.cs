@@ -3,17 +3,17 @@ namespace Domain;
 public class Match
 {
     private const int MinGoals = 0;
-
-    private const string InvalidDateError = "Match date must be valid.";
-    private const string RequiredStadiumError = "Stadium cannot be null.";
-    private const string RequiredHomeTeamError = "Home team cannot be null.";
-    private const string RequiredAwayTeamError = "Away team cannot be null.";
-    private const string SameTeamsError = "Home team and away team must be different.";
-    private const string LockedMatchError = "Locked matches cannot be edited.";
-    private const string NegativeGoalsError = "Goals cannot be negative.";
-    private const string FinishedMatchError = "Finished matches cannot be edited.";
-    private const string DrawInKnockoutError = "Knockout matches cannot end in a draw.";
-    private const string KnockoutGroupError = "Knockout matches cannot have a group assigned.";
+    
+    private const string InvalidDateErrorMessage = "La fecha del partido debe ser válida.";
+    private const string RequiredStadiumErrorMessage = "El estadio no puede ser nulo.";
+    private const string RequiredHomeTeamErrorMessage = "El equipo local no puede ser nulo.";
+    private const string RequiredAwayTeamErrorMessage = "El equipo visitante no puede ser nulo.";
+    private const string SameTeamsErrorMessage = "El equipo local y el visitante deben ser diferentes.";
+    private const string LockedMatchErrorMessage = "Los partidos bloqueados no pueden ser editados.";
+    private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
+    private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
+    private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
+    private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
 
     private static int _nextId = 1;
 
@@ -41,11 +41,11 @@ public class Match
         TournamentPhase phase = TournamentPhase.GroupStage)
     {
         ValidateDate(date);
-        ValidateRequired(stadium, RequiredStadiumError);
-        ValidateRequired(homeTeam, RequiredHomeTeamError);
-        ValidateRequired(awayTeam, RequiredAwayTeamError);
+        ValidateRequired(stadium, RequiredStadiumErrorMessage);
+        ValidateRequired(homeTeam, RequiredHomeTeamErrorMessage);
+        ValidateRequired(awayTeam, RequiredAwayTeamErrorMessage);
         ValidateTeamsAreDifferent(homeTeam!, awayTeam!);
-        ValidateGroupForPhase(group, phase);
+        ValidateGroupIsNotAssignedToKnockoutPhase(group, phase);
 
         Id = _nextId++;
         Date = date;
@@ -60,16 +60,17 @@ public class Match
     public void SetResult(int homeGoals, int awayGoals)
     {
         ValidateIsEditable();
-        ValidateGoals(homeGoals, awayGoals);
+        ValidateGoalsAreNotNegative(homeGoals, awayGoals);
+        ValidateKnockoutMatchIsNotDraw(homeGoals, awayGoals);
 
         if (HasResult)
-            RevertPreviousResult();
+            RevertPreviousResultFromTeams();
 
         HomeGoals = homeGoals;
         AwayGoals = awayGoals;
         Winner = DetermineWinner(homeGoals, awayGoals);
 
-        NotifyTeams();
+        ApplyResultToTeams();
     }
 
     public void Finish()
@@ -90,7 +91,7 @@ public class Match
     public void UpdateStadium(Stadium? newStadium)
     {
         ValidateIsEditable();
-        ValidateRequired(newStadium, RequiredStadiumError);
+        ValidateRequired(newStadium, RequiredStadiumErrorMessage);
 
         Stadium = newStadium!;
     }
@@ -99,45 +100,7 @@ public class Match
     {
         IsLocked = true;
     }
-
-    private void RevertPreviousResult()
-    {
-        if (HomeGoals > AwayGoals)
-        {
-            HomeTeam.RevertWin(HomeGoals!.Value, AwayGoals!.Value);
-            AwayTeam.RevertLoss(AwayGoals.Value, HomeGoals.Value);
-        }
-        else if (AwayGoals > HomeGoals)
-        {
-            AwayTeam.RevertWin(AwayGoals!.Value, HomeGoals!.Value);
-            HomeTeam.RevertLoss(HomeGoals.Value, AwayGoals.Value);
-        }
-        else
-        {
-            HomeTeam.RevertDraw(HomeGoals!.Value);
-            AwayTeam.RevertDraw(AwayGoals!.Value);
-        }
-    }
-
-    private void NotifyTeams()
-    {
-        if (HomeGoals > AwayGoals)
-        {
-            HomeTeam.RecordWin(HomeGoals!.Value, AwayGoals!.Value);
-            AwayTeam.RecordLoss(AwayGoals.Value, HomeGoals.Value);
-        }
-        else if (AwayGoals > HomeGoals)
-        {
-            AwayTeam.RecordWin(AwayGoals!.Value, HomeGoals!.Value);
-            HomeTeam.RecordLoss(HomeGoals.Value, AwayGoals.Value);
-        }
-        else
-        {
-            HomeTeam.RecordDraw(HomeGoals!.Value);
-            AwayTeam.RecordDraw(AwayGoals!.Value);
-        }
-    }
-
+    
     private void ValidateIsEditable()
     {
         ValidateIsNotFinished();
@@ -147,19 +110,19 @@ public class Match
     private void ValidateIsNotFinished()
     {
         if (Status == MatchStatus.Finished)
-            throw new InvalidOperationException(FinishedMatchError);
+            throw new InvalidOperationException(FinishedMatchErrorMessage);
     }
 
     private void ValidateIsNotLocked()
     {
         if (IsLocked)
-            throw new InvalidOperationException(LockedMatchError);
+            throw new InvalidOperationException(LockedMatchErrorMessage);
     }
 
     private static void ValidateDate(DateTime date)
     {
         if (date == DateTime.MinValue)
-            throw new ArgumentException(InvalidDateError, nameof(date));
+            throw new ArgumentException(InvalidDateErrorMessage, nameof(date));
     }
 
     private static void ValidateRequired<T>(T? value, string errorMessage)
@@ -171,30 +134,33 @@ public class Match
     private static void ValidateTeamsAreDifferent(Team homeTeam, Team awayTeam)
     {
         if (AreSameTeam(homeTeam, awayTeam))
-            throw new ArgumentException(SameTeamsError);
+            throw new ArgumentException(SameTeamsErrorMessage);
     }
 
-    private static void ValidateGroupForPhase(char? group, TournamentPhase phase)
+    private static void ValidateGroupIsNotAssignedToKnockoutPhase(char? group, TournamentPhase phase)
     {
         if (phase != TournamentPhase.GroupStage && group.HasValue)
-            throw new InvalidOperationException(KnockoutGroupError);
+            throw new InvalidOperationException(KnockoutGroupErrorMessage);
     }
 
-    private void ValidateGoals(int homeGoals, int awayGoals)
+    private static void ValidateGoalsAreNotNegative(int homeGoals, int awayGoals)
     {
         ValidateSingleGoalValue(homeGoals, nameof(homeGoals));
         ValidateSingleGoalValue(awayGoals, nameof(awayGoals));
+    }
 
+    private void ValidateKnockoutMatchIsNotDraw(int homeGoals, int awayGoals)
+    {
         if (Phase != TournamentPhase.GroupStage && homeGoals == awayGoals)
-            throw new InvalidOperationException(DrawInKnockoutError);
+            throw new InvalidOperationException(DrawInKnockoutErrorMessage);
     }
 
     private static void ValidateSingleGoalValue(int goals, string paramName)
     {
         if (goals < MinGoals)
-            throw new ArgumentOutOfRangeException(paramName, NegativeGoalsError);
+            throw new ArgumentOutOfRangeException(paramName, NegativeGoalsErrorMessage);
     }
-
+    
     private static bool AreSameTeam(Team homeTeam, Team awayTeam) =>
         ReferenceEquals(homeTeam, awayTeam)
         || string.Equals(homeTeam.Name, awayTeam.Name, StringComparison.OrdinalIgnoreCase);
@@ -204,5 +170,35 @@ public class Match
         if (homeGoals > awayGoals) return HomeTeam;
         if (awayGoals > homeGoals) return AwayTeam;
         return null;
+    }
+
+    private void RevertPreviousResultFromTeams() =>
+        ApplyResultOperationToTeams(
+            HomeGoals!.Value,
+            AwayGoals!.Value,
+            onHomeWin: (hg, ag) => { HomeTeam.RevertWin(hg, ag); AwayTeam.RevertLoss(ag, hg); },
+            onAwayWin: (hg, ag) => { AwayTeam.RevertWin(ag, hg); HomeTeam.RevertLoss(hg, ag); },
+            onDraw: (hg, ag) => { HomeTeam.RevertDraw(hg); AwayTeam.RevertDraw(ag); }
+        );
+
+    private void ApplyResultToTeams() =>
+        ApplyResultOperationToTeams(
+            HomeGoals!.Value,
+            AwayGoals!.Value,
+            onHomeWin: (hg, ag) => { HomeTeam.RecordWin(hg, ag); AwayTeam.RecordLoss(ag, hg); },
+            onAwayWin: (hg, ag) => { AwayTeam.RecordWin(ag, hg); HomeTeam.RecordLoss(hg, ag); },
+            onDraw: (hg, ag) => { HomeTeam.RecordDraw(hg); AwayTeam.RecordDraw(ag); }
+        );
+
+    private static void ApplyResultOperationToTeams(
+        int homeGoals,
+        int awayGoals,
+        Action<int, int> onHomeWin,
+        Action<int, int> onAwayWin,
+        Action<int, int> onDraw)
+    {
+        if (homeGoals > awayGoals) onHomeWin(homeGoals, awayGoals);
+        else if (awayGoals > homeGoals) onAwayWin(homeGoals, awayGoals);
+        else onDraw(homeGoals, awayGoals);
     }
 }

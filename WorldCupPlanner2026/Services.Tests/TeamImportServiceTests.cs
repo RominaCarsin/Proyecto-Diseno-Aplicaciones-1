@@ -8,7 +8,12 @@ namespace Services.Tests;
 [TestClass]
 public class TeamImportServiceTests
 {
-    private const string Header = "Nombre,Confederaci\u00f3n,RankingFIFA";
+    private const string Header = "Nombre,Confederación,RankingFIFA";
+    private const string ValidCsv = $"{Header}\r\nUruguay,CONMEBOL,1900";
+    private const string InvalidHeaderCsv = "name,confederation,ranking\r\nUruguay,CONMEBOL,1900";
+    private const string HeaderWithWrongColumnCountCsv = "Nombre,RankingFIFA\r\nUruguay,1900";
+    private const string MissingColumnCsv = $"{Header}\r\nUruguay,CONMEBOL";
+    private const string NonNumericRankingCsv = $"{Header}\r\nUruguay,CONMEBOL,abc";
 
     private TeamImportService _service = null!;
     private TeamService _teamService = null!;
@@ -17,20 +22,13 @@ public class TeamImportServiceTests
     [TestInitialize]
     public void Setup()
     {
-        var teamRepository = new Repository<Team>();
-        _auditRepository = new Repository<AuditLog>();
-        var auditService = new AuditService(_auditRepository);
-        var sessionService = new SessionService(null!, new AuthStateService());
-        _teamService = new TeamService(teamRepository, new ConfederationService(), auditService, sessionService);
-        _service = new TeamImportService(_teamService, auditService, sessionService);
+        CreateServiceWithDefaultSession();
     }
 
     [TestMethod]
     public void Preview_WithValidCsv_ShouldReportSuccessfulRowsWithoutPersisting()
     {
-        var csv = $"{Header}\r\nUruguay,CONMEBOL,1900";
-
-        var result = _service.Preview(csv);
+        var result = _service.Preview(ValidCsv);
 
         Assert.AreEqual(1, result.TotalRows);
         Assert.AreEqual(1, result.SuccessfulRows);
@@ -40,9 +38,7 @@ public class TeamImportServiceTests
     [TestMethod]
     public void Import_WithValidCsv_ShouldPersistTeam()
     {
-        var csv = $"{Header}\r\nUruguay,CONMEBOL,1900";
-
-        var result = _service.Import(csv);
+        var result = _service.Import(ValidCsv);
 
         Assert.AreEqual(1, result.SuccessfulRows);
         Assert.AreEqual("URUGUAY", _teamService.GetTeams().Single().Name);
@@ -51,13 +47,10 @@ public class TeamImportServiceTests
     [TestMethod]
     public void Import_WithInvalidHeader_ShouldFailAndAuditError()
     {
-        var csv = "name,confederation,ranking\r\nUruguay,CONMEBOL,1900";
+        var result = _service.Import(InvalidHeaderCsv);
 
-        var result = _service.Import(csv);
-
-        Assert.AreEqual(1, result.FailedRows);
-        Assert.IsTrue(result.Rows.Single().ErrorMessage.Contains("encabezado"));
-        Assert.IsTrue(_auditRepository.GetAll().Any(log => log.Action == "Teams import error"));
+        AssertFailedImport(result, "encabezado");
+        AssertAuditActionExists("Teams import error");
     }
 
     [TestMethod]
@@ -75,12 +68,176 @@ public class TeamImportServiceTests
     [TestMethod]
     public void Preview_WithNonNumericRanking_ShouldReportError()
     {
-        var csv = $"{Header}\r\nUruguay,CONMEBOL,abc";
+        var result = _service.Preview(NonNumericRankingCsv);
 
-        var result = _service.Preview(csv);
+        AssertFailedImport(result, "RankingFIFA");
+    }
 
+    [TestMethod]
+    public void Preview_WithEmptyCsv_ShouldReportGlobalError()
+    {
+        var result = _service.Preview(string.Empty);
+
+        AssertGlobalError(result, "vacio");
+    }
+
+    [TestMethod]
+    public void Preview_WithWhitespaceCsv_ShouldReportGlobalError()
+    {
+        var result = _service.Preview("   ");
+
+        AssertGlobalError(result, "vacio");
+    }
+
+    [TestMethod]
+    public void Import_WithEmptyCsv_ShouldReportGlobalError()
+    {
+        var result = _service.Import(string.Empty);
+
+        AssertGlobalError(result, "vacio");
+    }
+
+    [TestMethod]
+    public void Import_WithInvalidHeaderColumnCount_ShouldFailAndAuditError()
+    {
+        var result = _service.Import(HeaderWithWrongColumnCountCsv);
+
+        AssertFailedImport(result, "encabezado");
+        AssertAuditActionExists("Teams import error");
+    }
+
+    [TestMethod]
+    public void Preview_WithInvalidHeader_ShouldReportErrorWithoutAuditing()
+    {
+        var result = _service.Preview(InvalidHeaderCsv);
+
+        AssertFailedImport(result, "encabezado");
+        AssertNoAuditLogs();
+    }
+
+    [TestMethod]
+    public void Import_WithRowMissingColumns_ShouldReportRowErrorAndAudit()
+    {
+        var result = _service.Import(MissingColumnCsv);
+
+        AssertFailedImport(result, "3 columnas");
+        AssertAuditActionExists("Teams import error");
+    }
+
+    [TestMethod]
+    public void Preview_WithRowMissingColumns_ShouldReportRowError()
+    {
+        var result = _service.Preview(MissingColumnCsv);
+
+        AssertFailedImport(result, "3 columnas");
+    }
+
+    [TestMethod]
+    public void Preview_WithHeaderWithWrongColumnCount_ShouldReportGlobalError()
+    {
+        var result = _service.Preview(HeaderWithWrongColumnCountCsv);
+
+        AssertFailedImport(result, "encabezado");
+    }
+
+    [TestMethod]
+    public void Preview_WithValidRow_ShouldNotPersistNorAudit()
+    {
+        var result = _service.Preview(ValidCsv);
+
+        Assert.AreEqual(1, result.SuccessfulRows);
+        Assert.AreEqual(0, _teamService.GetTeams().Count());
+        AssertNoAuditLogs();
+    }
+
+    [TestMethod]
+    public void Import_WithNullSession_ShouldUseSystemAsActorEmail()
+    {
+        CreateServiceWithDefaultSession();
+
+        var result = _service.Import(ValidCsv);
+
+        Assert.AreEqual(1, result.SuccessfulRows);
+        AssertAuditActorExists("system");
+    }
+
+    [TestMethod]
+    public void Import_WithNonNumericRanking_ShouldReportRowErrorAndAudit()
+    {
+        var result = _service.Import(NonNumericRankingCsv);
+
+        AssertFailedImport(result, "RankingFIFA");
+        AssertAuditActionExists("Teams import error");
+    }
+
+    private void CreateServiceWithDefaultSession()
+    {
+        var teamRepository = new Repository<Team>();
+        _auditRepository = new Repository<AuditLog>();
+
+        var auditService = new AuditService(_auditRepository);
+        var sessionService = new SessionService(null!, new AuthStateService());
+
+        _teamService = new TeamService(
+            teamRepository,
+            new ConfederationService(),
+            auditService,
+            sessionService);
+
+        _service = new TeamImportService(
+            _teamService,
+            auditService,
+            sessionService);
+    }
+
+    private static void AssertFailedImport(TeamImportResult result, string expectedErrorText)
+    {
         Assert.AreEqual(0, result.SuccessfulRows);
         Assert.AreEqual(1, result.FailedRows);
-        Assert.IsTrue(result.Rows.Single().ErrorMessage.Contains("RankingFIFA"));
+        Assert.IsTrue(result.Rows.Single().ErrorMessage.Contains(expectedErrorText));
+    }
+
+    private static void AssertGlobalError(TeamImportResult result, string expectedErrorText)
+    {
+        Assert.AreEqual(0, result.TotalRows);
+        Assert.AreEqual(1, result.FailedRows);
+        Assert.IsTrue(result.Rows.Single().ErrorMessage.Contains(expectedErrorText));
+    }
+
+    private void AssertAuditActionExists(string expectedAction)
+    {
+        Assert.IsTrue(_auditRepository
+            .GetAll()
+            .Any(log => log.Action == expectedAction));
+    }
+
+    private void AssertAuditActorExists(string expectedActorEmail)
+    {
+        Assert.IsTrue(_auditRepository
+            .GetAll()
+            .Any(log => log.ActorEmail == expectedActorEmail));
+    }
+
+    private void AssertNoAuditLogs()
+    {
+        Assert.IsFalse(_auditRepository.GetAll().Any());
+    }
+    
+    [TestMethod]
+    public void Preview_WithOnlyNewlines_ShouldReportGlobalError()
+    {
+        var result = _service.Preview("\r\n");
+
+        AssertGlobalError(result, "vacio");
+    }
+    
+    [TestMethod]
+    public void Import_WithOnlyNewlines_ShouldReportGlobalError()
+    {
+        var result = _service.Import("\r\n\r\n");
+
+        Assert.AreEqual(0, result.TotalRows);
+        Assert.AreEqual(1, result.FailedRows);
+        Assert.IsTrue(result.Rows.Single().ErrorMessage.Contains("vacio"));
     }
 }

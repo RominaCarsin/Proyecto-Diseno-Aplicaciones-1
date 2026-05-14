@@ -43,6 +43,6 @@ public static class MatchMapper
         if (Enum.TryParse<TournamentPhase>(phase, ignoreCase: true, out var result))
             return result;
 
-        throw new ArgumentException($"Invalid tournament phase: '{phase}'.");
+        throw new ArgumentException($"Fase del torneo inválida: '{phase}'.");
     }
 }

@@ -566,7 +566,6 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         var matchRepo = new Repository<Match>();
         var potRepo = new Repository<Pot>();
         _groupRepository = groupRepo;
-        _matchRepository = matchRepo;
 
         var teamRepo = new Repository<Team>();
         var confederationService = new ConfederationService();

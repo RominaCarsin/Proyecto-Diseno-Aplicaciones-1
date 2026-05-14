@@ -1,4 +1,3 @@
-
 namespace Domain;
 
 [Flags]
@@ -11,6 +10,25 @@ public enum Role
 
 public class User
 {
+    private const int CaesarShift = 3;
+    private const int MinPasswordLength = 8;
+    private const int MaxAgeInYears = 120;
+
+    private const string NameRequiredErrorMessage = "El nombre no puede estar vacío.";
+    private const string SurnameRequiredErrorMessage = "El apellido no puede estar vacío.";
+    private const string EmailRequiredErrorMessage = "El email no puede estar vacío.";
+    private const string EmailMissingAtSignErrorMessage = "El email debe contener @.";
+    private const string EmailInvalidFormatErrorMessage = "El email debe tener texto antes y después del @.";
+    private const string BirthDateRequiredErrorMessage = "La fecha de nacimiento es obligatoria.";
+    private const string BirthDateTooOldErrorMessage = "La fecha de nacimiento no es realista.";
+    private const string BirthDateInFutureErrorMessage = "La fecha de nacimiento no puede estar en el futuro.";
+    private const string PasswordEmptyErrorMessage = "La contraseña no puede estar vacía.";
+    private const string PasswordTooShortErrorMessage = "La contraseña debe tener al menos 8 caracteres.";
+    private const string PasswordMissingLowercaseErrorMessage = "La contraseña debe contener una letra minúscula.";
+    private const string PasswordMissingUppercaseErrorMessage = "La contraseña debe contener una letra mayúscula.";
+    private const string PasswordMissingDigitErrorMessage = "La contraseña debe contener un número.";
+    private const string PasswordMissingSpecialCharErrorMessage = "La contraseña debe contener un carácter especial.";
+    
     public string Name { get; private set; }
     public string Surname { get; private set; }
     public string Email { get; private set; }
@@ -18,14 +36,17 @@ public class User
     public string PasswordHash { get; private set; } = string.Empty;
     public Role Roles { get; private set; }
 
-    private const int CaesarShift = 3;
-
-    public User(string name, string surname, string email, DateTime dateOfBirth, string plainPassword, Role roles = Role.None)
+    public User(
+        string name,
+        string surname,
+        string email,
+        DateTime dateOfBirth,
+        string plainPassword,
+        Role roles = Role.None)
     {
-       UpdatePersonalInfo(name, surname, email, dateOfBirth);
-       Roles = roles;
-       ValidatePasswordComplexity(plainPassword);
-       SetPassword(plainPassword);
+        UpdatePersonalInfo(name, surname, email, dateOfBirth);
+        Roles = roles;
+        SetPassword(plainPassword);
     }
 
     public void UpdatePersonalInfo(string name, string surname, string email, DateTime dateOfBirth)
@@ -34,7 +55,6 @@ public class User
         ValidateSurname(surname);
         ValidateEmail(email);
         ValidateBirthDate(dateOfBirth);
-       
 
         Name = name;
         Surname = surname;
@@ -45,7 +65,6 @@ public class User
     public void SetPassword(string plainPassword)
     {
         ValidatePasswordComplexity(plainPassword);
-
         PasswordHash = EncryptPassword(plainPassword, CaesarShift);
     }
 
@@ -54,78 +73,80 @@ public class User
         if (string.IsNullOrEmpty(PasswordHash))
             return false;
 
-        var decrypted = DecryptPassword(PasswordHash, CaesarShift);
-        return decrypted == plainPassword;
+        return DecryptPassword(PasswordHash, CaesarShift) == plainPassword;
     }
 
     public void AddRole(Role role) => Roles |= role;
     public void RemoveRole(Role role) => Roles &= ~role;
     public bool HasRole(Role role) => (Roles & role) == role;
-
-    private static string EncryptPassword(string password, int shift)
-    {
-        return new string(password.Select(c => (char)(c + shift)).ToArray());
-    }
-
-    private static string DecryptPassword(string cipherText, int shift)
-    {
-        return new string(cipherText.Select(c => (char)(c - shift)).ToArray());
-    }
-
-    private void ValidateName(string name)
+    
+    private static void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name cannot be empty");
+            throw new ArgumentException(NameRequiredErrorMessage);
     }
 
-    private void ValidateSurname(string surname)
+    private static void ValidateSurname(string surname)
     {
         if (string.IsNullOrWhiteSpace(surname))
-            throw new ArgumentException("Surname cannot be empty");
+            throw new ArgumentException(SurnameRequiredErrorMessage);
     }
-    
-    private void  ValidateEmail(string email)
+
+    private static void ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email cannot be empty");
-        if (!email.Contains("@"))
-            throw new ArgumentException("Email must contain @");
+            throw new ArgumentException(EmailRequiredErrorMessage);
+
+        if (!email.Contains('@'))
+            throw new ArgumentException(EmailMissingAtSignErrorMessage);
 
         var parts = email.Split('@');
-        if (parts.Length != 2 ||
-            string.IsNullOrWhiteSpace(parts[0]) ||
-            string.IsNullOrWhiteSpace(parts[1]))
-        {
-            throw new ArgumentException("Email must have text before and after @");
-        }
+        bool hasTextBeforeAndAfterAtSign = parts.Length == 2
+            && !string.IsNullOrWhiteSpace(parts[0])
+            && !string.IsNullOrWhiteSpace(parts[1]);
+
+        if (!hasTextBeforeAndAfterAtSign)
+            throw new ArgumentException(EmailInvalidFormatErrorMessage);
     }
 
-    private void ValidateBirthDate(DateTime birthDate)
+    private static void ValidateBirthDate(DateTime birthDate)
     {
+        var today = DateTime.Now;
+
         if (birthDate == DateTime.MinValue)
-            throw new ArgumentException("Date of birth is required");
-        
-        if (birthDate < DateTime.Now.AddYears(-120))
-            throw new ArgumentException("Date of birth is not realistic");
-        
-        if (birthDate > DateTime.Now)
-            throw new ArgumentException("Date of birth cannot be in the future");
+            throw new ArgumentException(BirthDateRequiredErrorMessage);
+
+        if (birthDate < today.AddYears(-MaxAgeInYears))
+            throw new ArgumentException(BirthDateTooOldErrorMessage);
+
+        if (birthDate > today)
+            throw new ArgumentException(BirthDateInFutureErrorMessage);
     }
 
-    private void ValidatePasswordComplexity(string password)
+    private static void ValidatePasswordComplexity(string password)
     {
         if (string.IsNullOrEmpty(password))
-            throw new ArgumentException("Password cannot be empty");
-        if (password.Length < 8)
-            throw new ArgumentException("Password must be at least 8 characters long");
+            throw new ArgumentException(PasswordEmptyErrorMessage);
+
+        if (password.Length < MinPasswordLength)
+            throw new ArgumentException(PasswordTooShortErrorMessage);
+
         if (!password.Any(char.IsLower))
-            throw new ArgumentException("Password must contain a lowercase letter");
+            throw new ArgumentException(PasswordMissingLowercaseErrorMessage);
+
         if (!password.Any(char.IsUpper))
-            throw new ArgumentException("Password must contain an uppercase letter");
+            throw new ArgumentException(PasswordMissingUppercaseErrorMessage);
+
         if (!password.Any(char.IsDigit))
-            throw new ArgumentException("Password must contain a number");
+            throw new ArgumentException(PasswordMissingDigitErrorMessage);
+
         if (!password.Any(c => !char.IsLetterOrDigit(c)))
-            throw new ArgumentException("Password must contain a special character");
+            throw new ArgumentException(PasswordMissingSpecialCharErrorMessage);
     }
 
+    private static string EncryptPassword(string password, int shift) =>
+        new string(password.Select(c => (char)(c + shift)).ToArray());
+
+    private static string DecryptPassword(string cipherText, int shift) =>
+        new string(cipherText.Select(c => (char)(c - shift)).ToArray());
 }

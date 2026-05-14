@@ -9,8 +9,8 @@ public static class ConfederationMapper
     {
         return new ConfederationResponse
         {
-            Name           = confederation.Name,
-            Slots          = confederation.Slots,
+            Name = confederation.Name,
+            Slots = confederation.Slots,
             RemainingSlots = confederation.RemainingSlots
         };
     }
