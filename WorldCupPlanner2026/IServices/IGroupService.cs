@@ -15,4 +15,5 @@ public interface IGroupService
     IEnumerable<TeamResponse> GetGroupStandings(char groupLabel);
     TeamResponse GetTeamByPosition(char groupLabel, int position);
     void FinishMatch(char groupLabel, int matchId);
+    IEnumerable<TeamResponse> GetQualifiedTeams();
 }
