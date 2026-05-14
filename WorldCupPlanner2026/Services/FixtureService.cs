@@ -292,33 +292,100 @@ public class FixtureService : IFixtureService
         _knockout = knockout;
     }
 
+    public void SetKnockoutMatchResult(string matchCode, int homeGoals, int awayGoals)
+    {
+        var allMatches = _matchRepository.GetAll().ToList();
+        var shuffleService = new ShuffleService(0);
+        var knockout = new Knockout(0, shuffleService);
+        knockout.LoadExistingMatches(allMatches);
+        knockout.SetMatchResult(matchCode, homeGoals, awayGoals);
+    }
+
+    public IEnumerable<MatchResponse> GetKnockoutMatches()
+    {
+        return _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .Select(MatchMapper.ToResponse)
+            .ToList();
+    }
+
     public void InitializeRoundOf16()
     {
         if (_knockout is null)
             throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeRoundOf16();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.RoundOf16)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
     }
 
     public void InitializeQuarterFinals()
     {
         if (_knockout is null)
             throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeQuarterFinals();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.QuarterFinals)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
     }
 
     public void InitializeSemiFinals()
     {
         if (_knockout is null)
             throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeSemiFinals();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.SemiFinals)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
     }
 
     public void InitializeThirdPlace()
     {
         if (_knockout is null)
             throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeThirdPlace();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.ThirdPlace)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
     }
 
     public void InitializeFinal()
     {
         if (_knockout is null)
             throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeFinal();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.Final)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
     }
 }

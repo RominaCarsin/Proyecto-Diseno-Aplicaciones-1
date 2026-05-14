@@ -328,6 +328,12 @@ public class Knockout
         return phaseMatches.Any() && phaseMatches.All(m => m.Status == MatchStatus.Finished);
     }
 
+    public void LoadExistingMatches(IEnumerable<Match> matches)
+    {
+        _matches.Clear();
+        _matches.AddRange(matches);
+    }
+
     public void SetMatchResult(string matchCode, int homeGoals, int awayGoals)
     {
         var match = _matches.SingleOrDefault(m => m.MatchCode == matchCode);

@@ -1,4 +1,5 @@
 ﻿using Domain;
+using DTOs;
 using IRepository;
 using IServices;
 using Repository;
@@ -859,6 +860,75 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             fixtureService.InitializeFinal());
+    }
+
+    [TestMethod]
+    public void SetKnockoutMatchResult_WithValidData_ShouldUpdateRepositoryAndFinishMatch()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+        string targetCode = "A1";
+
+        service.SetKnockoutMatchResult(targetCode, 2, 1);
+
+        var updatedMatch = _matchRepository.GetAll().Single(m => m.MatchCode == targetCode);
+        Assert.AreEqual(2, updatedMatch.HomeGoals);
+        Assert.AreEqual(1, updatedMatch.AwayGoals);
+        Assert.AreEqual(MatchStatus.Finished, updatedMatch.Status);
+        Assert.IsNotNull(updatedMatch.Winner);
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(ArgumentException))]
+    public void SetKnockoutMatchResult_WithDraw_ShouldThrowArgumentException()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+
+        service.SetKnockoutMatchResult("A1", 1, 1);
+    }
+
+    [TestMethod]
+    public void InitializeRoundOf16_WhenAllRoundOf32MatchesAreFinished_ShouldCreateNewMatches()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+
+        var r32Matches = _matchRepository.GetAll().Where(m => m.Phase == TournamentPhase.RoundOf32).ToList();
+        foreach (var match in r32Matches)
+            service.SetKnockoutMatchResult(match.MatchCode!, 2, 1);
+
+        service.InitializeRoundOf16();
+
+        var r16Matches = _matchRepository.GetAll().Where(m => m.Phase == TournamentPhase.RoundOf16).ToList();
+        Assert.AreEqual(8, r16Matches.Count);
+        Assert.IsTrue(r16Matches.Any(m => m.MatchCode == "C1"));
+    }
+
+    [TestMethod]
+    public void InitializeRoundOf16_WhenSomeMatchesAreNotFinished_ShouldThrowInvalidOperationException()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+
+        service.SetKnockoutMatchResult("A1", 2, 0);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.InitializeRoundOf16(),
+            "No debería permitir inicializar Octavos si falta terminar Dieciseisavos.");
+    }
+
+    [TestMethod]
+    public void GetKnockoutMatches_ShouldReturnMappedResponses()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+
+        var responses = service.GetKnockoutMatches();
+
+        Assert.IsInstanceOfType(responses.First(), typeof(MatchResponse));
+        Assert.IsNotNull(responses.First().HomeTeam);
+        Assert.IsNotNull(responses.First().MatchCode);
     }
 
     private IFixtureService CreateFixtureServiceWithSimulatedGroupStage()

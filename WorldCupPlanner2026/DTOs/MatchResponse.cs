@@ -24,6 +24,8 @@ public class MatchResponse
 
     public bool IsLocked { get; set; }
     
+    public string? MatchCode { get; set; }
+    
     public string Status { get; set; } = "NotFinished";
     
     public bool HasResult { get; set; }
