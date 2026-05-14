@@ -42,7 +42,7 @@
                 </div>
             </div>
 
-            @if (!IsEditor)
+            @if (IsEditor)
             {
                 <div class="text-muted mt-3">Solo un Editor puede generar el fixture.</div>
             }
@@ -62,7 +62,7 @@
                 </div>
                 <div class="col-md-4">
                     <button class="btn btn-wc-green w-100"
-                            disabled="@(!IsEditor || !simulationSeed.HasValue)"
+                            disabled="@(IsEditor || !simulationSeed.HasValue)"
                             @onclick="SimulateGroupStage">
                         Simular fase de grupos
                     </button>
@@ -268,7 +268,7 @@
     private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
 
     private bool CanGenerateFixture =>
-        IsEditor && teamCount == 48 && stadiumCount >= 4 && fixtureSeed.HasValue && !fixtureGenerated;
+        !IsEditor && teamCount == 48 && stadiumCount >= 4 && fixtureSeed.HasValue && !fixtureGenerated;
 
     protected override void OnInitialized()
     {
@@ -314,7 +314,7 @@
     {
         ClearMessages();
 
-        if (!IsEditor || !simulationSeed.HasValue)
+        if (IsEditor || !simulationSeed.HasValue)
             return;
 
         try

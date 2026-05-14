@@ -7,7 +7,7 @@
 @inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
-    @if (!IsAdmin)
+    @if (IsAdmin)
     {
         <div class="bg-white border-custom p-4 diagonal-corners text-muted">
             No tienes permisos para gestionar equipos.
