@@ -25,6 +25,7 @@ public class Match
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
+    public Team? Loser => Winner is null ? null : ReferenceEquals(Winner, HomeTeam) ? AwayTeam : HomeTeam;
     public bool IsLocked { get; private set; }
     public MatchStatus Status { get; private set; }
     public char? Group { get; private set; }
