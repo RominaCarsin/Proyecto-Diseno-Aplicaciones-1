@@ -23,12 +23,18 @@ public class Team
     public int Points { get; private set; }
     public int GoalDifference { get; private set; }
     public int GoalsInFavor { get; private set; }
+    public string GroupLabel { get; private set; } = string.Empty;
 
-    public Team(string name, string confederationName, int rankingFifa)
+    public Team(string name, string confederationName, int rankingFifa, string groupLabel = "")
     {
         UpdateName(name);
         UpdateConfederationName(confederationName);
         UpdateRankingFifa(rankingFifa);
+        UpdateGroupLabel(groupLabel);
+
+        Points = 0;
+        GoalDifference = 0;
+        GoalsInFavor = 0;
     }
 
     public void UpdateName(string name)
@@ -60,6 +66,11 @@ public class Team
             throw new ArgumentException(RankingInvalidErrorMessage);
 
         RankingFifa = rankingFifa;
+    }
+    
+    public void UpdateGroupLabel(string groupLabel)
+    {
+        GroupLabel = Normalized(groupLabel);
     }
 
     public void RecordWin(int goalsScored, int goalsConceded) =>

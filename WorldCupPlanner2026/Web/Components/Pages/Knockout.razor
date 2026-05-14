@@ -4,81 +4,353 @@
 @page "/knockout"
 @inject ISessionService SessionService
 @inject IMatchService MatchService
+@inject IFixtureService FixtureService
 
 <div class="container-fluid p-0 space-y-6">
     <div class="bg-white border-custom p-4 diagonal-corners">
-        <h3 class="mb-3">Segunda fase</h3>
-        <GeometricDivider />
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h3 class="mb-1">Fase Eliminatoria</h3>
+                <p class="text-muted mb-0">Gestión de llaves y progresión del torneo.</p>
+            </div>
 
-        <div class="alert alert-warning border-custom mt-3">
-            FALTA: no existe un servicio/contrato de dominio para generar los cruces de segunda fase,
-            persistir las llaves A1..B8/C1..Final, ni avanzar el bracket con ganadores y perdedores.
+            <div class="d-flex gap-2 align-items-end flex-wrap">
+                @if (!AllMatches.Any())
+                {
+                    <div class="d-flex align-items-end gap-2">
+                        <div>
+                            <label class="small fw-bold">Semilla Cruces</label>
+                            <input type="number" @bind="knockoutSeed" class="form-control form-control-sm border-custom-input" style="width: 100px;" />
+                        </div>
+                        <button class="btn btn-wc-blue btn-sm" @onclick="() => RunPhaseAction(() => FixtureService.InitializeKnockoutStage(1, knockoutSeed))">
+                            Inicializar 16vos (R32)
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-items-end gap-2">
+                        <div>
+                            <label class="small fw-bold">SemillaSimulation</label>
+                            <input type="number" @bind="simulationSeed" class="form-control form-control-sm border-custom-input" style="width: 100px;" />
+                        </div>
+                        <button class="btn btn-wc-green btn-sm"
+                                disabled="@(!simulationSeed.HasValue)"
+                                @onclick="SimulateKnockout">
+                            <i class="bi bi-shuffle"></i> Simular fase eliminatoria
+                        </button>
+                    </div>
+                    <button class="btn btn-outline-dark btn-sm border-custom" @onclick="CheckAndInitializeNextPhase">
+                        Siguiente Fase <i class="bi bi-arrow-right"></i>
+                    </button>
+                }
+            </div>
         </div>
 
-        @if (!IsEditor)
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
-            <div class="text-muted">Solo un Editor puede realizar sorteos de cruces.</div>
+            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
         }
     </div>
 
-    <div class="bg-white border-custom diagonal-corners overflow-hidden">
-        <div class="bg-light px-4 py-3">
-            <h4 class="mb-0">Partidos eliminatorios existentes</h4>
+    @if (!AllMatches.Any())
+    {
+        <div class="bg-white border-custom p-5 text-center diagonal-corners">
+            <i class="bi bi-trophy text-light display-1"></i>
+            <p class="mt-3 text-muted">Aún no se ha generado la fase de eliminación directa.</p>
         </div>
-        <GeometricDivider />
-
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-3">Fase</th>
-                        <th class="px-4 py-3">Fecha</th>
-                        <th class="px-4 py-3">Local</th>
-                        <th class="px-4 py-3">Resultado</th>
-                        <th class="px-4 py-3">Visitante</th>
-                        <th class="px-4 py-3">Ganador</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!KnockoutMatches.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="px-4 py-4 text-center text-muted">
-                                No hay partidos eliminatorios generados.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        @foreach (var match in KnockoutMatches)
+    }
+    else
+    {
+        <div class="bracket-container p-4">
+            @foreach (var phaseGroup in GroupedMatches)
+            {
+                <div class="bracket-column @(phaseGroup.Key == "Final" ? "match-final" : "")">
+                    <h5 class="text-center mb-4 phase-title">@TranslatePhase(phaseGroup.Key)</h5>
+                    <div class="matches-list">
+                        @foreach (var match in phaseGroup.OrderBy(m => m.MatchCode))
                         {
-                            <tr>
-                                <td class="px-4 py-3">@match.Phase</td>
-                                <td class="px-4 py-3">@match.Date.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td class="px-4 py-3 fw-bold">@match.HomeTeam.Name</td>
-                                <td class="px-4 py-3">@FormatResult(match)</td>
-                                <td class="px-4 py-3 fw-bold">@match.AwayTeam.Name</td>
-                                <td class="px-4 py-3">@(match.Winner?.Name ?? "-")</td>
-                            </tr>
+                            <div class="match-card @(match.Status == "Finished" ? "match-finished" : "match-pending") @(editingMatchCode == match.MatchCode ? "match-editing" : "")">
+                                <div class="match-header d-flex justify-content-between">
+                                    <span class="badge bg-light text-dark border-custom">@match.MatchCode</span>
+                                    <span class="small text-muted">@match.Date.ToString("dd/MM HH:mm")</span>
+                                </div>
+
+                                <div class="match-body my-2">
+                                    <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.HomeTeam) ? "fw-bold text-success" : "")">
+                                        <span><i class="bi bi-shield-fill me-1"></i> @match.HomeTeam.Name</span>
+                                        @if (editingMatchCode == match.MatchCode)
+                                        {
+                                            <input type="number" @bind="editHomeGoals" class="score-input-sm" />
+                                        }
+                                        else
+                                        {
+                                            <span class="score-box">@(match.HomeGoals?.ToString() ?? "-")</span>
+                                        }
+                                    </div>
+                                    <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.AwayTeam) ? "fw-bold text-success" : "")">
+                                        <span><i class="bi bi-shield-fill me-1"></i> @match.AwayTeam.Name</span>
+                                        @if (editingMatchCode == match.MatchCode)
+                                        {
+                                            <input type="number" @bind="editAwayGoals" class="score-input-sm" />
+                                        }
+                                        else
+                                        {
+                                            <span class="score-box">@(match.AwayGoals?.ToString() ?? "-")</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                @if (IsEditor)
+                                {
+                                    <div class="match-actions border-top pt-2 mt-2 d-flex justify-content-center gap-2">
+                                        @if (editingMatchCode == match.MatchCode)
+                                        {
+                                            <button class="btn btn-xs btn-wc-green" @onclick="() => SaveResult(match.MatchCode)">OK</button>
+                                            <button class="btn btn-xs btn-light border-custom" @onclick="CancelEdit">X</button>
+                                        }
+                                        else if (match.Status != "Finished")
+                                        {
+                                            <button class="btn btn-xs btn-light border-custom" @onclick="() => StartEdit(match)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         }
-                    }
-                </tbody>
-            </table>
+                    </div>
+                </div>
+            }
         </div>
-    </div>
+
+        @if (HasFinalWinner)
+        {
+            <div class="winner-banner text-center p-5">
+                <i class="bi bi-trophy-fill winner-trophy"></i>
+                <h2 class="winner-title">¡@(FinalMatch!.Winner!.Name) es el Campeón del Mundo!</h2>
+                <p class="winner-subtitle">Ganador de la Copa Mundial 2026</p>
+            </div>
+        }
+    }
 </div>
 
 @code {
-    private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
+    private List<MatchResponse> AllMatches = new();
+    private IEnumerable<IGrouping<string, MatchResponse>> GroupedMatches =>
+        AllMatches.GroupBy(m => m.Phase).OrderBy(g => GetPhaseOrder(g.Key));
 
-    private IEnumerable<MatchResponse> KnockoutMatches => MatchService.GetMatches()
-        .Where(match => match.Phase != "GroupStage")
-        .OrderBy(match => match.Date);
+    private string? editingMatchCode;
+    private int editHomeGoals;
+    private int editAwayGoals;
+    private int knockoutSeed = 42;
+    private int? simulationSeed;
+    private string errorMessage = "";
+    private string successMessage = "";
+    private string? worldCupWinner;
 
-    private static string FormatResult(MatchResponse match)
+    private bool IsEditor => SessionService.IsLoggedIn();
+
+    private MatchResponse? FinalMatch => AllMatches.FirstOrDefault(m => m.Phase == "Final" && m.Status == "Finished");
+    private bool HasFinalWinner => FinalMatch?.Winner != null;
+
+    protected override void OnInitialized() => LoadData();
+
+    private void LoadData()
     {
-        return match.HomeGoals.HasValue && match.AwayGoals.HasValue
-            ? $"{match.HomeGoals} - {match.AwayGoals}"
-            : "-";
+        AllMatches = MatchService.GetMatches()
+            .Where(m => m.Phase != "GroupStage")
+            .ToList();
+        worldCupWinner = HasFinalWinner ? FinalMatch!.Winner!.Name : null;
     }
+
+    private void SimulateKnockout()
+    {
+        errorMessage = "";
+        successMessage = "";
+        if (!simulationSeed.HasValue) return;
+        try
+        {
+            FixtureService.SimulateKnockoutStage(simulationSeed.Value);
+            successMessage = "Fase eliminatoria simulada correctamente.";
+            LoadData();
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
+    }
+
+    private void StartEdit(MatchResponse match)
+    {
+        editingMatchCode = match.MatchCode;
+        editHomeGoals = match.HomeGoals ?? 0;
+        editAwayGoals = match.AwayGoals ?? 0;
+        errorMessage = "";
+    }
+
+    private void CancelEdit() => editingMatchCode = null;
+
+    private void SaveResult(string? matchCode)
+    {
+        if (string.IsNullOrEmpty(matchCode)) return;
+        try
+        {
+            FixtureService.SetKnockoutMatchResult(matchCode, editHomeGoals, editAwayGoals);
+            editingMatchCode = null;
+            LoadData();
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
+    }
+
+    private void CheckAndInitializeNextPhase()
+    {
+        var lastPhase = AllMatches.OrderByDescending(m => GetPhaseOrder(m.Phase)).FirstOrDefault()?.Phase;
+
+        RunPhaseAction(() =>
+        {
+            switch (lastPhase)
+            {
+                case "RoundOf32": FixtureService.InitializeRoundOf16(); break;
+                case "RoundOf16": FixtureService.InitializeQuarterFinals(); break;
+                case "QuarterFinals": FixtureService.InitializeSemiFinals(); break;
+                case "SemiFinals":
+                    FixtureService.InitializeThirdPlace();
+                    FixtureService.InitializeFinal();
+                    break;
+                default: throw new InvalidOperationException("No hay más fases para inicializar.");
+            }
+        });
+    }
+
+    private void RunPhaseAction(Action action)
+    {
+        try
+        {
+            errorMessage = "";
+            action();
+            LoadData();
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
+    }
+
+    private bool IsWinner(MatchResponse m, TeamResponse t) =>
+        m.Status == "Finished" && m.Winner?.Name == t.Name;
+
+    private static int GetPhaseOrder(string phase) => phase switch
+    {
+        "RoundOf32" => 1, "RoundOf16" => 2, "QuarterFinals" => 3,
+        "SemiFinals" => 4, "ThirdPlace" => 5, "Final" => 6, _ => 99
+    };
+
+    private static string TranslatePhase(string phase) => phase switch
+    {
+        "RoundOf32" => "Dieciseisavos", "RoundOf16" => "Octavos",
+        "QuarterFinals" => "Cuartos", "SemiFinals" => "Semis",
+        "ThirdPlace" => "Tercer Puesto", "Final" => "Final", _ => phase
+    };
 }
+
+<style>
+    .bracket-container {
+        display: flex;
+        gap: 2rem;
+        overflow-x: auto;
+        align-items: flex-start;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .bracket-column {
+        flex: 0 0 250px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .matches-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        justify-content: space-around;
+        height: 100%;
+    }
+
+    .match-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        padding: 0.75rem;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        position: relative;
+    }
+
+    .match-finished { border-left: 4px solid var(--wc-green); }
+    .match-editing { outline: 2px solid var(--wc-blue); }
+
+    .score-box {
+        background: #eee;
+        padding: 2px 8px;
+        border-radius: 4px;
+        min-width: 25px;
+        text-align: center;
+    }
+
+    .score-input-sm {
+        width: 45px;
+        height: 24px;
+        font-size: 0.8rem;
+        text-align: center;
+        border: 1px solid var(--wc-blue);
+    }
+
+    .btn-xs {
+        padding: 0.1rem 0.4rem;
+        font-size: 0.7rem;
+    }
+
+    .phase-title {
+        color: var(--wc-blue);
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 2px solid var(--wc-blue);
+        padding-bottom: 5px;
+    }
+
+    .winner-banner {
+        background: linear-gradient(135deg, #ffd700 0%, #ffec80 50%, #ffd700 100%);
+        border: 3px solid #b8860b;
+        border-radius: 12px;
+        margin-top: 2rem;
+    }
+
+    .winner-trophy {
+        font-size: 4rem;
+        color: #b8860b;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .winner-title {
+        color: #8b6914;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 0.5rem 0;
+    }
+
+    .winner-subtitle {
+        color: #6b4f0a;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .match-final .match-card {
+        border-color: #ffd700 !important;
+    }
+
+    .team-winner-gold {
+        color: #8b6914 !important;
+        font-weight: bold;
+    }
+</style>

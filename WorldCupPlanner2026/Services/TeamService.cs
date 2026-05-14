@@ -104,6 +104,60 @@ public class TeamService : ITeamService
         return orderedTeams.Select(TeamMapper.FromEntity);
     }
 
+    private void ResolveRankingTies(IList<Team> teams, int seed)
+    {
+        var shuffleService = CreateShuffleService(seed);
+        var tieStartIndex = 0;
+
+        while (tieStartIndex < teams.Count)
+        {
+            var tieEndIndex = FindTieEndIndex(teams, tieStartIndex);
+            if (tieEndIndex - tieStartIndex > 1)
+                shuffleService.ShuffleRange(teams, tieStartIndex, tieEndIndex);
+
+            tieStartIndex = tieEndIndex;
+        }
+    }
+
+    private int FindTieEndIndex(IList<Team> teams, int tieStartIndex)
+    {
+        var tieRanking = teams[tieStartIndex].RankingFifa;
+        var tieEndIndex = tieStartIndex + 1;
+
+        while (tieEndIndex < teams.Count && teams[tieEndIndex].RankingFifa == tieRanking)
+            tieEndIndex++;
+
+        return tieEndIndex;
+    }
+
+    private IServices.IShuffleService CreateShuffleService(int seed)
+    {
+        return new ShuffleService(seed);
+    }
+
+    private void AddFictionalTeams(string confederationName, int teamsToCreate, Random random)
+    {
+        for (var index = 1; index <= teamsToCreate; index++)
+            AddTeam(BuildFictionalTeamRequest(confederationName, index, random));
+    }
+
+    private TeamRequest BuildFictionalTeamRequest(string confederationName, int index, Random random) => new()
+    {
+        Name = GenerateFictionalName(confederationName, index),
+        ConfederationName = confederationName,
+        RankingFifa = GenerateRandomRanking(random)
+    };
+
+    private string GenerateFictionalName(string confederationName, int index)
+    {
+        return $"{confederationName}_{index:00}";
+    }
+
+    private int GenerateRandomRanking(Random random)
+    {
+        return random.Next(FirstFifaRanking, LastFifaRanking + 1);
+    }
+
     private Team? FindByName(string name) =>
         _repository.GetAll()
             .FirstOrDefault(t => t.Name == Team.Normalize(name));

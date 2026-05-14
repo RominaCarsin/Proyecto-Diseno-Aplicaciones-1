@@ -2,6 +2,7 @@
 using DTOs;
 using IRepository;
 using IServices;
+using Services.Mappers;
 
 namespace Services;
 
@@ -12,9 +13,10 @@ public class FixtureService : IFixtureService
    private readonly IGroupService _groupService;
    private readonly IRepository<Group> _groupRepository;
    private readonly IRepository<Match> _matchRepository;
-   private readonly IPotService _potService;
-  
-   private const int FirstMatchHour = 14;
+    private readonly IPotService _potService;
+    private Knockout? _knockout;
+   
+    private const int FirstMatchHour = 14;
    private const int HoursBetweenMatches = 4;
 
 
@@ -236,28 +238,162 @@ public class FixtureService : IFixtureService
    }
 
 
-   private static void AddMatchToGroup(
-       Group group,
-       List<Team> teamList,
-       (int homeIndex, int awayIndex) pairing,
-       DateTime matchDate,
-       List<StadiumResponse> stadiums,
-       ref int matchCounter)
-   {
-       var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+    private static void AddMatchToGroup(
+        Group group,
+        List<Team> teamList,
+        (int homeIndex, int awayIndex) pairing,
+        DateTime matchDate,
+        List<StadiumResponse> stadiums,
+        ref int matchCounter)
+    {
+        var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
 
 
-       group.AddMatch(new Match(
-           matchDate,
-           stadium,
-           teamList[pairing.homeIndex],
-           teamList[pairing.awayIndex],
-           group: group.Label,
-           phase: TournamentPhase.GroupStage
-       ));
+        group.AddMatch(new Match(
+            matchDate,
+            stadium,
+            teamList[pairing.homeIndex],
+            teamList[pairing.awayIndex],
+            group: group.Label,
+            phase: TournamentPhase.GroupStage
+        ));
 
 
-       matchCounter++;
-   }
-  
+        matchCounter++;
+    }
+
+    public void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0)
+    {
+        var groups = _groupRepository.GetAll().ToList();
+
+        if (!groups.Any())
+            throw new InvalidOperationException("No se ha generado la fase de grupos.");
+
+        var allMatchesHaveResults = groups.SelectMany(g => g.Matches).All(m => m.HasResult);
+        if (!allMatchesHaveResults)
+            throw new InvalidOperationException("La fase de grupos debe estar simulada.");
+
+        if (_matchRepository.GetAll().Any(m => m.Phase != TournamentPhase.GroupStage))
+            throw new InvalidOperationException("La fase eliminatoria ya fue inicializada.");
+
+        var qualifiedTeamResponses = _groupService.GetQualifiedTeams().ToList();
+        var qualifiedTeams = qualifiedTeamResponses.Select(TeamMapper.ToEntity);
+
+        var shuffleService = new ShuffleService(simulationSeed);
+        var knockout = new Knockout(simulationSeed, shuffleService, semillaCrucesFase);
+        knockout.SetQualifiedTeams(qualifiedTeams);
+        knockout.InitializeRoundOf32();
+
+        foreach (var match in knockout.Matches)
+            _matchRepository.Add(match);
+
+        _knockout = knockout;
+    }
+
+    public void SetKnockoutMatchResult(string matchCode, int homeGoals, int awayGoals)
+    {
+        var allMatches = _matchRepository.GetAll().ToList();
+        var shuffleService = new ShuffleService(0);
+        var knockout = new Knockout(0, shuffleService);
+        knockout.LoadExistingMatches(allMatches);
+        knockout.SetMatchResult(matchCode, homeGoals, awayGoals);
+    }
+
+    public IEnumerable<MatchResponse> GetKnockoutMatches()
+    {
+        return _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .Select(MatchMapper.ToResponse)
+            .ToList();
+    }
+
+    public void InitializeRoundOf16()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeRoundOf16();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.RoundOf16)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
+    }
+
+    public void InitializeQuarterFinals()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeQuarterFinals();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.QuarterFinals)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
+    }
+
+    public void InitializeSemiFinals()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeSemiFinals();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.SemiFinals)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
+    }
+
+    public void InitializeThirdPlace()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeThirdPlace();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.ThirdPlace)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
+    }
+
+    public void SimulateKnockoutStage(int seed)
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.SimulateMatches(seed);
+    }
+
+    public void InitializeFinal()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.InitializeFinal();
+
+        var newMatches = _knockout.Matches
+            .Where(m => m.Phase == TournamentPhase.Final)
+            .ToList();
+        foreach (var match in newMatches)
+            _matchRepository.Add(match);
+    }
 }

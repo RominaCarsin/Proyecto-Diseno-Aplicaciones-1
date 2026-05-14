@@ -19,7 +19,15 @@ public static class TeamMapper
             RankingFifa = team.RankingFifa,
             Points = team.Points,
             GoalDifference = team.GoalDifference,
-            GoalsInFavor = team.GoalsInFavor
+            GoalsInFavor = team.GoalsInFavor,
+            GroupLabel = team.GroupLabel
         };
+    }
+
+    public static Team ToEntity(TeamResponse response)
+    {
+        var team = new Team(response.Name, response.ConfederationName, response.RankingFifa);
+        team.UpdateGroupLabel(response.GroupLabel);
+        return team;
     }
 }

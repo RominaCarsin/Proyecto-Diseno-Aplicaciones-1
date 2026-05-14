@@ -25,10 +25,12 @@ public class Match
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
+    public Team? Loser => Winner is null ? null : ReferenceEquals(Winner, HomeTeam) ? AwayTeam : HomeTeam;
     public bool IsLocked { get; private set; }
     public MatchStatus Status { get; private set; }
     public char? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
+    public string? MatchCode { get; private set; }
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
 
@@ -38,7 +40,8 @@ public class Match
         Team? homeTeam,
         Team? awayTeam,
         char? group = null,
-        TournamentPhase phase = TournamentPhase.GroupStage)
+        TournamentPhase phase = TournamentPhase.GroupStage,
+        string? matchCode = null)
     {
         ValidateDate(date);
         ValidateRequired(stadium, RequiredStadiumErrorMessage);
@@ -54,6 +57,7 @@ public class Match
         AwayTeam = awayTeam!;
         Group = group;
         Phase = phase;
+        MatchCode = NormalizeMatchCode(matchCode);
         Status = MatchStatus.NotFinished;
     }
 
@@ -164,6 +168,14 @@ public class Match
     private static bool AreSameTeam(Team homeTeam, Team awayTeam) =>
         ReferenceEquals(homeTeam, awayTeam)
         || string.Equals(homeTeam.Name, awayTeam.Name, StringComparison.OrdinalIgnoreCase);
+
+    private static string? NormalizeMatchCode(string? matchCode)
+    {
+        if (string.IsNullOrWhiteSpace(matchCode))
+            return null;
+
+        return matchCode.Trim().ToUpperInvariant();
+    }
 
     private Team? DetermineWinner(int homeGoals, int awayGoals)
     {
