@@ -24,7 +24,7 @@ public class Stadium
         Name = NormalizeAndValidateName(name);
         City = NormalizeAndValidateCity(city);
         Description = NormalizeDescription(description);
-        Capacity = ValidatedCapacity(capacity);
+        Capacity = ValidateCapacity(capacity);
     }
     
     private static string NormalizeAndValidateName(string name) =>
@@ -61,7 +61,7 @@ public class Stadium
         return description;
     }
 
-    private static int ValidatedCapacity(int capacity)
+    private static int ValidateCapacity(int capacity)
     {
         if (capacity < MinCapacity)
             throw new ArgumentException(CapacityTooSmallErrorMessage);

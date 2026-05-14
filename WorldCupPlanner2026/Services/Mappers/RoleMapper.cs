@@ -3,7 +3,7 @@ using DTOs;
 
 namespace Services.Mappers;
 
-public class RoleMapper
+public static class RoleMapper
 {
     public static Role ToDomain(RoleDto dto)
     {

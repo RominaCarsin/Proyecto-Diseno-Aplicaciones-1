@@ -41,11 +41,8 @@ public class Confederation
         if (team is null)
             throw new ArgumentException(NullTeamErrorMessage);
 
-        if (!_teams.Contains(team))
-            throw new ArgumentException(
-                $"Team '{team.Name}' does not belong to confederation '{Name}'.");
-
-        _teams.Remove(team);
+        if (!_teams.Remove(team))
+            throw new ArgumentException($"El equipo '{team.Name}' no pertenece a la confederación '{Name}'.");
     }
     
     private static void ValidateName(string name)

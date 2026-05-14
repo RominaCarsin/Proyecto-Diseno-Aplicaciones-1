@@ -3,7 +3,7 @@ using DTOs;
 
 namespace Services.Mappers;
 
-public class UserMapper
+public static class UserMapper
 {
     public static User ToEntity(UserRequest request)
     {

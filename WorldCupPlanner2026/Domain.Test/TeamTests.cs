@@ -228,9 +228,9 @@ public class TeamTests
     }
     
     [TestMethod]
-    public void Normalized_WithLowercaseAndSpaces_ShouldReturnNormalizedString()
+    public void Normalize_WithLowercaseAndSpaces_ShouldReturnNormalizedString()
     {
-        var result = Team.Normalized("  uruguay  ");
+        var result = Team.Normalize("  uruguay  ");
 
         Assert.AreEqual("URUGUAY", result);
     }

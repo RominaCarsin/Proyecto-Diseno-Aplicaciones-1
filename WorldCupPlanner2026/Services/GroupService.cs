@@ -8,11 +8,12 @@ namespace Services;
 
 public class GroupService : IGroupService
 {
+    private const int RequiredGroupCount = 12;
+    private const int MinTeamsPerGroup = 3;
     private const string GroupNotFoundErrorMessage = "No se encontró el grupo.";
     private const string MatchNotFoundErrorMessage = "No se encontró el partido en el grupo.";
 
     private readonly IRepository<Group> _repository;
-    private const int RequiredGroupCount = 12;
 
     public GroupService(IRepository<Group> repository)
     {
@@ -25,22 +26,14 @@ public class GroupService : IGroupService
         _repository.Add(group);
     }
 
-    public IEnumerable<GroupResponse> GetGroups()
-    {
-        return _repository.GetAll()
-            .Select(GroupMapper.FromEntity);
-    }
+    public IEnumerable<GroupResponse> GetGroups() =>
+        _repository.GetAll().Select(GroupMapper.FromEntity);
 
-    public GroupResponse GetGroupByLabel(char label)
-    {
-        return GroupMapper.FromEntity(FindGroupByLabelOrThrow(label));
-    }
+    public GroupResponse GetGroupByLabel(char label) =>
+        GroupMapper.FromEntity(FindGroupByLabelOrThrow(label));
 
-    public void DeleteGroup(char label)
-    {
-        var group = FindGroupByLabelOrThrow(label);
-        _repository.Delete(group);
-    }
+    public void DeleteGroup(char label) =>
+        _repository.Delete(FindGroupByLabelOrThrow(label));
 
     public void AddTeamToGroup(char groupLabel, TeamRequest teamRequest)
     {
@@ -101,30 +94,19 @@ public class GroupService : IGroupService
         group.FinishMatch(match);
     }
     
-    private Group FindGroupByLabelOrThrow(char label)
-    {
-        return _repository.GetAll()
-            .FirstOrDefault(g => g.Label == label)
+    private Group FindGroupByLabelOrThrow(char label) =>
+        _repository.GetAll().FirstOrDefault(g => g.Label == label)
             ?? throw new ArgumentException(GroupNotFoundErrorMessage);
-    }
-
-    // ──────────────────────────────────────────────
-    // GREEN: Implementación de GetQualifiedTeams
-    // ──────────────────────────────────────────────
 
     public IEnumerable<TeamResponse> GetQualifiedTeams()
     {
         var groups = _repository.GetAll().ToList();
 
         if (groups.Count != RequiredGroupCount)
-        {
             throw new InvalidOperationException("Deben existir exactamente 12 grupos para determinar clasificados.");
-        }
 
-        if (groups.Any(g => g.Teams.Count < 3))
-        {
+        if (groups.Any(g => g.Teams.Count < MinTeamsPerGroup))
             throw new InvalidOperationException("Cada grupo debe tener al menos 3 equipos para determinar 1ro, 2do y 3ro.");
-        }
 
         var winners = groups.Select(g => g.GetTeamByPosition(1));
         var runnersUp = groups.Select(g => g.GetTeamByPosition(2));
@@ -132,40 +114,24 @@ public class GroupService : IGroupService
 
         var sortedWinners = SortTeams(winners);
         var sortedRunnersUp = SortTeams(runnersUp);
-        var bestThirds = SortTeams(thirds).Take(8); // Solo los mejores 8 terceros
+        var bestThirds = SortTeams(thirds).Take(8);
 
-        var qualifiedTeams = sortedWinners
+        return sortedWinners
             .Concat(sortedRunnersUp)
-            .Concat(bestThirds);
-
-        return qualifiedTeams.Select(TeamMapper.FromEntity);
+            .Concat(bestThirds)
+            .Select(TeamMapper.FromEntity);
     }
 
-    private static Team FindTeamInGroupOrThrow(Group group, string teamName)
-    {
-        return group.Teams
-            .FirstOrDefault(t => t.Name.Equals(
-                Team.Normalize(teamName),
-                StringComparison.OrdinalIgnoreCase))
-            ?? throw new ArgumentException($"Team '{teamName}' was not found in group.");
-    }
+    private static Team FindTeamInGroupOrThrow(Group group, string teamName) =>
+        group.Teams.FirstOrDefault(t => t.Name.Equals(Team.Normalize(teamName), StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException($"El equipo '{teamName}' no se encontró en el grupo.");
 
-    private static Match FindMatchInGroupOrThrow(Group group, int matchId)
-    {
-        return group.Matches
-            .FirstOrDefault(m => m.Id == matchId)
+    private static Match FindMatchInGroupOrThrow(Group group, int matchId) =>
+        group.Matches.FirstOrDefault(m => m.Id == matchId)
             ?? throw new ArgumentException(MatchNotFoundErrorMessage);
-    }
 
-    /// <summary>
-    /// Ordena una colección de equipos basándose en las reglas de desempate
-    /// (Puntos > Diferencia de Goles > Goles a Favor).
-    /// </summary>
-    private static IEnumerable<Team> SortTeams(IEnumerable<Team> teams)
-    {
-        return teams
-            .OrderByDescending(t => t.Points)
+    private static IEnumerable<Team> SortTeams(IEnumerable<Team> teams) =>
+        teams.OrderByDescending(t => t.Points)
             .ThenByDescending(t => t.GoalDifference)
             .ThenByDescending(t => t.GoalsInFavor);
-    }
 }

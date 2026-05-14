@@ -8,10 +8,12 @@ namespace Services;
 
 public class MatchService : IMatchService
 {
-    private const string MatchNotFoundErrorMessage = "Match was not found.";
-    private const string MatchRequestRequiredErrorMessage = "Match request cannot be null.";
-    private const string StadiumRequestRequiredErrorMessage = "Stadium request cannot be null.";
-    private const string GroupNotFoundErrorMessage = "Group was not found.";
+    private const string MatchNotFoundErrorMessage = "No se encontró el partido.";
+    private const string MatchRequestRequiredErrorMessage = "La solicitud de partido no puede ser nula.";
+    private const string StadiumRequestRequiredErrorMessage = "La solicitud de estadio no puede ser nula.";
+    private const string GroupNotFoundErrorMessage = "No se encontró el grupo.";
+    private const string MaxMatchesPerDayErrorMessage = "El estadio no puede tener más de 3 partidos por día.";
+    private const string MinHoursBetweenMatchesErrorMessage = "Los partidos en el mismo estadio deben tener al menos 4 horas de diferencia.";
 
     private readonly IRepository<Match> _repository;
     private readonly IRepository<Group> _groupRepository;
@@ -128,12 +130,9 @@ public class MatchService : IMatchService
         group.AddMatch(match);
     }
 
-    private Match FindMatchByIdOrThrow(int matchId)
-    {
-        return _repository.GetAll()
-            .FirstOrDefault(match => match.Id == matchId)
+    private Match FindMatchByIdOrThrow(int matchId) =>
+        _repository.GetAll().FirstOrDefault(match => match.Id == matchId)
             ?? throw new ArgumentException(MatchNotFoundErrorMessage);
-    }
 
     private void ValidateStadiumAvailability(int? excludeMatchId, Stadium  stadium, DateTime matchDate)
     {
@@ -144,15 +143,13 @@ public class MatchService : IMatchService
             .ToList();
 
         if (matchesInSameStadiumAndDay.Count >= 3)
-            throw new InvalidOperationException(
-                "Stadium cannot have more than 3 matches per day.");
+            throw new InvalidOperationException(MaxMatchesPerDayErrorMessage);
 
         bool tooClose = matchesInSameStadiumAndDay.Any(m =>
             Math.Abs((m.Date - matchDate).TotalHours) < 4);
 
         if (tooClose)
-            throw new InvalidOperationException(
-                "Matches in the same stadium must be at least 4 hours apart.");
+            throw new InvalidOperationException(MinHoursBetweenMatchesErrorMessage);
     }
 
 

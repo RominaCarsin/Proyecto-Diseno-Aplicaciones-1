@@ -70,31 +70,29 @@ public class Team
     
     public void UpdateGroupLabel(string groupLabel)
     {
-        GroupLabel = Normalized(groupLabel);
+        GroupLabel = Normalize(groupLabel);
     }
 
     public void RecordWin(int goalsScored, int goalsConceded) =>
-        ApplyStatsChange(points: 3, goalsScored, goalsConceded);
+        ApplyStatsChange(3, goalsScored, goalsConceded);
 
     public void RecordDraw(int goalsScored) =>
-        ApplyStatsChange(points: 1, goalsScored, goalsConceded: goalsScored);
+        ApplyStatsChange(1, goalsScored, goalsScored);
 
     public void RecordLoss(int goalsScored, int goalsConceded) =>
-        ApplyStatsChange(points: 0, goalsScored, goalsConceded);
+        ApplyStatsChange(0, goalsScored, goalsConceded);
 
     public void RevertWin(int goalsScored, int goalsConceded) =>
-        RevertStatsChange(points: 3, goalsScored, goalsConceded);
+        RevertStatsChange(3, goalsScored, goalsConceded);
 
     public void RevertDraw(int goalsScored) =>
-        RevertStatsChange(points: 1, goalsScored, goalsConceded: goalsScored);
+        RevertStatsChange(1, goalsScored, goalsScored);
 
     public void RevertLoss(int goalsScored, int goalsConceded) =>
-        RevertStatsChange(points: 0, goalsScored, goalsConceded);
-    
+        RevertStatsChange(0, goalsScored, goalsConceded);
+
     public static string Normalize(string value) =>
-            value?.Trim().ToUpper() ?? string.Empty;
-    
-    public static string Normalized(string value) => Normalize(value);
+        value?.Trim().ToUpper() ?? string.Empty;
         
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
     {

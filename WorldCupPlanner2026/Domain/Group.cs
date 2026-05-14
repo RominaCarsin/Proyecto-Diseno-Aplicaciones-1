@@ -45,11 +45,8 @@ public class Group
         _teams.Add(team!);
     }
     
-    public void FinishMatch(Match match)
-    {
-        match.Finish();
-    }
-    
+    public void FinishMatch(Match match) => match.Finish();
+
     private void ValidateConfederationLimit(Team team)
     {
         int teamsFromSameConfederation = _teams.Count(t =>
@@ -73,18 +70,15 @@ public class Group
             throw new ArgumentException(TeamNotFoundErrorMessage);
     }
 
+
     public void AddMatch(Match? match)
     {
-        if (match is null)
-            throw new ArgumentException(NullMatchErrorMessage);
-
-        _matches.Add(match);
+        ValidateRequiredMatch(match);
+        _matches.Add(match!);
     }
 
-    public void SetMatchResult(Match match, int homeGoals, int awayGoals)
-    {
-        match.SetResult(homeGoals, awayGoals); 
-    }
+    public void SetMatchResult(Match match, int homeGoals, int awayGoals) =>
+        match.SetResult(homeGoals, awayGoals);
 
     public Team GetTeamByPosition(int position)
     {
@@ -160,7 +154,12 @@ public class Group
             throw new ArgumentException(NullTeamErrorMessage);
     }
 
-    
+    private static void ValidateRequiredMatch(Match? match)
+    {
+        if (match is null)
+            throw new ArgumentException(NullMatchErrorMessage);
+    }
+
     private void ValidateGroupHasAvailableSlot()
     {
         if (_teams.Count >= MaxTeams)

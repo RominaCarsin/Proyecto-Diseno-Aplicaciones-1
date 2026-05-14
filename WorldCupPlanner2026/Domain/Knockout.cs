@@ -17,7 +17,17 @@ public class Knockout
     private const int FirstMatchNumber = 1;
     private const int RemainingSecondsFirstMatchNumber = 5;
 
+    private const string NullQualifiedTeamsErrorMessage = "Qualified teams cannot be null.";
+    private const string NullMatchErrorMessage = "Match cannot be null.";
+    private const string RoundOf32AlreadyInitErrorMessage = "Round of 32 has already been initialized.";
+    private const string PhaseNotFinishedErrorMessage = "Previous knockout phase must be finished before adding matches for the next phase.";
+    private const string MatchNotFoundErrorMessage = "No se encontró un partido con el código '{0}'.";
+    private const string KnockoutDrawErrorMessage = "Los partidos de knockout no pueden terminar en empate.";
+    private const string QualifiedTeamsCountErrorMessage = "Knockout phase must receive exactly {0} qualified teams.";
+    private const string QualifiedTeamsCountInitErrorMessage = "Knockout phase requires exactly {0} qualified teams.";
+
     private static readonly DateTime RoundOf32DefaultDate = new(2026, 7, 1);
+    private static readonly DateTime KnockoutPhaseDefaultDate = new(2026, 7, 1);
 
     private readonly List<Team> _qualifiedTeams = new();
     private readonly List<Match> _matches = new();
@@ -35,20 +45,17 @@ public class Knockout
         SemillaCrucesFase = semillaCrucesFase;
     }
 
-    public void UpdateSimulationSeed(int newSeed)
-    {
-        SimulationSeed = newSeed;
-    }
+    public void UpdateSimulationSeed(int newSeed) => SimulationSeed = newSeed;
 
     public void SetQualifiedTeams(IEnumerable<Team> qualifiedTeams)
     {
         if (qualifiedTeams is null)
-            throw new ArgumentException("Qualified teams cannot be null.");
+            throw new ArgumentException(NullQualifiedTeamsErrorMessage);
 
         var teams = qualifiedTeams.ToList();
 
         if (teams.Count != RequiredQualifiedTeams)
-            throw new ArgumentException($"Knockout phase must receive exactly {RequiredQualifiedTeams} qualified teams.");
+            throw new ArgumentException(string.Format(QualifiedTeamsCountErrorMessage, RequiredQualifiedTeams));
 
         _qualifiedTeams.Clear();
         _qualifiedTeams.AddRange(teams);
@@ -72,20 +79,19 @@ public class Knockout
     public void AddMatch(Match match)
     {
         if (match is null)
-            throw new ArgumentException("Match cannot be null.");
+            throw new ArgumentException(NullMatchErrorMessage);
 
         ValidatePreviousPhaseFinished(match.Phase);
-
         _matches.Add(match);
     }
 
     private void ValidateCanInitializeRoundOf32()
     {
         if (_qualifiedTeams.Count != RequiredQualifiedTeams)
-            throw new InvalidOperationException($"Knockout phase requires exactly {RequiredQualifiedTeams} qualified teams.");
+            throw new InvalidOperationException(string.Format(QualifiedTeamsCountInitErrorMessage, RequiredQualifiedTeams));
 
         if (_matches.Any(match => match.Phase == TournamentPhase.RoundOf32))
-            throw new InvalidOperationException("Round of 32 has already been initialized.");
+            throw new InvalidOperationException(RoundOf32AlreadyInitErrorMessage);
     }
 
     private List<Team> GetQualifiedTeamsSegment(int start, int count) =>
@@ -152,6 +158,7 @@ public class Knockout
             AddMatch(match);
     }
 
+
     private static Match CreateRoundOf32Match(Team homeTeam, Team awayTeam, string matchCode) =>
         new(
             RoundOf32DefaultDate,
@@ -178,7 +185,7 @@ public class Knockout
             .All(match => match.Status == MatchStatus.Finished);
 
         if (previousPhaseHasMatches && !previousPhaseIsFinished)
-            throw new InvalidOperationException("Previous knockout phase must be finished before adding matches for the next phase.");
+            throw new InvalidOperationException(PhaseNotFinishedErrorMessage);
     }
 
     private static TournamentPhase? GetPreviousPhase(TournamentPhase phase) =>
@@ -192,10 +199,7 @@ public class Knockout
             _ => null
         };
 
-    private static readonly DateTime KnockoutPhaseDefaultDate = new(2026, 7, 1);
-    private const int RoundOf16FirstMatchNumber = 1;
-    private const int QuarterFinalsFirstMatchNumber = 1;
-    private const int SemiFinalsFirstMatchNumber = 1;
+
 
     public void InitializeRoundOf16()
     {
@@ -334,10 +338,10 @@ public class Knockout
         var match = _matches.SingleOrDefault(m => m.MatchCode == matchCode);
 
         if (match is null)
-            throw new ArgumentException($"No se encontró un partido con código '{matchCode}'.");
+            throw new ArgumentException(string.Format(MatchNotFoundErrorMessage, matchCode));
 
         if (homeGoals == awayGoals)
-            throw new ArgumentException("Los partidos de knockout no pueden terminar en empate.");
+            throw new ArgumentException(KnockoutDrawErrorMessage);
 
         match.SetResult(homeGoals, awayGoals);
         match.Finish();
@@ -377,19 +381,6 @@ public class Knockout
     private static int SimulateGoals(Random random, int min, int max) =>
         random.Next(min, max + 1);
 
-    private static Match CreateKnockoutMatch(
-        Team homeTeam,
-        Team awayTeam,
-        string matchCode,
-        TournamentPhase phase)
-    {
-        return new Match(
-            KnockoutPhaseDefaultDate,
-            BuildDefaultStadium(),
-            homeTeam,
-            awayTeam,
-            group: null,
-            phase: phase,
-            matchCode: matchCode);
-    }
+    private static Match CreateKnockoutMatch(Team homeTeam, Team awayTeam, string matchCode, TournamentPhase phase) =>
+        new(KnockoutPhaseDefaultDate, BuildDefaultStadium(), homeTeam, awayTeam, group: null, phase: phase, matchCode: matchCode);
 }
