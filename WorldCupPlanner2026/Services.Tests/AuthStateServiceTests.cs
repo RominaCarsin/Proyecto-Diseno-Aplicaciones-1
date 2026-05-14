@@ -8,33 +8,28 @@ namespace Services.Tests;
 [TestClass]
 public class AuthStateServiceTests
 {
-    private AuthStateService _authStateService;
+    private const string ValidEmail = "juan@gmail.com";
+    private const string ValidPassword = "Password1!";
+
+    private AuthStateService _authStateService = null!;
+    private SessionService _sessionService = null!;
+    private UserService _userService = null!;
     private int _notifyCount;
-
-    private string validEmail = "juan@gmail.com";
-    private string validPassword = "Password1!";
-
-    private UserRequest _validUser = new UserRequest
-    {
-        Name = "Juan",
-        Surname = "Perez",
-        Email = "juan@gmail.com",
-        DateOfBirth = new DateTime(2000, 1, 1),
-        Password = "Password1!"
-    };
 
     [TestInitialize]
     public void Setup()
     {
         _authStateService = new AuthStateService();
         _notifyCount = 0;
-    }
 
-    private void AddValidUser(UserService userService)
-    {
-        userService.AddUser(_validUser);
-    }
+        var userRepository = new Repository<User>();
+        var auditRepository = new Repository<AuditLog>();
+        var auditService = new AuditService(auditRepository);
 
+        _userService = new UserService(userRepository, auditService);
+        _sessionService = new SessionService(_userService, _authStateService);
+    }
+    
     [TestMethod]
     public void NotifyStateChanged_WhenNoSubscribers_ShouldNotThrow()
     {
@@ -65,7 +60,7 @@ public class AuthStateServiceTests
     }
 
     [TestMethod]
-    public void NotifyStateChanged_CalledMultipleTimes_ShouldInvokeEachTime()
+    public void NotifyStateChanged_CalledMultipleTimes_ShouldInvokeOnEachCall()
     {
         _authStateService.OnChange += () => _notifyCount++;
 
@@ -77,7 +72,7 @@ public class AuthStateServiceTests
     }
 
     [TestMethod]
-    public void NotifyStateChanged_AfterUnsubscribe_ShouldNotInvoke()
+    public void NotifyStateChanged_AfterUnsubscribe_ShouldNotInvokeHandler()
     {
         Action handler = () => _notifyCount++;
         _authStateService.OnChange += handler;
@@ -87,56 +82,48 @@ public class AuthStateServiceTests
 
         Assert.AreEqual(0, _notifyCount);
     }
-
+    
     [TestMethod]
-    public void Login_ShouldTriggerOnChangeEvent()
+    public void Login_WithValidCredentials_ShouldTriggerOnChangeEvent()
     {
-        var auditRepo    = new Repository<AuditLog>();
-        var auditService = new AuditService(auditRepo);
-        var repository = new Repository<User>();
-        var userService  = new UserService(repository, auditService);
-        var sessionService = new SessionService(userService, _authStateService);
-
-        AddValidUser(userService);
-
+        _userService.AddUser(BuildValidUserRequest());
         _authStateService.OnChange += () => _notifyCount++;
-        sessionService.Login(validEmail, validPassword);
+
+        _sessionService.Login(ValidEmail, ValidPassword);
 
         Assert.AreEqual(1, _notifyCount);
     }
 
     [TestMethod]
-    public void Logout_ShouldTriggerOnChangeEvent()
+    public void Logout_AfterSuccessfulLogin_ShouldTriggerOnChangeEvent()
     {
-        var auditRepo    = new Repository<AuditLog>();
-        var auditService = new AuditService(auditRepo);
-        var repository = new Repository<User>();
-        var userService  = new UserService(repository, auditService);
-        var sessionService = new SessionService(userService, _authStateService);
-
-        AddValidUser(userService);
-
-        sessionService.Login(validEmail, validPassword);
+        _userService.AddUser(BuildValidUserRequest());
+        _sessionService.Login(ValidEmail, ValidPassword);
         _authStateService.OnChange += () => _notifyCount++;
-        sessionService.Logout();
+
+        _sessionService.Logout();
 
         Assert.AreEqual(1, _notifyCount);
     }
 
     [TestMethod]
-    public void Login_WithInvalidCredentials_ShouldNotTriggerEvent()
+    public void Login_WithInvalidCredentials_ShouldNotTriggerOnChangeEvent()
     {
-        var auditRepo    = new Repository<AuditLog>();
-        var auditService = new AuditService(auditRepo);
-        var repository = new Repository<User>();
-        var userService  = new UserService(repository, auditService);
-        var sessionService = new SessionService(userService, _authStateService);
-
-        AddValidUser(userService);
-
+        _userService.AddUser(BuildValidUserRequest());
         _authStateService.OnChange += () => _notifyCount++;
-        try { sessionService.Login(validEmail, "WrongPass1!"); } catch { }
+
+        try { _sessionService.Login(ValidEmail, "WrongPass1!"); } catch { }
 
         Assert.AreEqual(0, _notifyCount);
     }
+    
+    private static UserRequest BuildValidUserRequest() =>
+        new UserRequest
+        {
+            Name = "Juan",
+            Surname = "Perez",
+            Email = ValidEmail,
+            DateOfBirth = new DateTime(2000, 1, 1),
+            Password = ValidPassword
+        };
 }

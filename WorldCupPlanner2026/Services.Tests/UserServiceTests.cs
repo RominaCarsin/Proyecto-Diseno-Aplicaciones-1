@@ -8,276 +8,277 @@ namespace Services.Tests;
 [TestClass]
 public class UserServiceTests
 {
-    private UserService _service;
-    private IRepository<User> _repository;
-    private AuditService          _auditService;
-    private IRepository<AuditLog> _auditRepository;
-    
-    private UserRequest _validUser = new UserRequest {
-        Name = "Juan",
-        Surname = "Perez",
-        Email = "juan@gmail.com",
-        DateOfBirth = new DateTime(2000, 1, 1),
-        Password = "Password1!"
-    };
-    
-    private UserRequest _otherUser = new UserRequest
-    {
-        Name = "Carlos",
-        Surname = "Lopez",
-        Email = "carlos@gmail.com",
-        DateOfBirth = new DateTime(1999, 1, 1),
-        Password = "Password1!"
-    };
+    private const string ValidEmail = "juan@gmail.com";
+    private const string ValidPassword = "Password1!";
+    private const string ValidName = "Juan";
+    private const string ValidSurname = "Perez";
+
+    private const string OtherEmail = "carlos@gmail.com";
+    private const string OtherName = "Carlos";
+    private const string OtherSurname = "Lopez";
+
+    private const string AdminEmail = "admin@test.com";
+
+    private static readonly DateTime ValidDateOfBirth = new(2000, 1, 1);
+
+    private UserService _service = null!;
+    private IRepository<User> _repository = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repository = new Repository<User>();
-        _auditRepository = new Repository<AuditLog>();
-        _auditService = new AuditService(_auditRepository);
-        _service = new UserService(_repository, _auditService);
-    }
-
-    private void CreateAdminUser(string email, string name, string surname, DateTime dob, string password)
-    {
-        var adminRequest = new UserRequest
-        {
-            Name = name,
-            Surname = surname,
-            Email = email,
-            DateOfBirth = dob,
-            Password = password
-        };
-        _service.AddUser(adminRequest);
-        
-        var admin = _repository.GetAll().FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-        admin!.AddRole(Role.Admin);
+        var auditRepository = new Repository<AuditLog>();
+        var auditService = new AuditService(auditRepository);
+        _service = new UserService(_repository, auditService);
     }
 
     [TestMethod]
-    public void AddUser_WithValidData_ShouldAddUser()
+    public void AddUser_WithValidData_ShouldPersistUserWithExpectedProperties()
     {
-        var result = _service.AddUser(_validUser);
+        _service.AddUser(BuildValidUserRequest());
 
-        var user = _repository.GetAll().FirstOrDefault(u => u.Email == "juan@gmail.com");
-
+        var user = FindUserByEmail(ValidEmail);
         Assert.IsNotNull(user);
-        Assert.AreEqual("Juan", user.Name);
-        Assert.AreEqual("juan@gmail.com", result.Email);
-        Assert.AreEqual("Juan", result.Name);
+        Assert.AreEqual(ValidName, user.Name);
+        Assert.AreEqual(ValidEmail, user.Email);
     }
 
     [TestMethod]
-    public void AddUser_WithExistingEmail_ShouldThrowException()
+    public void AddUser_WithValidData_ShouldReturnMappedResponse()
     {
-        _service.AddUser(_validUser);
+        var result = _service.AddUser(BuildValidUserRequest());
 
-        Assert.ThrowsException<ArgumentException>(() => _service.AddUser(_validUser));
+        Assert.AreEqual(ValidEmail, result.Email);
+        Assert.AreEqual(ValidName, result.Name);
     }
 
     [TestMethod]
-    public void UpdateUser_WithValidData_ShouldUpdateUser()
+    public void AddUser_WithExistingEmail_ShouldThrowArgumentException()
     {
-        _service.AddUser(_validUser);
+        _service.AddUser(BuildValidUserRequest());
 
-        var updated = new UserRequest
-        {
-            Name = "Nuevo",
-            Surname = "Apellido",
-            Email = "juan@gmail.com",
-            DateOfBirth = new DateTime(1998, 1, 1),
-            Password = "Password1!"
-        };
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddUser(BuildValidUserRequest()));
+    }
+    
+    [TestMethod]
+    public void UpdateUser_WithValidData_ShouldUpdateUserProperties()
+    {
+        _service.AddUser(BuildValidUserRequest());
+        var updatedRequest = BuildUserRequest(
+            name: "Nuevo",
+            surname: "Apellido",
+            email: ValidEmail);
 
-        _service.UpdateUser("juan@gmail.com", updated);
+        _service.UpdateUser(ValidEmail, updatedRequest);
 
-        var user = _repository.GetAll().FirstOrDefault(u => u.Email == "juan@gmail.com");
-
+        var user = FindUserByEmail(ValidEmail);
         Assert.IsNotNull(user);
         Assert.AreEqual("Nuevo", user.Name);
         Assert.AreEqual("Apellido", user.Surname);
     }
 
     [TestMethod]
-    public void UpdateUser_WhenUserNotFound_ShouldThrowException()
+    public void UpdateUser_WithNonExistingEmail_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.UpdateUser("notfound@gmail.com", _validUser));
+            _service.UpdateUser("notfound@gmail.com", BuildValidUserRequest()));
     }
 
     [TestMethod]
-    public void UpdateUser_WhenEmailAlreadyInUse_ShouldThrowException()
+    public void UpdateUser_WithEmailAlreadyTakenByAnotherUser_ShouldThrowArgumentException()
     {
-        _service.AddUser(_validUser);
-        _service.AddUser(_otherUser);
-
-        var update = new UserRequest
-        {
-            Name = "Juan",
-            Surname = "Perez",
-            Email = "carlos@gmail.com",
-            DateOfBirth = DateTime.Now,
-            Password = "Password1!"
-        };
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
+        var requestWithTakenEmail = BuildUserRequest(
+            name: ValidName,
+            surname: ValidSurname,
+            email: OtherEmail);
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.UpdateUser("juan@gmail.com", update));
+            _service.UpdateUser(ValidEmail, requestWithTakenEmail));
     }
-
+    
     [TestMethod]
-    public void DeleteUser_WhenUserExists_ShouldRemoveUser()
+    public void DeleteUser_WithExistingUser_ShouldRemoveUserFromRepository()
     {
-        _service.AddUser(_validUser);
+        _service.AddUser(BuildValidUserRequest());
 
-        _service.DeleteUser("juan@gmail.com");
+        _service.DeleteUser(ValidEmail);
 
-        var user = _repository.GetAll().FirstOrDefault(u => u.Email == "juan@gmail.com");
-
-        Assert.IsNull(user);
+        Assert.IsNull(FindUserByEmail(ValidEmail));
     }
 
     [TestMethod]
-    public void DeleteUser_WhenUserNotFound_ShouldThrowException()
+    public void DeleteUser_WithNonExistingEmail_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             _service.DeleteUser("notfound@gmail.com"));
     }
-
+    
     [TestMethod]
-    public void GetUserByEmail_ShouldReturnUser()
+    public void GetUserByEmail_WithExistingEmail_ShouldReturnUserWithExpectedProperties()
     {
-        _service.AddUser(_validUser);
+        _service.AddUser(BuildValidUserRequest());
 
-        var result = _service.GetUserByEmail("juan@gmail.com");
+        var result = _service.GetUserByEmail(ValidEmail);
 
-        Assert.AreEqual("Juan", result.Name);
-        Assert.AreEqual("juan@gmail.com", result.Email);
+        Assert.AreEqual(ValidName, result.Name);
+        Assert.AreEqual(ValidEmail, result.Email);
     }
-
+    
     [TestMethod]
-    public void GetUsers_ShouldReturnAllUsers()
+    public void GetUsers_WithMultipleUsers_ShouldReturnAllUsers()
     {
-        _service.AddUser(_validUser);
-        _service.AddUser(_otherUser);
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
 
         var result = _service.GetUsers().ToList();
 
         Assert.AreEqual(2, result.Count);
-        Assert.IsTrue(result.Any(u => u.Email == "juan@gmail.com" && u.Name == "Juan"));
-        Assert.IsTrue(result.Any(u => u.Email == "carlos@gmail.com" && u.Name == "Carlos"));
+        Assert.IsTrue(result.Any(u => u.Email == ValidEmail && u.Name == ValidName));
+        Assert.IsTrue(result.Any(u => u.Email == OtherEmail && u.Name == OtherName));
+    }
+    
+    [TestMethod]
+    public void Login_WithCorrectCredentials_ShouldReturnUserResponse()
+    {
+        _service.AddUser(BuildValidUserRequest());
+
+        var result = _service.Login(ValidEmail, ValidPassword);
+
+        Assert.AreEqual(ValidEmail, result.Email);
     }
 
     [TestMethod]
-    public void AddRoleToUser_ShouldAssignRole()
+    public void Login_WithWrongPassword_ShouldThrowArgumentException()
     {
-        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
-        _service.AddUser(_validUser);
-
-        _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
-        var hasRole = _service.UserHasRole("juan@gmail.com", RoleDto.Admin);
-
-        Assert.IsTrue(hasRole);
-    }
-
-    [TestMethod]
-    public void AddRoleToUser_WhenAdminNotAuthenticated_ShouldThrowException()
-    {
-        _service.AddUser(_validUser);
-        _service.AddUser(_otherUser);
+        _service.AddUser(BuildValidUserRequest());
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.AddRoleToUser("carlos@gmail.com", "juan@gmail.com", RoleDto.Admin));
+            _service.Login(ValidEmail, "WrongPassword"));
+    }
+    
+    [TestMethod]
+    public void AddRoleToUser_WithAdminPerformingAction_ShouldAssignRoleToTargetUser()
+    {
+        CreateAdminUser();
+        _service.AddUser(BuildValidUserRequest());
+
+        _service.AddRoleToUser(AdminEmail, ValidEmail, RoleDto.Admin);
+
+        Assert.IsTrue(_service.UserHasRole(ValidEmail, RoleDto.Admin));
     }
 
     [TestMethod]
-    public void RemoveRoleFromUser_ShouldRemoveRole()
+    public void AddRoleToUser_WithNonAdminPerformingAction_ShouldThrowArgumentException()
     {
-        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
-        _service.AddUser(_validUser);
-
-        _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
-        _service.RemoveRoleFromUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
-
-        var hasRole = _service.UserHasRole("juan@gmail.com", RoleDto.Admin);
-
-        Assert.IsFalse(hasRole);
-    }
-
-    [TestMethod]
-    public void RemoveRoleFromUser_WhenAdminNotAuthenticated_ShouldThrowException()
-    {
-        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
-        _service.AddUser(_validUser);
-        _service.AddUser(_otherUser);
-
-        _service.AddRoleToUser("admin@test.com", "juan@gmail.com", RoleDto.Admin);
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.RemoveRoleFromUser("carlos@gmail.com", "juan@gmail.com", RoleDto.Admin));
+            _service.AddRoleToUser(OtherEmail, ValidEmail, RoleDto.Admin));
+    }
+    
+    [TestMethod]
+    public void RemoveRoleFromUser_WithAdminPerformingAction_ShouldRemoveRoleFromTargetUser()
+    {
+        CreateAdminUser();
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddRoleToUser(AdminEmail, ValidEmail, RoleDto.Admin);
+
+        _service.RemoveRoleFromUser(AdminEmail, ValidEmail, RoleDto.Admin);
+
+        Assert.IsFalse(_service.UserHasRole(ValidEmail, RoleDto.Admin));
     }
 
     [TestMethod]
-    public void Login_WithCorrectCredentials_ShouldReturnUser()
+    public void RemoveRoleFromUser_WithNonAdminPerformingAction_ShouldThrowArgumentException()
     {
-        _service.AddUser(_validUser);
-
-        var result = _service.Login("juan@gmail.com", "Password1!");
-
-        Assert.AreEqual("juan@gmail.com", result.Email);
-    }
-
-    [TestMethod]
-    public void Login_WithWrongPassword_ShouldThrowException()
-    {
-        _service.AddUser(_validUser);
+        CreateAdminUser();
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
+        _service.AddRoleToUser(AdminEmail, ValidEmail, RoleDto.Admin);
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.Login("juan@gmail.com", "WrongPassword"));
+            _service.RemoveRoleFromUser(OtherEmail, ValidEmail, RoleDto.Admin));
     }
-
+    
     [TestMethod]
-    public void ChangePassword_ShouldUpdatePassword()
+    public void ChangePassword_WithCorrectCurrentPassword_ShouldUpdatePassword()
     {
-        _service.AddUser(_validUser);
+        _service.AddUser(BuildValidUserRequest());
 
-        _service.ChangePassword("juan@gmail.com", "Password1!", "Newpass1!");
+        _service.ChangePassword(ValidEmail, ValidPassword, "Newpass1!");
 
         var user = _repository.GetAll().First();
-
         Assert.IsTrue(user.VerifyPassword("Newpass1!"));
     }
 
     [TestMethod]
-    public void ChangePassword_WithWrongCurrentPassword_ShouldThrowException()
+    public void ChangePassword_WithWrongCurrentPassword_ShouldThrowArgumentException()
     {
-        _service.AddUser(_validUser);
+        _service.AddUser(BuildValidUserRequest());
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.ChangePassword("juan@gmail.com", "WrongPassword", "Newpass1!"));
+            _service.ChangePassword(ValidEmail, "WrongPassword", "Newpass1!"));
     }
-
+    
     [TestMethod]
-    public void ResetPassword_ShouldChangePassword()
+    public void ResetPassword_WithAdminPerformingAction_ShouldReplaceTargetUserPassword()
     {
-        CreateAdminUser("admin@test.com", "Admin", "User", new DateTime(2000, 1, 1), "Password1!");
-        _service.AddUser(_validUser);
+        CreateAdminUser();
+        _service.AddUser(BuildValidUserRequest());
 
-        _service.ResetPassword("admin@test.com", "juan@gmail.com", "NewPass1!");
+        _service.ResetPassword(AdminEmail, ValidEmail, "NewPass1!");
 
-        var user = _repository.GetAll().First(u => u.Email == "juan@gmail.com");
-
-        Assert.IsFalse(user.VerifyPassword("Password1!"));
+        var user = FindUserByEmail(ValidEmail);
+        Assert.IsFalse(user!.VerifyPassword(ValidPassword));
         Assert.IsTrue(user.VerifyPassword("NewPass1!"));
     }
 
     [TestMethod]
-    public void ResetPassword_WhenAdminNotAuthenticated_ShouldThrowException()
+    public void ResetPassword_WithNonAdminPerformingAction_ShouldThrowArgumentException()
     {
-        _service.AddUser(_validUser);
-        _service.AddUser(_otherUser);
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
 
         Assert.ThrowsException<ArgumentException>(() =>
-            _service.ResetPassword("carlos@gmail.com", "juan@gmail.com", "NewPass1!"));
+            _service.ResetPassword(OtherEmail, ValidEmail, "NewPass1!"));
     }
+    
+    private static UserRequest BuildValidUserRequest() =>
+        BuildUserRequest(ValidName, ValidSurname, ValidEmail);
+
+    private static UserRequest BuildUserRequest(
+        string name,
+        string surname,
+        string email,
+        string password = ValidPassword) =>
+        new UserRequest
+        {
+            Name = name,
+            Surname = surname,
+            Email = email,
+            DateOfBirth = ValidDateOfBirth,
+            Password = password
+        };
+
+    private void CreateAdminUser()
+    {
+        var adminRequest = BuildUserRequest(
+            name: "Admin",
+            surname: "User",
+            email: AdminEmail);
+
+        _service.AddUser(adminRequest);
+
+        var admin = FindUserByEmail(AdminEmail);
+        admin!.AddRole(Role.Admin);
+    }
+
+    private User? FindUserByEmail(string email) =>
+        _repository.GetAll()
+            .FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
 }

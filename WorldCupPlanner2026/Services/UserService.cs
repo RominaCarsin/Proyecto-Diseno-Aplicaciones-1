@@ -8,100 +8,66 @@ namespace Services;
 
 public class UserService : IUserService
 {
+    private const string UserAlreadyExistsErrorMessage = "User already exists.";
+    private const string UserNotFoundErrorMessage = "User not found.";
+    private const string EmailAlreadyInUseErrorMessage = "Email already in use.";
+    private const string InvalidPasswordErrorMessage = "Invalid password.";
+    private const string CurrentPasswordIncorrectErrorMessage = "Current password is incorrect.";
+    private const string UserNotAuthorizedErrorMessage = "User is not authorized.";
+
     private readonly IRepository<User> _repository;
     private readonly IAuditService _auditService;
+
     public UserService(IRepository<User> repository, IAuditService auditService)
     {
         _repository = repository;
         _auditService = auditService;
-        if (!_repository.GetAll().Any())
-        {
-            var adminDefault = new User(
-                name: "Admin",
-                surname: "Principal",
-                email: "admin@test.com",
-                dateOfBirth: new DateTime(2000, 1, 1),
-                plainPassword: "Password1!",
-                roles: Role.Admin | Role.Editor
-            );
-            _repository.Add(adminDefault);
-        }
     }
 
-    public UserResponse AddUser(UserRequest request)
+    public UserResponse AddUser(UserRequest userRequest)
     {
-        if (FindByEmail(request.Email) != null)
-            throw new ArgumentException("User already exists");
-        var user = UserMapper.ToEntity(request);
+        if (FindByEmail(userRequest.Email) is not null)
+            throw new ArgumentException(UserAlreadyExistsErrorMessage);
+
+        var user = UserMapper.ToEntity(userRequest);
         _repository.Add(user);
-        LogAction(request.Email, "User created", $"New user registered: {request.Name} {request.Surname} ({request.Email})");
+
+        _auditService.Log(userRequest.Email, "User created",
+            $"New user registered: {userRequest.Name} {userRequest.Surname} ({userRequest.Email})");
+
         return UserMapper.FromEntity(user);
     }
 
-    private User GetExistingUserOrThrowArgumentException(string email) =>
-        FindByEmail(email) ?? throw new ArgumentException("User not found.");
-
-    private User? FindByEmail(string email) =>
-        _repository.GetAll().FirstOrDefault(u =>  u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-
-    public void UpdateUser(string email, UserRequest request)
+    public void UpdateUser(string email, UserRequest userRequest)
     {
-        User existingUser = GetExistingUserOrThrowArgumentException(email);
-        ValidateEmailNotInUse(email, request.Email);
+        var existingUser = GetUserByEmailOrThrow(email);
+
+        ValidateEmailIsNotTakenByAnotherUser(email, userRequest.Email);
+
         existingUser.UpdatePersonalInfo(
-            request.Name,
-            request.Surname,
-            request.Email,
-            request.DateOfBirth
-        );
-        LogAction(email, "User updated", $"[USER UPDATE] Target: {email} | " +
-                                         $"New Data -> Name: {request.Name}, Surname: {request.Surname}, " +
-                                         $"Email: {request.Email}, DOB: {request.DateOfBirth:yyyy-MM-dd}");
-    }
+            userRequest.Name,
+            userRequest.Surname,
+            userRequest.Email,
+            userRequest.DateOfBirth);
 
-    private void ValidateEmailNotInUse(string currentEmail, string newEmail)
-    {
-        if (!currentEmail.Equals(newEmail, StringComparison.OrdinalIgnoreCase)
-            && FindByEmail(newEmail) != null)
-        {
-            throw new ArgumentException("Email already in use");
-        }
-    }
-
-    public bool UserHasRole(string email, RoleDto role)
-    {
-        return GetExistingUserOrThrowArgumentException(email)
-            .HasRole(RoleMapper.ToDomain(role));
-    }
-
-    public void AddRoleToUser(string adminEmail, string targetEmail, RoleDto role)
-    {
-        EnsureAdmin(adminEmail);
-        var user = GetExistingUserOrThrowArgumentException(targetEmail);
-        user.AddRole(RoleMapper.ToDomain(role));
-        LogAction(adminEmail, "Role added", $"Role {role} granted to {targetEmail} by {adminEmail}");
-    }
-
-    public void RemoveRoleFromUser(string adminEmail, string targetEmail, RoleDto role)
-    {
-        EnsureAdmin(adminEmail);
-
-        var user = GetExistingUserOrThrowArgumentException(targetEmail);
-        user.RemoveRole(RoleMapper.ToDomain(role));
-        LogAction(adminEmail, "Role revoked", $"Role {role} revoked from {targetEmail} by {adminEmail}");
+        _auditService.Log(email, "User updated",
+            $"User {email} updated: Name={userRequest.Name}, Surname={userRequest.Surname}, " +
+            $"Email={userRequest.Email}, DOB={userRequest.DateOfBirth:yyyy-MM-dd}");
     }
 
     public void DeleteUser(string email)
     {
-        User existingUser = GetExistingUserOrThrowArgumentException(email);
+        var existingUser = GetUserByEmailOrThrow(email);
         _repository.Delete(existingUser);
-        LogAction("system", "User deleted", $"User {email} was removed from the system");
+
+        _auditService.Log("system", "User deleted",
+            $"User {email} was removed from the system");
     }
 
     public UserResponse GetUserByEmail(string email)
     {
-        User existingUser = GetExistingUserOrThrowArgumentException(email);
-        return UserMapper.FromEntity(existingUser);
+        var user = GetUserByEmailOrThrow(email);
+        return UserMapper.FromEntity(user);
     }
 
     public IEnumerable<UserResponse> GetUsers()
@@ -111,43 +77,87 @@ public class UserService : IUserService
 
     public UserResponse Login(string email, string password)
     {
-        User existingUser = GetExistingUserOrThrowArgumentException(email);
-        if (!existingUser.VerifyPassword(password))
-            throw new ArgumentException("Invalid password");
-        return UserMapper.FromEntity(existingUser);
+        var user = GetUserByEmailOrThrow(email);
+
+        if (!user.VerifyPassword(password))
+            throw new ArgumentException(InvalidPasswordErrorMessage);
+
+        return UserMapper.FromEntity(user);
     }
 
-    public void ResetPassword(string adminEmail, string targetEmail, string newPassword)
+    public bool UserHasRole(string email, RoleDto role)
     {
-        EnsureAdmin(adminEmail);
-
-        var targetUser = GetExistingUserOrThrowArgumentException(targetEmail);
-
-        targetUser.SetPassword(newPassword);
-        LogAction(adminEmail, "Password changed (reset)", $"Password of {targetEmail} was reset by {adminEmail}");
+        return GetUserByEmailOrThrow(email)
+            .HasRole(RoleMapper.ToDomain(role));
     }
 
-    private void EnsureAdmin(string adminEmail)
+    public void AddRoleToUser(string adminEmail, string targetEmail, RoleDto role)
     {
-        var admin = GetExistingUserOrThrowArgumentException(adminEmail);
+        EnsureUserIsAdmin(adminEmail);
 
-        if (!admin.HasRole(Role.Admin))
-            throw new ArgumentException("User is not authorized");
+        var targetUser = GetUserByEmailOrThrow(targetEmail);
+        targetUser.AddRole(RoleMapper.ToDomain(role));
+
+        _auditService.Log(adminEmail, "Role added",
+            $"Role {role} granted to {targetEmail} by {adminEmail}");
+    }
+
+    public void RemoveRoleFromUser(string adminEmail, string targetEmail, RoleDto role)
+    {
+        EnsureUserIsAdmin(adminEmail);
+
+        var targetUser = GetUserByEmailOrThrow(targetEmail);
+        targetUser.RemoveRole(RoleMapper.ToDomain(role));
+
+        _auditService.Log(adminEmail, "Role revoked",
+            $"Role {role} revoked from {targetEmail} by {adminEmail}");
     }
 
     public void ChangePassword(string email, string currentPassword, string newPassword)
     {
-        var user = GetExistingUserOrThrowArgumentException(email);
+        var user = GetUserByEmailOrThrow(email);
 
         if (!user.VerifyPassword(currentPassword))
-            throw new ArgumentException("Current password is incorrect");
+            throw new ArgumentException(CurrentPasswordIncorrectErrorMessage);
 
         user.SetPassword(newPassword);
-        LogAction(email, "Password changed", $"User {email} changed their own password");
+
+        _auditService.Log(email, "Password changed",
+            $"User {email} changed their own password");
     }
 
-    private void LogAction(string actorEmail, string action, string details)
+    public void ResetPassword(string adminEmail, string targetEmail, string newPassword)
     {
-        _auditService.Log(actorEmail, action, details);
+        EnsureUserIsAdmin(adminEmail);
+
+        var targetUser = GetUserByEmailOrThrow(targetEmail);
+        targetUser.SetPassword(newPassword);
+
+        _auditService.Log(adminEmail, "Password reset",
+            $"Password of {targetEmail} was reset by {adminEmail}");
+    }
+    
+    private User GetUserByEmailOrThrow(string email) =>
+        FindByEmail(email) ?? throw new ArgumentException(UserNotFoundErrorMessage);
+
+    private User? FindByEmail(string email) =>
+        _repository.GetAll()
+            .FirstOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+
+    private void ValidateEmailIsNotTakenByAnotherUser(string currentEmail, string newEmail)
+    {
+        bool isChangingEmail = !currentEmail.Equals(newEmail, StringComparison.OrdinalIgnoreCase);
+        bool newEmailAlreadyExists = FindByEmail(newEmail) is not null;
+
+        if (isChangingEmail && newEmailAlreadyExists)
+            throw new ArgumentException(EmailAlreadyInUseErrorMessage);
+    }
+
+    private void EnsureUserIsAdmin(string adminEmail)
+    {
+        var user = GetUserByEmailOrThrow(adminEmail);
+
+        if (!user.HasRole(Role.Admin))
+            throw new ArgumentException(UserNotAuthorizedErrorMessage);
     }
 }
