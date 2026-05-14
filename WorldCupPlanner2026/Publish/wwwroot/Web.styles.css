@@ -1,0 +1,202 @@
+/* _content/Web/Components/Layout/MainLayout.razor.rz.scp.css */
+.page[b-739djkm78g] {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--background);
+}
+
+.sidebar[b-739djkm78g] {
+    flex: 0 0 250px;
+    width: 250px;
+}
+
+.main-content[b-739djkm78g] {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+.top-row[b-739djkm78g] {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-height: 60px;
+    border-bottom: 1px solid var(--wc-border);
+    background-color: #fff;
+}
+
+.logout-link[b-739djkm78g] {
+    color: var(--wc-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.logout-link:hover[b-739djkm78g],
+.logout-link:focus[b-739djkm78g] {
+    color: var(--wc-blue);
+    text-decoration: none;
+}
+
+.content-wrapper[b-739djkm78g] {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+    .page[b-739djkm78g] {
+        flex-direction: column;
+    }
+
+    .sidebar[b-739djkm78g] {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+
+    .main-content[b-739djkm78g] {
+        width: 100%;
+        min-height: auto;
+        margin-left: 0;
+    }
+
+    .content-wrapper[b-739djkm78g] {
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
+    }
+}
+/* _content/Web/Components/Layout/NavMenu.razor.rz.scp.css */
+.sidebar-container[b-rg61plsfb0] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    width: 250px;
+    height: 100vh;
+    background-color: #f5f5f5;
+    border-right: 1px solid var(--wc-border);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.sidebar-header[b-rg61plsfb0] {
+    padding: 1.5rem;
+}
+
+.brand-stripe[b-rg61plsfb0] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    gap: 0.25rem;
+    width: 100%;
+    height: 4px;
+}
+
+.brand-stripe-segment[b-rg61plsfb0] {
+    flex: 1 1 0;
+}
+
+.sidebar-nav[b-rg61plsfb0] {
+    flex: 1 1 auto;
+    padding: 0.75rem 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.sidebar-footer[b-rg61plsfb0] {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(217, 217, 217, 0.7);
+    opacity: 0.75;
+}
+
+[b-rg61plsfb0] .nav-item-custom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.95rem 1.5rem;
+    color: rgba(17, 17, 17, 0.7) !important;
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none !important;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+[b-rg61plsfb0] .nav-item-custom:hover,
+[b-rg61plsfb0] .nav-item-custom:focus {
+    color: var(--wc-text) !important;
+    text-decoration: none !important;
+    background-color: rgba(255, 255, 255, 0.7);
+    outline: none;
+}
+
+[b-rg61plsfb0] .nav-item-custom.active {
+    color: var(--wc-text) !important;
+    font-weight: 700;
+    text-decoration: none !important;
+    background-color: #fff;
+}
+
+[b-rg61plsfb0] .nav-item-icon {
+    flex: 0 0 1.15rem;
+    font-size: 1.15rem;
+    color: rgba(17, 17, 17, 0.55);
+    transition: color 0.2s ease;
+}
+
+[b-rg61plsfb0] .nav-item-custom.active .nav-item-icon {
+    color: var(--item-color) !important;
+}
+
+[b-rg61plsfb0] .active-indicator {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background-color: transparent;
+}
+
+[b-rg61plsfb0] .nav-item-custom.active .active-indicator {
+    background-color: var(--item-color);
+}
+
+@media (max-width: 768px) {
+    .sidebar-container[b-rg61plsfb0] {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--wc-border);
+    }
+
+    .sidebar-nav[b-rg61plsfb0] {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.5rem 0.75rem 0.75rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .sidebar-footer[b-rg61plsfb0] {
+        display: none;
+    }
+
+    [b-rg61plsfb0] .nav-item-custom {
+        flex: 0 0 auto;
+        width: auto;
+        padding: 0.75rem 0.9rem;
+        white-space: nowrap;
+    }
+
+    [b-rg61plsfb0] .active-indicator {
+        top: auto;
+        right: 0;
+        width: auto;
+        height: 3px;
+    }
+}
