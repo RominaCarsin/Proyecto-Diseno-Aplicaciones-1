@@ -194,8 +194,14 @@ public class TeamServiceTests
         var firstResult = _service.GetTeamsOrdered(seed: 7).ToList();
         var secondResult = _service.GetTeamsOrdered(seed: 7).ToList();
 
-        var expectedTiedNames = new List<string> { "ALPHA", "BETA", "GAMMA" };
-        new ShuffleService(seed: 7).ShuffleRange(expectedTiedNames, 0, expectedTiedNames.Count);
+        var expectedTiedTeams = new List<Team>
+        {
+            new("ALPHA", "UEFA", 1800),
+            new("BETA", "UEFA", 1800),
+            new("GAMMA", "UEFA", 1800),
+        };
+        new ShuffleService(seed: 7).ShuffleByRanking(expectedTiedTeams);
+        var expectedTiedNames = expectedTiedTeams.Select(t => t.Name).ToList();
 
         CollectionAssert.AreEqual(
             firstResult.Select(t => t.Name).ToArray(),

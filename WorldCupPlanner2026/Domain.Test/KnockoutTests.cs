@@ -63,6 +63,14 @@ public class KnockoutTests
     }
 
     [TestMethod]
+    public void GivenNullQualifiedTeams_WhenSetQualifiedTeams_ThenThrowsArgumentException()
+    {
+        var knockout = CreateValidKnockout();
+
+        Assert.ThrowsException<ArgumentException>(() => knockout.SetQualifiedTeams(null!));
+    }
+
+    [TestMethod]
     public void GivenThirtyTwoQualifiedTeams_WhenSetQualifiedTeams_ThenQualifiedTeamsAreAssigned()
     {
         var knockout = CreateValidKnockout();
@@ -71,6 +79,24 @@ public class KnockoutTests
         knockout.SetQualifiedTeams(qualifiedTeams);
 
         CollectionAssert.AreEqual(qualifiedTeams, knockout.QualifiedTeams.ToList());
+    }
+
+    [TestMethod]
+    public void GivenNoQualifiedTeamsSet_WhenInitializeRoundOf32_ThenThrowsInvalidOperationException()
+    {
+        var knockout = CreateValidKnockout();
+
+        Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf32());
+    }
+
+    [TestMethod]
+    public void GivenAlreadyInitializedRoundOf32_WhenInitializeRoundOf32Again_ThenThrowsInvalidOperationException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf32());
     }
 
     [TestMethod]
@@ -109,6 +135,27 @@ public class KnockoutTests
         knockout.InitializeRoundOf32();
 
         Assert.IsTrue(knockout.Matches.All(match => match.HomeTeam.GroupLabel != match.AwayTeam.GroupLabel));
+    }
+
+    [TestMethod]
+    public void GivenAllSecondBestTeamsFromSameGroup_WhenInitializeRoundOf32_ThenFallbackToFirstOpponent()
+    {
+        var knockout = CreateValidKnockout();
+        var teams = CreateOrderedQualifiedTeams().ToList();
+        for (int i = 12; i <= 19; i++)
+        {
+            var t = teams[i];
+            teams[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, "A");
+        }
+        knockout.SetQualifiedTeams(teams);
+
+        knockout.InitializeRoundOf32();
+
+        var b5ToB8 = knockout.Matches
+            .Where(m => IsMatchCodeBetween(m.MatchCode, "B5", "B8"))
+            .ToList();
+        Assert.AreEqual(4, b5ToB8.Count);
+        Assert.IsTrue(b5ToB8.All(m => m.HomeTeam is not null && m.AwayTeam is not null));
     }
 
     [TestMethod]
@@ -153,6 +200,14 @@ public class KnockoutTests
 
         Assert.AreEqual(1, knockout.Matches.Count);
         Assert.AreSame(match, knockout.Matches.Single());
+    }
+
+    [TestMethod]
+    public void GivenNullMatch_WhenAddMatch_ThenThrowsArgumentException()
+    {
+        var knockout = CreateValidKnockout();
+
+        Assert.ThrowsException<ArgumentException>(() => knockout.AddMatch(null!));
     }
 
     [TestMethod]
@@ -738,6 +793,34 @@ public class KnockoutTests
                 int j = random.Next(i + 1);
                 (list[i], list[j]) = (list[j], list[i]);
             }
+        }
+
+        public void ShuffleByRanking(IList<Team> teams)
+        {
+            var random = new Random(_seed);
+            int start = 0;
+
+            while (start < teams.Count)
+            {
+                int end = FindEndOfTiedGroup(teams, start);
+
+                if (end - start > 1)
+                    for (int i = end - 1; i > start; i--)
+                    {
+                        int j = random.Next(start, i + 1);
+                        (teams[i], teams[j]) = (teams[j], teams[i]);
+                    }
+
+                start = end;
+            }
+        }
+
+        private static int FindEndOfTiedGroup(IList<Team> teams, int start)
+        {
+            int end = start;
+            while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
+                end++;
+            return end;
         }
     }
 

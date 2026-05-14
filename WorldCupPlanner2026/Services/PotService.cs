@@ -53,27 +53,7 @@ public class PotService : IPotService
 
     private static void ShuffleTiedRankingGroups(List<Team> teams, int seed)
     {
-        var shuffleService = new ShuffleService(seed);
-        int start = 0;
-
-        while (start < teams.Count)
-        {
-            int end = FindEndOfTiedGroup(teams, start);
-
-            bool tiedGroupHasMoreThanOneTeam = end - start > 1;
-            if (tiedGroupHasMoreThanOneTeam)
-                shuffleService.ShuffleRange(teams, start, end);
-
-            start = end;
-        }
-    }
-
-    private static int FindEndOfTiedGroup(List<Team> teams, int start)
-    {
-        int end = start;
-        while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
-            end++;
-        return end;
+        new ShuffleService(seed).ShuffleByRanking(teams);
     }
     
     private void CreateAndSavePots(List<Team> teams)

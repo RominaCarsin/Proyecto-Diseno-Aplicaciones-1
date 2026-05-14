@@ -835,12 +835,46 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
     }
 
     [TestMethod]
+    public void InitializeQuarterFinals_WhenAllPreviousPhasesAreFinished_ShouldCreateNewMatches()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf32);
+        service.InitializeRoundOf16();
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf16);
+
+        service.InitializeQuarterFinals();
+
+        var qfMatches = _matchRepository.GetAll().Where(m => m.Phase == TournamentPhase.QuarterFinals).ToList();
+        Assert.AreEqual(4, qfMatches.Count);
+        CollectionAssert.AreEquivalent(new[] { "D1", "D2", "D3", "D4" }, qfMatches.Select(m => m.MatchCode).ToList());
+    }
+
+    [TestMethod]
     public void InitializeSemiFinals_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
     {
         var fixtureService = CreateFixtureService();
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             fixtureService.InitializeSemiFinals());
+    }
+
+    [TestMethod]
+    public void InitializeSemiFinals_WhenAllPreviousPhasesAreFinished_ShouldCreateNewMatches()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf32);
+        service.InitializeRoundOf16();
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf16);
+        service.InitializeQuarterFinals();
+        FinishAllPhaseMatches(service, TournamentPhase.QuarterFinals);
+
+        service.InitializeSemiFinals();
+
+        var sfMatches = _matchRepository.GetAll().Where(m => m.Phase == TournamentPhase.SemiFinals).ToList();
+        Assert.AreEqual(2, sfMatches.Count);
+        CollectionAssert.AreEquivalent(new[] { "S1", "S2" }, sfMatches.Select(m => m.MatchCode).ToList());
     }
 
     [TestMethod]
@@ -853,12 +887,52 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
     }
 
     [TestMethod]
+    public void InitializeThirdPlace_WhenAllPreviousPhasesAreFinished_ShouldCreateNewMatch()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf32);
+        service.InitializeRoundOf16();
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf16);
+        service.InitializeQuarterFinals();
+        FinishAllPhaseMatches(service, TournamentPhase.QuarterFinals);
+        service.InitializeSemiFinals();
+        FinishAllPhaseMatches(service, TournamentPhase.SemiFinals);
+
+        service.InitializeThirdPlace();
+
+        var tpMatches = _matchRepository.GetAll().Where(m => m.Phase == TournamentPhase.ThirdPlace).ToList();
+        Assert.AreEqual(1, tpMatches.Count);
+        Assert.AreEqual("T1", tpMatches.Single().MatchCode);
+    }
+
+    [TestMethod]
     public void InitializeFinal_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
     {
         var fixtureService = CreateFixtureService();
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             fixtureService.InitializeFinal());
+    }
+
+    [TestMethod]
+    public void InitializeFinal_WhenAllPreviousPhasesAreFinished_ShouldCreateNewMatch()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf32);
+        service.InitializeRoundOf16();
+        FinishAllPhaseMatches(service, TournamentPhase.RoundOf16);
+        service.InitializeQuarterFinals();
+        FinishAllPhaseMatches(service, TournamentPhase.QuarterFinals);
+        service.InitializeSemiFinals();
+        FinishAllPhaseMatches(service, TournamentPhase.SemiFinals);
+
+        service.InitializeFinal();
+
+        var finalMatches = _matchRepository.GetAll().Where(m => m.Phase == TournamentPhase.Final).ToList();
+        Assert.AreEqual(1, finalMatches.Count);
+        Assert.AreEqual("F1", finalMatches.Single().MatchCode);
     }
 
     [TestMethod]
@@ -1002,5 +1076,12 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
         fixtureService.SimulateGroupStage(42);
         return fixtureService;
+    }
+
+    private void FinishAllPhaseMatches(IFixtureService service, TournamentPhase phase)
+    {
+        var matches = _matchRepository.GetAll().Where(m => m.Phase == phase).ToList();
+        foreach (var match in matches)
+            service.SetKnockoutMatchResult(match.MatchCode!, 2, 1);
     }
 }

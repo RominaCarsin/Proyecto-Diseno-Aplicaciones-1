@@ -125,6 +125,24 @@ public class TeamImportServiceTests
     }
 
     [TestMethod]
+    public void Import_WithOnlyNewline_ShouldReportGlobalError()
+    {
+        var result = _service.Import("\n");
+
+        AssertGlobalError(result, "vacio");
+    }
+    
+    [TestMethod]
+    public void Preview_WithMultipleValidRows_ShouldNotAuditSummary()
+    {
+        var csv = $"{Header}\r\nUruguay,CONMEBOL,1900\r\nArgentina,CONMEBOL,1800";
+
+        _service.Preview(csv);
+
+        AssertNoAuditLogs();
+    }
+    
+    [TestMethod]
     public void Preview_WithRowMissingColumns_ShouldReportRowError()
     {
         var result = _service.Preview(MissingColumnCsv);
@@ -223,6 +241,27 @@ public class TeamImportServiceTests
         Assert.IsFalse(_auditRepository.GetAll().Any());
     }
     
+    [TestMethod]
+    public void Import_WithHeaderOnly_ShouldSucceedWithZeroRowsNoneSaved()
+    {
+        var result = _service.Import(Header);
+
+        Assert.AreEqual(0, result.TotalRows);
+        Assert.AreEqual(0, result.SuccessfulRows);
+        Assert.AreEqual(0, _teamService.GetTeams().Count());
+    }
+
+    [TestMethod]
+    public void Preview_WithHeaderOnly_ShouldSucceedWithZeroRowsNoneSaved()
+    {
+        var result = _service.Preview(Header);
+
+        Assert.AreEqual(0, result.TotalRows);
+        Assert.AreEqual(0, result.SuccessfulRows);
+        Assert.AreEqual(0, _teamService.GetTeams().Count());
+        AssertNoAuditLogs();
+    }
+
     [TestMethod]
     public void Preview_WithOnlyNewlines_ShouldReportGlobalError()
     {

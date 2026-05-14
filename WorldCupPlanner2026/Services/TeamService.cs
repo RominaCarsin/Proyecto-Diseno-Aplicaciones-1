@@ -99,63 +99,9 @@ public class TeamService : ITeamService
             .OrderByDescending(team => team.RankingFifa)
             .ToList();
 
-        ShuffleTiedRankingGroups(orderedTeams, seed);
+        new ShuffleService(seed).ShuffleByRanking(orderedTeams);
 
         return orderedTeams.Select(TeamMapper.FromEntity);
-    }
-
-    private void ResolveRankingTies(IList<Team> teams, int seed)
-    {
-        var shuffleService = CreateShuffleService(seed);
-        var tieStartIndex = 0;
-
-        while (tieStartIndex < teams.Count)
-        {
-            var tieEndIndex = FindTieEndIndex(teams, tieStartIndex);
-            if (tieEndIndex - tieStartIndex > 1)
-                shuffleService.ShuffleRange(teams, tieStartIndex, tieEndIndex);
-
-            tieStartIndex = tieEndIndex;
-        }
-    }
-
-    private int FindTieEndIndex(IList<Team> teams, int tieStartIndex)
-    {
-        var tieRanking = teams[tieStartIndex].RankingFifa;
-        var tieEndIndex = tieStartIndex + 1;
-
-        while (tieEndIndex < teams.Count && teams[tieEndIndex].RankingFifa == tieRanking)
-            tieEndIndex++;
-
-        return tieEndIndex;
-    }
-
-    private IServices.IShuffleService CreateShuffleService(int seed)
-    {
-        return new ShuffleService(seed);
-    }
-
-    private void AddFictionalTeams(string confederationName, int teamsToCreate, Random random)
-    {
-        for (var index = 1; index <= teamsToCreate; index++)
-            AddTeam(BuildFictionalTeamRequest(confederationName, index, random));
-    }
-
-    private TeamRequest BuildFictionalTeamRequest(string confederationName, int index, Random random) => new()
-    {
-        Name = GenerateFictionalName(confederationName, index),
-        ConfederationName = confederationName,
-        RankingFifa = GenerateRandomRanking(random)
-    };
-
-    private string GenerateFictionalName(string confederationName, int index)
-    {
-        return $"{confederationName}_{index:00}";
-    }
-
-    private int GenerateRandomRanking(Random random)
-    {
-        return random.Next(FirstFifaRanking, LastFifaRanking + 1);
     }
 
     private Team? FindByName(string name) =>
@@ -193,30 +139,6 @@ public class TeamService : ITeamService
             };
             AddTeam(request);
         }
-    }
-
-    private void ShuffleTiedRankingGroups(IList<Team> teams, int seed)
-    {
-        var shuffleService = new ShuffleService(seed);
-        int start = 0;
-
-        while (start < teams.Count)
-        {
-            int end = FindEndOfTiedGroup(teams, start);
-
-            if (end - start > 1)
-                shuffleService.ShuffleRange(teams, start, end);
-
-            start = end;
-        }
-    }
-
-    private static int FindEndOfTiedGroup(IList<Team> teams, int start)
-    {
-        int end = start + 1;
-        while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
-            end++;
-        return end;
     }
 
     private void LogAction(string action, string details)

@@ -23,7 +23,7 @@ public class UserService : IUserService
         _repository = repository;
         _auditService = auditService;
         
-        if (!_repository.GetAll().Any())
+        /*if (!_repository.GetAll().Any())
         {
             var adminDefault = new User(
                 name: "Admin",
@@ -32,9 +32,9 @@ public class UserService : IUserService
                 dateOfBirth: new DateTime(2000, 1, 1),
                 plainPassword: "Password1!",
                 roles: Role.Admin | Role.Editor
-            );
+            )
             _repository.Add(adminDefault);
-        }
+        }*/
     }
 
     public UserResponse AddUser(UserRequest userRequest)

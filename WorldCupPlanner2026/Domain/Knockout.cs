@@ -40,11 +40,6 @@ public class Knockout
         SimulationSeed = newSeed;
     }
 
-    public void UpdateSemillaCrucesFase(int newSeed)
-    {
-        SemillaCrucesFase = newSeed;
-    }
-
     public void SetQualifiedTeams(IEnumerable<Team> qualifiedTeams)
     {
         if (qualifiedTeams is null)

@@ -1,4 +1,6 @@
-﻿namespace Services.Tests;
+﻿using Domain;
+
+namespace Services.Tests;
 
 [TestClass]
 public class ShuffleServiceTests
@@ -60,52 +62,23 @@ public class ShuffleServiceTests
 
         Assert.AreEqual(0, emptyList.Count);
     }
-    
-    [TestMethod]
-    public void ShuffleRange_ShouldOnlyAffectElementsWithinRange()
-    {
-        var list = new List<string> { "A", "B", "C", "D", "E" };
-
-        new ShuffleService(DefaultSeed).ShuffleRange(list, startIndex: 1, endIndex: 4);
-
-        Assert.AreEqual("A", list[0]);
-        Assert.AreEqual("E", list[4]);
-    }
 
     [TestMethod]
-    public void ShuffleRange_ShouldPreserveAllElementsWithinRange()
+    public void ShuffleByRanking_ShouldOnlyShuffleWithinTiedGroups()
     {
-        var list = new List<string> { "A", "B", "C", "D", "E" };
+        var teams = new List<Team>
+        {
+            new("A", "UEFA", 1000),
+            new("B", "UEFA", 1000),
+            new("C", "UEFA", 1000),
+            new("D", "UEFA", 500),
+            new("E", "UEFA", 500),
+        };
 
-        new ShuffleService(DefaultSeed).ShuffleRange(list, startIndex: 1, endIndex: 4);
+        new ShuffleService(DefaultSeed).ShuffleByRanking(teams);
 
-        CollectionAssert.Contains(list, "B");
-        CollectionAssert.Contains(list, "C");
-        CollectionAssert.Contains(list, "D");
-    }
-
-    [TestMethod]
-    public void ShuffleRange_WithSameSeed_ShouldProduceSameOrder()
-    {
-        var list1 = new List<string> { "A", "B", "C", "D", "E" };
-        var list2 = new List<string> { "A", "B", "C", "D", "E" };
-
-        new ShuffleService(DefaultSeed).ShuffleRange(list1, startIndex: 0, endIndex: 5);
-        new ShuffleService(DefaultSeed).ShuffleRange(list2, startIndex: 0, endIndex: 5);
-
-        CollectionAssert.AreEqual(list1, list2);
-    }
-
-    [TestMethod]
-    public void ShuffleRange_WithSingleElementRange_ShouldNotChangeList()
-    {
-        var list = new List<int> { 1, 2, 3 };
-
-        new ShuffleService(DefaultSeed).ShuffleRange(list, startIndex: 1, endIndex: 2);
-
-        Assert.AreEqual(1, list[0]);
-        Assert.AreEqual(2, list[1]);
-        Assert.AreEqual(3, list[2]);
+        Assert.IsTrue(teams.Take(3).All(t => t.RankingFifa == 1000));
+        Assert.IsTrue(teams.Skip(3).All(t => t.RankingFifa == 500));
     }
     
     private static List<string> BuildStringList() =>
