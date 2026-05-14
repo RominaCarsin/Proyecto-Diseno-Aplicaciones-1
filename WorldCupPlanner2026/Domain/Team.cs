@@ -6,6 +6,12 @@ public class Team
     private const int MaxRanking = 2500;
     private const int MaxNameLength = 60;
 
+    private const string NameInvalidErrorMessage = "Name must be between 1 and 60 characters.";
+    private const string RankingInvalidErrorMessage = "Ranking FIFA must be between 300 and 2500.";
+    private const string ConfederationRequiredErrorMessage = "Confederation is required.";
+    private const string ConfederationInvalidErrorMessage = "Invalid confederation.";
+    private const string NegativeGoalsErrorMessage = "Goals cannot be negative.";
+
     private static readonly HashSet<string> ValidConfederations = new()
     {
         "AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"
@@ -23,109 +29,83 @@ public class Team
         UpdateName(name);
         UpdateConfederationName(confederationName);
         UpdateRankingFifa(rankingFifa);
-
-        Points = 0;
-        GoalDifference = 0;
-        GoalsInFavor = 0;
     }
 
     public void UpdateName(string name)
     {
-        var normalized = Normalized(name);
+        var normalized = Normalize(name);
 
-        if (InvalidNameLength(normalized))
-            throw new ArgumentException($"Name must be between 1 and {MaxNameLength} characters.");
+        if (string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength)
+            throw new ArgumentException(NameInvalidErrorMessage);
 
         Name = normalized;
     }
 
-    public void UpdateRankingFifa(int rankingFifa)
-    {
-        if (InvalidRankingFifa(rankingFifa))
-            throw new ArgumentException($"Ranking fifa must be between {MinRanking} and {MaxRanking}.");
-
-        RankingFifa = rankingFifa;
-    }
-
     public void UpdateConfederationName(string confederationName)
     {
-        var normalized = Normalized(confederationName);
+        var normalized = Normalize(confederationName);
 
         if (string.IsNullOrWhiteSpace(normalized))
-            throw new ArgumentException("Confederation is required.");
+            throw new ArgumentException(ConfederationRequiredErrorMessage);
 
         if (!ValidConfederations.Contains(normalized))
-            throw new ArgumentException("Invalid confederation.");
+            throw new ArgumentException(ConfederationInvalidErrorMessage);
 
         ConfederationName = normalized;
     }
 
-    public void RecordWin(int goalsScored, int goalsConceded)
+    public void UpdateRankingFifa(int rankingFifa)
     {
-        UpdateStats(3, goalsScored, goalsConceded);
+        if (rankingFifa < MinRanking || rankingFifa > MaxRanking)
+            throw new ArgumentException(RankingInvalidErrorMessage);
+
+        RankingFifa = rankingFifa;
     }
 
-    public void RecordDraw(int goalsScored)
-    {
-        UpdateStats(1, goalsScored, goalsScored);
-    }
+    public void RecordWin(int goalsScored, int goalsConceded) =>
+        ApplyStatsChange(points: 3, goalsScored, goalsConceded);
 
-    public void RecordLoss(int goalsScored, int goalsConceded)
-    {
-        UpdateStats(0, goalsScored, goalsConceded);
-    }
+    public void RecordDraw(int goalsScored) =>
+        ApplyStatsChange(points: 1, goalsScored, goalsConceded: goalsScored);
 
-    public void RevertWin(int goalsScored, int goalsConceded)
-    {
-        RevertStats(3, goalsScored, goalsConceded);
-    }
+    public void RecordLoss(int goalsScored, int goalsConceded) =>
+        ApplyStatsChange(points: 0, goalsScored, goalsConceded);
 
-    public void RevertDraw(int goalsScored)
-    {
-        RevertStats(1, goalsScored, goalsScored);
-    }
+    public void RevertWin(int goalsScored, int goalsConceded) =>
+        RevertStatsChange(points: 3, goalsScored, goalsConceded);
 
-    public void RevertLoss(int goalsScored, int goalsConceded)
-    {
-        RevertStats(0, goalsScored, goalsConceded);
-    }
+    public void RevertDraw(int goalsScored) =>
+        RevertStatsChange(points: 1, goalsScored, goalsConceded: goalsScored);
 
-    private void UpdateStats(int points, int goalsScored, int goalsConceded)
+    public void RevertLoss(int goalsScored, int goalsConceded) =>
+        RevertStatsChange(points: 0, goalsScored, goalsConceded);
+    
+    public static string Normalize(string value) =>
+            value?.Trim().ToUpper() ?? string.Empty;
+    
+    public static string Normalized(string value) => Normalize(value);
+        
+    private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
     {
-        GuardAgainstNegativeGoals(goalsScored, goalsConceded);
+        ValidateGoalsAreNotNegative(goalsScored, goalsConceded);
 
         Points += points;
         GoalsInFavor += goalsScored;
         GoalDifference += goalsScored - goalsConceded;
     }
 
-    private void RevertStats(int points, int goalsScored, int goalsConceded)
+    private void RevertStatsChange(int points, int goalsScored, int goalsConceded)
     {
-        GuardAgainstNegativeGoals(goalsScored, goalsConceded);
+        ValidateGoalsAreNotNegative(goalsScored, goalsConceded);
 
         Points -= points;
         GoalsInFavor -= goalsScored;
         GoalDifference -= goalsScored - goalsConceded;
     }
 
-    private static void GuardAgainstNegativeGoals(params int[] goals)
+    private static void ValidateGoalsAreNotNegative(params int[] goals)
     {
         if (goals.Any(goal => goal < 0))
-            throw new ArgumentException("Goals cannot be negative.");
-    }
-
-    private static bool InvalidNameLength(string normalized)
-    {
-        return string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength;
-    }
-
-    private static bool InvalidRankingFifa(int rankingFifa)
-    {
-        return rankingFifa < MinRanking || rankingFifa > MaxRanking;
-    }
-
-    public static string Normalized(string name)
-    {
-        return name?.Trim().ToUpper() ?? string.Empty;
+            throw new ArgumentException(NegativeGoalsErrorMessage);
     }
 }

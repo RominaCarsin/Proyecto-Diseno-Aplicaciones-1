@@ -1,7 +1,7 @@
 ﻿using Domain;
 using DTOs;
-using IServices;
 using IRepository;
+using IServices;
 using Services.Mappers;
 
 namespace Services;
@@ -12,12 +12,19 @@ public class TeamService : ITeamService
     private const int FirstFifaRanking = 300;
     private const int LastFifaRanking = 2500;
 
+    private const string TeamNotFoundErrorMessage = "Team not found.";
+    private const string TeamNameAlreadyExistsErrorMessage = "A team with this name already exists.";
+
     private readonly IRepository<Team> _repository;
     private readonly IConfederationService _confederationService;
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;
 
-    public TeamService(IRepository<Team> repository, IConfederationService confederationService, IAuditService auditService, ISessionService sessionService)
+    public TeamService(
+        IRepository<Team> repository,
+        IConfederationService confederationService,
+        IAuditService auditService,
+        ISessionService sessionService)
     {
         _repository = repository;
         _confederationService = confederationService;
@@ -25,41 +32,47 @@ public class TeamService : ITeamService
         _sessionService = sessionService;
     }
 
-    public void AddTeam(TeamRequest request)
+    public void AddTeam(TeamRequest teamRequest)
     {
-        CheckNameIsAvailable(request.Name);
-        var team = TeamMapper.ToEntity(request);
+        EnsureTeamNameIsNotTaken(teamRequest.Name);
+
+        var team = TeamMapper.ToEntity(teamRequest);
         _confederationService.AddTeamToConfederation(team);
         _repository.Add(team);
-        LogAction("Team created",
-            $"Team '{request.Name}' added to {request.ConfederationName} with FIFA ranking {request.RankingFifa}");
 
+        LogAction("Team created",
+            $"Team '{teamRequest.Name}' added to {teamRequest.ConfederationName} " +
+            $"with FIFA ranking {teamRequest.RankingFifa}");
     }
 
-    public void UpdateTeam(string currentName, TeamRequest request)
+    public void UpdateTeam(string currentName, TeamRequest updatedTeamData)
     {
-        var team = GetExistingTeamOrThrowArgumentException(currentName);
-        CheckNameIsAvailableForUpdate(currentName, request.Name);
+        var team = FindTeamByNameOrThrow(currentName);
 
-        team.UpdateName(request.Name);
-        team.UpdateRankingFifa(request.RankingFifa);
+        EnsureTeamNameIsNotTakenByAnotherTeam(currentName, updatedTeamData.Name);
 
-        if (team.ConfederationName != request.ConfederationName)
+        team.UpdateName(updatedTeamData.Name);
+        team.UpdateRankingFifa(updatedTeamData.RankingFifa);
+
+        bool isChangingConfederation = team.ConfederationName != updatedTeamData.ConfederationName;
+        if (isChangingConfederation)
         {
-            team.UpdateConfederationName(request.ConfederationName);
-            _confederationService.UpdateTeamConfederation(team, request.ConfederationName);
+            team.UpdateConfederationName(updatedTeamData.ConfederationName);
+            _confederationService.UpdateTeamConfederation(team, updatedTeamData.ConfederationName);
         }
+
         LogAction("Team updated",
-            $"Team '{currentName}' updated. New name: '{request.Name}', confederation: {request.ConfederationName}, ranking: {request.RankingFifa}");
+            $"Team '{currentName}' updated. New name: '{updatedTeamData.Name}', " +
+            $"confederation: {updatedTeamData.ConfederationName}, ranking: {updatedTeamData.RankingFifa}");
     }
 
     public void DeleteTeam(string name)
     {
-        var team = GetExistingTeamOrThrowArgumentException(name);
+        var team = FindTeamByNameOrThrow(name);
         _confederationService.RemoveTeamFromConfederation(team);
         _repository.Delete(team);
-        LogAction("Team deleted",
-            $"Team '{name}' was removed from the system");
+
+        LogAction("Team deleted", $"Team '{name}' was removed from the system");
     }
 
     public void AutoCompleteTeams(int seed)
@@ -68,11 +81,12 @@ public class TeamService : ITeamService
 
         foreach (var confederation in _confederationService.GetAll())
         {
-            var remainingGlobalSlots = RequiredTeamsCount - _repository.GetAll().Count();
-            if (remainingGlobalSlots <= 0) return;
+            int remainingGlobalSlots = RequiredTeamsCount - _repository.GetAll().Count();
+            if (remainingGlobalSlots <= 0)
+                return;
 
-            var teamsToCreate = Math.Min(confederation.RemainingSlots, remainingGlobalSlots);
-            AddFictionalTeams(confederation.Name, teamsToCreate, random);
+            int teamsToCreate = Math.Min(confederation.RemainingSlots, remainingGlobalSlots);
+            AddFictionalTeamsToConfederation(confederation.Name, teamsToCreate, random);
         }
     }
 
@@ -85,82 +99,70 @@ public class TeamService : ITeamService
             .OrderByDescending(team => team.RankingFifa)
             .ToList();
 
-        ResolveRankingTies(orderedTeams, seed);
+        ShuffleTiedRankingGroups(orderedTeams, seed);
 
         return orderedTeams.Select(TeamMapper.FromEntity);
     }
 
-    private void ResolveRankingTies(IList<Team> teams, int seed)
+    private Team? FindByName(string name) =>
+        _repository.GetAll()
+            .FirstOrDefault(t => t.Name == Team.Normalize(name));
+
+    private Team FindTeamByNameOrThrow(string name) =>
+        FindByName(name) ?? throw new ArgumentException(TeamNotFoundErrorMessage);
+
+    private void EnsureTeamNameIsNotTaken(string name)
     {
-        var shuffleService = CreateShuffleService(seed);
-        var tieStartIndex = 0;
+        if (FindByName(name) is not null)
+            throw new ArgumentException(TeamNameAlreadyExistsErrorMessage);
+    }
 
-        while (tieStartIndex < teams.Count)
+    private void EnsureTeamNameIsNotTakenByAnotherTeam(string currentName, string newName)
+    {
+        var teamWithNewName = FindByName(newName);
+        if (teamWithNewName is not null && teamWithNewName.Name != currentName)
+            throw new ArgumentException(TeamNameAlreadyExistsErrorMessage);
+    }
+
+    private void AddFictionalTeamsToConfederation(
+        string confederationName,
+        int teamsToCreate,
+        Random random)
+    {
+        for (int index = 1; index <= teamsToCreate; index++)
         {
-            var tieEndIndex = FindTieEndIndex(teams, tieStartIndex);
-            if (tieEndIndex - tieStartIndex > 1)
-                shuffleService.ShuffleRange(teams, tieStartIndex, tieEndIndex);
-
-            tieStartIndex = tieEndIndex;
+            var request = new TeamRequest
+            {
+                Name = $"{confederationName}_{index:00}",
+                ConfederationName = confederationName,
+                RankingFifa = random.Next(FirstFifaRanking, LastFifaRanking + 1)
+            };
+            AddTeam(request);
         }
     }
 
-    private int FindTieEndIndex(IList<Team> teams, int tieStartIndex)
+    private void ShuffleTiedRankingGroups(IList<Team> teams, int seed)
     {
-        var tieRanking = teams[tieStartIndex].RankingFifa;
-        var tieEndIndex = tieStartIndex + 1;
+        var shuffleService = new ShuffleService(seed);
+        int start = 0;
 
-        while (tieEndIndex < teams.Count && teams[tieEndIndex].RankingFifa == tieRanking)
-            tieEndIndex++;
+        while (start < teams.Count)
+        {
+            int end = FindEndOfTiedGroup(teams, start);
 
-        return tieEndIndex;
+            if (end - start > 1)
+                shuffleService.ShuffleRange(teams, start, end);
+
+            start = end;
+        }
     }
 
-    private IShuffleService CreateShuffleService(int seed)
+    private static int FindEndOfTiedGroup(IList<Team> teams, int start)
     {
-        return new ShuffleService(seed);
-    }
-
-    private void AddFictionalTeams(string confederationName, int teamsToCreate, Random random)
-    {
-        for (var index = 1; index <= teamsToCreate; index++)
-            AddTeam(BuildFictionalTeamRequest(confederationName, index, random));
-    }
-
-    private TeamRequest BuildFictionalTeamRequest(string confederationName, int index, Random random) => new()
-    {
-        Name = GenerateFictionalName(confederationName, index),
-        ConfederationName = confederationName,
-        RankingFifa = GenerateRandomRanking(random)
-    };
-
-    private string GenerateFictionalName(string confederationName, int index)
-    {
-        return $"{confederationName}_{index:00}";
-    }
-
-    private int GenerateRandomRanking(Random random)
-    {
-        return random.Next(FirstFifaRanking, LastFifaRanking + 1);
-    }
-
-    private Team? FindByName(string name) =>
-        _repository.GetAll().FirstOrDefault(t => t.Name == Team.Normalized(name));
-
-    private Team GetExistingTeamOrThrowArgumentException(string name) =>
-        FindByName(name) ?? throw new ArgumentException("Team not found.");
-
-    private void CheckNameIsAvailable(string name)
-    {
-        if (FindByName(name) != null)
-            throw new ArgumentException("A team with this name already exists.");
-    }
-
-    private void CheckNameIsAvailableForUpdate(string currentName, string newName)
-    {
-        var teamWithNewName = FindByName(newName);
-        if (teamWithNewName != null && teamWithNewName.Name != currentName)
-            throw new ArgumentException("A team with this name already exists.");
+        int end = start + 1;
+        while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
+            end++;
+        return end;
     }
 
     private void LogAction(string action, string details)

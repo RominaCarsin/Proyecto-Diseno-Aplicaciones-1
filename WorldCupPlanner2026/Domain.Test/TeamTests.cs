@@ -4,11 +4,11 @@ namespace Domain.Test;
 public class TeamTests
 {
     private const string ValidName = "URUGUAY";
-    private const string ValidConf = "CONMEBOL";
+    private const string ValidConfederation = "CONMEBOL";
     private const int ValidRanking = 500;
-
+    
     [TestMethod]
-    public void CreateTeam_WithValidData_ShouldSucceedAndNormalize()
+    public void CreateTeam_WithValidData_ShouldCreateTeamWithNormalizedAndDefaultProperties()
     {
         var team = new Team("uruguay", "conmebol", ValidRanking);
 
@@ -19,93 +19,222 @@ public class TeamTests
         Assert.AreEqual(0, team.GoalDifference);
         Assert.AreEqual(0, team.GoalsInFavor);
     }
-
+    
     [TestMethod]
-    public void CreateTeam_WithInvalidData_ShouldThrowException()
+    public void CreateTeam_WithEmptyName_ShouldThrowArgumentException()
     {
-        Assert.ThrowsException<ArgumentException>(() => new Team("", ValidConf, ValidRanking));
-        Assert.ThrowsException<ArgumentException>(() => new Team("   ", ValidConf, ValidRanking));
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, "INVALID", ValidRanking));
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, null!, ValidRanking));
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 299));
-        Assert.ThrowsException<ArgumentException>(() => new Team(ValidName, ValidConf, 2501));
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team("", ValidConfederation, ValidRanking));
     }
 
     [TestMethod]
-    public void UpdateNameAndConfederation_ShouldNormalizeToUppercase()
+    public void CreateTeam_WithWhitespaceOnlyName_ShouldThrowArgumentException()
     {
-        var team = new Team("Spain", "UEFA", ValidRanking);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team("   ", ValidConfederation, ValidRanking));
+    }
+
+    [TestMethod]
+    public void UpdateName_WithLowercaseValue_ShouldNormalizeToUppercase()
+    {
+        var team = new Team("SPAIN", "UEFA", ValidRanking);
 
         team.UpdateName("france");
-        team.UpdateConfederationName("afc");
 
         Assert.AreEqual("FRANCE", team.Name);
+    }
+    
+    [TestMethod]
+    public void CreateTeam_WithInvalidConfederation_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(ValidName, "INVALID", ValidRanking));
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithNullConfederation_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(ValidName, null!, ValidRanking));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithLowercaseValue_ShouldNormalizeToUppercase()
+    {
+        var team = new Team("SPAIN", "UEFA", ValidRanking);
+
+        team.UpdateConfederationName("afc");
+
         Assert.AreEqual("AFC", team.ConfederationName);
     }
-
+    
     [TestMethod]
-    public void CreateTeam_WithRankingFifaAtBoundaries_ShouldSucceed()
+    public void CreateTeam_WithRankingAtMinimumBoundary_ShouldSucceed()
     {
-        Assert.AreEqual(300, new Team(ValidName, ValidConf, 300).RankingFifa);
-        Assert.AreEqual(2500, new Team(ValidName, ValidConf, 2500).RankingFifa);
+        var team = new Team(ValidName, ValidConfederation, 300);
+
+        Assert.AreEqual(300, team.RankingFifa);
     }
 
     [TestMethod]
-    public void RecordResults_ShouldUpdateStats()
+    public void CreateTeam_WithRankingAtMaximumBoundary_ShouldSucceed()
     {
-        var winTeam = new Team(ValidName, ValidConf, ValidRanking);
-        winTeam.RecordWin(3, 1);
-        Assert.AreEqual(3, winTeam.Points);
-        Assert.AreEqual(3, winTeam.GoalsInFavor);
-        Assert.AreEqual(2, winTeam.GoalDifference);
+        var team = new Team(ValidName, ValidConfederation, 2500);
 
-        var drawTeam = new Team(ValidName, ValidConf, ValidRanking);
-        drawTeam.RecordDraw(2);
-        Assert.AreEqual(1, drawTeam.Points);
-        Assert.AreEqual(2, drawTeam.GoalsInFavor);
-        Assert.AreEqual(0, drawTeam.GoalDifference);
-
-        var lossTeam = new Team(ValidName, ValidConf, ValidRanking);
-        lossTeam.RecordLoss(0, 4);
-        Assert.AreEqual(0, lossTeam.Points);
-        Assert.AreEqual(0, lossTeam.GoalsInFavor);
-        Assert.AreEqual(-4, lossTeam.GoalDifference);
+        Assert.AreEqual(2500, team.RankingFifa);
     }
 
     [TestMethod]
-    public void RevertResults_ShouldRemovePreviousStats()
+    public void CreateTeam_WithRankingBelowMinimum_ShouldThrowArgumentException()
     {
-        var team = new Team(ValidName, ValidConf, ValidRanking);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(ValidName, ValidConfederation, 299));
+    }
 
+    [TestMethod]
+    public void CreateTeam_WithRankingAboveMaximum_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(ValidName, ValidConfederation, 2501));
+    }
+    
+    [TestMethod]
+    public void RecordWin_ShouldAddThreePointsAndUpdateGoalStats()
+    {
+        var team = CreateValidTeam();
+
+        team.RecordWin(goalsScored: 3, goalsConceded: 1);
+
+        Assert.AreEqual(3, team.Points);
+        Assert.AreEqual(3, team.GoalsInFavor);
+        Assert.AreEqual(2, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void RecordWin_WithNegativeScoredGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RecordWin(goalsScored: -1, goalsConceded: 0));
+    }
+
+    [TestMethod]
+    public void RecordWin_WithNegativeConcededGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RecordWin(goalsScored: 1, goalsConceded: -1));
+    }
+    
+    [TestMethod]
+    public void RecordDraw_ShouldAddOnePointAndKeepZeroGoalDifference()
+    {
+        var team = CreateValidTeam();
+
+        team.RecordDraw(goalsScored: 2);
+
+        Assert.AreEqual(1, team.Points);
+        Assert.AreEqual(2, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void RecordDraw_WithNegativeGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RecordDraw(goalsScored: -1));
+    }
+    
+    [TestMethod]
+    public void RecordLoss_ShouldAddZeroPointsAndNegativeGoalDifference()
+    {
+        var team = CreateValidTeam();
+
+        team.RecordLoss(goalsScored: 0, goalsConceded: 4);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(-4, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void RecordLoss_WithNegativeScoredGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RecordLoss(goalsScored: -1, goalsConceded: 0));
+    }
+
+    [TestMethod]
+    public void RecordLoss_WithNegativeConcededGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RecordLoss(goalsScored: 0, goalsConceded: -1));
+    }
+    
+    [TestMethod]
+    public void RevertWin_ShouldRestoreStatsToBeforeTheWin()
+    {
+        var team = CreateValidTeam();
         team.RecordWin(3, 1);
+
         team.RevertWin(3, 1);
-        Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalsInFavor);
-        Assert.AreEqual(0, team.GoalDifference);
 
-        team.RecordDraw(2);
-        team.RevertDraw(2);
-        Assert.AreEqual(0, team.Points);
-        Assert.AreEqual(0, team.GoalsInFavor);
-        Assert.AreEqual(0, team.GoalDifference);
-
-        team.RecordLoss(1, 3);
-        team.RevertLoss(1, 3);
         Assert.AreEqual(0, team.Points);
         Assert.AreEqual(0, team.GoalsInFavor);
         Assert.AreEqual(0, team.GoalDifference);
     }
 
     [TestMethod]
-    public void MatchResults_ShouldThrowException_WhenGoalsAreNegative()
+    public void RevertWin_WithNegativeGoals_ShouldThrowArgumentException()
     {
-        var team = new Team(ValidName, ValidConf, ValidRanking);
+        var team = CreateValidTeam();
 
-        Assert.ThrowsException<ArgumentException>(() => team.RecordWin(-1, 0));
-        Assert.ThrowsException<ArgumentException>(() => team.RecordWin(1, -1));
-        Assert.ThrowsException<ArgumentException>(() => team.RecordDraw(-1));
-        Assert.ThrowsException<ArgumentException>(() => team.RecordLoss(-1, 0));
-        Assert.ThrowsException<ArgumentException>(() => team.RecordLoss(0, -1));
-        Assert.ThrowsException<ArgumentException>(() => team.RevertWin(-1, 0));
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RevertWin(goalsScored: -1, goalsConceded: 0));
     }
+    
+    [TestMethod]
+    public void RevertDraw_ShouldRestoreStatsToBeforeTheDraw()
+    {
+        var team = CreateValidTeam();
+        team.RecordDraw(2);
+
+        team.RevertDraw(2);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+    }
+    
+    [TestMethod]
+    public void RevertLoss_ShouldRestoreStatsToBeforeTheLoss()
+    {
+        var team = CreateValidTeam();
+        team.RecordLoss(1, 3);
+
+        team.RevertLoss(1, 3);
+
+        Assert.AreEqual(0, team.Points);
+        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+    }
+    
+    [TestMethod]
+    public void Normalized_WithLowercaseAndSpaces_ShouldReturnNormalizedString()
+    {
+        var result = Team.Normalized("  uruguay  ");
+
+        Assert.AreEqual("URUGUAY", result);
+    }
+    
+    private static Team CreateValidTeam() =>
+        new Team(ValidName, ValidConfederation, ValidRanking);
 }
