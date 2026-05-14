@@ -6,6 +6,10 @@ namespace Services;
 
 public class PotService : IPotService
 {
+    private const int RequiredTeamCount = 48;
+    private const string InvalidTeamCountErrorMessage =
+        "Exactly 48 teams are required to generate the pots.";
+
     private readonly IRepository<Team> _teamRepository;
     private readonly IRepository<Pot> _potRepository;
 
@@ -19,18 +23,23 @@ public class PotService : IPotService
 
     public void GeneratePots(int seed)
     {
-        var teamList = _teamRepository.GetAll().ToList();
+        var teams = _teamRepository.GetAll().ToList();
 
-        if (teamList.Count != 48)
-            throw new ArgumentException("Se requieren exactamente 48 equipos para generar los bombos.");
-
-        SortByFifaRankingDescending(teamList);
-        ShuffleTiedGroups(teamList, seed);
-        CreateAndSavePots(teamList);
+        ValidateTeamCount(teams);
+        SortByFifaRankingDescending(teams);
+        ShuffleTiedRankingGroups(teams, seed);
+        CreateAndSavePots(teams);
     }
 
     public IEnumerable<Pot> GetPots() => _potRepository.GetAll();
+    
 
+    private static void ValidateTeamCount(List<Team> teams)
+    {
+        if (teams.Count != RequiredTeamCount)
+            throw new ArgumentException(InvalidTeamCountErrorMessage);
+    }
+    
     private static void SortByFifaRankingDescending(List<Team> teams)
     {
         for (int i = 0; i < teams.Count - 1; i++)
@@ -43,29 +52,40 @@ public class PotService : IPotService
         }
     }
 
-    private static void ShuffleTiedGroups(List<Team> teams, int seed)
+    private static void ShuffleTiedRankingGroups(List<Team> teams, int seed)
     {
         var shuffleService = new ShuffleService(seed);
         int start = 0;
 
         while (start < teams.Count)
         {
-            int end = start;
-            while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
-                end++;
+            int end = FindEndOfTiedGroup(teams, start);
 
-            if (end - start > 1)
+            bool tiedGroupHasMoreThanOneTeam = end - start > 1;
+            if (tiedGroupHasMoreThanOneTeam)
                 shuffleService.ShuffleRange(teams, start, end);
 
             start = end;
         }
     }
 
+    private static int FindEndOfTiedGroup(List<Team> teams, int start)
+    {
+        int end = start;
+        while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
+            end++;
+        return end;
+    }
+    
     private void CreateAndSavePots(List<Team> teams)
     {
-        for (int potNumber = 1; potNumber <= 4; potNumber++)
+        for (int potNumber = Pot.MinNumber; potNumber <= Pot.MaxNumber; potNumber++)
         {
-            var potTeams = teams.Skip((potNumber - 1) * 12).Take(12).ToList();
+            var potTeams = teams
+                .Skip((potNumber - 1) * Pot.MaxTeams)
+                .Take(Pot.MaxTeams)
+                .ToList();
+
             _potRepository.Add(new Pot(potNumber, potTeams));
         }
     }

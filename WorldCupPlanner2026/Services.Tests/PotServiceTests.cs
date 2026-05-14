@@ -1,14 +1,19 @@
 ﻿using Domain;
-using Services;
 using IRepository;
 using Repository;
+
+namespace Services.Tests;
 
 [TestClass]
 public class PotServiceTests
 {
-    private PotService _service;
-    private IRepository<Team> _teamRepository;
-    private IRepository<Pot> _potRepository;
+    private const int DefaultSeed = 42;
+    private const int TiedRanking = 500;
+    private const int BaseRanking = 300;
+
+    private PotService _service = null!;
+    private IRepository<Team> _teamRepository = null!;
+    private IRepository<Pot> _potRepository = null!;
 
     [TestInitialize]
     public void Setup()
@@ -17,171 +22,138 @@ public class PotServiceTests
         _potRepository = new Repository<Pot>();
         _service = new PotService(_teamRepository, _potRepository);
     }
-
-    private Pot GetPotByNumber(int number)
+    
+    [TestMethod]
+    public void GeneratePots_WithNoTeams_ShouldThrowArgumentException()
     {
-        foreach (var pot in _potRepository.GetAll())
-            if (pot.Number == number)
-                return pot;
-        return null;
-    }
-
-    private bool AllTeamsHaveRankingAtMost(Pot pot, int max)
-    {
-        foreach (var team in pot.Teams)
-            if (team.RankingFifa > max)
-                return false;
-        return true;
-    }
-
-    private bool AllTeamsHaveRankingAtLeast(Pot pot, int min)
-    {
-        foreach (var team in pot.Teams)
-            if (team.RankingFifa < min)
-                return false;
-        return true;
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.GeneratePots(DefaultSeed));
     }
 
     [TestMethod]
     public void GeneratePots_WithLessThan48Teams_ShouldThrowArgumentException()
     {
-        for (int i = 0; i < 47; i++)
-            _teamRepository.Add(new Team("Equipo " + i, "UEFA", i + 300));
+        AddTeamsWithDistinctRankings(count: 47);
 
-        Assert.ThrowsException<ArgumentException>(() => _service.GeneratePots(42));
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.GeneratePots(DefaultSeed));
     }
 
     [TestMethod]
     public void GeneratePots_WithMoreThan48Teams_ShouldThrowArgumentException()
     {
-        for (int i = 0; i < 49; i++)
-            _teamRepository.Add(new Team("Equipo " + i, "UEFA", i + 300));
+        AddTeamsWithDistinctRankings(count: 49);
 
-        Assert.ThrowsException<ArgumentException>(() => _service.GeneratePots(42));
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.GeneratePots(DefaultSeed));
+    }
+    
+    [TestMethod]
+    public void GeneratePots_WithExactly48Teams_ShouldCreateFourPots()
+    {
+        AddTeamsWithDistinctRankings(count: 48);
+
+        _service.GeneratePots(DefaultSeed);
+
+        Assert.AreEqual(4, _potRepository.GetAll().Count());
     }
 
     [TestMethod]
-    public void GeneratePots_WithNoTeams_ShouldThrowArgumentException()
+    public void GeneratePots_WithExactly48Teams_ShouldAssign12TeamsPerPot()
     {
-        Assert.ThrowsException<ArgumentException>(() => _service.GeneratePots(42));
+        AddTeamsWithDistinctRankings(count: 48);
+
+        _service.GeneratePots(DefaultSeed);
+
+        Assert.IsTrue(_potRepository.GetAll().All(p => p.Teams.Count == 12));
     }
 
     [TestMethod]
-    public void GeneratePots_ShouldCreateFourPots()
+    public void GeneratePots_WithExactly48Teams_ShouldCreatePotsNumbered1Through4()
     {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 300 + i));
+        AddTeamsWithDistinctRankings(count: 48);
 
-        _service.GeneratePots(42);
+        _service.GeneratePots(DefaultSeed);
 
-        int count = 0;
-        foreach (var _ in _potRepository.GetAll())
-            count++;
-
-        Assert.AreEqual(4, count);
+        for (int number = Pot.MinNumber; number <= Pot.MaxNumber; number++)
+            Assert.IsNotNull(GetPotByNumber(number));
     }
-
+    
     [TestMethod]
-    public void GeneratePots_EachPotShouldHaveTwelveTeams()
+    public void GeneratePots_Pot1ShouldContainHighestRankedTeams()
     {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 300 + i));
+        AddTeamsWithDistinctRankings(count: 48);
 
-        _service.GeneratePots(42);
-
-        foreach (var pot in _potRepository.GetAll())
-            Assert.AreEqual(12, pot.Teams.Count);
-    }
-
-    [TestMethod]
-    public void GeneratePots_Pot1ShouldHaveHighestRankedTeams()
-    {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 300 + i));
-
-        _service.GeneratePots(42);
+        _service.GeneratePots(DefaultSeed);
 
         var pot1 = GetPotByNumber(1);
         Assert.IsNotNull(pot1);
-        Assert.IsTrue(AllTeamsHaveRankingAtLeast(pot1, 337)); // rankings 337-348 son los 12 más altos
+        Assert.IsTrue(pot1.Teams.All(t => t.RankingFifa >= 337));
     }
 
     [TestMethod]
-    public void GeneratePots_Pot4ShouldHaveLowestRankedTeams()
+    public void GeneratePots_Pot4ShouldContainLowestRankedTeams()
     {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 300 + i));
+        AddTeamsWithDistinctRankings(count: 48);
 
-        _service.GeneratePots(42);
+        _service.GeneratePots(DefaultSeed);
 
         var pot4 = GetPotByNumber(4);
         Assert.IsNotNull(pot4);
-        Assert.IsTrue(AllTeamsHaveRankingAtMost(pot4, 312)); // rankings 301-312 son los 12 más bajos
+        Assert.IsTrue(pot4.Teams.All(t => t.RankingFifa <= 312));
+    }
+    
+    [TestMethod]
+    public void GeneratePots_WithTiedRankingsAndSameSeed_ShouldProduceSameTeamOrder()
+    {
+        AddTeamsWithTiedRankings(_teamRepository, count: 48);
+        _service.GeneratePots(DefaultSeed);
+        var firstTeamFirstRun = GetPotByNumber(1)!.Teams[0].Name;
+
+        var secondService = BuildServiceWithTiedRankingTeams();
+        secondService.GeneratePots(DefaultSeed);
+        var firstTeamSecondRun = GetPotByNumberFrom(secondService, 1)!.Teams[0].Name;
+
+        Assert.AreEqual(firstTeamFirstRun, firstTeamSecondRun);
     }
 
     [TestMethod]
-    public void GeneratePots_PotNumbersShouldBe1Through4()
+    public void GeneratePots_WithTiedRankingsAndDifferentSeeds_ShouldProduceDifferentTeamOrder()
     {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 300 + i));
+        AddTeamsWithTiedRankings(_teamRepository, count: 48);
+        _service.GeneratePots(seed: 42);
+        var firstTeamSeed42 = GetPotByNumber(1)!.Teams[0].Name;
 
-        _service.GeneratePots(42);
+        var secondService = BuildServiceWithTiedRankingTeams();
+        secondService.GeneratePots(seed: 99);
+        var firstTeamSeed99 = GetPotByNumberFrom(secondService, 1)!.Teams[0].Name;
 
-        for (int number = 1; number <= 4; number++)
-        {
-            var pot = GetPotByNumber(number);
-            Assert.IsNotNull(pot, $"No se encontró el bombo {number}");
-        }
+        Assert.AreNotEqual(firstTeamSeed42, firstTeamSeed99);
+    }
+    
+    private void AddTeamsWithDistinctRankings(int count)
+    {
+        for (int i = 1; i <= count; i++)
+            _teamRepository.Add(new Team($"TEAM_{i:00}", "UEFA", BaseRanking + i));
     }
 
-    [TestMethod]
-    public void GeneratePots_WithTiedRankings_SameSeedShouldProduceSameOrder()
+    private static void AddTeamsWithTiedRankings(IRepository<Team> teamRepository, int count)
     {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 500));
-
-        _service.GeneratePots(42);
-        var pot1FirstRun = GetPotByNumber(1);
-        var firstTeamFirstRun = pot1FirstRun.Teams[0].Name;
-        
-        var teamRepo2 = new Repository<Team>();
-        var potRepo2  = new Repository<Pot>();
-        for (int i = 1; i <= 48; i++)
-            teamRepo2.Add(new Team("Team " + i, "UEFA", 500));
-
-        var service2 = new PotService(teamRepo2, potRepo2);
-
-        service2.GeneratePots(42);
-
-        Pot pot1SecondRun = null;
-        foreach (var pot in potRepo2.GetAll())
-            if (pot.Number == 1) { pot1SecondRun = pot; break; }
-
-        Assert.AreEqual(firstTeamFirstRun, pot1SecondRun.Teams[0].Name);
+        for (int i = 1; i <= count; i++)
+            teamRepository.Add(new Team($"TEAM_{i:00}", "UEFA", TiedRanking));
     }
 
-    [TestMethod]
-    public void GeneratePots_WithTiedRankings_DifferentSeedShouldProduceDifferentOrder()
+    private static PotService BuildServiceWithTiedRankingTeams()
     {
-        for (int i = 1; i <= 48; i++)
-            _teamRepository.Add(new Team("Team " + i, "UEFA", 500));
-
-        _service.GeneratePots(42);
-        var firstTeamSeed42 = GetPotByNumber(1).Teams[0].Name;
-
-        var teamRepo2 = new Repository<Team>();
-        var potRepo2  = new Repository<Pot>();
-        for (int i = 1; i <= 48; i++)
-            teamRepo2.Add(new Team("Team " + i, "UEFA", 500));
-
-        var service2 = new PotService(teamRepo2, potRepo2);
-
-        service2.GeneratePots(99);
-
-        Pot pot1Seed99 = null;
-        foreach (var pot in potRepo2.GetAll())
-            if (pot.Number == 1) { pot1Seed99 = pot; break; }
-
-        Assert.AreNotEqual(firstTeamSeed42, pot1Seed99.Teams[0].Name);
+        var teamRepo = new Repository<Team>();
+        var potRepo = new Repository<Pot>();
+        AddTeamsWithTiedRankings(teamRepo, count: 48);
+        return new PotService(teamRepo, potRepo);
     }
+
+    private Pot? GetPotByNumber(int number) =>
+        _potRepository.GetAll().FirstOrDefault(p => p.Number == number);
+
+    private static Pot? GetPotByNumberFrom(PotService service, int number) =>
+        service.GetPots().FirstOrDefault(p => p.Number == number);
 }

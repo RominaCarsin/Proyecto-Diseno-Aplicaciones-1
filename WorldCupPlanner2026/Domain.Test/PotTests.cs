@@ -3,20 +3,9 @@ namespace Domain.Test;
 [TestClass]
 public class PotTests
 {
-    // ─── Helper sin LINQ ──────────────────────────────────────────────────────
-
-    private List<Team> BuildTeams(int count, int rankingStart = 500)
-    {
-        var teams = new List<Team>();
-        for (int i = 1; i <= count; i++)
-            teams.Add(new Team($"Team{i}", "UEFA", rankingStart + i));
-        return teams;
-    }
-
-    // ─── Constructor válido ───────────────────────────────────────────────────
 
     [TestMethod]
-    public void CreatePot_WithValidNumberAndTwelveTeams_ShouldCreate()
+    public void CreatePot_WithValidData_ShouldCreatePotWithExpectedProperties()
     {
         var pot = new Pot(1, BuildTeams(12));
 
@@ -25,33 +14,26 @@ public class PotTests
     }
 
     [TestMethod]
-    public void CreatePot_NumberOne_ShouldBeValid()
+    public void CreatePot_WithMinValidNumber_ShouldSucceed()
     {
-        var pot = new Pot(1, BuildTeams(12));
-        Assert.AreEqual(1, pot.Number);
+        var pot = new Pot(Pot.MinNumber, BuildTeams(12));
+
+        Assert.AreEqual(Pot.MinNumber, pot.Number);
     }
 
     [TestMethod]
-    public void CreatePot_NumberFour_ShouldBeValid()
+    public void CreatePot_WithMaxValidNumber_ShouldSucceed()
     {
-        var pot = new Pot(4, BuildTeams(12));
-        Assert.AreEqual(4, pot.Number);
+        var pot = new Pot(Pot.MaxNumber, BuildTeams(12));
+
+        Assert.AreEqual(Pot.MaxNumber, pot.Number);
     }
 
-    // ─── Número de bombo inválido ─────────────────────────────────────────────
-
     [TestMethod]
-    public void CreatePot_WithNumberZero_ShouldThrowArgumentException()
+    public void CreatePot_WithNumberBelowMinimum_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             new Pot(0, BuildTeams(12)));
-    }
-
-    [TestMethod]
-    public void CreatePot_WithNumberFive_ShouldThrowArgumentException()
-    {
-        Assert.ThrowsException<ArgumentException>(() =>
-            new Pot(5, BuildTeams(12)));
     }
 
     [TestMethod]
@@ -61,42 +43,54 @@ public class PotTests
             new Pot(-1, BuildTeams(12)));
     }
 
-    // ─── Cantidad de equipos inválida ─────────────────────────────────────────
+    [TestMethod]
+    public void CreatePot_WithNumberAboveMaximum_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Pot(5, BuildTeams(12)));
+    }
 
     [TestMethod]
-    public void CreatePot_WithMoreThanTwelveTeams_ShouldThrowArgumentException()
+    public void CreatePot_WithMoreThanMaxTeams_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             new Pot(1, BuildTeams(13)));
     }
 
     [TestMethod]
-    public void CreatePot_WithLessThanTwelveTeams_ShouldThrowArgumentException()
+    public void CreatePot_WithLessThanMaxTeams_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             new Pot(1, BuildTeams(11)));
     }
 
     [TestMethod]
-    public void CreatePot_WithEmptyList_ShouldThrowArgumentException()
+    public void CreatePot_WithEmptyTeamsList_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
             new Pot(1, new List<Team>()));
     }
 
     [TestMethod]
-    public void CreatePot_WithNullList_ShouldThrowArgumentException()
+    public void CreatePot_WithNullTeamsList_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new Pot(1, null));
+            new Pot(1, null!));
     }
 
-    // ─── IsFull ───────────────────────────────────────────────────────────────
-
     [TestMethod]
-    public void IsFull_WithTwelveTeams_ShouldReturnTrue()
+    public void IsFull_WithExactlyMaxTeams_ShouldReturnTrue()
     {
         var pot = new Pot(1, BuildTeams(12));
+
         Assert.IsTrue(pot.IsFull());
+    }
+    
+    private static List<Team> BuildTeams(int count, int rankingStart = 500)
+    {
+        var teams = new List<Team>();
+        for (int i = 1; i <= count; i++)
+            teams.Add(new Team($"TEAM_{i}", "UEFA", rankingStart + i));
+        return teams;
     }
 }

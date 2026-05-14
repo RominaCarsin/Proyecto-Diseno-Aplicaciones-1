@@ -6,23 +6,37 @@ public class Pot
     public const int MinNumber = 1;
     public const int MaxNumber = 4;
 
+    private const string InvalidNumberErrorMessage = "Pot number must be between 1 and 4.";
+    private const string NullTeamsListErrorMessage = "Teams list cannot be null.";
+    private const string InvalidTeamsCountErrorMessage = "Pot must have exactly 12 teams.";
+
     public int Number { get; }
-    public List<Team> Teams { get; }
+    public IReadOnlyList<Team> Teams { get; }
+
+    public bool IsFull() => Teams.Count == MaxTeams;
 
     public Pot(int number, List<Team> teams)
     {
-        if (number < MinNumber || number > MaxNumber)
-            throw new ArgumentException($"El número de bombo debe estar entre {MinNumber} y {MaxNumber}.");
-
-        if (teams == null)
-            throw new ArgumentException("La lista de equipos no puede ser nula.");
-
-        if (teams.Count != MaxTeams)
-            throw new ArgumentException($"El bombo debe tener exactamente {MaxTeams} equipos.");
+        ValidatePotNumber(number);
+        ValidateTeamsList(teams);
 
         Number = number;
-        Teams  = teams;
+        Teams = teams;
+    }
+    
+
+    private static void ValidatePotNumber(int number)
+    {
+        if (number < MinNumber || number > MaxNumber)
+            throw new ArgumentException(InvalidNumberErrorMessage);
     }
 
-    public bool IsFull() => Teams.Count == MaxTeams;
+    private static void ValidateTeamsList(List<Team> teams)
+    {
+        if (teams is null)
+            throw new ArgumentException(NullTeamsListErrorMessage);
+
+        if (teams.Count != MaxTeams)
+            throw new ArgumentException(InvalidTeamsCountErrorMessage);
+    }
 }
