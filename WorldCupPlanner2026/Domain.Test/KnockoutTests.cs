@@ -1,13 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace Domain.Test;
+﻿namespace Domain.Test;
 
 [TestClass]
 public class KnockoutTests
 {
     private const int simulationSeed = 12345;
     
-    private Group CreateValidKnockout(int seed = simulationSeed) => new(seed);
+    private Knockout CreateValidKnockout(int seed = simulationSeed) => new(seed);
 
     [TestMethod]
     public void CreateKnockout_WithSimulationSeed_ShouldHaveAsAtributeSimulationSeed()
