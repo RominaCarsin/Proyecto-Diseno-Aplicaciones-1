@@ -3,7 +3,6 @@ using DTOs;
 using IRepository;
 using IServices;
 using Repository;
-using Services;
 
 namespace Services.Tests;
 
@@ -37,9 +36,7 @@ public class MatchServiceTests
 
         _matchService = new MatchService(repository, _groupRepository, auditService, sessionService);
     }
-
-    // ─── AddMatch ─────────────────────────────────────────────────────────────
-
+    
     [TestMethod]
     public void AddMatch_WithValidRequest_ShouldPersistOneMatch()
     {
@@ -91,11 +88,9 @@ public class MatchServiceTests
         Assert.AreEqual('B', result.Group);
         Assert.AreEqual("GroupStage", result.Phase);
     }
-
-    // ─── GetMatches ───────────────────────────────────────────────────────────
-
+    
     [TestMethod]
-    public void GetMatches_WithNoMatches_ShouldReturnEmptyList()
+    public void GetMatches_WithNoMatches_ShouldReturnEmptyCollection()
     {
         var result = _matchService.GetMatches();
 
@@ -112,9 +107,7 @@ public class MatchServiceTests
 
         Assert.AreEqual(2, _matchService.GetMatches().Count());
     }
-
-    // ─── GetMatchById ─────────────────────────────────────────────────────────
-
+    
     [TestMethod]
     public void GetMatchById_WithExistingId_ShouldReturnMatchWithExpectedProperties()
     {
@@ -133,9 +126,7 @@ public class MatchServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.GetMatchById(999));
     }
-
-    // ─── SetMatchResult ───────────────────────────────────────────────────────
-
+    
     [TestMethod]
     public void SetMatchResult_WithHomeTeamScoringMore_ShouldSetHomeTeamAsWinner()
     {
@@ -162,7 +153,7 @@ public class MatchServiceTests
     }
 
     [TestMethod]
-    public void SetMatchResult_WithDraw_ShouldSetNullWinner()
+    public void SetMatchResult_WithEqualGoals_ShouldSetWinnerAsNull()
     {
         var savedMatch = AddValidMatchAndGetResponse();
 
@@ -188,9 +179,7 @@ public class MatchServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.SetMatchResult(999, 1, 0));
     }
-
-    // ─── UpdateMatchDate ──────────────────────────────────────────────────────
-
+    
     [TestMethod]
     public void UpdateMatchDate_WithValidDate_ShouldReplaceMatchDate()
     {
@@ -228,13 +217,14 @@ public class MatchServiceTests
             _matchService.UpdateMatchDate(999, UpdatedMatchDate));
     }
 
-    // ─── UpdateMatchStadium ───────────────────────────────────────────────────
-
     [TestMethod]
     public void UpdateMatchStadium_WithValidStadium_ShouldReplaceMatchStadium()
     {
         var savedMatch = AddValidMatchAndGetResponse();
-        var alternativeStadium = BuildStadiumRequest(AlternativeStadiumName, AlternativeStadiumCity, capacity: 78000);
+        var alternativeStadium = BuildStadiumRequest(
+            AlternativeStadiumName,
+            AlternativeStadiumCity,
+            capacity: 78000);
 
         _matchService.UpdateMatchStadium(savedMatch.Id, alternativeStadium);
 
@@ -271,9 +261,36 @@ public class MatchServiceTests
         Assert.ThrowsException<InvalidOperationException>(() =>
             _matchService.UpdateMatchStadium(savedMatch.Id, alternativeStadium));
     }
+    
+    [TestMethod]
+    public void FinishMatch_WithExistingMatch_ShouldSetStatusToFinishedAndLockMatch()
+    {
+        var savedMatch = AddValidMatchAndGetResponse();
 
-    // ─── LockMatchEdition ─────────────────────────────────────────────────────
+        _matchService.FinishMatch(savedMatch.Id);
 
+        var result = _matchService.GetMatchById(savedMatch.Id);
+        Assert.IsTrue(result.IsLocked);
+        Assert.AreEqual("Finished", result.Status);
+    }
+
+    [TestMethod]
+    public void FinishMatch_WithNonExistingId_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.FinishMatch(999));
+    }
+
+    [TestMethod]
+    public void FinishMatch_WhenAlreadyFinished_ShouldThrowInvalidOperationException()
+    {
+        var savedMatch = AddValidMatchAndGetResponse();
+        _matchService.FinishMatch(savedMatch.Id);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _matchService.FinishMatch(savedMatch.Id));
+    }
+    
     [TestMethod]
     public void LockMatchEdition_WithExistingMatch_ShouldSetIsLockedToTrue()
     {
@@ -291,22 +308,27 @@ public class MatchServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _matchService.LockMatchEdition(999));
     }
-
-    // ─── LockMatchesByPhase ───────────────────────────────────────────────────
-
+    
     [TestMethod]
-    public void LockMatchesByPhase_ShouldLockAllMatchesInPhase()
+    public void LockMatchesByPhase_WithValidPhase_ShouldLockAllMatchesInThatPhase()
     {
         _matchService.AddMatch(BuildValidMatchRequest());
-        _matchService.AddMatch(BuildValidMatchRequest(homeTeamName: "FRANCE", awayTeamName: "GERMANY"));
+        _matchService.AddMatch(BuildValidMatchRequest(
+            homeTeamName: "FRANCE",
+            awayTeamName: "GERMANY"));
 
         _matchService.LockMatchesByPhase("GroupStage");
 
         Assert.IsTrue(_matchService.GetMatches().All(m => m.IsLocked));
     }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
-
+    [TestMethod]
+    public void LockMatchesByPhase_WithInvalidPhase_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _matchService.LockMatchesByPhase("InvalidPhase"));
+    }
+    
     private MatchResponse AddValidMatchAndGetResponse()
     {
         _matchService.AddMatch(BuildValidMatchRequest());

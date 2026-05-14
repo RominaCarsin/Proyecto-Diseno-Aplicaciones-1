@@ -5,11 +5,12 @@ public class MatchTests
 {
     private static readonly DateTime ValidDate = new(2026, 6, 1);
     private static readonly DateTime AnotherValidDate = new(2026, 6, 10);
-
+    
     [TestMethod]
     public void CreateGroupStageMatch_WithValidData_ShouldCreateMatchWithExpectedProperties()
     {
         var group = new Group('A');
+
         var match = CreateMatch(group: group);
 
         Assert.AreEqual(ValidDate, match.Date);
@@ -40,20 +41,51 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void CreateMatch_WithInvalidData_ShouldThrow()
+    public void CreateMatch_WithMinValueDate_ShouldThrowArgumentException()
     {
-        Assert.ThrowsException<ArgumentException>(() => CreateMatch(date: DateTime.MinValue));
-        Assert.ThrowsException<ArgumentException>(() => new Match(ValidDate, null, BuildTeam("ARGENTINA"), BuildTeam("BRAZIL")));
-        Assert.ThrowsException<ArgumentException>(() => new Match(ValidDate, BuildStadium(), null, BuildTeam("BRAZIL")));
-        Assert.ThrowsException<ArgumentException>(() => new Match(ValidDate, BuildStadium(), BuildTeam("ARGENTINA"), null));
-
-        var team = BuildTeam("ARGENTINA");
-        Assert.ThrowsException<ArgumentException>(() => CreateMatch(homeTeam: team, awayTeam: team));
-        Assert.ThrowsException<ArgumentException>(() => CreateMatch(homeTeam: BuildTeam("ARGENTINA"), awayTeam: BuildTeam("ARGENTINA")));
+        Assert.ThrowsException<ArgumentException>(() =>
+            CreateMatch(date: DateTime.MinValue));
     }
 
     [TestMethod]
-    public void SetResult_WithValidGroupStageResults_ShouldSetWinnerAndTeamStats()
+    public void CreateMatch_WithNullStadium_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Match(ValidDate, null, BuildTeam("ARGENTINA"), BuildTeam("BRAZIL")));
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithNullHomeTeam_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Match(ValidDate, BuildStadium(), null, BuildTeam("BRAZIL")));
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithNullAwayTeam_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Match(ValidDate, BuildStadium(), BuildTeam("ARGENTINA"), null));
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithSameTeamReferenceForBothRoles_ShouldThrowArgumentException()
+    {
+        var sameTeam = BuildTeam("ARGENTINA");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            CreateMatch(homeTeam: sameTeam, awayTeam: sameTeam));
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithDifferentInstancesOfSameTeamName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            CreateMatch(homeTeam: BuildTeam("ARGENTINA"), awayTeam: BuildTeam("ARGENTINA")));
+    }
+    
+    [TestMethod]
+    public void SetResult_WithHomeTeamScoringMore_ShouldSetHomeTeamAsWinnerAndUpdateStats()
     {
         var homeTeam = BuildTeam("URUGUAY");
         var awayTeam = BuildTeam("ARGENTINA");
@@ -71,7 +103,7 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void SetResult_WithExistingResult_ShouldRevertPreviousTeamStats()
+    public void SetResult_WithExistingHomeWin_WhenReplacedWithAwayWin_ShouldRevertAndApplyNewResult()
     {
         var homeTeam = BuildTeam("URUGUAY");
         var awayTeam = BuildTeam("ARGENTINA");
@@ -90,42 +122,172 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void SetResult_WithInvalidGoals_ShouldThrow()
+    public void SetResult_WithExistingHomeWin_WhenReplacedWithDraw_ShouldRevertAndApplyDraw()
     {
-        var match = CreateMatch();
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
 
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => match.SetResult(-1, 0));
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => match.SetResult(0, -1));
+        match.SetResult(2, 0);
+        match.SetResult(1, 1);
 
-        var knockout = CreateMatch(phase: TournamentPhase.RoundOf32);
-        Assert.ThrowsException<InvalidOperationException>(() => knockout.SetResult(1, 1));
+        Assert.AreEqual(1, homeTeam.Points);
+        Assert.AreEqual(1, awayTeam.Points);
+        Assert.AreEqual(0, homeTeam.GoalDifference);
+        Assert.AreEqual(0, awayTeam.GoalDifference);
+        Assert.AreEqual(1, homeTeam.GoalsInFavor);
+        Assert.AreEqual(1, awayTeam.GoalsInFavor);
+        Assert.IsNull(match.Winner);
     }
 
     [TestMethod]
-    public void UpdateDateAndStadium_WithUnlockedMatch_ShouldReplaceValues()
+    public void SetResult_WithExistingAwayWin_WhenReplacedWithHomeWin_ShouldRevertAndApplyNewResult()
     {
-        var match = CreateMatch();
-        var newStadium = new Stadium("MARACANA", "RIO DE JANEIRO", "Historic stadium", 60000);
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
 
-        match.UpdateDate(AnotherValidDate);
-        match.UpdateStadium(newStadium);
+        match.SetResult(0, 2);
+        match.SetResult(3, 0);
 
-        Assert.AreEqual(AnotherValidDate, match.Date);
-        Assert.AreEqual("MARACANA", match.Stadium.Name);
+        Assert.AreEqual(3, homeTeam.Points);
+        Assert.AreEqual(0, awayTeam.Points);
+        Assert.AreEqual(3, homeTeam.GoalDifference);
+        Assert.AreEqual(-3, awayTeam.GoalDifference);
+        Assert.AreEqual(3, homeTeam.GoalsInFavor);
+        Assert.AreEqual(0, awayTeam.GoalsInFavor);
+        Assert.AreEqual(homeTeam, match.Winner);
     }
 
     [TestMethod]
-    public void LockedMatch_ShouldRejectEditableChanges()
+    public void SetResult_WithExistingDraw_WhenReplacedWithHomeWin_ShouldRevertAndApplyNewResult()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.SetResult(1, 1);
+        match.SetResult(2, 0);
+
+        Assert.AreEqual(3, homeTeam.Points);
+        Assert.AreEqual(0, awayTeam.Points);
+        Assert.AreEqual(2, homeTeam.GoalDifference);
+        Assert.AreEqual(-2, awayTeam.GoalDifference);
+        Assert.AreEqual(2, homeTeam.GoalsInFavor);
+        Assert.AreEqual(0, awayTeam.GoalsInFavor);
+        Assert.AreEqual(homeTeam, match.Winner);
+    }
+
+    [TestMethod]
+    public void SetResult_WithNegativeHomeGoals_ShouldThrowArgumentOutOfRangeException()
+    {
+        var match = CreateMatch();
+
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            match.SetResult(-1, 0));
+    }
+
+    [TestMethod]
+    public void SetResult_WithNegativeAwayGoals_ShouldThrowArgumentOutOfRangeException()
+    {
+        var match = CreateMatch();
+
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            match.SetResult(0, -1));
+    }
+
+    [TestMethod]
+    public void SetResult_WithDrawInKnockoutMatch_ShouldThrowInvalidOperationException()
+    {
+        var knockoutMatch = CreateMatch(phase: TournamentPhase.RoundOf32);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            knockoutMatch.SetResult(1, 1));
+    }
+
+    [TestMethod]
+    public void SetResult_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
     {
         var match = CreateMatch();
         match.LockEdition();
 
-        Assert.ThrowsException<InvalidOperationException>(() => match.UpdateDate(AnotherValidDate));
-        Assert.ThrowsException<InvalidOperationException>(() => match.UpdateStadium(BuildStadium("MARACANA")));
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.SetResult(1, 0));
     }
 
     [TestMethod]
-    public void Finish_ShouldSetStatusAndLockMatch()
+    public void SetResult_WhenMatchIsFinished_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.SetResult(1, 0));
+    }
+    
+    [TestMethod]
+    public void UpdateDate_WithValidDate_ShouldReplaceMatchDate()
+    {
+        var match = CreateMatch();
+
+        match.UpdateDate(AnotherValidDate);
+
+        Assert.AreEqual(AnotherValidDate, match.Date);
+    }
+
+    [TestMethod]
+    public void UpdateDate_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.LockEdition();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.UpdateDate(AnotherValidDate));
+    }
+
+    [TestMethod]
+    public void UpdateDate_WhenMatchIsFinished_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.UpdateDate(AnotherValidDate));
+    }
+    
+    [TestMethod]
+    public void UpdateStadium_WithValidStadium_ShouldReplaceMatchStadium()
+    {
+        var match = CreateMatch();
+        var newStadium = BuildStadium("MARACANA");
+
+        match.UpdateStadium(newStadium);
+
+        Assert.AreEqual("MARACANA", match.Stadium.Name);
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WhenMatchIsLocked_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.LockEdition();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.UpdateStadium(BuildStadium("MARACANA")));
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WhenMatchIsFinished_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.UpdateStadium(BuildStadium("MARACANA")));
+    }
+    
+    [TestMethod]
+    public void Finish_ShouldSetStatusToFinishedAndLockMatch()
     {
         var match = CreateMatch();
 
@@ -133,10 +295,28 @@ public class MatchTests
 
         Assert.AreEqual(MatchStatus.Finished, match.Status);
         Assert.IsTrue(match.IsLocked);
-        Assert.ThrowsException<InvalidOperationException>(() => match.Finish());
-        Assert.ThrowsException<InvalidOperationException>(() => match.SetResult(1, 0));
     }
 
+    [TestMethod]
+    public void Finish_WhenMatchIsAlreadyFinished_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.Finish());
+    }
+    
+    [TestMethod]
+    public void LockEdition_ShouldSetIsLockedToTrue()
+    {
+        var match = CreateMatch();
+
+        match.LockEdition();
+
+        Assert.IsTrue(match.IsLocked);
+    }
+    
     private static Match CreateMatch(
         DateTime? date = null,
         Stadium? stadium = null,
