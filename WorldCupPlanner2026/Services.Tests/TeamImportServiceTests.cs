@@ -50,7 +50,7 @@ public class TeamImportServiceTests
         var result = _service.Import(InvalidHeaderCsv);
 
         AssertFailedImport(result, "encabezado");
-        AssertAuditActionExists("Teams import error");
+        AssertAuditActionExists("Error al importar equipos");
     }
 
     [TestMethod]
@@ -103,7 +103,7 @@ public class TeamImportServiceTests
         var result = _service.Import(HeaderWithWrongColumnCountCsv);
 
         AssertFailedImport(result, "encabezado");
-        AssertAuditActionExists("Teams import error");
+        AssertAuditActionExists("Error al importar equipos");
     }
 
     [TestMethod]
@@ -121,7 +121,7 @@ public class TeamImportServiceTests
         var result = _service.Import(MissingColumnCsv);
 
         AssertFailedImport(result, "3 columnas");
-        AssertAuditActionExists("Teams import error");
+        AssertAuditActionExists("Error al importar equipos");
     }
 
     [TestMethod]
@@ -167,7 +167,7 @@ public class TeamImportServiceTests
         var result = _service.Import(NonNumericRankingCsv);
 
         AssertFailedImport(result, "RankingFIFA");
-        AssertAuditActionExists("Teams import error");
+        AssertAuditActionExists("Error al importar equipos");
     }
 
     private void CreateServiceWithDefaultSession()
