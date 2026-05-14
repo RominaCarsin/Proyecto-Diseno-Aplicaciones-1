@@ -394,6 +394,71 @@ public class KnockoutTests
         Assert.AreEqual(16 + 8 + 4 + 2 + 1 + 1, knockout.Matches.Count);
     }
 
+    // ──────────────────────────────────────────────
+    // RED: SetMatchResult — casos de prueba
+    // ──────────────────────────────────────────────
+
+    [TestMethod]
+    public void SetMatchResult_WhenMatchExists_ShouldUpdateGoalsAndFinishMatch()
+    {
+        var knockout = CreateValidKnockout();
+        var qualifiedTeams = CreateOrderedQualifiedTeams();
+        knockout.SetQualifiedTeams(qualifiedTeams);
+        knockout.InitializeRoundOf32();
+
+        string targetCode = "A1";
+        int homeGoals = 2;
+        int awayGoals = 1;
+
+        knockout.SetMatchResult(targetCode, homeGoals, awayGoals);
+
+        var match = knockout.Matches.Single(m => m.MatchCode == targetCode);
+        Assert.AreEqual(homeGoals, match.HomeGoals);
+        Assert.AreEqual(awayGoals, match.AwayGoals);
+        Assert.AreEqual(MatchStatus.Finished, match.Status);
+        Assert.IsNotNull(match.Winner);
+    }
+
+    [TestCategory("UpdateResults")]
+    [TestMethod]
+    public void SetMatchResult_WhenMatchDoesNotExist_ShouldThrowArgumentException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            knockout.SetMatchResult("NON-EXISTENT", 1, 0),
+            "Debe fallar si el código de partido no existe en la fase de knockout.");
+    }
+
+    [TestCategory("UpdateResults")]
+    [TestMethod]
+    public void SetMatchResult_WhenResultIsDraw_ShouldThrowArgumentException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            knockout.SetMatchResult("A1", 1, 1),
+            "Los partidos de knockout no pueden terminar en empate.");
+    }
+
+    [TestCategory("UpdateResults")]
+    [TestMethod]
+    public void SetMatchResult_WhenMatchIsAlreadyFinished_ShouldThrowInvalidOperationException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+        knockout.SetMatchResult("A1", 3, 0);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            knockout.SetMatchResult("A1", 1, 2),
+            "No se debería poder cambiar el resultado de un partido ya finalizado (bloqueo de integridad).");
+    }
+
     //Helpers--------------------------------
     private static List<Team> CreateOrderedQualifiedTeams()
     {

@@ -328,6 +328,11 @@ public class Knockout
         return phaseMatches.Any() && phaseMatches.All(m => m.Status == MatchStatus.Finished);
     }
 
+    public void SetMatchResult(string matchCode, int homeGoals, int awayGoals)
+    {
+        throw new NotImplementedException("SetMatchResult - RED phase: implementar en GREEN.");
+    }
+
     private static Match CreateKnockoutMatch(
         Team homeTeam,
         Team awayTeam,
