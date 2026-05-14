@@ -1,8 +1,9 @@
+using Domain;
 using IServices;
 
 namespace Services;
 
-public class ShuffleService : IShuffleService
+public class ShuffleService : IServices.IShuffleService, Domain.IShuffleService
 {
     private readonly Random _random;
 

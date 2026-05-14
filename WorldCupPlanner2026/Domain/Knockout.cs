@@ -21,15 +21,17 @@ public class Knockout
 
     private readonly List<Team> _qualifiedTeams = new();
     private readonly List<Match> _matches = new();
+    private readonly IShuffleService _shuffleService;
 
     public int SimulationSeed { get; private set; }
     public int SemillaCrucesFase { get; private set; }
     public IReadOnlyList<Team> QualifiedTeams => _qualifiedTeams;
     public IReadOnlyList<Match> Matches => _matches;
 
-    public Knockout(int simulationSeed, int semillaCrucesFase = 0)
+    public Knockout(int simulationSeed, IShuffleService shuffleService, int semillaCrucesFase = 0)
     {
         SimulationSeed = simulationSeed;
+        _shuffleService = shuffleService;
         SemillaCrucesFase = semillaCrucesFase;
     }
 
@@ -99,7 +101,7 @@ public class Knockout
 
     private IEnumerable<Match> PairRemainingSecondPlaces(List<Team> remainingSecondPlaces)
     {
-        Shuffle(remainingSecondPlaces, SemillaCrucesFase);
+        _shuffleService.Shuffle(remainingSecondPlaces);
 
         var homePot = remainingSecondPlaces
             .Take(HalfRemainingSecondsCount)
@@ -115,8 +117,8 @@ public class Knockout
 
     private List<Match> PairTeams(List<Team> homePot, List<Team> awayPot, string prefix, int startNumber)
     {
-        Shuffle(homePot, SemillaCrucesFase);
-        Shuffle(awayPot, SemillaCrucesFase);
+        _shuffleService.Shuffle(homePot);
+        _shuffleService.Shuffle(awayPot);
 
         var matches = new List<Match>();
 
@@ -194,17 +196,6 @@ public class Knockout
             TournamentPhase.Final => TournamentPhase.SemiFinals,
             _ => null
         };
-
-    private static void Shuffle<T>(List<T> list, int seed)
-    {
-        var random = new Random(seed);
-
-        for (int i = list.Count - 1; i > 0; i--)
-        {
-            int j = random.Next(i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
-    }
 
     private static readonly DateTime KnockoutPhaseDefaultDate = new(2026, 7, 1);
     private const int RoundOf16FirstMatchNumber = 1;

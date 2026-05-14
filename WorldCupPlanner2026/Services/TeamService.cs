@@ -116,7 +116,7 @@ public class TeamService : ITeamService
         return tieEndIndex;
     }
 
-    private IShuffleService CreateShuffleService(int seed)
+    private IServices.IShuffleService CreateShuffleService(int seed)
     {
         return new ShuffleService(seed);
     }

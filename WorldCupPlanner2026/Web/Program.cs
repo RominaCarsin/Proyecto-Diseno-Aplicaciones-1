@@ -38,7 +38,7 @@ builder.Services.AddScoped<IPotService, PotService>();
 
 builder.Services.AddScoped<IFixtureService, FixtureService>();
 builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
-builder.Services.AddScoped<IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
+builder.Services.AddScoped<IServices.IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
 
 builder.Services.AddBlazoredLocalStorage();
 
