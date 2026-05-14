@@ -8,8 +8,8 @@ namespace Services;
 
 public class GroupService : IGroupService
 {
-    private const string GroupNotFoundErrorMessage = "Group was not found.";
-    private const string MatchNotFoundErrorMessage = "Match was not found in group.";
+    private const string GroupNotFoundErrorMessage = "No se encontró el grupo.";
+    private const string MatchNotFoundErrorMessage = "No se encontró el partido en el grupo.";
 
     private readonly IRepository<Group> _repository;
 

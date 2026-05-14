@@ -6,11 +6,11 @@ public class Team
     private const int MaxRanking = 2500;
     private const int MaxNameLength = 60;
 
-    private const string NameInvalidErrorMessage = "Name must be between 1 and 60 characters.";
-    private const string RankingInvalidErrorMessage = "Ranking FIFA must be between 300 and 2500.";
-    private const string ConfederationRequiredErrorMessage = "Confederation is required.";
-    private const string ConfederationInvalidErrorMessage = "Invalid confederation.";
-    private const string NegativeGoalsErrorMessage = "Goals cannot be negative.";
+    private const string NameInvalidErrorMessage = "El nombre debe tener entre 1 y 60 caracteres.";
+    private const string RankingInvalidErrorMessage = "El ranking FIFA debe estar entre 300 y 2500.";
+    private const string ConfederationRequiredErrorMessage = "La confederación es obligatoria.";
+    private const string ConfederationInvalidErrorMessage = "La confederación es inválida.";
+    private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
 
     private static readonly HashSet<string> ValidConfederations = new()
     {

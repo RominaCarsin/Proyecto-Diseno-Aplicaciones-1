@@ -14,21 +14,21 @@ public class User
     private const int MinPasswordLength = 8;
     private const int MaxAgeInYears = 120;
 
-    private const string NameRequiredErrorMessage = "Name cannot be empty.";
-    private const string SurnameRequiredErrorMessage = "Surname cannot be empty.";
-    private const string EmailRequiredErrorMessage = "Email cannot be empty.";
-    private const string EmailMissingAtSignErrorMessage = "Email must contain @.";
-    private const string EmailInvalidFormatErrorMessage = "Email must have text before and after @.";
-    private const string BirthDateRequiredErrorMessage = "Date of birth is required.";
-    private const string BirthDateTooOldErrorMessage = "Date of birth is not realistic.";
-    private const string BirthDateInFutureErrorMessage = "Date of birth cannot be in the future.";
-    private const string PasswordEmptyErrorMessage = "Password cannot be empty.";
-    private const string PasswordTooShortErrorMessage = "Password must be at least 8 characters long.";
-    private const string PasswordMissingLowercaseErrorMessage = "Password must contain a lowercase letter.";
-    private const string PasswordMissingUppercaseErrorMessage = "Password must contain an uppercase letter.";
-    private const string PasswordMissingDigitErrorMessage = "Password must contain a number.";
-    private const string PasswordMissingSpecialCharErrorMessage = "Password must contain a special character.";
-
+    private const string NameRequiredErrorMessage = "El nombre no puede estar vacío.";
+    private const string SurnameRequiredErrorMessage = "El apellido no puede estar vacío.";
+    private const string EmailRequiredErrorMessage = "El email no puede estar vacío.";
+    private const string EmailMissingAtSignErrorMessage = "El email debe contener @.";
+    private const string EmailInvalidFormatErrorMessage = "El email debe tener texto antes y después del @.";
+    private const string BirthDateRequiredErrorMessage = "La fecha de nacimiento es obligatoria.";
+    private const string BirthDateTooOldErrorMessage = "La fecha de nacimiento no es realista.";
+    private const string BirthDateInFutureErrorMessage = "La fecha de nacimiento no puede estar en el futuro.";
+    private const string PasswordEmptyErrorMessage = "La contraseña no puede estar vacía.";
+    private const string PasswordTooShortErrorMessage = "La contraseña debe tener al menos 8 caracteres.";
+    private const string PasswordMissingLowercaseErrorMessage = "La contraseña debe contener una letra minúscula.";
+    private const string PasswordMissingUppercaseErrorMessage = "La contraseña debe contener una letra mayúscula.";
+    private const string PasswordMissingDigitErrorMessage = "La contraseña debe contener un número.";
+    private const string PasswordMissingSpecialCharErrorMessage = "La contraseña debe contener un carácter especial.";
+    
     public string Name { get; private set; }
     public string Surname { get; private set; }
     public string Email { get; private set; }

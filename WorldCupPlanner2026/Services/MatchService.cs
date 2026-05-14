@@ -8,9 +8,9 @@ namespace Services;
 
 public class MatchService : IMatchService
 {
-    private const string MatchNotFoundErrorMessage = "Match was not found.";
-    private const string MatchRequestRequiredErrorMessage = "Match request cannot be null.";
-    private const string StadiumRequestRequiredErrorMessage = "Stadium request cannot be null.";
+    private const string MatchNotFoundErrorMessage = "No se encontró el partido.";
+    private const string MatchRequestRequiredErrorMessage = "La solicitud del partido no puede ser nula.";
+    private const string StadiumRequestRequiredErrorMessage = "La solicitud del estadio no puede ser nula.";
 
     private readonly IRepository<Match> _repository;
     private readonly IRepository<Group> _groupRepository;

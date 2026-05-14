@@ -7,9 +7,9 @@ namespace Services;
 
 public class ConfederationService : IConfederationService
 {
-    private const string ConfederationNotFoundErrorMessage = "Confederation '{0}' not found.";
-    private const string ConfederationFullErrorMessage = "Confederation '{0}' is full.";
-
+    private const string ConfederationNotFoundErrorMessage = "No se encontró la confederación '{0}'.";
+    private const string ConfederationFullErrorMessage = "La confederación '{0}' está completa.";
+    
     private readonly List<Confederation> _confederations = new()
     {
         new Confederation("UEFA",     16),

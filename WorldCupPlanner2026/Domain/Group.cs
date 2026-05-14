@@ -9,13 +9,13 @@ public class Group
     private const int MaxOtherConfederationTeamsPerGroup = 1;
     private const double DrawZone = 0.10;
     
-    private const string TooManyTeamsFromSameConfederationErrorMessage = "Group cannot have more than 2 teams from the same confederation.";
-    private const string LabelOutOfRangeErrorMessage = "Label debe ser una letra mayúscula entre 'A' y 'L'.";
-    private const string NullTeamErrorMessage = "Team cannot be null.";
-    private const string FullGroupErrorMessage = "Group cannot have more than 4 teams.";
-    private const string TeamNotFoundErrorMessage = "Team does not exist in group.";
-    private const string InvalidPositionErrorMessage = "Position is invalid.";
-    private const string NullMatchErrorMessage = "Match cannot be null.";
+    private const string TooManyTeamsFromSameConfederationErrorMessage = "El grupo no puede tener más de 2 equipos de la misma confederación.";
+    private const string LabelOutOfRangeErrorMessage = "La etiqueta debe ser una letra mayúscula entre 'A' y 'L'.";
+    private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
+    private const string FullGroupErrorMessage = "El grupo no puede tener más de 4 equipos.";
+    private const string TeamNotFoundErrorMessage = "El equipo no existe en el grupo.";
+    private const string InvalidPositionErrorMessage = "La posición es inválida.";
+    private const string NullMatchErrorMessage = "El partido no puede ser nulo.";
 
     private readonly List<Team> _teams = new();
     private readonly List<Match> _matches = new();
@@ -81,10 +81,9 @@ public class Group
         _matches.Add(match);
     }
 
-    // Group dice "actualizate con este resultado" — Match se encarga del resto
     public void SetMatchResult(Match match, int homeGoals, int awayGoals)
     {
-        match.SetResult(homeGoals, awayGoals); // Match notifica a los Teams internamente
+        match.SetResult(homeGoals, awayGoals); 
     }
 
     public Team GetTeamByPosition(int position)
@@ -92,8 +91,6 @@ public class Group
         ValidatePosition(position);
         return GetStandings().ElementAt(position - 1);
     }
-
-    // Group ordena por lo que Team ya sabe de sí mismo — sin recalcular
     public IEnumerable<Team> GetStandings()
     {
         return _teams
@@ -139,8 +136,7 @@ public class Group
 
         if (roll > homeProbability + DrawZone)
             return (SimulateGoals(random, 0, 2), SimulateGoals(random, 2, 4));
-
-        //empate
+        
         int finalDrawGoals = SimulateGoals(random, 0, 2);
         return (finalDrawGoals, finalDrawGoals);
     }

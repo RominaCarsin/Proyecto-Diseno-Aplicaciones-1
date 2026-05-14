@@ -2,8 +2,8 @@
 
 public class AuditLog
 {
-    private const string ActorEmailRequiredErrorMessage = "Actor email cannot be empty.";
-    private const string ActionRequiredErrorMessage = "Action cannot be empty.";
+    private const string ActorEmailRequiredErrorMessage = "El email del actor no puede estar vacío.";
+    private const string ActionRequiredErrorMessage = "La acción no puede estar vacía.";
 
     private static int _nextId = 1;
 
@@ -24,8 +24,6 @@ public class AuditLog
         Action = action;
         Details = details;
     }
-
-    // ─── Validaciones ─────────────────────────────────────────────────────────
 
     private static void ValidateActorEmail(string actorEmail)
     {

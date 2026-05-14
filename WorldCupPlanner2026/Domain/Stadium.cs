@@ -6,14 +6,14 @@ public class Stadium
     private const int MaxCityLength = 60;
     private const int MaxDescriptionLength = 400;
     private const int MinCapacity = 20000;
-
-    private const string NameEmptyErrorMessage = "Stadium name cannot be empty.";
-    private const string NameTooLongErrorMessage = "Stadium name cannot exceed 80 characters.";
-    private const string CityEmptyErrorMessage = "Stadium city cannot be empty.";
-    private const string CityTooLongErrorMessage = "Stadium city cannot exceed 60 characters.";
-    private const string DescriptionTooLongErrorMessage = "Stadium description cannot exceed 400 characters.";
-    private const string CapacityTooSmallErrorMessage = "Stadium capacity must be at least 20000.";
-
+    
+    private const string NameEmptyErrorMessage = "El nombre del estadio no puede estar vacío.";
+    private const string NameTooLongErrorMessage = "El nombre del estadio no puede superar los 80 caracteres.";
+    private const string CityEmptyErrorMessage = "La ciudad del estadio no puede estar vacía.";
+    private const string CityTooLongErrorMessage = "La ciudad del estadio no puede superar los 60 caracteres.";
+    private const string DescriptionTooLongErrorMessage = "La descripción del estadio no puede superar los 400 caracteres.";
+    private const string CapacityTooSmallErrorMessage = "La capacidad del estadio debe ser de al menos 20000.";
+    
     public string Name { get; private set; }
     public string City { get; private set; }
     public string? Description { get; private set; }
@@ -26,9 +26,7 @@ public class Stadium
         Description = NormalizeDescription(description);
         Capacity = ValidatedCapacity(capacity);
     }
-
-    // ─── Validaciones ─────────────────────────────────────────────────────────
-
+    
     private static string NormalizeAndValidateName(string name) =>
         NormalizeAndValidateTextField(name, MaxNameLength, NameEmptyErrorMessage, NameTooLongErrorMessage);
 
@@ -70,9 +68,7 @@ public class Stadium
 
         return capacity;
     }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
+    
     private static string Normalize(string value) =>
         value?.Trim().ToUpper() ?? string.Empty;
 }

@@ -6,10 +6,10 @@ public class Pot
     public const int MinNumber = 1;
     public const int MaxNumber = 4;
 
-    private const string InvalidNumberErrorMessage = "Pot number must be between 1 and 4.";
-    private const string NullTeamsListErrorMessage = "Teams list cannot be null.";
-    private const string InvalidTeamsCountErrorMessage = "Pot must have exactly 12 teams.";
-
+    private const string InvalidNumberErrorMessage = "El número del bombo debe estar entre 1 y 4.";
+    private const string NullTeamsListErrorMessage = "La lista de equipos no puede ser nula.";
+    private const string InvalidTeamsCountErrorMessage = "El bombo debe tener exactamente 12 equipos.";
+    
     public int Number { get; }
     public IReadOnlyList<Team> Teams { get; }
 

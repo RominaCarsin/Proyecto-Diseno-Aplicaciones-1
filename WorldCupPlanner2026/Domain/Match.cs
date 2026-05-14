@@ -3,17 +3,17 @@ namespace Domain;
 public class Match
 {
     private const int MinGoals = 0;
-
-    private const string InvalidDateErrorMessage = "Match date must be valid.";
-    private const string RequiredStadiumErrorMessage = "Stadium cannot be null.";
-    private const string RequiredHomeTeamErrorMessage = "Home team cannot be null.";
-    private const string RequiredAwayTeamErrorMessage = "Away team cannot be null.";
-    private const string SameTeamsErrorMessage = "Home team and away team must be different.";
-    private const string LockedMatchErrorMessage = "Locked matches cannot be edited.";
-    private const string NegativeGoalsErrorMessage = "Goals cannot be negative.";
-    private const string FinishedMatchErrorMessage = "Finished matches cannot be edited.";
-    private const string DrawInKnockoutErrorMessage = "Knockout matches cannot end in a draw.";
-    private const string KnockoutGroupErrorMessage = "Knockout matches cannot have a group assigned.";
+    
+    private const string InvalidDateErrorMessage = "La fecha del partido debe ser válida.";
+    private const string RequiredStadiumErrorMessage = "El estadio no puede ser nulo.";
+    private const string RequiredHomeTeamErrorMessage = "El equipo local no puede ser nulo.";
+    private const string RequiredAwayTeamErrorMessage = "El equipo visitante no puede ser nulo.";
+    private const string SameTeamsErrorMessage = "El equipo local y el visitante deben ser diferentes.";
+    private const string LockedMatchErrorMessage = "Los partidos bloqueados no pueden ser editados.";
+    private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
+    private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
+    private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
+    private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
 
     private static int _nextId = 1;
 

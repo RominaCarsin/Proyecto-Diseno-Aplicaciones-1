@@ -5,13 +5,13 @@ namespace Services;
 
 public class TeamImportService : ITeamImportService
 {
-    private const string SystemActorEmail = "system";
+    private const string SystemActorEmail = "sistema";
     private const string NameHeader = "Nombre";
     private const string ConfederationHeader = "Confederación";
     private const string RankingHeader = "RankingFIFA";
-    private const string ImportErrorAction = "Teams import error";
-    private const string ImportSuccessAction = "Teams import success";
-    private const string ImportExecutedAction = "Teams import executed";
+    private const string ImportErrorAction = "Error al importar equipos";
+    private const string ImportSuccessAction = "Importación de equipos exitosa";
+    private const string ImportExecutedAction = "Importación de equipos ejecutada";
 
     private static readonly string[] ExpectedHeaders =
     [

@@ -7,8 +7,7 @@ namespace Services;
 public class PotService : IPotService
 {
     private const int RequiredTeamCount = 48;
-    private const string InvalidTeamCountErrorMessage =
-        "Exactly 48 teams are required to generate the pots.";
+    private const string InvalidTeamCountErrorMessage = "Se requieren exactamente 48 equipos para generar los bombos.";
 
     private readonly IRepository<Team> _teamRepository;
     private readonly IRepository<Pot> _potRepository;

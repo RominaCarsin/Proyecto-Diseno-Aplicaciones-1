@@ -15,15 +15,14 @@ public class FixtureService : IFixtureService
     private const int MatchesPerRound = 2;
     private const int DaysBetweenRounds = 3;
     private const int DaysBetweenGroupStarts = 7;
-    private const int MaxMatchesPerDay = 3;
     private const int FirstMatchHour = 14;
     private const int HoursBetweenMatches = 4;
 
-    private const string NotEnoughTeamsErrorMessage = "48 teams are required to generate the fixture.";
-    private const string NotEnoughStadiumsErrorMessage = "At least 4 stadiums are required to generate the fixture.";
-    private const string FixtureAlreadyGeneratedErrorMessage = "The fixture has already been generated.";
-    private const string FixtureNotGeneratedErrorMessage = "The fixture has not been generated yet.";
-    private const string TeamCouldNotBeAssignedErrorMessage = "Team '{0}' could not be assigned to any group.";
+    private const string NotEnoughTeamsErrorMessage = "Se requieren 48 equipos para generar el fixture.";
+    private const string NotEnoughStadiumsErrorMessage = "Se requieren al menos 4 estadios para generar el fixture.";
+    private const string FixtureAlreadyGeneratedErrorMessage = "El fixture ya fue generado.";
+    private const string FixtureNotGeneratedErrorMessage = "El fixture aún no fue generado.";
+    private const string TeamCouldNotBeAssignedErrorMessage = "El equipo '{0}' no pudo ser asignado a ningún grupo.";
 
     private static readonly List<(int homeIndex, int awayIndex)> GroupStagePairings = new()
     {
@@ -94,9 +93,7 @@ public class FixtureService : IFixtureService
     }
 
     public int GetStadiumCount() => _stadiumService.GetAllStadiums().Count();
-
-    // ─── Validaciones ─────────────────────────────────────────────────────────
-
+    
     private void ValidateFixtureCanBeGenerated()
     {
         if (!HasEnoughTeams())
@@ -117,9 +114,7 @@ public class FixtureService : IFixtureService
 
     private bool FixtureHasNotBeenGenerated() =>
         !_groupService.GetGroups().Any();
-
-    // ─── Generación de grupos y equipos ───────────────────────────────────────
-
+    
     private static List<Group> CreateGroups() =>
         Enumerable.Range(0, TotalGroupCount)
             .Select(i => new Group((char)('A' + i)))
@@ -167,9 +162,7 @@ public class FixtureService : IFixtureService
         throw new InvalidOperationException(
             string.Format(TeamCouldNotBeAssignedErrorMessage, team.Name));
     }
-
-    // ─── Generación de partidos ───────────────────────────────────────────────
-
+    
     private static void GenerateMatchesForGroups(
         List<Group> groups,
         List<StadiumResponse> stadiums,
@@ -223,9 +216,7 @@ public class FixtureService : IFixtureService
 
     private static Stadium BuildStadiumFromResponse(StadiumResponse response) =>
         new Stadium(response.Name, response.City, response.Description, response.Capacity);
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
+    
     private List<StadiumResponse> GetStadiumsSortedByName() =>
         _stadiumService.GetAllStadiums()
             .OrderBy(s => s.Name.ToUpperInvariant())

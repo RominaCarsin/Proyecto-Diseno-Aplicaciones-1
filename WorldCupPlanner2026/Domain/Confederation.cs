@@ -2,10 +2,10 @@
 
 public class Confederation
 {
-    private const string NameRequiredErrorMessage = "Name cannot be empty.";
-    private const string SlotsInvalidErrorMessage = "Slots must be greater than zero.";
-    private const string NullTeamErrorMessage = "Team cannot be null.";
-    private const string ConfederationFullErrorMessage = "Confederation is full.";
+    private const string NameRequiredErrorMessage = "El nombre no puede estar vacío.";
+    private const string SlotsInvalidErrorMessage = "Los cupos deben ser mayores a cero.";
+    private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
+    private const string ConfederationFullErrorMessage = "La confederación está completa.";
 
     public string Name { get; private set; }
     public IReadOnlyList<Team> Teams => _teams;

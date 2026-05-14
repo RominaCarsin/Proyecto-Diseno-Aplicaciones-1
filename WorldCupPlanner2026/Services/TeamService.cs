@@ -12,9 +12,9 @@ public class TeamService : ITeamService
     private const int FirstFifaRanking = 300;
     private const int LastFifaRanking = 2500;
 
-    private const string TeamNotFoundErrorMessage = "Team not found.";
-    private const string TeamNameAlreadyExistsErrorMessage = "A team with this name already exists.";
-
+    private const string TeamNotFoundErrorMessage = "No se encontró el equipo.";
+    private const string TeamNameAlreadyExistsErrorMessage = "Ya existe un equipo con este nombre.";
+    
     private readonly IRepository<Team> _repository;
     private readonly IConfederationService _confederationService;
     private readonly IAuditService _auditService;

@@ -8,13 +8,13 @@ namespace Services;
 
 public class UserService : IUserService
 {
-    private const string UserAlreadyExistsErrorMessage = "User already exists.";
-    private const string UserNotFoundErrorMessage = "User not found.";
-    private const string EmailAlreadyInUseErrorMessage = "Email already in use.";
-    private const string InvalidPasswordErrorMessage = "Invalid password.";
-    private const string CurrentPasswordIncorrectErrorMessage = "Current password is incorrect.";
-    private const string UserNotAuthorizedErrorMessage = "User is not authorized.";
-
+    private const string UserAlreadyExistsErrorMessage = "El usuario ya existe.";
+    private const string UserNotFoundErrorMessage = "No se encontró el usuario.";
+    private const string EmailAlreadyInUseErrorMessage = "El email ya está en uso.";
+    private const string InvalidPasswordErrorMessage = "La contraseña es inválida.";
+    private const string CurrentPasswordIncorrectErrorMessage = "La contraseña actual es incorrecta.";
+    private const string UserNotAuthorizedErrorMessage = "El usuario no está autorizado.";
+    
     private readonly IRepository<User> _repository;
     private readonly IAuditService _auditService;
 
