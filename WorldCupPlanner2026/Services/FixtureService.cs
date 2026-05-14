@@ -2,6 +2,7 @@
 using DTOs;
 using IRepository;
 using IServices;
+using Services.Mappers;
 
 
 namespace Services;
@@ -14,9 +15,10 @@ public class FixtureService : IFixtureService
    private readonly IGroupService _groupService;
    private readonly IRepository<Group> _groupRepository;
    private readonly IRepository<Match> _matchRepository;
-   private readonly IPotService _potService;
-  
-   private const int FirstMatchHour = 14;
+    private readonly IPotService _potService;
+    private Knockout? _knockout;
+   
+    private const int FirstMatchHour = 14;
    private const int HoursBetweenMatches = 4;
 
 
@@ -238,28 +240,85 @@ public class FixtureService : IFixtureService
    }
 
 
-   private static void AddMatchToGroup(
-       Group group,
-       List<Team> teamList,
-       (int homeIndex, int awayIndex) pairing,
-       DateTime matchDate,
-       List<StadiumResponse> stadiums,
-       ref int matchCounter)
-   {
-       var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+    private static void AddMatchToGroup(
+        Group group,
+        List<Team> teamList,
+        (int homeIndex, int awayIndex) pairing,
+        DateTime matchDate,
+        List<StadiumResponse> stadiums,
+        ref int matchCounter)
+    {
+        var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
 
 
-       group.AddMatch(new Match(
-           matchDate,
-           stadium,
-           teamList[pairing.homeIndex],
-           teamList[pairing.awayIndex],
-           group: group.Label,
-           phase: TournamentPhase.GroupStage
-       ));
+        group.AddMatch(new Match(
+            matchDate,
+            stadium,
+            teamList[pairing.homeIndex],
+            teamList[pairing.awayIndex],
+            group: group.Label,
+            phase: TournamentPhase.GroupStage
+        ));
 
 
-       matchCounter++;
-   }
-  
+        matchCounter++;
+    }
+
+    public void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0)
+    {
+        var groups = _groupRepository.GetAll().ToList();
+
+        if (!groups.Any())
+            throw new InvalidOperationException("No se ha generado la fase de grupos.");
+
+        var allMatchesHaveResults = groups.SelectMany(g => g.Matches).All(m => m.HasResult);
+        if (!allMatchesHaveResults)
+            throw new InvalidOperationException("La fase de grupos debe estar simulada.");
+
+        if (_matchRepository.GetAll().Any(m => m.Phase != TournamentPhase.GroupStage))
+            throw new InvalidOperationException("La fase eliminatoria ya fue inicializada.");
+
+        var qualifiedTeamResponses = _groupService.GetQualifiedTeams().ToList();
+        var qualifiedTeams = qualifiedTeamResponses.Select(TeamMapper.ToEntity);
+
+        var shuffleService = new ShuffleService(simulationSeed);
+        var knockout = new Knockout(simulationSeed, shuffleService, semillaCrucesFase);
+        knockout.SetQualifiedTeams(qualifiedTeams);
+        knockout.InitializeRoundOf32();
+
+        foreach (var match in knockout.Matches)
+            _matchRepository.Add(match);
+
+        _knockout = knockout;
+    }
+
+    public void InitializeRoundOf16()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+    }
+
+    public void InitializeQuarterFinals()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+    }
+
+    public void InitializeSemiFinals()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+    }
+
+    public void InitializeThirdPlace()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+    }
+
+    public void InitializeFinal()
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+    }
 }

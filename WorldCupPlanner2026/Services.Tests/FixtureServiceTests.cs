@@ -696,4 +696,176 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
             Assert.AreEqual(expectedStart, firstMatchDate);
         }
     }
+
+    // ──────────────────────────────────────────────
+    // RED: InitializeKnockoutStage — casos de prueba
+    // ──────────────────────────────────────────────
+
+    [TestMethod]
+    public void InitializeKnockoutStage_WithoutGroupStage_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeKnockoutStage(42),
+            "Debe existir una fase de grupos con resultados para inicializar Knockout.");
+    }
+
+    [TestMethod]
+    public void InitializeKnockoutStage_WithGroupStageNotSimulated_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeKnockoutStage(42),
+            "Los partidos de grupo deben tener resultados para determinar clasificados.");
+    }
+
+    [TestMethod]
+    public void InitializeKnockoutStage_WithValidGroupStage_ShouldCreate16RoundOf32Matches()
+    {
+        var fixtureService = CreateFixtureServiceWithSimulatedGroupStage();
+
+        fixtureService.InitializeKnockoutStage(42);
+
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(m => m.Phase == TournamentPhase.RoundOf32)
+            .ToList();
+
+        Assert.AreEqual(16, knockoutMatches.Count,
+            "La fase de grupos debe producir 16 partidos de octavos de final.");
+    }
+
+    [TestMethod]
+    public void InitializeKnockoutStage_WhenAlreadyInitialized_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureServiceWithSimulatedGroupStage();
+        fixtureService.InitializeKnockoutStage(42);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeKnockoutStage(42),
+            "No se puede inicializar Knockout dos veces.");
+    }
+
+    [TestMethod]
+    public void InitializeKnockoutStage_ShouldStoreMatchesInMatchRepository()
+    {
+        var fixtureService = CreateFixtureServiceWithSimulatedGroupStage();
+
+        fixtureService.InitializeKnockoutStage(42);
+
+        var totalMatches = _matchRepository.GetAll().ToList();
+        Assert.IsTrue(totalMatches.Count > 72,
+            "Deben existir los 72 partidos de grupo mas los 16 de Knockout.");
+    }
+
+    [TestMethod]
+    public void InitializeKnockoutStage_ShouldUseMatchCodesA1toA8andB1toB8()
+    {
+        var fixtureService = CreateFixtureServiceWithSimulatedGroupStage();
+
+        fixtureService.InitializeKnockoutStage(42);
+
+        var roundOf32Matches = _matchRepository.GetAll()
+            .Where(m => m.Phase == TournamentPhase.RoundOf32)
+            .ToList();
+
+        var aCodes = roundOf32Matches
+            .Select(m => m.MatchCode)
+            .Where(c => c != null && c.StartsWith("A"))
+            .OrderBy(c => c)
+            .ToList();
+
+        var bCodes = roundOf32Matches
+            .Select(m => m.MatchCode)
+            .Where(c => c != null && c.StartsWith("B"))
+            .OrderBy(c => c)
+            .ToList();
+
+        Assert.AreEqual(8, aCodes.Count, "Deben existir 8 partidos con codigo A1-A8.");
+        Assert.AreEqual(8, bCodes.Count, "Deben existir 8 partidos con codigo B1-B8.");
+        CollectionAssert.AreEqual(
+            new[] { "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" }, aCodes);
+        CollectionAssert.AreEqual(
+            new[] { "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8" }, bCodes);
+    }
+
+    [TestMethod]
+    public void InitializeKnockoutStage_WithSameSeed_ShouldProduceDeterministicResults()
+    {
+        var service1 = CreateFixtureServiceWithSimulatedGroupStage();
+        service1.InitializeKnockoutStage(42);
+
+        var codes1 = _matchRepository.GetAll()
+            .Where(m => m.Phase == TournamentPhase.RoundOf32)
+            .Select(m => $"{m.MatchCode}:{m.HomeTeam.Name}-{m.AwayTeam.Name}")
+            .OrderBy(c => c)
+            .ToList();
+
+        var service2 = CreateFixtureServiceWithSimulatedGroupStage();
+        service2.InitializeKnockoutStage(42);
+
+        var codes2 = _matchRepository.GetAll()
+            .Where(m => m.Phase == TournamentPhase.RoundOf32)
+            .Select(m => $"{m.MatchCode}:{m.HomeTeam.Name}-{m.AwayTeam.Name}")
+            .OrderBy(c => c)
+            .ToList();
+
+        CollectionAssert.AreEqual(codes1, codes2,
+            "Mismo seed debe producir los mismos cruces de octavos.");
+    }
+
+    [TestMethod]
+    public void InitializeRoundOf16_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeRoundOf16());
+    }
+
+    [TestMethod]
+    public void InitializeQuarterFinals_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeQuarterFinals());
+    }
+
+    [TestMethod]
+    public void InitializeSemiFinals_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeSemiFinals());
+    }
+
+    [TestMethod]
+    public void InitializeThirdPlace_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeThirdPlace());
+    }
+
+    [TestMethod]
+    public void InitializeFinal_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.InitializeFinal());
+    }
+
+    private IFixtureService CreateFixtureServiceWithSimulatedGroupStage()
+    {
+        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        fixtureService.SimulateGroupStage(42);
+        return fixtureService;
+    }
 }

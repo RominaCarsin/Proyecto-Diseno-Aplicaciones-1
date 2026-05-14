@@ -8,4 +8,5 @@ public class TeamResponse
     public int Points { get; set; }
     public int GoalDifference { get; set; }
     public int GoalsInFavor { get; set; }
+    public string GroupLabel { get; set; } = string.Empty;
 }
