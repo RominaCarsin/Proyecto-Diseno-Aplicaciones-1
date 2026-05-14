@@ -8,6 +8,7 @@ public class StadiumTests
     private const string ValidDescription = "Historic stadium";
     private const int ValidCapacity = 60000;
 
+    // ─── Constructor ──────────────────────────────────────────────────────────
 
     [TestMethod]
     public void CreateStadium_WithValidData_ShouldCreateStadiumWithExpectedProperties()
@@ -20,6 +21,7 @@ public class StadiumTests
         Assert.AreEqual(ValidCapacity, stadium.Capacity);
     }
 
+    // ─── Nombre ───────────────────────────────────────────────────────────────
 
     [TestMethod]
     public void CreateStadium_WithLowercaseName_ShouldStoreNameInUpperCase()
@@ -95,6 +97,7 @@ public class StadiumTests
             new Stadium(nameOneAboveMaxLength, ValidCity, ValidDescription, ValidCapacity));
     }
 
+    // ─── Ciudad ───────────────────────────────────────────────────────────────
 
     [TestMethod]
     public void CreateStadium_WithLowercaseCity_ShouldStoreCityInUpperCase()
@@ -169,7 +172,8 @@ public class StadiumTests
         Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, cityOneAboveMaxLength, ValidDescription, ValidCapacity));
     }
-    
+
+    // ─── Descripción ──────────────────────────────────────────────────────────
 
     [TestMethod]
     public void CreateStadium_WithNullDescription_ShouldStoreNullDescription()
@@ -215,7 +219,8 @@ public class StadiumTests
         Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, ValidCity, descriptionOneAboveMaxLength, ValidCapacity));
     }
-    
+
+    // ─── Capacidad ────────────────────────────────────────────────────────────
 
     [TestMethod]
     public void CreateStadium_WithCapacityExactlyAtMinimum_ShouldStoreCapacitySuccessfully()
@@ -254,7 +259,8 @@ public class StadiumTests
         Assert.ThrowsException<ArgumentException>(() =>
             new Stadium(ValidName, ValidCity, ValidDescription, 1));
     }
-    
+
+    // ─── Normalización combinada ──────────────────────────────────────────────
 
     [TestMethod]
     public void CreateStadium_WithLowercaseAndSpacesInNameAndCity_ShouldNormalizeBothFields()
@@ -264,7 +270,8 @@ public class StadiumTests
         Assert.AreEqual("SAN JUAN", stadium.Name);
         Assert.AreEqual("BUENOS AIRES", stadium.City);
     }
-    
+
+    // ─── Builders ─────────────────────────────────────────────────────────────
 
     private static Stadium CreateValidStadium() =>
         new Stadium(ValidName, ValidCity, ValidDescription, ValidCapacity);
