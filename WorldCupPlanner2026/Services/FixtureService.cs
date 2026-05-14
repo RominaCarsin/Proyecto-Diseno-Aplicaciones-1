@@ -373,6 +373,16 @@ public class FixtureService : IFixtureService
             _matchRepository.Add(match);
     }
 
+    public void SimulateKnockoutStage(int seed)
+    {
+        if (_knockout is null)
+            throw new InvalidOperationException("La fase eliminatoria no ha sido inicializada.");
+
+        var allMatches = _matchRepository.GetAll().ToList();
+        _knockout.LoadExistingMatches(allMatches);
+        _knockout.SimulateMatches(seed);
+    }
+
     public void InitializeFinal()
     {
         if (_knockout is null)

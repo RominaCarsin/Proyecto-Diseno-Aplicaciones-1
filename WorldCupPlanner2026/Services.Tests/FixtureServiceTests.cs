@@ -1,4 +1,4 @@
-﻿﻿using Domain;
+﻿using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -929,6 +929,72 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         Assert.IsInstanceOfType(responses.First(), typeof(MatchResponse));
         Assert.IsNotNull(responses.First().HomeTeam);
         Assert.IsNotNull(responses.First().MatchCode);
+    }
+
+    [TestMethod]
+    public void SimulateKnockoutStage_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        var fixtureService = CreateFixtureService();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            fixtureService.SimulateKnockoutStage(42));
+    }
+
+    [TestMethod]
+    public void SimulateKnockoutStage_ShouldSetResultAndFinishAllKnockoutMatches()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+
+        service.SimulateKnockoutStage(42);
+
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .ToList();
+        Assert.IsTrue(knockoutMatches.All(m => m.HomeGoals.HasValue && m.AwayGoals.HasValue),
+            "Todos los partidos de knockout deben tener resultado.");
+        Assert.IsTrue(knockoutMatches.All(m => m.Status == MatchStatus.Finished),
+            "Todos los partidos de knockout deben estar finalizados.");
+    }
+
+    [TestMethod]
+    public void SimulateKnockoutStage_ShouldProduceNoDraws()
+    {
+        var service = CreateFixtureServiceWithSimulatedGroupStage();
+        service.InitializeKnockoutStage(42);
+
+        service.SimulateKnockoutStage(42);
+
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .ToList();
+        Assert.IsTrue(knockoutMatches.All(m => m.Winner != null),
+            "Ningún partido de knockout puede terminar en empate.");
+    }
+
+    [TestMethod]
+    public void SimulateKnockoutStage_WithSameSeed_ShouldProduceSameWinners()
+    {
+        var service1 = CreateFixtureServiceWithSimulatedGroupStage();
+        service1.InitializeKnockoutStage(42);
+        service1.SimulateKnockoutStage(42);
+        var winners1 = _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .OrderBy(m => m.MatchCode)
+            .Select(m => $"{m.MatchCode}:{m.Winner?.Name}")
+            .ToList();
+
+        var service2 = CreateFixtureServiceWithSimulatedGroupStage();
+        service2.InitializeKnockoutStage(42);
+        service2.SimulateKnockoutStage(42);
+        var winners2 = _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .OrderBy(m => m.MatchCode)
+            .Select(m => $"{m.MatchCode}:{m.Winner?.Name}")
+            .ToList();
+
+        CollectionAssert.AreEqual(winners1, winners2,
+            "Misma semilla debe producir los mismos ganadores.");
     }
 
     private IFixtureService CreateFixtureServiceWithSimulatedGroupStage()

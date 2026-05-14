@@ -16,4 +16,5 @@ public interface IFixtureService
     void InitializeSemiFinals();
     void InitializeThirdPlace();
     void InitializeFinal();
+    void SimulateKnockoutStage(int seed);
 }
