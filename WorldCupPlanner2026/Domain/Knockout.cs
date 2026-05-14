@@ -330,7 +330,16 @@ public class Knockout
 
     public void SetMatchResult(string matchCode, int homeGoals, int awayGoals)
     {
-        throw new NotImplementedException("SetMatchResult - RED phase: implementar en GREEN.");
+        var match = _matches.SingleOrDefault(m => m.MatchCode == matchCode);
+
+        if (match is null)
+            throw new ArgumentException($"No se encontró un partido con código '{matchCode}'.");
+
+        if (homeGoals == awayGoals)
+            throw new ArgumentException("Los partidos de knockout no pueden terminar en empate.");
+
+        match.SetResult(homeGoals, awayGoals);
+        match.Finish();
     }
 
     private static Match CreateKnockoutMatch(
