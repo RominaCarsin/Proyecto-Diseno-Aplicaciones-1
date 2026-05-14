@@ -2,11 +2,19 @@
 
 public class Confederation
 {
+    private const string NameRequiredErrorMessage = "Name cannot be empty.";
+    private const string SlotsInvalidErrorMessage = "Slots must be greater than zero.";
+    private const string NullTeamErrorMessage = "Team cannot be null.";
+    private const string ConfederationFullErrorMessage = "Confederation is full.";
+
     public string Name { get; private set; }
-    public List<Team> Teams { get; private set; }
+    public IReadOnlyList<Team> Teams => _teams;
     public int Slots { get; private set; }
-    public bool IsFull => Teams.Count >= Slots;
-    public int RemainingSlots => Slots - Teams.Count;
+
+    public bool IsFull => _teams.Count >= Slots;
+    public int RemainingSlots => Slots - _teams.Count;
+
+    private readonly List<Team> _teams = new();
 
     public Confederation(string name, int slots)
     {
@@ -15,38 +23,40 @@ public class Confederation
 
         Name = name;
         Slots = slots;
-        Teams = new List<Team>();
     }
 
     public void AddTeam(Team team)
     {
-        if (team == null)
-            throw new ArgumentException("Team cannot be null.");
-        if (IsFull)
-            throw new ArgumentException("Confederation is full.");
+        if (team is null)
+            throw new ArgumentException(NullTeamErrorMessage);
 
-        Teams.Add(team);
+        if (IsFull)
+            throw new ArgumentException(ConfederationFullErrorMessage);
+
+        _teams.Add(team);
     }
 
     public void RemoveTeam(Team team)
     {
-        if (team == null)
-            throw new ArgumentException("Team cannot be null.");
-        if (!Teams.Contains(team))
-            throw new ArgumentException($"Team '{team.Name}' does not belong to confederation '{Name}'.");
+        if (team is null)
+            throw new ArgumentException(NullTeamErrorMessage);
 
-        Teams.Remove(team);
+        if (!_teams.Contains(team))
+            throw new ArgumentException(
+                $"Team '{team.Name}' does not belong to confederation '{Name}'.");
+
+        _teams.Remove(team);
     }
-
-    private void ValidateName(string name)
+    
+    private static void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name cannot be empty.");
+            throw new ArgumentException(NameRequiredErrorMessage);
     }
 
-    private void ValidateSlots(int slots)
+    private static void ValidateSlots(int slots)
     {
         if (slots <= 0)
-            throw new ArgumentException("Slots cannot be negative or 0.");
+            throw new ArgumentException(SlotsInvalidErrorMessage);
     }
 }
