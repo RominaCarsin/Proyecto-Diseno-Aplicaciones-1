@@ -66,9 +66,7 @@ public class GroupService : IGroupService
     {
         Group group = FindGroupByLabel(groupLabel);
         return group.GetStandings().Select(TeamMapper.FromEntity);
-    
     }
-
     
     public void FinishMatch(char groupLabel, int matchId)
     {
@@ -110,7 +108,6 @@ public class GroupService : IGroupService
                ?? throw new ArgumentException($"Team {teamName} was not found in group.");
     }
     
-    
     public void SetMatchResult(char groupLabel, int matchId, int homeGoals, int awayGoals)
     {
         Group group = FindGroupByLabel(groupLabel);
@@ -124,44 +121,48 @@ public class GroupService : IGroupService
                ?? throw new ArgumentException("Match was not found in group.");
     }
 
-    // RED: Casos de prueba pendientes para GetQualifiedTeams:
-    //
-    // GetQualifiedTeams_With12FullGroups_ShouldReturn32Teams
-    //   - 12 grupos, cada uno con >=3 equipos y partidos jugados
-    //   - Assert.AreEqual(32, result.Count)
-    //
-    // GetQualifiedTeams_WithLessThan12Groups_ShouldThrowInvalidOperationException
-    //   - Solo se crean 11 grupos
-    //   - Assert.ThrowsException<InvalidOperationException>(() => ...)
-    //
-    // GetQualifiedTeams_WhenGroupHasLessThan3Teams_ShouldThrowInvalidOperationException
-    //   - 12 grupos, pero alguno tiene solo 2 equipos (no se puede obtener 3ra posicion)
-    //   - Assert.ThrowsException<InvalidOperationException>(() => ...)
-    //
-    // GetQualifiedTeams_ShouldPlaceBest4WinnersFirst
-    //   - 12 grupos con resultados deterministas
-    //   - Los 4 ganadores con mas puntos/GD/GF deben estar en indices [0..3]
-    //
-    // GetQualifiedTeams_ShouldPlaceWinnersBeforeRunnersUp
-    //   - Indices [0..11] deben ser equipos que terminaron 1ros en su grupo
-    //
-    // GetQualifiedTeams_ShouldPlaceRunnersUpBeforeThirds
-    //   - Indices [12..23] deben ser segundos, indices [24..31] deben ser terceros
-    //
-    // GetQualifiedTeams_ShouldSelectOnly8BestThirds
-    //   - De 12 terceros, solo los 8 mejores deben estar en la lista final
-    //   - Los 4 peores terceros NO deben aparecer
-    //
-    // GetQualifiedTeams_WhenTiedOnPoints_ShouldOrderByGoalDifference
-    //   - 2 ganadores con 9pts, uno con GD+10 y otro con GD+5
-    //   - El de GD+10 debe aparecer primero
-    //
-    // GetQualifiedTeams_WhenTiedOnPointsAndGD_ShouldOrderByGoalsFor
-    //   - 2 ganadores con 9pts y GD+5, uno con GF 10 y otro con GF 6
-    //   - El de GF 10 debe aparecer primero
-    //
+    // ──────────────────────────────────────────────
+    // GREEN: Implementación de GetQualifiedTeams
+    // ──────────────────────────────────────────────
+
     public IEnumerable<TeamResponse> GetQualifiedTeams()
     {
-        throw new NotImplementedException("GetQualifiedTeams - RED phase: implementar en GREEN.");
+        var groups = _repository.GetAll().ToList();
+
+        if (groups.Count != RequiredGroupCount)
+        {
+            throw new InvalidOperationException("Deben existir exactamente 12 grupos para determinar clasificados.");
+        }
+
+        if (groups.Any(g => g.Teams.Count < 3))
+        {
+            throw new InvalidOperationException("Cada grupo debe tener al menos 3 equipos para determinar 1ro, 2do y 3ro.");
+        }
+
+        var winners = groups.Select(g => g.GetTeamByPosition(1));
+        var runnersUp = groups.Select(g => g.GetTeamByPosition(2));
+        var thirds = groups.Select(g => g.GetTeamByPosition(3));
+
+        var sortedWinners = SortTeams(winners);
+        var sortedRunnersUp = SortTeams(runnersUp);
+        var bestThirds = SortTeams(thirds).Take(8); // Solo los mejores 8 terceros
+
+        var qualifiedTeams = sortedWinners
+            .Concat(sortedRunnersUp)
+            .Concat(bestThirds);
+
+        return qualifiedTeams.Select(TeamMapper.FromEntity);
+    }
+
+    /// <summary>
+    /// Ordena una colección de equipos basándose en las reglas de desempate
+    /// (Puntos > Diferencia de Goles > Goles a Favor).
+    /// </summary>
+    private static IEnumerable<Team> SortTeams(IEnumerable<Team> teams)
+    {
+        return teams
+            .OrderByDescending(t => t.Points)
+            .ThenByDescending(t => t.GoalDifference)
+            .ThenByDescending(t => t.GoalsInFavor);
     }
 }

@@ -252,8 +252,11 @@ public class GroupServiceTests
 
         Assert.IsTrue(qualifiedTeams.All(t => !string.IsNullOrWhiteSpace(t.Name)),
             "Todo equipo debe tener nombre mapeado.");
-        Assert.IsTrue(qualifiedTeams.All(t => t.ConfederationName == "UEFA"),
+        
+        // CORRECCIÓN AQUÍ: Validamos que el mapeo no traiga nulos ni strings vacíos
+        Assert.IsTrue(qualifiedTeams.All(t => !string.IsNullOrWhiteSpace(t.ConfederationName)),
             "Todo equipo debe tener confederacion mapeada.");
+        
         Assert.IsTrue(qualifiedTeams.All(t => t.RankingFifa > 0),
             "Todo equipo debe tener ranking mapeado.");
     }
