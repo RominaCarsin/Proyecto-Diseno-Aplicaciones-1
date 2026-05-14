@@ -9,343 +9,224 @@ namespace Services.Tests;
 [TestClass]
 public class FixtureServiceTests
 {
+    private const int RequiredTeamCount = 48;
+    private const int RequiredStadiumCount = 4;
+    private const int TotalGroupCount = 12;
+    private const int TeamsPerGroup = 4;
+    private const int MatchesPerGroup = 6;
+    private const int TotalMatchCount = 72;
+    private const int DefaultSeed = 42;
+
+    private static readonly DateTime DefaultStartDate = new(2026, 6, 1);
+
     private IRepository<Group> _groupRepository = null!;
 
+    // ─── GenerateFixture — validaciones ───────────────────────────────────────
+
     [TestMethod]
-    public void GenerateFixture_WhenLessThan48Teams_ShouldThrowInvalidOperationException()
+    public void GenerateFixture_WithLessThan48Teams_ShouldThrowInvalidOperationException()
     {
-        var fixtureService = CreateFixtureService();
+        var service = BuildFixtureServiceWithNoTeamsAndNoStadiums();
 
         Assert.ThrowsException<InvalidOperationException>(() =>
-            fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
+            service.GenerateFixture(DefaultSeed, DefaultStartDate));
     }
 
-    private FixtureService CreateFixtureService()
-    {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        _groupRepository = groupRepo;
-
-        var teamRepo = new Repository<Team>();
-        var confederationService = new ConfederationService();
-        var teamService = CreateTeamService(teamRepo, confederationService);
-
-        var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = CreateStadiumService(stadiumRepo);
-
-        var groupService = new GroupService(groupRepo);
-
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, null);
-    }
-    
     [TestMethod]
     public void GenerateFixture_WithLessThan4Stadiums_ShouldThrowInvalidOperationException()
     {
-        var fixtureService = CreateFixtureServiceWith48TeamsNoStadiums();
+        var service = BuildFixtureServiceWith48TeamsAndNoStadiums();
 
         Assert.ThrowsException<InvalidOperationException>(() =>
-            fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
+            service.GenerateFixture(DefaultSeed, DefaultStartDate));
     }
 
-    private FixtureService CreateFixtureServiceWith48TeamsNoStadiums()
-    {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        _groupRepository = groupRepo;
-
-        var teamRepo = new Repository<Team>();
-        var confederationService = new ConfederationService();
-        var teamService = CreateTeamService(teamRepo, confederationService);
-
-        for (int i = 0; i < 48; i++)
-            teamRepo.Add(new Team($"TEAM_{i:00}", "UEFA", 1000 + i));
-
-        var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = CreateStadiumService(stadiumRepo);
-
-        var groupService = new GroupService(groupRepo);
-
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, null);
-    }
-    
     [TestMethod]
     public void GenerateFixture_WithExistingFixture_ShouldThrowInvalidOperationException()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        var service = BuildFixtureServiceReady();
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
         Assert.ThrowsException<InvalidOperationException>(() =>
-            fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
+            service.GenerateFixture(DefaultSeed, DefaultStartDate));
     }
-    
+
+    // ─── GenerateFixture — estructura ─────────────────────────────────────────
+
     [TestMethod]
     public void GenerateFixture_WithValidData_ShouldCreate12Groups()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-        var groups = _groupRepository.GetAll().ToList();
-        Assert.AreEqual(12, groups.Count);
+        Assert.AreEqual(TotalGroupCount, _groupRepository.GetAll().Count());
     }
-    
+
     [TestMethod]
     public void GenerateFixture_WithValidData_ShouldAssign4TeamsPerGroup()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-        var groups = _groupRepository.GetAll().ToList();
-        Assert.IsTrue(groups.All(g => g.Teams.Count == 4));
+        Assert.IsTrue(_groupRepository.GetAll().All(g => g.Teams.Count == TeamsPerGroup));
     }
-    
+
     [TestMethod]
     public void GenerateFixture_WithValidData_ShouldCreate6MatchesPerGroup()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-        var groups = _groupRepository.GetAll().ToList();
-        Assert.IsTrue(groups.All(g => g.Matches.Count == 6));
+        Assert.IsTrue(_groupRepository.GetAll().All(g => g.Matches.Count == MatchesPerGroup));
     }
-    
-    [TestMethod]
-    public void GenerateFixture_WithValidData_GroupsShouldHaveLabelsAToL()
-    {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+    [TestMethod]
+    public void GenerateFixture_WithValidData_ShouldCreate72TotalMatches()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        Assert.AreEqual(TotalMatchCount, GetAllMatches().Count());
+    }
+
+    [TestMethod]
+    public void GenerateFixture_WithValidData_ShouldCreateGroupsWithLabelsAToL()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
         var labels = _groupRepository.GetAll()
             .Select(g => g.Label)
             .OrderBy(l => l)
             .ToList();
 
-        var expected = Enumerable.Range(0, 12)
+        var expectedLabels = Enumerable.Range(0, TotalGroupCount)
             .Select(i => (char)('A' + i))
             .ToList();
 
-        CollectionAssert.AreEqual(expected, labels);
+        CollectionAssert.AreEqual(expectedLabels, labels);
     }
-    
-    [TestMethod]
-    public void CanGenerateFixture_WithLessThan48Teams_ShouldReturnFalse()
-    {
-        var fixtureService = CreateFixtureService();
 
-        Assert.IsFalse(fixtureService.CanGenerateFixture());
-    }
+    // ─── GenerateFixture — confederaciones ────────────────────────────────────
 
     [TestMethod]
-    public void CanGenerateFixture_WithLessThan4Stadiums_ShouldReturnFalse()
+    public void GenerateFixture_ShouldNotAssignMoreThan2UefaTeamsPerGroup()
     {
-        var fixtureService = CreateFixtureServiceWith48TeamsNoStadiums();
-        Assert.IsFalse(fixtureService.CanGenerateFixture());
-    }
-    
-    [TestMethod] public void CanGenerateFixture_WithExistingFixture_ShouldReturnFalse() 
-    { 
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-        Assert.IsFalse(fixtureService.CanGenerateFixture()); 
-    }
-    
-    [TestMethod]
-    public void GetStadiumCount_WithNoStadiums_ShouldReturnZero()
-    {
-        var fixtureService = CreateFixtureService();
+        var service = BuildFixtureServiceReady();
 
-        Assert.AreEqual(0, fixtureService.GetStadiumCount());
-    }
-    
-    [TestMethod]
-    public void GetStadiumCount_WithExistingStadiums_ShouldReturnCorrectCount()
-    {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-        Assert.AreEqual(4, fixtureService.GetStadiumCount());
-    }
-    
-    
-    [TestMethod]
-    public void GeneratePots_WithSameSeed_ShouldProduceSameOrder()
-    {
-        var teamRepo1 = new  Repository<Team>();
-        var teamService = CreateTeamService(teamRepo1, new ConfederationService());
-        teamService.AutoCompleteTeams(48);
-        
-        var potRepo1 = new Repository<Pot>();
-        var potService1 = new PotService(teamRepo1, potRepo1);
-        potService1.GeneratePots(48);
-        var order1 = potRepo1.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
-
-        var teamRepo2 = new  Repository<Team>();
-        var teamService2 = CreateTeamService(teamRepo2, new ConfederationService());
-        teamService2.AutoCompleteTeams(48);
-        
-        var potRepo2 = new Repository<Pot>();
-        var potService2 = new PotService(teamRepo2, potRepo2);
-        potService2.GeneratePots(48);
-        var order2 = potRepo2.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
-
-        CollectionAssert.AreEqual(order1, order2);
-    }
-    
-    [TestMethod]
-    public void GeneratePots_WithDifferentSeeds_ShouldProduceDifferentOrder_WhenRankingsAreTied()
-    {
-        var teamRepo1 = CreateTeamRepoWithTiedRankings();
-
-        var potRepo1 = new Repository<Pot>();
-        var potService1 = new PotService(teamRepo1, potRepo1);
-
-        potService1.GeneratePots(48);
-
-        var order1 = potRepo1.GetAll()
-            .SelectMany(p => p.Teams.Select(t => t.Name))
-            .ToList();
-
-        var teamRepo2 = CreateTeamRepoWithTiedRankings();
-
-        var potRepo2 = new Repository<Pot>();
-        var potService2 = new PotService(teamRepo2, potRepo2);
-
-        potService2.GeneratePots(99);
-
-        var order2 = potRepo2.GetAll()
-            .SelectMany(p => p.Teams.Select(t => t.Name))
-            .ToList();
-
-        CollectionAssert.AreNotEqual(order1, order2);
-    }
-    
-    private Repository<Team> CreateTeamRepoWithTiedRankings()
-    {
-        var repo = new Repository<Team>();
-
-        for (int i = 1; i <= 48; i++)
-        {
-            repo.Add(new Team(
-                $"Team {i}",
-                "CONMEBOL",
-                1000
-            ));
-        }
-
-        return repo;
-    }
-    
-    [TestMethod]
-    public void GenerateFixture_WithSameSeed_ShouldProduceSameGroupAssignment()
-    {
-        var service1 = CreateFixtureServiceReadyWithPots(42);
-        service1.GenerateFixture(42, new DateTime(2026, 6, 1));
-        var teams1 = _groupRepository.GetAll()
-            .OrderBy(g => g.Label)
-            .SelectMany(g => g.Teams.Select(t => t.Name))
-            .ToList();
-
-        var service2 = CreateFixtureServiceReadyWithPots(50);
-        service2.GenerateFixture(42, new DateTime(2026, 6, 1));
-        var teams2 = _groupRepository.GetAll()
-            .OrderBy(g => g.Label)
-            .SelectMany(g => g.Teams.Select(t => t.Name))
-            .ToList();
-
-        CollectionAssert.AreEqual(teams1, teams2);
-    }
-    //
-    [TestMethod]
-    public void GroupAdds3UEFATeams_ShouldInsertTeamInNextAvailableGroup()
-    {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
-
-        fixtureService.GenerateFixture(48, new DateTime(2026, 6, 1));
-
-        var groups = _groupRepository.GetAll().ToList();
-
-        Assert.IsTrue(groups.All(g =>
+        Assert.IsTrue(_groupRepository.GetAll().All(g =>
             g.Teams.Count(t => t.ConfederationName == "UEFA") <= 2));
     }
-    
+
     [TestMethod]
-    public void GroupAdds2NotUEFATeams_ShouldInsertTeamInNextAvailableGroup()
+    public void GenerateFixture_ShouldNotAssignMoreThan1NonUefaTeamPerConfederationPerGroup()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(48, new DateTime(2026, 6, 1));
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-        var groups = _groupRepository.GetAll().ToList();
-
-        Assert.IsTrue(groups.All(g =>
+        Assert.IsTrue(_groupRepository.GetAll().All(g =>
             g.Teams
                 .Where(t => t.ConfederationName != "UEFA")
                 .GroupBy(t => t.ConfederationName)
                 .All(conf => conf.Count() <= 1)));
     }
 
-    private FixtureService CreateFixtureServiceReadyWithPots(int seed = 42)
+    [TestMethod]
+    public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperationException()
     {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        var potRepo = new Repository<Pot>();
-        _groupRepository = groupRepo;
+        var service = BuildFixtureServiceWithAllTeamsFromSameNonUefaConfederation();
 
-        var teamRepo = new Repository<Team>();
-        var confederationService = new ConfederationService();
-        var teamService = CreateTeamService(teamRepo, confederationService);
-
-        var slots = new Dictionary<string, int>
-        {
-            { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
-            { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
-        };
-
-        int ranking = 1500;
-        foreach (var (conf, count) in slots)
-            for (int i = 1; i <= count; i++)
-                teamRepo.Add(new Team($"{conf}_{i:00}", conf, ranking--));
-
-        var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = CreateStadiumService(stadiumRepo);
-        for (int i = 0; i < 4; i++)
-            stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
-
-        var groupService = new GroupService(groupRepo);
-        var potService = new PotService(teamRepo, potRepo);
-
-        return new FixtureService(teamService, stadiumService, groupService, groupRepo, matchRepo, potService);
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.GenerateFixture(DefaultSeed, DefaultStartDate));
     }
-    
+
+    // ─── GenerateFixture — fases y grupos ─────────────────────────────────────
+
+    [TestMethod]
+    public void GenerateFixture_ShouldAssignGroupStagePhaseToAllMatches()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        Assert.IsTrue(GetAllMatches().All(m => m.Phase == TournamentPhase.GroupStage));
+    }
+
+    [TestMethod]
+    public void GenerateFixture_ShouldAssignGroupLabelToAllMatches()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        Assert.IsTrue(_groupRepository.GetAll()
+            .All(g => g.Matches.All(m => m.Group?.Label == g.Label)));
+    }
+
+    // ─── GenerateFixture — calendario ─────────────────────────────────────────
+
     [TestMethod]
     public void GenerateFixture_ShouldNotCreateMoreThan3MatchesPerDay()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
-        var startDate = new DateTime(2026, 6, 1);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(42, startDate);
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-        var matchesByDay = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
-            .GroupBy(m => m.Date.Date);
-
+        var matchesByDay = GetAllMatches().GroupBy(m => m.Date.Date);
         Assert.IsTrue(matchesByDay.All(g => g.Count() <= 3));
     }
-    
+
+    [TestMethod]
+    public void GenerateFixture_ShouldStartMatchesAt14Hours()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        Assert.IsTrue(GetAllMatches().All(m => m.Date.Hour >= 14));
+    }
+
+    [TestMethod]
+    public void GenerateFixture_ShouldSeparateMatchesWith4HoursBetweenMatchesInSameDay()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        foreach (var group in _groupRepository.GetAll())
+        {
+            var matchesPerDay = group.Matches
+                .GroupBy(m => m.Date.Date)
+                .Where(g => g.Count() > 1)
+                .Where(g => g.Select(m => m.Date).Distinct().Count() > 1);
+
+            foreach (var day in matchesPerDay)
+            {
+                var times = day.Select(m => m.Date.TimeOfDay).OrderBy(t => t).ToList();
+                for (int i = 1; i < times.Count; i++)
+                    Assert.AreEqual(TimeSpan.FromHours(4), times[i] - times[i - 1]);
+            }
+        }
+    }
+
     [TestMethod]
     public void GenerateFixture_ShouldScheduleEachGroupRoundsWith3DaysBetweenRounds()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
-        var startDate = new DateTime(2026, 6, 1);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(42, startDate);
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
         foreach (var group in _groupRepository.GetAll())
         {
             var matches = group.Matches.ToList();
-
             var round1Date = matches[0].Date.Date;
             var round2Date = matches[2].Date.Date;
             var round3Date = matches[4].Date.Date;
@@ -354,334 +235,388 @@ public class FixtureServiceTests
             Assert.AreEqual(round2Date.AddDays(3), round3Date);
         }
     }
-   
-    [TestMethod]
-    public void GenerateFixture_WithGroupStage_ShouldScheduleLastRoundMatchesAtSameDateAndTime()
-    {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
 
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+    [TestMethod]
+    public void GenerateFixture_ShouldScheduleLastRoundMatchesAtSameDateAndTime()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
         foreach (var group in _groupRepository.GetAll())
         {
             var matches = group.Matches.ToList();
-
             Assert.AreEqual(matches[4].Date, matches[5].Date);
         }
     }
-    
+
+    [TestMethod]
+    public void GenerateFixture_ShouldScheduleGroupsWithSevenDayOffset()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        var groups = _groupRepository.GetAll().OrderBy(g => g.Label).ToList();
+
+        for (int i = 0; i < groups.Count; i++)
+        {
+            var expectedStart = DefaultStartDate.Date.AddDays(i * 7);
+            var firstMatchDate = groups[i].Matches.Min(m => m.Date.Date);
+            Assert.AreEqual(expectedStart, firstMatchDate);
+        }
+    }
+
     [TestMethod]
     public void GenerateFixture_WithNoStartDate_ShouldUseDefaultStartDate()
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(48);
+        var service = BuildFixtureServiceReady();
 
-        fixtureService.GenerateFixture(42);
+        service.GenerateFixture(DefaultSeed);
 
-        var firstMatchDate = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
-            .Min(m => m.Date);
-
+        var firstMatchDate = GetAllMatches().Min(m => m.Date);
         Assert.AreEqual(new DateTime(2026, 6, 1, 14, 0, 0), firstMatchDate);
     }
-    
+
+    // ─── GenerateFixture — estadios ───────────────────────────────────────────
+
+    [TestMethod]
+    public void GenerateFixture_ShouldAssignStadiumsInCircularOrder()
+    {
+        var service = BuildFixtureServiceReady();
+
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        var allMatches = GetAllMatches().ToList();
+        var expectedStadiums = Enumerable.Range(0, RequiredStadiumCount)
+            .Select(i => $"STADIUM_{i}")
+            .OrderBy(s => s)
+            .ToList();
+
+        Assert.IsTrue(allMatches.All(m => expectedStadiums.Contains(m.Stadium.Name)));
+        for (int i = 0; i < allMatches.Count; i++)
+            Assert.AreEqual(expectedStadiums[i % expectedStadiums.Count], allMatches[i].Stadium.Name);
+    }
+
+    // ─── GenerateFixture — determinismo ───────────────────────────────────────
+
+    [TestMethod]
+    public void GenerateFixture_WithSameSeed_ShouldProduceSameGroupAssignment()
+    {
+        var service1 = BuildFixtureServiceReady();
+        service1.GenerateFixture(DefaultSeed, DefaultStartDate);
+        var teams1 = GetTeamNamesOrderedByGroup();
+
+        var service2 = BuildFixtureServiceReady();
+        service2.GenerateFixture(DefaultSeed, DefaultStartDate);
+        var teams2 = GetTeamNamesOrderedByGroup();
+
+        CollectionAssert.AreEqual(teams1, teams2);
+    }
+
     [TestMethod]
     public void GenerateFixture_WithDifferentSeeds_ShouldProduceDifferentGroupAssignment()
     {
-        var service1 = CreateFixtureServiceReadyWithPotsWithTiedRankings();
-        service1.GenerateFixture(1, new DateTime(2026, 6, 1));
-        var teams1 = _groupRepository.GetAll()
-            .OrderBy(g => g.Label)
-            .SelectMany(g => g.Teams.Select(t => t.Name))
-            .ToList();
+        var service1 = BuildFixtureServiceReadyWithTiedRankings();
+        service1.GenerateFixture(seed: 1, DefaultStartDate);
+        var teams1 = GetTeamNamesOrderedByGroup();
 
-        var service2 = CreateFixtureServiceReadyWithPotsWithTiedRankings();
-        service2.GenerateFixture(99, new DateTime(2026, 6, 1));
-        var teams2 = _groupRepository.GetAll()
-            .OrderBy(g => g.Label)
-            .SelectMany(g => g.Teams.Select(t => t.Name))
-            .ToList();
+        var service2 = BuildFixtureServiceReadyWithTiedRankings();
+        service2.GenerateFixture(seed: 99, DefaultStartDate);
+        var teams2 = GetTeamNamesOrderedByGroup();
 
         CollectionAssert.AreNotEqual(teams1, teams2);
     }
-    
 
-[TestMethod]
-public void GenerateFixture_ShouldStartMatchesAt14Hours()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
+    // ─── CanGenerateFixture ───────────────────────────────────────────────────
 
-    fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-    var allMatches = _groupRepository.GetAll()
-        .SelectMany(g => g.Matches)
-        .ToList();
-
-    Assert.IsTrue(allMatches.All(m => m.Date.Hour >= 14));
-}
-
-[TestMethod]
-public void GenerateFixture_ShouldSeparateMatchesWith4HoursBetweenMatchesInSameDay()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-    fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-    foreach (var group in _groupRepository.GetAll())
+    [TestMethod]
+    public void CanGenerateFixture_WithAllConditionsMet_ShouldReturnTrue()
     {
-        var matchesPerDay = group.Matches
-            .GroupBy(m => m.Date.Date)
-            .Where(g => g.Count() > 1)
-            .Where(g => g.Select(m => m.Date).Distinct().Count() > 1);
+        var service = BuildFixtureServiceReady();
 
-        foreach (var day in matchesPerDay)
-        {
-            var times = day.Select(m => m.Date.TimeOfDay).OrderBy(t => t).ToList();
-            for (int i = 1; i < times.Count; i++)
-                Assert.AreEqual(TimeSpan.FromHours(4), times[i] - times[i - 1]);
-        }
+        Assert.IsTrue(service.CanGenerateFixture());
     }
-}
 
-[TestMethod]
-public void GenerateFixture_ShouldAssignStadiumsInCircularOrder()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-
-    fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-    var allMatches = _groupRepository.GetAll()
-        .SelectMany(g => g.Matches)
-        .ToList();
-
-    var stadiumNames = allMatches
-        .Select(m => m.Stadium.Name)
-        .ToList();
-
-    var expectedStadiums = Enumerable.Range(0, 4)
-        .Select(i => $"STADIUM_{i}")
-        .OrderBy(s => s)
-        .ToList();
-
-    // Verificar que todos los estadios usados pertenecen al conjunto esperado
-    Assert.IsTrue(stadiumNames.All(s => expectedStadiums.Contains(s)));
-
-    // Verificar distribución circular: partido N usa estadio[N % 4]
-    for (int i = 0; i < allMatches.Count; i++)
-        Assert.AreEqual(expectedStadiums[i % expectedStadiums.Count], allMatches[i].Stadium.Name);
-}
-
-[TestMethod]
-public void CanGenerateFixture_WithAllConditionsMet_ShouldReturnTrue()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-
-    Assert.IsTrue(fixtureService.CanGenerateFixture());
-}
-
-[TestMethod]
-public void GenerateFixture_WithValidData_ShouldCreate72TotalMatches()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-
-    fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-    var totalMatches = _groupRepository.GetAll()
-        .SelectMany(g => g.Matches)
-        .Count();
-
-    Assert.AreEqual(72, totalMatches);
-}
-
-[TestMethod]
-public void GenerateFixture_ShouldAssignPhaseGroupStageToAllMatches()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-
-    fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-    var allMatches = _groupRepository.GetAll()
-        .SelectMany(g => g.Matches)
-        .ToList();
-
-    Assert.IsTrue(allMatches.All(m => m.Phase == TournamentPhase.GroupStage));
-}
-
-[TestMethod]
-public void GenerateFixture_ShouldAssignGroupLabelToAllMatches()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-
-    fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-    foreach (var group in _groupRepository.GetAll())
+    [TestMethod]
+    public void CanGenerateFixture_WithLessThan48Teams_ShouldReturnFalse()
     {
-        Assert.IsTrue(group.Matches.All(m => m.Group?.Label == group.Label));
+        var service = BuildFixtureServiceWithNoTeamsAndNoStadiums();
+
+        Assert.IsFalse(service.CanGenerateFixture());
     }
-}
 
-[TestMethod]
-public void GenerateFixture_ShouldScheduleGroupsWithSevenDayOffset()
-{
-    var fixtureService = CreateFixtureServiceReadyWithPots(48);
-    var startDate = new DateTime(2026, 6, 1);
-
-    fixtureService.GenerateFixture(42, startDate);
-
-    var groups = _groupRepository.GetAll()
-        .OrderBy(g => g.Label)
-        .ToList();
-
-    for (int i = 0; i < groups.Count; i++)
+    [TestMethod]
+    public void CanGenerateFixture_WithLessThan4Stadiums_ShouldReturnFalse()
     {
-        var expectedStart = startDate.Date.AddDays(i * 7);
-        var firstMatch = groups[i].Matches.Min(m => m.Date.Date);
-        Assert.AreEqual(expectedStart, firstMatch);
+        var service = BuildFixtureServiceWith48TeamsAndNoStadiums();
+
+        Assert.IsFalse(service.CanGenerateFixture());
     }
-}
 
-[TestMethod]
-public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperationException()
-{
-    // Crear 48 equipos todos de la misma confederación no-UEFA
-    // Así los primeros 12 grupos quedan llenos y los siguientes no pueden aceptar
-    // más equipos de esa confederación
-    var groupRepo = new Repository<Group>();
-    var matchRepo = new Repository<Match>();
-    var potRepo = new Repository<Pot>();
-    _groupRepository = groupRepo;
+    [TestMethod]
+    public void CanGenerateFixture_WithExistingFixture_ShouldReturnFalse()
+    {
+        var service = BuildFixtureServiceReady();
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
 
-    var teamRepo = new Repository<Team>();
+        Assert.IsFalse(service.CanGenerateFixture());
+    }
 
-    // 48 equipos AFC: cada grupo solo admite 1, pero hay 12 grupos → 12 caben
-    // Con 48 equipos del mismo confederación no-UEFA, el pot 2 en adelante falla
-    for (int i = 1; i <= 48; i++)
-        teamRepo.Add(new Team($"AFC_{i:00}", "AFC", 1000 - i));
+    // ─── GetStadiumCount ──────────────────────────────────────────────────────
 
-    var stadiumRepo = new Repository<Stadium>();
-    var stadiumService = CreateStadiumService(stadiumRepo);
-    for (int i = 0; i < 4; i++)
-        stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
+    [TestMethod]
+    public void GetStadiumCount_WithNoStadiums_ShouldReturnZero()
+    {
+        var service = BuildFixtureServiceWithNoTeamsAndNoStadiums();
 
-    var confederationService = new ConfederationService();
-    var groupService = new GroupService(groupRepo);
-    var potService = new PotService(teamRepo, potRepo);
+        Assert.AreEqual(0, service.GetStadiumCount());
+    }
 
-    var fixtureService = new FixtureService(
-        CreateTeamService(teamRepo, confederationService),
-        stadiumService, groupService, groupRepo, matchRepo, potService);
+    [TestMethod]
+    public void GetStadiumCount_WithExistingStadiums_ShouldReturnCorrectCount()
+    {
+        var service = BuildFixtureServiceReady();
 
-    Assert.ThrowsException<InvalidOperationException>(() =>
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1)));
-}
+        Assert.AreEqual(RequiredStadiumCount, service.GetStadiumCount());
+    }
 
-    private FixtureService CreateFixtureServiceReadyWithPotsWithTiedRankings()
+    // ─── GeneratePots ─────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void GeneratePots_WithSameSeed_ShouldProduceSameTeamOrder()
+    {
+        var teamRepo1 = new Repository<Team>();
+        BuildTeamService(teamRepo1).AutoCompleteTeams(RequiredTeamCount);
+        var potService1 = new PotService(teamRepo1, new Repository<Pot>());
+        potService1.GeneratePots(DefaultSeed);
+        var order1 = potService1.GetPots()
+            .SelectMany(p => p.Teams.Select(t => t.Name))
+            .ToList();
+
+        var teamRepo2 = new Repository<Team>();
+        BuildTeamService(teamRepo2).AutoCompleteTeams(RequiredTeamCount);
+        var potService2 = new PotService(teamRepo2, new Repository<Pot>());
+        potService2.GeneratePots(DefaultSeed);
+        var order2 = potService2.GetPots()
+            .SelectMany(p => p.Teams.Select(t => t.Name))
+            .ToList();
+
+        CollectionAssert.AreEqual(order1, order2);
+    }
+
+    [TestMethod]
+    public void GeneratePots_WithDifferentSeeds_ShouldProduceDifferentTeamOrder()
+    {
+        var teamRepo1 = BuildTeamRepoWithTiedRankings();
+        var potService1 = new PotService(teamRepo1, new Repository<Pot>());
+        potService1.GeneratePots(seed: 48);
+        var order1 = potService1.GetPots()
+            .SelectMany(p => p.Teams.Select(t => t.Name))
+            .ToList();
+
+        var teamRepo2 = BuildTeamRepoWithTiedRankings();
+        var potService2 = new PotService(teamRepo2, new Repository<Pot>());
+        potService2.GeneratePots(seed: 99);
+        var order2 = potService2.GetPots()
+            .SelectMany(p => p.Teams.Select(t => t.Name))
+            .ToList();
+
+        CollectionAssert.AreNotEqual(order1, order2);
+    }
+
+    // ─── SimulateGroupStage ───────────────────────────────────────────────────
+
+    [TestMethod]
+    public void SimulateGroupStage_WithNoFixtureGenerated_ShouldThrowInvalidOperationException()
+    {
+        var service = BuildFixtureServiceWithNoTeamsAndNoStadiums();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            service.SimulateGroupStage(DefaultSeed));
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_ShouldSetResultOnAllMatches()
+    {
+        var service = BuildFixtureServiceReady();
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        service.SimulateGroupStage(DefaultSeed);
+
+        Assert.IsTrue(GetAllMatches().All(m => m.HomeGoals.HasValue && m.AwayGoals.HasValue));
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_ShouldProduceAtLeastOneMatchWithWinner()
+    {
+        var service = BuildFixtureServiceReady();
+        service.GenerateFixture(DefaultSeed, DefaultStartDate);
+
+        service.SimulateGroupStage(DefaultSeed);
+
+        Assert.IsTrue(GetAllMatches().Any(m => m.Winner != null));
+    }
+
+    [TestMethod]
+    public void SimulateGroupStage_WithSameSeed_ShouldProduceSameWinners()
+    {
+        var service1 = BuildFixtureServiceReady();
+        service1.GenerateFixture(DefaultSeed, DefaultStartDate);
+        service1.SimulateGroupStage(DefaultSeed);
+        var winners1 = GetAllMatches().Select(m => m.Winner?.Name).ToList();
+
+        var service2 = BuildFixtureServiceReady();
+        service2.GenerateFixture(DefaultSeed, DefaultStartDate);
+        service2.SimulateGroupStage(DefaultSeed);
+        var winners2 = GetAllMatches().Select(m => m.Winner?.Name).ToList();
+
+        CollectionAssert.AreEqual(winners1, winners2);
+    }
+
+    // ─── Builders ─────────────────────────────────────────────────────────────
+
+    private FixtureService BuildFixtureServiceWithNoTeamsAndNoStadiums()
     {
         var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        var potRepo = new Repository<Pot>();
+        _groupRepository = groupRepo;
+
+        return BuildFixtureService(
+            teamRepo: new Repository<Team>(),
+            stadiumRepo: new Repository<Stadium>(),
+            groupRepo: groupRepo,
+            potRepo: null);
+    }
+
+    private FixtureService BuildFixtureServiceWith48TeamsAndNoStadiums()
+    {
+        var groupRepo = new Repository<Group>();
         _groupRepository = groupRepo;
 
         var teamRepo = new Repository<Team>();
-        var confederationService = new ConfederationService();
+        AddTeamsWithDistinctConfederations(teamRepo);
 
-        var slots = new Dictionary<string, int>
-        {
-            { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
-            { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
-        };
-
-        foreach (var (conf, count) in slots)
-            for (int i = 1; i <= count; i++)
-                teamRepo.Add(new Team($"{conf}_{i:00}", conf, 1000));
-
-        var stadiumRepo = new Repository<Stadium>();
-        var stadiumService = CreateStadiumService(stadiumRepo);
-        for (int i = 0; i < 4; i++)
-            stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
-
-        var groupService = new GroupService(groupRepo);
-        var potService = new PotService(teamRepo, potRepo);
-
-        return new FixtureService(
-            CreateTeamService(teamRepo, confederationService),
-            stadiumService, groupService, groupRepo, matchRepo, potService);
+        return BuildFixtureService(
+            teamRepo: teamRepo,
+            stadiumRepo: new Repository<Stadium>(),
+            groupRepo: groupRepo,
+            potRepo: null);
     }
 
-    private static TeamService CreateTeamService(
-        IRepository<Team> teamRepository,
-        IConfederationService confederationService)
+    private FixtureService BuildFixtureServiceReady()
+    {
+        var groupRepo = new Repository<Group>();
+        _groupRepository = groupRepo;
+
+        var teamRepo = new Repository<Team>();
+        AddTeamsWithDistinctConfederations(teamRepo);
+
+        var stadiumRepo = new Repository<Stadium>();
+        AddStadiums(stadiumRepo, RequiredStadiumCount);
+
+        return BuildFixtureService(teamRepo, stadiumRepo, groupRepo, new Repository<Pot>());
+    }
+
+    private FixtureService BuildFixtureServiceReadyWithTiedRankings()
+    {
+        var groupRepo = new Repository<Group>();
+        _groupRepository = groupRepo;
+
+        var teamRepo = BuildTeamRepoWithTiedRankings();
+
+        var stadiumRepo = new Repository<Stadium>();
+        AddStadiums(stadiumRepo, RequiredStadiumCount);
+
+        return BuildFixtureService(teamRepo, stadiumRepo, groupRepo, new Repository<Pot>());
+    }
+
+    private FixtureService BuildFixtureServiceWithAllTeamsFromSameNonUefaConfederation()
+    {
+        var groupRepo = new Repository<Group>();
+        _groupRepository = groupRepo;
+
+        var teamRepo = new Repository<Team>();
+        for (int i = 1; i <= RequiredTeamCount; i++)
+            teamRepo.Add(new Team($"AFC_{i:00}", "AFC", 1000 - i));
+
+        var stadiumRepo = new Repository<Stadium>();
+        AddStadiums(stadiumRepo, RequiredStadiumCount);
+
+        return BuildFixtureService(teamRepo, stadiumRepo, groupRepo, new Repository<Pot>());
+    }
+
+    private static FixtureService BuildFixtureService(
+        IRepository<Team> teamRepo,
+        IRepository<Stadium> stadiumRepo,
+        IRepository<Group> groupRepo,
+        IRepository<Pot>? potRepo)
+    {
+        var teamService = BuildTeamService(teamRepo);
+        var stadiumService = BuildStadiumService(stadiumRepo);
+        var groupService = new GroupService(groupRepo);
+        var matchRepo = new Repository<Match>();
+        var potService = potRepo is not null
+            ? new PotService(teamRepo, potRepo)
+            : null;
+
+        return new FixtureService(
+            teamService, stadiumService, groupService,
+            groupRepo, matchRepo, potService!);
+    }
+
+    private static TeamService BuildTeamService(IRepository<Team> teamRepository)
     {
         var auditService = new AuditService(new Repository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
-        return new TeamService(teamRepository, confederationService, auditService, sessionService);
+        return new TeamService(teamRepository, new ConfederationService(), auditService, sessionService);
     }
 
-    private static StadiumService CreateStadiumService(IRepository<Stadium> stadiumRepository)
+    private static StadiumService BuildStadiumService(IRepository<Stadium> stadiumRepository)
     {
         var auditService = new AuditService(new Repository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
         return new StadiumService(stadiumRepository, auditService, sessionService);
     }
-    [TestMethod]
-    public void SimulateGroupStage_WithNoFixtureGenerated_ShouldThrowInvalidOperationException()
-    {
-        var fixtureService = CreateFixtureService();
 
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            fixtureService.SimulateGroupStage(42));
+    private static Repository<Team> BuildTeamRepoWithTiedRankings()
+    {
+        var repo = new Repository<Team>();
+        var slots = new Dictionary<string, int>
+        {
+            { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
+            { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
+        };
+        foreach (var (conf, count) in slots)
+            for (int i = 1; i <= count; i++)
+                repo.Add(new Team($"{conf}_{i:00}", conf, 1000));
+        return repo;
     }
-    
-    [TestMethod]
-    public void SimulateGroupStage_ShouldSetResultOnAllMatches()
+
+    private static void AddTeamsWithDistinctConfederations(IRepository<Team> teamRepo)
     {
-        var fixtureService = CreateFixtureServiceReadyWithPots(42);
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
+        var slots = new Dictionary<string, int>
+        {
+            { "UEFA", 16 }, { "CONMEBOL", 7 }, { "CONCACAF", 7 },
+            { "CAF", 9 }, { "AFC", 8 }, { "OFC", 1 }
+        };
+        int ranking = 1500;
+        foreach (var (conf, count) in slots)
+            for (int i = 1; i <= count; i++)
+                teamRepo.Add(new Team($"{conf}_{i:00}", conf, ranking--));
+    }
 
-        fixtureService.SimulateGroupStage(42);
+    private static void AddStadiums(IRepository<Stadium> stadiumRepo, int count)
+    {
+        for (int i = 0; i < count; i++)
+            stadiumRepo.Add(new Stadium($"STADIUM_{i}", "CITY", null, 50000));
+    }
 
-        var allMatches = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
+    private IEnumerable<Match> GetAllMatches() =>
+        _groupRepository.GetAll().SelectMany(g => g.Matches);
+
+    private List<string> GetTeamNamesOrderedByGroup() =>
+        _groupRepository.GetAll()
+            .OrderBy(g => g.Label)
+            .SelectMany(g => g.Teams.Select(t => t.Name))
             .ToList();
-
-        Assert.IsTrue(allMatches.All(m => m.HomeGoals.HasValue && m.AwayGoals.HasValue));
-    }
-    
-    [TestMethod]
-    public void SimulateGroupStage_ShouldProduceWinsNotOnlyDraws()
-    {
-        var fixtureService = CreateFixtureServiceReadyWithPots(42);
-        fixtureService.GenerateFixture(42, new DateTime(2026, 6, 1));
-
-        fixtureService.SimulateGroupStage(42);
-
-        // Con 0,0 hardcoded todos tienen puntos múltiplos de 1 (solo empates)
-        // Con simulación real debe haber al menos un partido con ganador
-        var anyMatchWithWinner = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
-            .Any(m => m.Winner != null);
-
-        Assert.IsTrue(anyMatchWithWinner);
-    }
-    
-    
-    [TestMethod]
-    public void SimulateGroupStage_WithSameSeed_ShouldProduceSameWinners()
-    {
-        var service1 = CreateFixtureServiceReadyWithPots(42);
-        service1.GenerateFixture(42, new DateTime(2026, 6, 1));
-        service1.SimulateGroupStage(42);
-        var winners1 = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
-            .Select(m => m.Winner?.Name)
-            .ToList();
-
-        var service2 = CreateFixtureServiceReadyWithPots(42);
-        service2.GenerateFixture(42, new DateTime(2026, 6, 1));
-        service2.SimulateGroupStage(42);
-        var winners2 = _groupRepository.GetAll()
-            .SelectMany(g => g.Matches)
-            .Select(m => m.Winner?.Name)
-            .ToList();
-
-        CollectionAssert.AreEqual(winners1, winners2);
-    }
 }
