@@ -15,8 +15,8 @@ public class AuditService : IAuditService
 
     public void Log(string actorEmail, string action, string details)
     {
-        var log = new AuditLog(actorEmail, action, details);
-        _repository.Add(log);
+        var auditLog = new AuditLog(actorEmail, action, details);
+        _repository.Add(auditLog);
     }
 
     public IEnumerable<AuditLog> GetAll()
