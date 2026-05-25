@@ -20,7 +20,7 @@ public class GroupServiceTests
     [TestInitialize]
     public void Setup()
     {
-        IRepository<Group> repository = new Repository<Group>();
+        IRepository<Group> repository = new FakeRepository<Group>();
         _service = new GroupService(repository);
     }
     

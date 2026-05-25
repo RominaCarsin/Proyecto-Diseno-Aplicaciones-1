@@ -23,9 +23,9 @@ public class TeamServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<Team>();
+        _repository = new FakeRepository<Team>();
         _confederationService = new ConfederationService();
-        var auditService = new AuditService(new Repository<AuditLog>());
+        var auditService = new AuditService(new FakeRepository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
 
         _service = new TeamService(_repository, _confederationService, auditService, sessionService);
@@ -240,8 +240,8 @@ public class TeamServiceTests
 
     private static TeamService BuildTeamService()
     {
-        var repository = new Repository<Team>();
-        var auditService = new AuditService(new Repository<AuditLog>());
+        var repository = new FakeRepository<Team>();
+        var auditService = new AuditService(new FakeRepository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
         var confederationService = new ConfederationService();
         return new TeamService(repository, confederationService, auditService, sessionService);

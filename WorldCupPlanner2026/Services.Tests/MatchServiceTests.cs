@@ -34,9 +34,9 @@ public class MatchServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _matchRepository = new Repository<Match>();
-        _groupRepository = new Repository<Group>();
-        _auditRepository = new Repository<AuditLog>();
+        _matchRepository = new FakeRepository<Match>();
+        _groupRepository = new FakeRepository<Group>();
+        _auditRepository = new FakeRepository<AuditLog>();
         _auditService    = new AuditService(_auditRepository);
         var authState    = new AuthStateService();
         _sessionService  = new SessionService(null!, authState);

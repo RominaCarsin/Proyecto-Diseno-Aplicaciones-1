@@ -24,16 +24,16 @@ public class FixtureServiceTests
 
     private FixtureService CreateFixtureService()
     {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
+        var groupRepo = new FakeRepository<Group>();
+        var matchRepo = new FakeRepository<Match>();
         _groupRepository = groupRepo;
         _matchRepository = matchRepo;
 
-        var teamRepo = new Repository<Team>();
+        var teamRepo = new FakeRepository<Team>();
         var confederationService = new ConfederationService();
         var teamService = CreateTeamService(teamRepo, confederationService);
 
-        var stadiumRepo = new Repository<Stadium>();
+        var stadiumRepo = new FakeRepository<Stadium>();
         var stadiumService = CreateStadiumService(stadiumRepo);
 
         var groupService = new GroupService(groupRepo);
@@ -52,18 +52,18 @@ public class FixtureServiceTests
 
     private FixtureService CreateFixtureServiceWith48TeamsNoStadiums()
     {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
+        var groupRepo = new FakeRepository<Group>();
+        var matchRepo = new FakeRepository<Match>();
         _groupRepository = groupRepo;
 
-        var teamRepo = new Repository<Team>();
+        var teamRepo = new FakeRepository<Team>();
         var confederationService = new ConfederationService();
         var teamService = CreateTeamService(teamRepo, confederationService);
 
         for (int i = 0; i < 48; i++)
             teamRepo.Add(new Team($"TEAM_{i:00}", "UEFA", 1000 + i));
 
-        var stadiumRepo = new Repository<Stadium>();
+        var stadiumRepo = new FakeRepository<Stadium>();
         var stadiumService = CreateStadiumService(stadiumRepo);
 
         var groupService = new GroupService(groupRepo);
@@ -175,20 +175,20 @@ public class FixtureServiceTests
     [TestMethod]
     public void GeneratePots_WithSameSeed_ShouldProduceSameOrder()
     {
-        var teamRepo1 = new  Repository<Team>();
+        var teamRepo1 = new  FakeRepository<Team>();
         var teamService = CreateTeamService(teamRepo1, new ConfederationService());
         teamService.AutoCompleteTeams(48);
         
-        var potRepo1 = new Repository<Pot>();
+        var potRepo1 = new FakeRepository<Pot>();
         var potService1 = new PotService(teamRepo1, potRepo1);
         potService1.GeneratePots(48);
         var order1 = potRepo1.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
 
-        var teamRepo2 = new  Repository<Team>();
+        var teamRepo2 = new  FakeRepository<Team>();
         var teamService2 = CreateTeamService(teamRepo2, new ConfederationService());
         teamService2.AutoCompleteTeams(48);
         
-        var potRepo2 = new Repository<Pot>();
+        var potRepo2 = new FakeRepository<Pot>();
         var potService2 = new PotService(teamRepo2, potRepo2);
         potService2.GeneratePots(48);
         var order2 = potRepo2.GetAll().SelectMany(p => p.Teams.Select(t => t.Name)).ToList();
@@ -201,7 +201,7 @@ public class FixtureServiceTests
     {
         var teamRepo1 = CreateTeamRepoWithTiedRankings();
 
-        var potRepo1 = new Repository<Pot>();
+        var potRepo1 = new FakeRepository<Pot>();
         var potService1 = new PotService(teamRepo1, potRepo1);
 
         potService1.GeneratePots(48);
@@ -212,7 +212,7 @@ public class FixtureServiceTests
 
         var teamRepo2 = CreateTeamRepoWithTiedRankings();
 
-        var potRepo2 = new Repository<Pot>();
+        var potRepo2 = new FakeRepository<Pot>();
         var potService2 = new PotService(teamRepo2, potRepo2);
 
         potService2.GeneratePots(99);
@@ -224,9 +224,9 @@ public class FixtureServiceTests
         CollectionAssert.AreNotEqual(order1, order2);
     }
     
-    private Repository<Team> CreateTeamRepoWithTiedRankings()
+    private FakeRepository<Team> CreateTeamRepoWithTiedRankings()
     {
-        var repo = new Repository<Team>();
+        var repo = new FakeRepository<Team>();
 
         for (int i = 1; i <= 48; i++)
         {
@@ -291,13 +291,13 @@ public class FixtureServiceTests
 
     private FixtureService CreateFixtureServiceReadyWithPots(int seed = 42)
     {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        var potRepo = new Repository<Pot>();
+        var groupRepo = new FakeRepository<Group>();
+        var matchRepo = new FakeRepository<Match>();
+        var potRepo = new FakeRepository<Pot>();
         _groupRepository = groupRepo;
         _matchRepository = matchRepo;
 
-        var teamRepo = new Repository<Team>();
+        var teamRepo = new FakeRepository<Team>();
         var confederationService = new ConfederationService();
         var teamService = CreateTeamService(teamRepo, confederationService);
 
@@ -312,7 +312,7 @@ public class FixtureServiceTests
             for (int i = 1; i <= count; i++)
                 teamRepo.Add(new Team($"{conf}_{i:00}", conf, ranking--));
 
-        var stadiumRepo = new Repository<Stadium>();
+        var stadiumRepo = new FakeRepository<Stadium>();
         var stadiumService = CreateStadiumService(stadiumRepo);
         for (int i = 0; i < 4; i++)
             stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
@@ -532,19 +532,19 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
     // Crear 48 equipos todos de la misma confederación no-UEFA
     // Así los primeros 12 grupos quedan llenos y los siguientes no pueden aceptar
     // más equipos de esa confederación
-    var groupRepo = new Repository<Group>();
-    var matchRepo = new Repository<Match>();
-    var potRepo = new Repository<Pot>();
+    var groupRepo = new FakeRepository<Group>();
+    var matchRepo = new FakeRepository<Match>();
+    var potRepo = new FakeRepository<Pot>();
     _groupRepository = groupRepo;
 
-    var teamRepo = new Repository<Team>();
+    var teamRepo = new FakeRepository<Team>();
 
     // 48 equipos AFC: cada grupo solo admite 1, pero hay 12 grupos → 12 caben
     // Con 48 equipos del mismo confederación no-UEFA, el pot 2 en adelante falla
     for (int i = 1; i <= 48; i++)
         teamRepo.Add(new Team($"AFC_{i:00}", "AFC", 1000 - i));
 
-    var stadiumRepo = new Repository<Stadium>();
+    var stadiumRepo = new FakeRepository<Stadium>();
     var stadiumService = CreateStadiumService(stadiumRepo);
     for (int i = 0; i < 4; i++)
         stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
@@ -563,12 +563,12 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
 
     private FixtureService CreateFixtureServiceReadyWithPotsWithTiedRankings()
     {
-        var groupRepo = new Repository<Group>();
-        var matchRepo = new Repository<Match>();
-        var potRepo = new Repository<Pot>();
+        var groupRepo = new FakeRepository<Group>();
+        var matchRepo = new FakeRepository<Match>();
+        var potRepo = new FakeRepository<Pot>();
         _groupRepository = groupRepo;
 
-        var teamRepo = new Repository<Team>();
+        var teamRepo = new FakeRepository<Team>();
         var confederationService = new ConfederationService();
 
         var slots = new Dictionary<string, int>
@@ -581,7 +581,7 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
             for (int i = 1; i <= count; i++)
                 teamRepo.Add(new Team($"{conf}_{i:00}", conf, 1000));
 
-        var stadiumRepo = new Repository<Stadium>();
+        var stadiumRepo = new FakeRepository<Stadium>();
         var stadiumService = CreateStadiumService(stadiumRepo);
         for (int i = 0; i < 4; i++)
             stadiumRepo.Add(new Stadium($"STADIUM_{i}", "City", null, 50000));
@@ -598,14 +598,14 @@ public void GenerateFixture_WhenNoGroupCanAcceptTeam_ShouldThrowInvalidOperation
         IRepository<Team> teamRepository,
         IConfederationService confederationService)
     {
-        var auditService = new AuditService(new Repository<AuditLog>());
+        var auditService = new AuditService(new FakeRepository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
         return new TeamService(teamRepository, confederationService, auditService, sessionService);
     }
 
     private static StadiumService CreateStadiumService(IRepository<Stadium> stadiumRepository)
     {
-        var auditService = new AuditService(new Repository<AuditLog>());
+        var auditService = new AuditService(new FakeRepository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
         return new StadiumService(stadiumRepository, auditService, sessionService);
     }

@@ -18,6 +18,10 @@ public class Match
     private static int _nextId = 1;
 
     public int Id { get; private set; }
+    
+    public int StadiumId { get; private set; }
+    public int HomeTeamId { get; private set; }
+    public int AwayTeamId { get; private set; }
     public DateTime Date { get; private set; }
     public Stadium Stadium { get; private set; }
     public Team HomeTeam { get; private set; }
@@ -34,6 +38,7 @@ public class Match
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
 
+    private Match() {}
     public Match(
         DateTime date,
         Stadium? stadium,

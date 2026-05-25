@@ -1,23 +1,33 @@
 ﻿using IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace Repository;
 
-public class Repository<T> : IRepository<T>
+public class Repository<T> : IRepository<T> where T : class
 {
-    private readonly List<T> _entities = new();
+    private readonly AppDbContext _context;
+    private readonly DbSet<T> _dbSet;
 
+    public Repository(AppDbContext context)
+    {
+        _context = context;
+        _dbSet = _context.Set<T>();
+    }
+    
     public void Add(T entity)
     {
-        _entities.Add(entity);
+        _dbSet.Add(entity);
+        _context.SaveChanges();
     }
 
     public IEnumerable<T> GetAll()
     {
-        return _entities;
+        return _dbSet.ToList();
     }
     
     public void Delete(T entity)
     {
-        _entities.Remove(entity);
+        _dbSet.Remove(entity);
+        _context.SaveChanges();
     }
 }

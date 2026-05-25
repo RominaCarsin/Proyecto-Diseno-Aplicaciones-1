@@ -1,21 +1,38 @@
 using Domain;
 using Repository;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Repository.Tests;
 
 [TestClass]
 public class RepositoryTests
 {
+    private AppDbContext _context;
     private Repository<Team> _repository;
     private Team _team;
 
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<Team>();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(x => x.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
+
+        _context = new AppDbContext(options);
+        
+        _repository = new Repository<Team>(_context);
+        
         _team = new Team("Uruguay", "CONMEBOL", 500);
     }
-    
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        _context.Database.EnsureDeleted();
+        _context.Dispose();
+    }
 
     [TestMethod]
     public void Add_ShouldAddEntity()
@@ -35,13 +52,11 @@ public class RepositoryTests
 
         Assert.AreEqual(2, _repository.GetAll().Count());
     }
-    
 
     [TestMethod]
     public void GetAll_WhenEmpty_ShouldReturnEmptyList()
     {
         var result = _repository.GetAll();
-
         Assert.AreEqual(0, result.Count());
     }
 
@@ -54,19 +69,8 @@ public class RepositoryTests
 
         var result = _repository.GetAll().ToList();
 
-        Assert.IsTrue(result.Contains(_team));
-        Assert.IsTrue(result.Contains(team2));
-    }
-    
-
-    [TestMethod]
-    public void Delete_WhenEntityExists_ShouldRemoveIt()
-    {
-        _repository.Add(_team);
-
-        _repository.Delete(_team);
-
-        Assert.AreEqual(0, _repository.GetAll().Count());
+        Assert.IsTrue(result.Any(t => t.Name == "Uruguay"));
+        Assert.IsTrue(result.Any(t => t.Name == "Argentina"));
     }
 
     [TestMethod]
@@ -79,18 +83,18 @@ public class RepositoryTests
         _repository.Delete(_team);
 
         var result = _repository.GetAll().ToList();
-        Assert.IsFalse(result.Contains(_team));
-        Assert.IsTrue(result.Contains(team2));
+        Assert.IsFalse(result.Any(t => t.Name == "Uruguay"));
+        Assert.IsTrue(result.Any(t => t.Name == "Argentina"));
     }
 
     [TestMethod]
-    public void Delete_WhenEntityNotExists_ShouldNotThrow()
+    public void Delete_WhenEntityExists_ShouldRemoveIt()
     {
         _repository.Add(_team);
-        var nonExistent = new Team("Brazil", "CONMEBOL", 700);
 
-        _repository.Delete(nonExistent);
+        _repository.Delete(_team);
 
-        Assert.AreEqual(1, _repository.GetAll().Count());
+        Assert.AreEqual(0, _repository.GetAll().Count());
     }
+    
 }

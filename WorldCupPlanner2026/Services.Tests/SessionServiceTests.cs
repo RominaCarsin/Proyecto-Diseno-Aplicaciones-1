@@ -22,8 +22,8 @@ public class SessionServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<User>();
-        var auditRepository = new Repository<AuditLog>();
+        _repository = new FakeRepository<User>();
+        var auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
         var authState = new AuthStateService();
 

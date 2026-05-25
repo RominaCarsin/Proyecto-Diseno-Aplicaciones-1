@@ -18,8 +18,8 @@ public class PotServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _teamRepository = new Repository<Team>();
-        _potRepository = new Repository<Pot>();
+        _teamRepository = new FakeRepository<Team>();
+        _potRepository = new FakeRepository<Pot>();
         _service = new PotService(_teamRepository, _potRepository);
     }
     
@@ -145,8 +145,8 @@ public class PotServiceTests
 
     private static PotService BuildServiceWithTiedRankingTeams()
     {
-        var teamRepo = new Repository<Team>();
-        var potRepo = new Repository<Pot>();
+        var teamRepo = new FakeRepository<Team>();
+        var potRepo = new FakeRepository<Pot>();
         AddTeamsWithTiedRankings(teamRepo, count: 48);
         return new PotService(teamRepo, potRepo);
     }

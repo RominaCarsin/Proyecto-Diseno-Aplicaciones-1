@@ -29,6 +29,7 @@ public class User
     private const string PasswordMissingDigitErrorMessage = "La contraseña debe contener un número.";
     private const string PasswordMissingSpecialCharErrorMessage = "La contraseña debe contener un carácter especial.";
     
+    public int Id { get; private set; }
     public string Name { get; private set; }
     public string Surname { get; private set; }
     public string Email { get; private set; }
@@ -36,6 +37,7 @@ public class User
     public string PasswordHash { get; private set; } = string.Empty;
     public Role Roles { get; private set; }
 
+    private User(){}
     public User(
         string name,
         string surname,

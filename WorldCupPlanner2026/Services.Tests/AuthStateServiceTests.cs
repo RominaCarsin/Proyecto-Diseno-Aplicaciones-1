@@ -22,8 +22,8 @@ public class AuthStateServiceTests
         _authStateService = new AuthStateService();
         _notifyCount = 0;
 
-        var userRepository = new Repository<User>();
-        var auditRepository = new Repository<AuditLog>();
+        var userRepository = new FakeRepository<User>();
+        var auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
 
         _userService = new UserService(userRepository, auditService);

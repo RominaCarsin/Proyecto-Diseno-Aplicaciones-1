@@ -190,8 +190,8 @@ public class TeamImportServiceTests
 
     private void CreateServiceWithDefaultSession()
     {
-        var teamRepository = new Repository<Team>();
-        _auditRepository = new Repository<AuditLog>();
+        var teamRepository = new FakeRepository<Team>();
+        _auditRepository = new FakeRepository<AuditLog>();
 
         var auditService = new AuditService(_auditRepository);
         var sessionService = new SessionService(null!, new AuthStateService());

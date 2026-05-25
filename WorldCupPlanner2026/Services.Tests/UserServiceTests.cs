@@ -27,8 +27,8 @@ public class UserServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<User>();
-        var auditRepository = new Repository<AuditLog>();
+        _repository = new FakeRepository<User>();
+        var auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
         _service = new UserService(_repository, auditService);
     }

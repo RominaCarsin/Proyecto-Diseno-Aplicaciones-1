@@ -13,8 +13,8 @@ public class StadiumServiceTests
     [TestInitialize]
     public void SetUp()
     {
-        IRepository<Stadium> repository = new Repository<Stadium>();
-        IRepository<AuditLog> auditRepository = new Repository<AuditLog>();
+        IRepository<Stadium> repository = new FakeRepository<Stadium>();
+        IRepository<AuditLog> auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
         var authState = new AuthStateService();
         var sessionService = new SessionService(null!, authState);
