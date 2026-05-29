@@ -34,7 +34,7 @@ public class AuditLogTests
         var firstLog = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
         var secondLog = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
 
-        Assert.AreEqual(firstLog.Id + 1, secondLog.Id);
+        Assert.AreEqual(firstLog.AuditLogId + 1, secondLog.AuditLogId);
     }
 
     [TestMethod]

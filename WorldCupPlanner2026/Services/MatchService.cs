@@ -131,13 +131,13 @@ public class MatchService : IMatchService
     }
 
     private Match FindMatchByIdOrThrow(int matchId) =>
-        _repository.GetAll().FirstOrDefault(match => match.Id == matchId)
+        _repository.GetAll().FirstOrDefault(match => match.MatchId == matchId)
             ?? throw new ArgumentException(MatchNotFoundErrorMessage);
 
     private void ValidateStadiumAvailability(int? excludeMatchId, Stadium  stadium, DateTime matchDate)
     {
         var matchesInSameStadiumAndDay = _repository.GetAll()
-            .Where(m => excludeMatchId == null || m.Id != excludeMatchId.Value)
+            .Where(m => excludeMatchId == null || m.MatchId != excludeMatchId.Value)
             .Where(m => m.Stadium.Name == stadium.Name)
             .Where(m => m.Date.Date    == matchDate.Date)
             .ToList();

@@ -19,7 +19,7 @@ public static class MatchMapper
     public static MatchResponse ToResponse(Match match) =>
         new()
         {
-            Id = match.Id,
+            Id = match.MatchId,
             Date = match.Date,
             Stadium = StadiumMapper.FromEntity(match.Stadium),
             HomeTeam = TeamMapper.FromEntity(match.HomeTeam),

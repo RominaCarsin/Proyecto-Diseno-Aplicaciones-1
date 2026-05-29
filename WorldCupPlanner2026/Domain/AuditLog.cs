@@ -1,11 +1,13 @@
-﻿namespace Domain;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Domain;
 
 public class AuditLog
 {
     private const string ActorEmailRequiredErrorMessage = "El email del actor no puede estar vacío.";
     private const string ActionRequiredErrorMessage = "La acción no puede estar vacía.";
-
-    public int Id { get; private set; }
+    
+    public int AuditLogId { get; private set; }
     public DateTime Timestamp { get; private set; }
     public string ActorEmail { get; private set; }
     public string Action { get; private set; }

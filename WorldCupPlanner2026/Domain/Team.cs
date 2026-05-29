@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Domain;
 
 public class Team
@@ -16,8 +18,7 @@ public class Team
     {
         "AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"
     };
-
-    public int Id { get; private set; }
+    
     public string Name { get; private set; }
     public string ConfederationName { get; private set; }
     public int RankingFifa { get; private set; }

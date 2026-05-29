@@ -127,7 +127,7 @@ public class GroupService : IGroupService
             ?? throw new ArgumentException($"El equipo '{teamName}' no se encontró en el grupo.");
 
     private static Match FindMatchInGroupOrThrow(Group group, int matchId) =>
-        group.Matches.FirstOrDefault(m => m.Id == matchId)
+        group.Matches.FirstOrDefault(m => m.MatchId == matchId)
             ?? throw new ArgumentException(MatchNotFoundErrorMessage);
 
     private static IEnumerable<Team> SortTeams(IEnumerable<Team> teams) =>

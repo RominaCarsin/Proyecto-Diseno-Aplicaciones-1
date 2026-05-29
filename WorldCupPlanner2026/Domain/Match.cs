@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Domain;
 
 public class Match
@@ -16,9 +18,8 @@ public class Match
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
 
     private static int _nextId = 1;
-
-    public int Id { get; private set; }
     
+    public int MatchId { get; private set; }
     public int StadiumId { get; private set; }
     public int HomeTeamId { get; private set; }
     public int AwayTeamId { get; private set; }
@@ -54,8 +55,7 @@ public class Match
         ValidateRequired(awayTeam, RequiredAwayTeamErrorMessage);
         ValidateTeamsAreDifferent(homeTeam!, awayTeam!);
         ValidateGroupIsNotAssignedToKnockoutPhase(group, phase);
-
-        Id = _nextId++;
+        
         Date = date;
         Stadium = stadium!;
         HomeTeam = homeTeam!;

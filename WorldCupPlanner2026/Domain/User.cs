@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Domain;
 
 [Flags]
@@ -32,6 +34,7 @@ public class User
     public int Id { get; private set; }
     public string Name { get; private set; }
     public string Surname { get; private set; }
+    
     public string Email { get; private set; }
     public DateTime DateOfBirth { get; private set; }
     public string PasswordHash { get; private set; } = string.Empty;

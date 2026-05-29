@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Domain;
 
 public class Knockout
@@ -32,7 +34,7 @@ public class Knockout
     private readonly List<Team> _qualifiedTeams = new();
     private readonly List<Match> _matches = new();
     private readonly IShuffleService _shuffleService;
-
+    
     public int Id { get; private set; }
     public int SimulationSeed { get; private set; }
     public int SemillaCrucesFase { get; private set; }
