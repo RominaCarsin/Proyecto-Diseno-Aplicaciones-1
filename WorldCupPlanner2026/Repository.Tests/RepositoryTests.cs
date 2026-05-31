@@ -24,7 +24,7 @@ public class RepositoryTests
         
         _repository = new Repository<Team>(_context);
         
-        _team = new Team("Uruguay", "CONMEBOL", 500);
+        _team = new Team("URUGUAY", "CONMEBOL", 500);
     }
 
     [TestCleanup]
@@ -45,7 +45,7 @@ public class RepositoryTests
     [TestMethod]
     public void Add_MultipleTimes_ShouldAddAll()
     {
-        var team2 = new Team("Argentina", "CONMEBOL", 600);
+        var team2 = new Team("ARGENTINA", "CONMEBOL", 600);
 
         _repository.Add(_team);
         _repository.Add(team2);
@@ -63,28 +63,28 @@ public class RepositoryTests
     [TestMethod]
     public void GetAll_ShouldReturnAllAddedEntities()
     {
-        var team2 = new Team("Argentina", "CONMEBOL", 600);
+        var team2 = new Team("ARGENTINA", "CONMEBOL", 600);
         _repository.Add(_team);
         _repository.Add(team2);
 
         var result = _repository.GetAll().ToList();
 
-        Assert.IsTrue(result.Any(t => t.Name == "Uruguay"));
-        Assert.IsTrue(result.Any(t => t.Name == "Argentina"));
+        Assert.IsTrue(result.Any(t => t.Name == "URUGUAY"));
+        Assert.IsTrue(result.Any(t => t.Name == "ARGENTINA"));
     }
 
     [TestMethod]
     public void Delete_ShouldOnlyRemoveTargetEntity()
     {
-        var team2 = new Team("Argentina", "CONMEBOL", 600);
+        var team2 = new Team("ARGENTINA", "CONMEBOL", 600);
         _repository.Add(_team);
         _repository.Add(team2);
 
         _repository.Delete(_team);
 
         var result = _repository.GetAll().ToList();
-        Assert.IsFalse(result.Any(t => t.Name == "Uruguay"));
-        Assert.IsTrue(result.Any(t => t.Name == "Argentina"));
+        Assert.IsFalse(result.Any(t => t.Name == "URUGUAY"));
+        Assert.IsTrue(result.Any(t => t.Name == "ARGENTINA"));
     }
 
     [TestMethod]
@@ -95,6 +95,18 @@ public class RepositoryTests
         _repository.Delete(_team);
 
         Assert.AreEqual(0, _repository.GetAll().Count());
+    }
+    
+    [TestMethod]
+    public void Update_ShouldPersistChanges()
+    {
+        _repository.Add(_team);
+
+        _team.UpdateName("BRASIL");
+        _repository.Update(_team);
+
+        var result = _repository.GetAll().First();
+        Assert.AreEqual("BRASIL", result.Name);
     }
     
 }

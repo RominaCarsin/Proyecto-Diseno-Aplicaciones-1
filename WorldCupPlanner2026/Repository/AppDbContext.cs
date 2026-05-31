@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     {
         if (Database.IsRelational())
         {
+            Database.EnsureDeleted();
             Database.Migrate();
         }
     }

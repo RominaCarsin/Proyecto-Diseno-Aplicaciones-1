@@ -20,4 +20,8 @@ public class FakeRepository<T> : IRepository<T> where T : class
     {
         _entities.Remove(entity);
     }
+
+    public void Update(T entity)
+    {
+    }
 }

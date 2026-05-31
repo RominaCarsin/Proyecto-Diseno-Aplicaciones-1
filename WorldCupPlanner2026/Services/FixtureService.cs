@@ -22,6 +22,8 @@ public class FixtureService : IFixtureService
     private readonly IGroupService _groupService;
     private readonly IRepository<Group> _groupRepository;
     private readonly IRepository<Match> _matchRepository;
+    private readonly IRepository<Stadium> _stadiumRepository;
+    private readonly IRepository<Team> _teamRepository;
     private readonly IPotService _potService;
     private Knockout? _knockout;
 
@@ -31,6 +33,8 @@ public class FixtureService : IFixtureService
         IGroupService groupService,
         IRepository<Group> groupRepository,
         IRepository<Match> matchRepository,
+        IRepository<Stadium> stadiumRepository,
+        IRepository<Team> teamRepository,
         IPotService potService)
     {
         _teamService = teamService;
@@ -38,6 +42,8 @@ public class FixtureService : IFixtureService
         _groupService = groupService;
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
+        _stadiumRepository = stadiumRepository;
+        _teamRepository = teamRepository;
         _potService = potService;
     }
 
@@ -96,12 +102,12 @@ public class FixtureService : IFixtureService
         throw new InvalidOperationException($"No se pudo asignar el equipo {team.Name} a ningún grupo.");
     }
 
-    private List<StadiumResponse> GetStadiumsNormalized() =>
-        _stadiumService.GetAllStadiums()
-            .OrderBy(s => s.Name.ToUpperInvariant())
+    private List<Stadium> GetStadiumsNormalized() =>
+        _stadiumRepository.GetAll()
+            .OrderBy(s => s.Name)
             .ToList();
 
-    private static void GenerateMatchesForGroups(List<Group> groups, List<StadiumResponse> stadiums, DateTime startDate)
+    private static void GenerateMatchesForGroups(List<Group> groups, List<Stadium> stadiums, DateTime startDate)
     {
         int matchCounter = 0;
 
@@ -140,9 +146,6 @@ public class FixtureService : IFixtureService
         }
     }
 
-    private static Stadium BuildStadium(StadiumResponse r) =>
-        new(r.Name, r.City, r.Description, r.Capacity);
-
     private void ValidateFixtureCanBeGenerated()
     {
         if (_teamService.GetTeams().Count() < RequiredTeamCount)
@@ -163,8 +166,6 @@ public class FixtureService : IFixtureService
         foreach (var group in groups)
         {
             _groupRepository.Add(group);
-            foreach (var match in group.Matches)
-                _matchRepository.Add(match);
         }
     }
 
@@ -191,6 +192,9 @@ public class FixtureService : IFixtureService
 
         foreach (var group in groups)
             group.SimulateMatches(seed);
+
+        foreach (var group in groups)
+            _groupRepository.Update(group);
     }
 
     private static void AddMatchToGroup(
@@ -198,10 +202,10 @@ public class FixtureService : IFixtureService
         List<Team> teamList,
         (int homeIndex, int awayIndex) pairing,
         DateTime matchDate,
-        List<StadiumResponse> stadiums,
+        List<Stadium> stadiums,
         ref int matchCounter)
     {
-        var stadium = BuildStadium(stadiums[matchCounter % stadiums.Count]);
+        var stadium = stadiums[matchCounter % stadiums.Count];
 
         group.AddMatch(new Match(
             matchDate,
@@ -230,7 +234,10 @@ public class FixtureService : IFixtureService
             throw new InvalidOperationException("La fase eliminatoria ya fue inicializada.");
 
         var qualifiedTeamResponses = _groupService.GetQualifiedTeams().ToList();
-        var qualifiedTeams = qualifiedTeamResponses.Select(TeamMapper.ToEntity);
+        var qualifiedTeamNames = qualifiedTeamResponses.Select(t => t.Name).ToHashSet();
+        var qualifiedTeams = _teamRepository.GetAll()
+            .Where(t => qualifiedTeamNames.Contains(t.Name))
+            .ToList();
 
         var shuffleService = new ShuffleService(simulationSeed);
         var knockout = new Knockout(simulationSeed, shuffleService, semillaCrucesFase);
@@ -250,6 +257,9 @@ public class FixtureService : IFixtureService
         var knockout = new Knockout(0, shuffleService);
         knockout.LoadExistingMatches(allMatches);
         knockout.SetMatchResult(matchCode, homeGoals, awayGoals);
+        
+        var updatedMatch = allMatches.Single(m => m.MatchCode == matchCode);
+        _matchRepository.Update(updatedMatch);
     }
 
     public IEnumerable<MatchResponse> GetKnockoutMatches() =>
@@ -322,6 +332,9 @@ public class FixtureService : IFixtureService
         var allMatches = _matchRepository.GetAll().ToList();
         _knockout.LoadExistingMatches(allMatches);
         _knockout.SimulateMatches(seed);
+
+        foreach (var match in _knockout.Matches)
+            _matchRepository.Update(match);
     }
 
     public void InitializeFinal()

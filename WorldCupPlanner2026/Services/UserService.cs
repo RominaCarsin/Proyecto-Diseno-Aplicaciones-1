@@ -22,15 +22,19 @@ public class UserService : IUserService
     {
         _repository = repository;
         _auditService = auditService;
-        var adminDefault = new User(
-            name: "Admin",
-            surname: "Principal",
-            email: "admin@test.com",
-            dateOfBirth: new DateTime(2000, 1, 1),
-            plainPassword: "Password1!",
-            roles: Role.Admin | Role.Editor
-        );
-        _repository.Add(adminDefault);
+        
+        if (!_repository.GetAll().Any(u => u.Email == "admin@test.com"))
+        {
+            var adminDefault = new User(
+                name: "Admin",
+                surname: "Principal",
+                email: "admin@test.com",
+                dateOfBirth: new DateTime(2000, 1, 1),
+                plainPassword: "Password1!",
+                roles: Role.Admin | Role.Editor
+            );
+            _repository.Add(adminDefault);
+        }
     }
 
     public UserResponse AddUser(UserRequest userRequest)

@@ -78,6 +78,7 @@ public class GroupService : IGroupService
         );
 
         group.AddMatch(match);
+        _repository.Update(group);
     }
 
     public void SetMatchResult(char groupLabel, int matchId, int homeGoals, int awayGoals)
@@ -85,6 +86,7 @@ public class GroupService : IGroupService
         var group = FindGroupByLabelOrThrow(groupLabel);
         var match = FindMatchInGroupOrThrow(group, matchId);
         group.SetMatchResult(match, homeGoals, awayGoals);
+        _repository.Update(group);
     }
 
     public void FinishMatch(char groupLabel, int matchId)
@@ -92,6 +94,7 @@ public class GroupService : IGroupService
         var group = FindGroupByLabelOrThrow(groupLabel);
         var match = FindMatchInGroupOrThrow(group, matchId);
         group.FinishMatch(match);
+        _repository.Update(group);
     }
     
     private Group FindGroupByLabelOrThrow(char label) =>
