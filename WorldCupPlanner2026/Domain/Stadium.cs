@@ -16,6 +16,7 @@ public class Stadium
     private const string DescriptionTooLongErrorMessage = "La descripción del estadio no puede superar los 400 caracteres.";
     private const string CapacityTooSmallErrorMessage = "La capacidad del estadio debe ser de al menos 20000.";
     
+    public int StadiumId { get; private set; }
     public string Name { get; private set; }
     public string City { get; private set; }
     public string? Description { get; private set; }

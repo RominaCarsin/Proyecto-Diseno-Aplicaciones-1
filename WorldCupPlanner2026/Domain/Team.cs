@@ -19,6 +19,7 @@ public class Team
         "AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"
     };
     
+    public int TeamId { get; private set; }
     public string Name { get; private set; }
     public string ConfederationName { get; private set; }
     public int RankingFifa { get; private set; }

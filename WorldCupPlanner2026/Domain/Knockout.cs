@@ -35,7 +35,7 @@ public class Knockout
     private readonly List<Match> _matches = new();
     private readonly IShuffleService _shuffleService;
     
-    public int Id { get; private set; }
+    public int KnockoutId { get; private set; }
     public int SimulationSeed { get; private set; }
     public int SemillaCrucesFase { get; private set; }
     public IReadOnlyList<Team> QualifiedTeams => _qualifiedTeams;

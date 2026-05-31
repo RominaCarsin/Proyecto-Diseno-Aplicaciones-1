@@ -22,6 +22,7 @@ public class Group
     private readonly List<Team> _teams = new();
     private readonly List<Match> _matches = new();
     
+    public int GroupId { get; private set; }
     public char Label { get; private set; }
     public IReadOnlyList<Team> Teams => _teams;
     public IReadOnlyList<Match> Matches => _matches;

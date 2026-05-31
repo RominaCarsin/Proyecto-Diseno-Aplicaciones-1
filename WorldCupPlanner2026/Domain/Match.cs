@@ -16,13 +16,13 @@ public class Match
     private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
     private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
-
-    private static int _nextId = 1;
     
     public int MatchId { get; private set; }
     public int StadiumId { get; private set; }
     public int HomeTeamId { get; private set; }
     public int AwayTeamId { get; private set; }
+    public int? WinnerId { get; private set; }
+    public int? GroupId { get; private set; }
     public DateTime Date { get; private set; }
     public Stadium Stadium { get; private set; }
     public Team HomeTeam { get; private set; }

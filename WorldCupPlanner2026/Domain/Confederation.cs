@@ -9,6 +9,7 @@ public class Confederation
     private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
     private const string ConfederationFullErrorMessage = "La confederación está completa.";
     
+    public int ConfederationId { get; private set; }
     public string Name { get; private set; }
     public IReadOnlyList<Team> Teams => _teams;
     public int Slots { get; private set; }

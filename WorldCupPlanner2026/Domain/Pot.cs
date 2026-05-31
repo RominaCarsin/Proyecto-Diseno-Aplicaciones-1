@@ -12,8 +12,9 @@ public class Pot
     private const string NullTeamsListErrorMessage = "La lista de equipos no puede ser nula.";
     private const string InvalidTeamsCountErrorMessage = "El bombo debe tener exactamente 12 equipos.";
     
-    public int Number { get; }
-    public IReadOnlyList<Team> Teams { get; }
+    public int PotId  { get; private set; }
+    public int Number { get; private set; }
+    public IReadOnlyList<Team> Teams { get; private set; }
 
     public bool IsFull() => Teams.Count == MaxTeams;
 
