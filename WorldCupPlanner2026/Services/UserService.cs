@@ -63,6 +63,7 @@ public class UserService : IUserService
             userRequest.Email,
             userRequest.DateOfBirth);
 
+        _repository.Update(existingUser);
         _auditService.Log(email, "User updated",
             $"User {email} updated: Name={userRequest.Name}, Surname={userRequest.Surname}, " +
             $"Email={userRequest.Email}, DOB={userRequest.DateOfBirth:yyyy-MM-dd}");
@@ -122,6 +123,7 @@ public class UserService : IUserService
         var targetUser = GetUserByEmailOrThrow(targetEmail);
         targetUser.RemoveRole(RoleMapper.ToDomain(role));
 
+        _repository.Update(targetUser);
         _auditService.Log(adminEmail, "Role revoked",
             $"Role {role} revoked from {targetEmail} by {adminEmail}");
     }
@@ -135,6 +137,7 @@ public class UserService : IUserService
 
         user.SetPassword(newPassword);
 
+        _repository.Update(user);
         _auditService.Log(email, "Password changed",
             $"User {email} changed their own password");
     }
@@ -146,6 +149,7 @@ public class UserService : IUserService
         var targetUser = GetUserByEmailOrThrow(targetEmail);
         targetUser.SetPassword(newPassword);
 
+        _repository.Update(targetUser);
         _auditService.Log(adminEmail, "Password reset",
             $"Password of {targetEmail} was reset by {adminEmail}");
     }
