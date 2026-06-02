@@ -20,6 +20,7 @@ public class Fixture
     private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string NotEnoughTeamsErrorMessage = "Se necesitan 48 equipos para generar el fixture.";
     private const string TeamNotAssignedErrorMessage = "No se pudo asignar el equipo {0} a ningún grupo.";
+    private const string FixtureNotGeneratedErrorMessage = "No se ha generado el fixture todavía.";
     
     public Fixture(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
     {
@@ -170,7 +171,31 @@ public class Fixture
     
     public void SimulateGroupStage(int seed)
     {
+        ValidateFixtureWasGenerated();
+
         foreach (var group in _groups)
             group.SimulateMatches(seed);
+    }
+    
+    private void ValidateFixtureWasGenerated()
+    {
+        if (_groups.Count == 0)
+            throw new InvalidOperationException(FixtureNotGeneratedErrorMessage);
+    }
+    
+    private Fixture()
+    {
+        _pots = new List<Pot>();
+        _stadiums = new List<Stadium>();
+    }
+
+    public static Fixture FromExistingGroups(IEnumerable<Group> groups)
+    {
+        var fixture = new Fixture();
+
+        if (groups is not null)
+            fixture._groups.AddRange(groups);
+
+        return fixture;
     }
 }
