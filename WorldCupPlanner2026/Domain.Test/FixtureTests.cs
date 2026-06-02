@@ -69,4 +69,14 @@ public class FixtureTests
         new Pot(2, BuildTeams("CONMEBOL", "B-", 12, 800)),
         new Pot(3, BuildTeams("AFC", "C-", 12, 1000)),
     };
+    
+    [TestMethod]
+    public void Generate_WithLessThanFourStadiums_ShouldThrowException()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(3), StartDate);
+
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => fixture.Generate());
+
+        Assert.AreEqual("Se necesitan al menos 4 estadios para generar el fixture.", exception.Message);
+    }
 }
