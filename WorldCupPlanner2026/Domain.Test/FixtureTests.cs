@@ -158,4 +158,18 @@ public class FixtureTests
         Assert.AreEqual(baseDate.AddDays(6).AddHours(14), matches[4].Date);
         Assert.AreEqual(baseDate.AddDays(6).AddHours(14), matches[5].Date);
     }
+    
+    [TestMethod]
+    public void Generate_WithValidData_ShouldAssignStadiumsRoundRobin()
+    {
+        var stadiums = BuildStadiums(4);
+        var fixture = new Fixture(BuildValidPots(), stadiums, StartDate);
+
+        fixture.Generate();
+
+        var matches = fixture.Groups.First().Matches.ToList();
+
+        for (int i = 0; i < matches.Count; i++)
+            Assert.AreSame(stadiums[i % stadiums.Count], matches[i].Stadium);
+    }
 }
