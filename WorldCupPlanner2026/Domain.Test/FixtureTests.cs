@@ -52,4 +52,21 @@ public class FixtureTests
 
         Assert.AreEqual(12, fixture.Groups.Count);
     }
+    
+    [TestMethod]
+    public void Generate_WithLessThanFortyEightTeams_ShouldThrowException()
+    {
+        var fixture = new Fixture(BuildPotsWithLessThanRequiredTeams(), BuildStadiums(4), StartDate);
+
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => fixture.Generate());
+
+        Assert.AreEqual("Se necesitan 48 equipos para generar el fixture.", exception.Message);
+    }
+    
+    private static List<Pot> BuildPotsWithLessThanRequiredTeams() => new()
+    {
+        new Pot(1, BuildTeams("UEFA", "A-", 12, 600)),
+        new Pot(2, BuildTeams("CONMEBOL", "B-", 12, 800)),
+        new Pot(3, BuildTeams("AFC", "C-", 12, 1000)),
+    };
 }
