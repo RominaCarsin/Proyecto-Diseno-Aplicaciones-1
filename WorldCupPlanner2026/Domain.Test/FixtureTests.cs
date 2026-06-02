@@ -172,4 +172,21 @@ public class FixtureTests
         for (int i = 0; i < matches.Count; i++)
             Assert.AreSame(stadiums[i % stadiums.Count], matches[i].Stadium);
     }
+    
+    [TestMethod]
+    public void SimulateGroupStage_WithValidSeed_ShouldUpdateGroupStandings()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+        fixture.Generate();
+
+        fixture.SimulateGroupStage(42);
+
+        var allMatches = fixture.Groups.SelectMany(g => g.Matches).ToList();
+        var allTeams = fixture.Groups.SelectMany(g => g.Teams).ToList();
+
+        foreach (var match in allMatches)
+            Assert.IsTrue(match.HasResult);
+
+        Assert.IsTrue(allTeams.Any(team => team.Points > 0));
+    }
 }
