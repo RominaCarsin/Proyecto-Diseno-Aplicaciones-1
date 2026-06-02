@@ -216,4 +216,25 @@ public class FixtureTests
         Assert.AreSame(groups[0], fixture.Groups.ElementAt(0));
         Assert.AreSame(groups[1], fixture.Groups.ElementAt(1));
     }
+    
+    [TestMethod]
+    public void Generate_WithTooManyTeamsFromSameNonUefaConfederation_ShouldThrowException()
+    {
+        var fixture = new Fixture(
+            BuildPotsWithOnlyConmebolTeams(),
+            BuildStadiums(4),
+            StartDate);
+
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => fixture.Generate());
+
+        StringAssert.StartsWith(exception.Message, "No se pudo asignar el equipo");
+    }
+    
+    private static List<Pot> BuildPotsWithOnlyConmebolTeams() => new()
+    {
+        new Pot(1, BuildTeams("CONMEBOL", "CON-A-", 12, 600)),
+        new Pot(2, BuildTeams("CONMEBOL", "CON-B-", 12, 800)),
+        new Pot(3, BuildTeams("CONMEBOL", "CON-C-", 12, 1000)),
+        new Pot(4, BuildTeams("CONMEBOL", "CON-D-", 12, 1200)),
+    };
 }
