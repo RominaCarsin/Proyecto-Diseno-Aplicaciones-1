@@ -9,6 +9,10 @@ public class Fixture
 
     public IReadOnlyCollection<Group> Groups => _groups;
     public const int GroupCount = 12;
+    public const int RequiredTeamCount = 48;
+
+    private const string NotEnoughTeamsErrorMessage = "Se necesitan 48 equipos para generar el fixture.";
+    
     public Fixture(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
     {
         _pots = pots?.ToList() ?? new List<Pot>();
@@ -17,12 +21,22 @@ public class Fixture
     }
     
     
+    
 
     public void Generate()
     {
+        ValidateTeamCount();
         _groups.Clear();
 
         for (int i = 0; i < GroupCount; i++)
             _groups.Add(new Group((char)('A' + i)));
+    }
+    
+    private void ValidateTeamCount()
+    {
+        var totalTeams = _pots.Sum(p => p.Teams.Count);
+
+        if (totalTeams < RequiredTeamCount)
+            throw new InvalidOperationException(NotEnoughTeamsErrorMessage);
     }
 }
