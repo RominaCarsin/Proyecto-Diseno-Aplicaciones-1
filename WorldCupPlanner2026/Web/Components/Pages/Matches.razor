@@ -2,7 +2,7 @@
 @using DTOs
 @using IServices
 @page "/matches"
-@inject IMatchService MatchService
+@inject ITournamentService TournamentService
 @inject IStadiumService StadiumService
 @inject ISessionService SessionService
 
@@ -263,15 +263,15 @@
             var current = matches.First(match => match.Id == editingMatchId.Value);
 
             if (editDate != current.Date)
-                MatchService.UpdateMatchDate(editingMatchId.Value, editDate);
+                TournamentService.UpdateMatchDate(editingMatchId.Value, editDate);
 
             if (editStadiumName != current.Stadium.Name)
-                MatchService.UpdateMatchStadium(editingMatchId.Value, FindStadiumRequest(editStadiumName));
+                TournamentService.UpdateMatchStadium(editingMatchId.Value, FindStadiumRequest(editStadiumName));
 
             if (editHomeGoals.HasValue && editAwayGoals.HasValue &&
                 (editHomeGoals != current.HomeGoals || editAwayGoals != current.AwayGoals))
             {
-                MatchService.SetMatchResult(editingMatchId.Value, editHomeGoals.Value, editAwayGoals.Value);
+                TournamentService.SetMatchResult(editingMatchId.Value, editHomeGoals.Value, editAwayGoals.Value);
             }
 
             successMessage = "Partido actualizado correctamente.";
@@ -303,7 +303,7 @@
 
     private void RefreshUI()
     {
-        matches = MatchService.GetMatches();
+        matches = TournamentService.GetMatches();
         stadiums = StadiumService.GetAllStadiums();
     }
 

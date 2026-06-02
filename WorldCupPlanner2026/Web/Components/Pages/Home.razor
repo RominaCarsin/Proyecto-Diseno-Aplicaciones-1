@@ -5,8 +5,7 @@
 @inject ISessionService SessionService
 @inject ITeamService TeamService
 @inject IStadiumService StadiumService
-@inject IGroupService GroupService
-@inject IMatchService MatchService
+@inject ITournamentService TournamentService
 
 <PageTitle>Inicio - WorldCupPlanner 2026</PageTitle>
 
@@ -84,8 +83,8 @@
     {
         var teams = TeamService.GetTeams().Count();
         var stadiums = StadiumService.GetAllStadiums().Count();
-        var groups = GroupService.GetGroups().Count();
-        var matches = MatchService.GetMatches().ToList();
+        var groups = TournamentService.GetGroups().Count();
+        var matches = TournamentService.GetMatches().ToList();
 
         Stats =
         [
@@ -105,7 +104,6 @@
                 match.AwayTeam.Name,
                 match.Stadium.Name))
             .ToList();
-
     }
 
     public record StatCard(string Label, string Value, string Icon, string Color);

@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
-@inject IMatchService MatchService
+@inject ITournamentService TournamentService
 @inject IStadiumService StadiumService
 @inject ITeamService TeamService
 
@@ -337,15 +337,15 @@
 
 
            if (_editDate != current.Date)
-               MatchService.UpdateMatchDate(_editingMatchId.Value, _editDate);
+               TournamentService.UpdateMatchDate(_editingMatchId.Value, _editDate);
 
 
            if (_editStadiumName != current.Stadium.Name)
-               MatchService.UpdateMatchStadium(_editingMatchId.Value, FindStadiumRequest(_editStadiumName));
+               TournamentService.UpdateMatchStadium(_editingMatchId.Value, FindStadiumRequest(_editStadiumName));
 
 
            if (_editHomeGoals != (current.HomeGoals ?? -1) || _editAwayGoals != (current.AwayGoals ?? -1))
-               MatchService.SetMatchResult(_editingMatchId.Value, _editHomeGoals, _editAwayGoals);
+               TournamentService.SetMatchResult(_editingMatchId.Value, _editHomeGoals, _editAwayGoals);
 
 
            _successMessage = "Match updated successfully!";
@@ -377,7 +377,7 @@
 
        try
        {
-           MatchService.AddMatch(BuildMatchRequest());
+           TournamentService.AddMatch(BuildMatchRequest());
            _successMessage = "Match created successfully!";
            ClearCreateForm();
            LoadData();
@@ -451,7 +451,7 @@
 
    private void LoadData()
    {
-       _matches = MatchService.GetMatches();
+       _matches = TournamentService.GetMatches();
        _stadiums = StadiumService.GetAllStadiums();
        _teams = TeamService.GetTeams();
    }
@@ -472,7 +472,7 @@
 
 
        var stadiumRequest = FindStadiumRequest(stadiumName);
-       var available = MatchService.GetAvailableStadiumsForMatch(
+       var available = TournamentService.GetAvailableStadiumsForMatch(
            _editingMatchId.Value,
            new[] { stadiumRequest });
 

@@ -3,8 +3,7 @@
 @using IServices
 @page "/knockout"
 @inject ISessionService SessionService
-@inject IMatchService MatchService
-@inject IFixtureService FixtureService
+@inject ITournamentService TournamentService
 
 <div class="container-fluid p-0 space-y-6">
     <div class="bg-white border-custom p-4 diagonal-corners">
@@ -22,7 +21,8 @@
                             <label class="small fw-bold">Semilla Cruces</label>
                             <input type="number" @bind="knockoutSeed" class="form-control form-control-sm border-custom-input" style="width: 100px;" />
                         </div>
-                        <button class="btn btn-wc-blue btn-sm" @onclick="() => RunPhaseAction(() => FixtureService.InitializeKnockoutStage(1, knockoutSeed))">
+                        <button class="btn btn-wc-blue btn-sm"
+                                @onclick="() => RunPhaseAction(() => TournamentService.InitializeKnockoutStage(1, knockoutSeed))">
                             Inicializar 16vos (R32)
                         </button>
                     </div>
@@ -162,9 +162,7 @@
 
     private void LoadData()
     {
-        AllMatches = MatchService.GetMatches()
-            .Where(m => m.Phase != "GroupStage")
-            .ToList();
+        AllMatches = TournamentService.GetKnockoutMatches().ToList();
         worldCupWinner = HasFinalWinner ? FinalMatch!.Winner!.Name : null;
     }
 
@@ -175,7 +173,7 @@
         if (!simulationSeed.HasValue) return;
         try
         {
-            FixtureService.SimulateKnockoutStage(simulationSeed.Value);
+            TournamentService.SimulateKnockoutStage(simulationSeed.Value);
             successMessage = "Fase eliminatoria simulada correctamente.";
             LoadData();
         }
@@ -197,8 +195,7 @@
         if (string.IsNullOrEmpty(matchCode)) return;
         try
         {
-            FixtureService.SetKnockoutMatchResult(matchCode, editHomeGoals, editAwayGoals);
-            editingMatchCode = null;
+            TournamentService.SetKnockoutMatchResult(matchCode, editHomeGoals, editAwayGoals);            editingMatchCode = null;
             LoadData();
         }
         catch (Exception ex) { errorMessage = ex.Message; }
@@ -212,14 +209,14 @@
         {
             switch (lastPhase)
             {
-                case "RoundOf32": FixtureService.InitializeRoundOf16(); break;
-                case "RoundOf16": FixtureService.InitializeQuarterFinals(); break;
-                case "QuarterFinals": FixtureService.InitializeSemiFinals(); break;
+                case "RoundOf32": TournamentService.InitializeRoundOf16(); break;
+                case "RoundOf16": TournamentService.InitializeQuarterFinals(); break;
+                case "QuarterFinals": TournamentService.InitializeSemiFinals(); break;
                 case "SemiFinals":
-                    FixtureService.InitializeThirdPlace();
-                    FixtureService.InitializeFinal();
+                    TournamentService.InitializeThirdPlace();
+                    TournamentService.InitializeFinal();
                     break;
-                default: throw new InvalidOperationException("No hay más fases para inicializar.");
+                
             }
         });
     }
