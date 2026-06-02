@@ -15,6 +15,7 @@ public class Fixture
 
     private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string NotEnoughTeamsErrorMessage = "Se necesitan 48 equipos para generar el fixture.";
+    private const string TeamNotAssignedErrorMessage = "No se pudo asignar el equipo {0} a ningún grupo.";
     
     public Fixture(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
     {
@@ -65,9 +66,41 @@ public class Fixture
 
             for (int i = 0; i < teams.Count; i++)
             {
-                var group = _groups[i % GroupCount];
-                group.AddTeam(teams[i]);
+                int bestStart = FindBestStartIndex(teams[i]);
+                AddTeamToNextAvailableGroup(teams[i], bestStart);
             }
         }
+    }
+    
+    
+    private int FindBestStartIndex(Team team) =>
+        _groups
+            .Select((g, index) => (group: g, index))
+            .Where(x => x.group.Teams.Count < MaxTeamsPerGroup)
+            .OrderBy(x => x.group.Teams.Count(t => t.ConfederationName == team.ConfederationName))
+            .ThenBy(x => x.group.Teams.Count)
+            .Select(x => x.index)
+            .FirstOrDefault(0);
+
+    private void AddTeamToNextAvailableGroup(Team team, int startGroupIndex)
+    {
+        int count = _groups.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            var group = _groups[(startGroupIndex + i) % count];
+
+            try
+            {
+                group.AddTeam(team);
+                return;
+            }
+            catch (ArgumentException)
+            {
+            }
+        }
+
+        throw new InvalidOperationException(
+            string.Format(TeamNotAssignedErrorMessage, team.Name));
     }
 }
