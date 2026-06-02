@@ -42,4 +42,14 @@ public class FixtureTests
         Assert.IsNotNull(fixture.Groups);
         Assert.AreEqual(0, fixture.Groups.Count);
     }
+    
+    [TestMethod]
+    public void Generate_WithValidData_ShouldCreateTwelveGroups()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+
+        fixture.Generate();
+
+        Assert.AreEqual(12, fixture.Groups.Count);
+    }
 }
