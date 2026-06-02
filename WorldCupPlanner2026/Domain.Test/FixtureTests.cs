@@ -79,4 +79,15 @@ public class FixtureTests
 
         Assert.AreEqual("Se necesitan al menos 4 estadios para generar el fixture.", exception.Message);
     }
+    
+    [TestMethod]
+    public void Generate_WithValidData_ShouldAssignFourTeamsPerGroup()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+
+        fixture.Generate();
+
+        foreach (var group in fixture.Groups)
+            Assert.AreEqual(4, group.Teams.Count);
+    }
 }
