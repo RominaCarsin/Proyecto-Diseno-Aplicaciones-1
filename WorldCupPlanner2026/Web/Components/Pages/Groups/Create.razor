@@ -9,7 +9,7 @@
 <div class="page-wrap">
 
     <div class="ph">
-        <h1 class="pt">Fixture · Phase de grupos</h1>
+        <h1 class="pt">GroupPhase · Phase de grupos</h1>
         <p class="ps">12 grupos · WorldCupPlanner 2026</p>
     </div>
 
@@ -21,7 +21,7 @@
             </div>
             <div class="card-body">
                 <div class="fg">
-                    <label class="fl">Semilla (SemillaFixture) <span class="req">*</span></label>
+                    <label class="fl">Semilla (SemillaGroupPhase) <span class="req">*</span></label>
                     <input class="finput" type="number" @bind="_seed" />
                 </div>
                 <div class="fg">
@@ -401,7 +401,7 @@
         try
         {
             FixtureService.GenerateFixture(_seed, _startDate);
-            _successMessage = "Fixture generado correctamente.";
+            _successMessage = "GroupPhase generado correctamente.";
             LoadData();
         }
         catch (Exception ex)

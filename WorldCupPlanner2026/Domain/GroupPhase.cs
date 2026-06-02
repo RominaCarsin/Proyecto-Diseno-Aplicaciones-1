@@ -1,6 +1,6 @@
 ﻿namespace Domain;
 
-public class Fixture
+public class GroupPhase
 {
     private const int GroupCount = 12;
     public const int RequiredTeamCount = 48;
@@ -36,7 +36,7 @@ public class Fixture
 
     public IReadOnlyCollection<Group> Groups => _groups;
 
-    public Fixture(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
+    public GroupPhase(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
     {
         _pots = pots?.ToList() ?? new List<Pot>();
         _stadiums = stadiums?.ToList() ?? new List<Stadium>();
@@ -60,9 +60,9 @@ public class Fixture
             group.SimulateMatches(seed);
     }
 
-    public static Fixture FromExistingGroups(IEnumerable<Group> groups)
+    public static GroupPhase FromExistingGroups(IEnumerable<Group> groups)
     {
-        var fixture = new Fixture();
+        var fixture = new GroupPhase();
 
         if (groups is not null)
             fixture._groups.AddRange(groups);
@@ -197,7 +197,7 @@ public class Fixture
         matchCounter++;
     }
     
-    private Fixture()
+    private GroupPhase()
     {
         _pots = new List<Pot>();
         _stadiums = new List<Stadium>();

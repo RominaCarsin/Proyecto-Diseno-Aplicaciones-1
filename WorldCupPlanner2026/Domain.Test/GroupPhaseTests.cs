@@ -1,14 +1,14 @@
 ﻿namespace Domain.Tests;
 
 [TestClass]
-public class FixtureTests
+public class GroupPhaseTests
 {
     private static readonly DateTime StartDate = new(2026, 6, 1);
     
     [TestMethod]
     public void CreateFixture_WithValidPotsStadiumsAndStartDate_ShouldCreateWithExpectedProperties()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         Assert.IsNotNull(fixture);
         Assert.IsNotNull(fixture.Groups);
@@ -18,7 +18,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithLessThan48Teams_ShouldThrowInvalidOperationException()
     {
-        var fixture = new Fixture(BuildPotsWithLessThanRequiredTeams(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildPotsWithLessThanRequiredTeams(), BuildStadiums(count: 4), StartDate);
 
         var exception = Assert.ThrowsException<InvalidOperationException>(() =>
             fixture.Generate());
@@ -29,7 +29,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithLessThan4Stadiums_ShouldThrowInvalidOperationException()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 3), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 3), StartDate);
 
         var exception = Assert.ThrowsException<InvalidOperationException>(() =>
             fixture.Generate());
@@ -40,7 +40,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithAllTeamsFromSameNonUefaConfederation_ShouldThrowInvalidOperationException()
     {
-        var fixture = new Fixture(BuildPotsWithOnlyConmebolTeams(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildPotsWithOnlyConmebolTeams(), BuildStadiums(count: 4), StartDate);
 
         var exception = Assert.ThrowsException<InvalidOperationException>(() =>
             fixture.Generate());
@@ -51,7 +51,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithMoreThan48Teams_ShouldThrowInvalidOperationException()
     {
-        var fixture = new Fixture(BuildPotsWithMoreThanRequiredTeams(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildPotsWithMoreThanRequiredTeams(), BuildStadiums(count: 4), StartDate);
 
         var exception = Assert.ThrowsException<InvalidOperationException>(() =>
             fixture.Generate());
@@ -62,7 +62,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithValidData_ShouldCreate12Groups()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         fixture.Generate();
 
@@ -72,7 +72,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithValidData_ShouldAssign4TeamsPerGroup()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         fixture.Generate();
 
@@ -83,7 +83,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithValidData_ShouldCreate6MatchesPerGroup()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         fixture.Generate();
 
@@ -94,7 +94,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithValidData_ShouldCreate72TotalMatchesWithGroupStagePhase()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         fixture.Generate();
 
@@ -107,7 +107,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithMoreThan4Stadiums_ShouldCreateFixtureSuccessfully()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 5), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 5), StartDate);
 
         fixture.Generate();
 
@@ -117,7 +117,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithValidData_ShouldDistributeTeamsByConfederationAcrossGroups()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         fixture.Generate();
 
@@ -144,7 +144,7 @@ public class FixtureTests
     [TestMethod]
     public void Generate_WithValidData_ShouldScheduleMatchesWithExpectedDatesAndTimes()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         fixture.Generate();
 
@@ -167,7 +167,7 @@ public class FixtureTests
     public void Generate_WithValidData_ShouldAssignStadiumsInRoundRobinOrder()
     {
         var stadiums = BuildStadiums(count: 4);
-        var fixture = new Fixture(BuildValidPots(), stadiums, StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), stadiums, StartDate);
 
         fixture.Generate();
 
@@ -180,7 +180,7 @@ public class FixtureTests
     [TestMethod]
     public void SimulateGroupStage_WithValidSeed_ShouldSetResultOnAllMatchesAndUpdateStandings()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
         fixture.Generate();
 
         fixture.SimulateGroupStage(seed: 42);
@@ -195,7 +195,7 @@ public class FixtureTests
     [TestMethod]
     public void SimulateGroupStage_WithoutGeneratedFixture_ShouldThrowInvalidOperationException()
     {
-        var fixture = new Fixture(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
 
         var exception = Assert.ThrowsException<InvalidOperationException>(() =>
             fixture.SimulateGroupStage(seed: 1));
@@ -208,7 +208,7 @@ public class FixtureTests
     {
         var groups = new List<Group> { new('A'), new('B') };
 
-        var fixture = Fixture.FromExistingGroups(groups);
+        var fixture = GroupPhase.FromExistingGroups(groups);
 
         Assert.AreEqual(2, fixture.Groups.Count);
         Assert.AreSame(groups[0], fixture.Groups.ElementAt(0));

@@ -46,7 +46,7 @@ public class FixtureService : IFixtureService
         var pots = _potService.GetPots().ToList();
         var stadiums = _stadiumRepository.GetAll().OrderBy(s => s.Name).ToList();
 
-        var fixture = new Fixture(pots, stadiums, startDate);
+        var fixture = new GroupPhase(pots, stadiums, startDate);
         fixture.Generate();
 
         foreach (var group in fixture.Groups)
@@ -60,7 +60,7 @@ public class FixtureService : IFixtureService
     {
         var groups = _groupRepository.GetAll().ToList();
 
-        var fixture = Fixture.FromExistingGroups(groups);
+        var fixture = GroupPhase.FromExistingGroups(groups);
         fixture.SimulateGroupStage(seed);
 
         foreach (var group in fixture.Groups)
@@ -73,8 +73,8 @@ public class FixtureService : IFixtureService
         var stadiumCount = _stadiumService.GetAllStadiums().Count();
         var groupCount = _groupService.GetGroups().Count();
 
-        return teamCount >= Fixture.RequiredTeamCount
-            && stadiumCount >= Fixture.MinStadiumCount
+        return teamCount >= GroupPhase.RequiredTeamCount
+            && stadiumCount >= GroupPhase.MinStadiumCount
             && groupCount == 0;
     }
 
@@ -82,10 +82,10 @@ public class FixtureService : IFixtureService
 
     private void ValidateFixtureCanBeGenerated()
     {
-        if (_teamService.GetTeams().Count() < Fixture.RequiredTeamCount)
+        if (_teamService.GetTeams().Count() < GroupPhase.RequiredTeamCount)
             throw new InvalidOperationException("Se necesitan 48 equipos para generar el fixture.");
 
-        if (_stadiumService.GetAllStadiums().Count() < Fixture.MinStadiumCount)
+        if (_stadiumService.GetAllStadiums().Count() < GroupPhase.MinStadiumCount)
             throw new InvalidOperationException("Se necesitan al menos 4 estadios para generar el fixture.");
 
         if (_groupService.GetGroups().Any())

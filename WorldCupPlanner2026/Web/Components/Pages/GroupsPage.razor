@@ -11,13 +11,13 @@
     <div class="bg-white border-custom p-4 diagonal-corners">
         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
             <div>
-                <h3 class="mb-1">Fixture y grupos</h3>
+                <h3 class="mb-1">GroupPhase y grupos</h3>
                 <p class="text-muted mb-0">
                     Equipos: @teamCount / 48 - Estadios: @stadiumCount / 4 minimo
                 </p>
             </div>
             <span class="badge @(fixtureGenerated ? "bg-success" : "bg-secondary") px-3 py-2">
-                @(fixtureGenerated ? "Fixture generado" : "Fixture pendiente")
+                @(fixtureGenerated ? "GroupPhase generado" : "GroupPhase pendiente")
             </span>
         </div>
         <GeometricDivider />
@@ -26,7 +26,7 @@
         {
             <div class="row g-3 align-items-end mt-2">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">SemillaFixture</label>
+                    <label class="form-label fw-bold">SemillaGroupPhase</label>
                     <input type="number" @bind="fixtureSeed" class="form-control border-custom-input" />
                 </div>
                 <div class="col-md-4">
@@ -301,7 +301,7 @@
         try
         {
             FixtureService.GenerateFixture(fixtureSeed!.Value, startDate);
-            successMessage = "Fixture generado correctamente.";
+            successMessage = "GroupPhase generado correctamente.";
             LoadData();
         }
         catch (Exception ex)
