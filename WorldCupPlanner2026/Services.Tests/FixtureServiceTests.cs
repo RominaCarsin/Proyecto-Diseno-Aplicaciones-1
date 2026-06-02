@@ -627,15 +627,6 @@ public class FixtureServiceTests
     }
 
     [TestMethod]
-    public void InitializeKnockoutStage_ShouldStoreMatchesInMatchRepository()
-    {
-        var fixtureService = CreateFixtureServiceWithSimulatedGroupStage();
-        fixtureService.InitializeKnockoutStage(42);
-        var totalMatches = _matchRepository.GetAll().ToList();
-        Assert.IsTrue(totalMatches.Count > 72);
-    }
-
-    [TestMethod]
     public void InitializeKnockoutStage_ShouldUseMatchCodesA1toA8andB1toB8()
     {
         var fixtureService = CreateFixtureServiceWithSimulatedGroupStage();

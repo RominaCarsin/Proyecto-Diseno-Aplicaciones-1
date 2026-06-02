@@ -2,35 +2,46 @@
 
 public class Fixture
 {
+    private const int GroupCount = 12;
+    public const int RequiredTeamCount = 48;
+    public const int MinStadiumCount = 4;
+    private const int MaxTeamsPerGroup = 4;
+    private const int RoundsPerGroup = 3;
+    private const int MatchesPerRound = 2;
+    private const int FirstMatchHour = 14;
+    private const int HoursBetweenMatches = 4;
+    private const int DaysBetweenRounds = 3;
+    private const int DaysBetweenGroupStarts = 3;
+
+    private const string NotEnoughTeamsErrorMessage =
+        "Se necesitan 48 equipos para generar el fixture.";
+    private const string NotEnoughStadiumsErrorMessage =
+        "Se necesitan al menos 4 estadios para generar el fixture.";
+    private const string TeamNotAssignedErrorMessage =
+        "No se pudo asignar el equipo {0} a ningún grupo.";
+    private const string FixtureNotGeneratedErrorMessage =
+        "No se ha generado el fixture todavía.";
+
+    private static readonly List<(int homeIndex, int awayIndex)> GroupStagePairings = new()
+    {
+        (0, 3), (1, 2),
+        (0, 2), (1, 3),
+        (0, 1), (2, 3)
+    };
+
     private readonly List<Pot> _pots;
     private readonly List<Stadium> _stadiums;
     private readonly DateTime _startDate;
     private readonly List<Group> _groups = new();
 
     public IReadOnlyCollection<Group> Groups => _groups;
-    public const int GroupCount = 12;
-    public const int RequiredTeamCount = 48;
-    public const int MinStadiumCount = 4;
-    public const int MaxTeamsPerGroup = 4;
-    public const int FirstMatchHour = 14;
-    public const int HoursBetweenMatches = 4;
-    public const int RoundDaysOffset = 3;
-    public const int MatchesPerRound = 2;
 
-    private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
-    private const string NotEnoughTeamsErrorMessage = "Se necesitan 48 equipos para generar el fixture.";
-    private const string TeamNotAssignedErrorMessage = "No se pudo asignar el equipo {0} a ningún grupo.";
-    private const string FixtureNotGeneratedErrorMessage = "No se ha generado el fixture todavía.";
-    
     public Fixture(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
     {
         _pots = pots?.ToList() ?? new List<Pot>();
         _stadiums = stadiums?.ToList() ?? new List<Stadium>();
         _startDate = startDate;
     }
-    
-    
-    
 
     public void Generate()
     {
@@ -40,19 +51,43 @@ public class Fixture
         AssignTeamsToGroupsFromPots();
         GenerateMatchesForGroups();
     }
+
+    public void SimulateGroupStage(int seed)
+    {
+        ValidateFixtureWasGenerated();
+
+        foreach (var group in _groups)
+            group.SimulateMatches(seed);
+    }
+
+    public static Fixture FromExistingGroups(IEnumerable<Group> groups)
+    {
+        var fixture = new Fixture();
+
+        if (groups is not null)
+            fixture._groups.AddRange(groups);
+
+        return fixture;
+    }
     
     private void ValidateTeamCount()
     {
-        var totalTeams = _pots.Sum(p => p.Teams.Count);
+        int totalTeams = _pots.Sum(p => p.Teams.Count);
 
         if (totalTeams < RequiredTeamCount)
             throw new InvalidOperationException(NotEnoughTeamsErrorMessage);
     }
-    
+
     private void ValidateStadiumCount()
     {
         if (_stadiums.Count < MinStadiumCount)
             throw new InvalidOperationException(NotEnoughStadiumsErrorMessage);
+    }
+
+    private void ValidateFixtureWasGenerated()
+    {
+        if (_groups.Count == 0)
+            throw new InvalidOperationException(FixtureNotGeneratedErrorMessage);
     }
     
     private void CreateGroups()
@@ -62,38 +97,34 @@ public class Fixture
         for (int i = 0; i < GroupCount; i++)
             _groups.Add(new Group((char)('A' + i)));
     }
-
+    
     private void AssignTeamsToGroupsFromPots()
     {
         foreach (var pot in _pots)
         {
-            var teams = pot.Teams;
-
-            for (int i = 0; i < teams.Count; i++)
+            foreach (var team in pot.Teams)
             {
-                int bestStart = FindBestStartIndex(teams[i]);
-                AddTeamToNextAvailableGroup(teams[i], bestStart);
+                int preferredGroupIndex = FindGroupIndexWithFewestSameConfederationTeams(team);
+                AssignTeamToGroupStartingFrom(team, preferredGroupIndex);
             }
         }
     }
-    
-    
-    private int FindBestStartIndex(Team team) =>
+
+    private int FindGroupIndexWithFewestSameConfederationTeams(Team team) =>
         _groups
-            .Select((g, index) => (group: g, index))
+            .Select((group, index) => (group, index))
             .Where(x => x.group.Teams.Count < MaxTeamsPerGroup)
-            .OrderBy(x => x.group.Teams.Count(t => t.ConfederationName == team.ConfederationName))
+            .OrderBy(x => x.group.Teams.Count(t =>
+                t.ConfederationName.Equals(team.ConfederationName, StringComparison.OrdinalIgnoreCase)))
             .ThenBy(x => x.group.Teams.Count)
             .Select(x => x.index)
             .FirstOrDefault(0);
 
-    private void AddTeamToNextAvailableGroup(Team team, int startGroupIndex)
+    private void AssignTeamToGroupStartingFrom(Team team, int startGroupIndex)
     {
-        int count = _groups.Count;
-
-        for (int i = 0; i < count; i++)
+        for (int offset = 0; offset < _groups.Count; offset++)
         {
-            var group = _groups[(startGroupIndex + i) % count];
+            var group = _groups[(startGroupIndex + offset) % _groups.Count];
 
             try
             {
@@ -116,41 +147,38 @@ public class Fixture
         for (int groupIndex = 0; groupIndex < _groups.Count; groupIndex++)
         {
             var group = _groups[groupIndex];
-            var teamList = group.Teams.ToList();
+            var groupTeams = group.Teams.ToList();
+            int groupStartDay = groupIndex * DaysBetweenGroupStarts;
 
-            var pairings = new List<(int, int)>
+            for (int round = 0; round < RoundsPerGroup; round++)
             {
-                (0, 3), (1, 2),
-                (0, 2), (1, 3),
-                (0, 1), (2, 3)
-            };
-
-            int groupStartDayOffset = groupIndex * RoundDaysOffset;
-
-            for (int round = 0; round < 3; round++)
-            {
-                var roundDate = _startDate.Date.AddDays(groupStartDayOffset + round * RoundDaysOffset);
-
-                var roundPairings = pairings
+                var roundDate = _startDate.Date.AddDays(groupStartDay + round * DaysBetweenRounds);
+                var roundPairings = GroupStagePairings
                     .Skip(round * MatchesPerRound)
                     .Take(MatchesPerRound)
                     .ToList();
 
                 for (int matchIndex = 0; matchIndex < roundPairings.Count; matchIndex++)
                 {
-                    var matchDate = round == 2
-                        ? roundDate.AddHours(FirstMatchHour)
-                        : roundDate.AddHours(FirstMatchHour).AddHours(matchIndex * HoursBetweenMatches);
-
-                    AddMatchToGroup(group, teamList, roundPairings[matchIndex], matchDate, ref matchCounter);
+                    var matchDate = CalculateMatchDate(roundDate, round, matchIndex);
+                    AddMatchToGroup(group, groupTeams, roundPairings[matchIndex], matchDate, ref matchCounter);
                 }
             }
         }
     }
 
+    private static DateTime CalculateMatchDate(DateTime roundDate, int round, int matchIndex)
+    {
+        bool isLastRound = round == RoundsPerGroup - 1;
+
+        return isLastRound
+            ? roundDate.AddHours(FirstMatchHour)
+            : roundDate.AddHours(FirstMatchHour + matchIndex * HoursBetweenMatches);
+    }
+
     private void AddMatchToGroup(
         Group group,
-        List<Team> teamList,
+        List<Team> groupTeams,
         (int homeIndex, int awayIndex) pairing,
         DateTime matchDate,
         ref int matchCounter)
@@ -160,8 +188,8 @@ public class Fixture
         group.AddMatch(new Match(
             matchDate,
             stadium,
-            teamList[pairing.homeIndex],
-            teamList[pairing.awayIndex],
+            groupTeams[pairing.homeIndex],
+            groupTeams[pairing.awayIndex],
             group: group.Label,
             phase: TournamentPhase.GroupStage
         ));
@@ -169,34 +197,9 @@ public class Fixture
         matchCounter++;
     }
     
-    public void SimulateGroupStage(int seed)
-    {
-        ValidateFixtureWasGenerated();
-
-        foreach (var group in _groups)
-            group.SimulateMatches(seed);
-    }
-    
-    private void ValidateFixtureWasGenerated()
-    {
-        if (_groups.Count == 0)
-            throw new InvalidOperationException(FixtureNotGeneratedErrorMessage);
-    }
-    
     private Fixture()
     {
         _pots = new List<Pot>();
         _stadiums = new List<Stadium>();
     }
-
-    public static Fixture FromExistingGroups(IEnumerable<Group> groups)
-    {
-        var fixture = new Fixture();
-
-        if (groups is not null)
-            fixture._groups.AddRange(groups);
-
-        return fixture;
-    }
-    
 }
