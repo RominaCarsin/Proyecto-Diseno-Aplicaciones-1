@@ -12,6 +12,10 @@ public class Fixture
     public const int RequiredTeamCount = 48;
     public const int MinStadiumCount = 4;
     public const int MaxTeamsPerGroup = 4;
+    public const int FirstMatchHour = 14;
+    public const int HoursBetweenMatches = 4;
+    public const int RoundDaysOffset = 3;
+    public const int MatchesPerRound = 2;
 
     private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string NotEnoughTeamsErrorMessage = "Se necesitan 48 equipos para generar el fixture.";
@@ -31,9 +35,9 @@ public class Fixture
     {
         ValidateTeamCount();
         ValidateStadiumCount();
-        _groups.Clear();
         CreateGroups();
         AssignTeamsToGroupsFromPots();
+        GenerateMatchesForGroups();
     }
     
     private void ValidateTeamCount()
@@ -102,5 +106,51 @@ public class Fixture
 
         throw new InvalidOperationException(
             string.Format(TeamNotAssignedErrorMessage, team.Name));
+    }
+    
+    private void GenerateMatchesForGroups()
+    {
+        for (int groupIndex = 0; groupIndex < _groups.Count; groupIndex++)
+        {
+            var group = _groups[groupIndex];
+            var teamList = group.Teams.ToList();
+
+            var pairings = new List<(int, int)>
+            {
+                (0, 3), (1, 2),
+                (0, 2), (1, 3),
+                (0, 1), (2, 3)
+            };
+
+            int groupStartDayOffset = groupIndex * RoundDaysOffset;
+
+            for (int round = 0; round < 3; round++)
+            {
+                var roundDate = _startDate.Date.AddDays(
+                    groupStartDayOffset + round * RoundDaysOffset);
+
+                var roundPairings = pairings
+                    .Skip(round * MatchesPerRound)
+                    .Take(MatchesPerRound)
+                    .ToList();
+
+                for (int matchIndex = 0; matchIndex < roundPairings.Count; matchIndex++)
+                {
+                    var matchDate = round == 2
+                        ? roundDate.AddHours(FirstMatchHour)
+                        : roundDate.AddHours(FirstMatchHour)
+                            .AddHours(matchIndex * HoursBetweenMatches);
+
+                    group.AddMatch(new Match(
+                        matchDate,
+                        _stadiums[0],
+                        teamList[roundPairings[matchIndex].Item1],
+                        teamList[roundPairings[matchIndex].Item2],
+                        group: group.Label,
+                        phase: TournamentPhase.GroupStage
+                    ));
+                }
+            }
+        }
     }
 }
