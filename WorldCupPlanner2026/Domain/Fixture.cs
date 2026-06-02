@@ -10,7 +10,9 @@ public class Fixture
     public IReadOnlyCollection<Group> Groups => _groups;
     public const int GroupCount = 12;
     public const int RequiredTeamCount = 48;
+    public const int MinStadiumCount = 4;
 
+    private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string NotEnoughTeamsErrorMessage = "Se necesitan 48 equipos para generar el fixture.";
     
     public Fixture(IEnumerable<Pot> pots, IEnumerable<Stadium> stadiums, DateTime startDate)
@@ -26,6 +28,7 @@ public class Fixture
     public void Generate()
     {
         ValidateTeamCount();
+        ValidateStadiumCount();
         _groups.Clear();
 
         for (int i = 0; i < GroupCount; i++)
@@ -38,5 +41,11 @@ public class Fixture
 
         if (totalTeams < RequiredTeamCount)
             throw new InvalidOperationException(NotEnoughTeamsErrorMessage);
+    }
+    
+    private void ValidateStadiumCount()
+    {
+        if (_stadiums.Count < MinStadiumCount)
+            throw new InvalidOperationException(NotEnoughStadiumsErrorMessage);
     }
 }
