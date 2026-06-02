@@ -118,4 +118,44 @@ public class FixtureTests
         }
     }
     
+    [TestMethod]
+    public void Generate_WithValidData_ShouldCreateExpectedGroupStageMatches()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+
+        fixture.Generate();
+
+        foreach (var group in fixture.Groups)
+            Assert.AreEqual(6, group.Matches.Count);
+
+        var allMatches = fixture.Groups.SelectMany(g => g.Matches).ToList();
+
+        Assert.AreEqual(72, allMatches.Count);
+
+        foreach (var match in allMatches)
+            Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
+    }
+    
+    [TestMethod]
+    public void Generate_WithValidData_ShouldAssignMatchDatesUsingExpectedSchedule()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+
+        fixture.Generate();
+
+        var matches = fixture.Groups.First().Matches.ToList();
+        var baseDate = StartDate.Date;
+
+        Assert.AreEqual(baseDate.AddHours(14), matches[0].Date);
+
+        Assert.AreEqual(baseDate.AddHours(18), matches[1].Date);
+        Assert.AreEqual(matches[0].Date.AddHours(4), matches[1].Date);
+
+        Assert.AreEqual(baseDate.AddDays(3).AddHours(14), matches[2].Date);
+        Assert.AreEqual(baseDate.AddDays(3).AddHours(18), matches[3].Date);
+        Assert.AreEqual(matches[2].Date.AddHours(4), matches[3].Date);
+
+        Assert.AreEqual(baseDate.AddDays(6).AddHours(14), matches[4].Date);
+        Assert.AreEqual(baseDate.AddDays(6).AddHours(14), matches[5].Date);
+    }
 }
