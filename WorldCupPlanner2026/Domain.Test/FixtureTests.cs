@@ -189,4 +189,31 @@ public class FixtureTests
 
         Assert.IsTrue(allTeams.Any(team => team.Points > 0));
     }
+    
+    [TestMethod]
+    public void SimulateGroupStage_WithoutGeneratedFixture_ShouldThrowException()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+
+        var exception = Assert.ThrowsException<InvalidOperationException>(
+            () => fixture.SimulateGroupStage(1));
+
+        Assert.AreEqual("No se ha generado el fixture todavía.", exception.Message);
+    }
+    
+    [TestMethod]
+    public void FromExistingGroups_WithValidGroups_ShouldCreateFixtureWithThoseGroups()
+    {
+        var groups = new List<Group>
+        {
+            new('A'),
+            new('B')
+        };
+
+        var fixture = Fixture.FromExistingGroups(groups);
+
+        Assert.AreEqual(2, fixture.Groups.Count);
+        Assert.AreSame(groups[0], fixture.Groups.ElementAt(0));
+        Assert.AreSame(groups[1], fixture.Groups.ElementAt(1));
+    }
 }
