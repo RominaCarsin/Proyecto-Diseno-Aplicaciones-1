@@ -110,6 +110,8 @@ public class Fixture
     
     private void GenerateMatchesForGroups()
     {
+        int matchCounter = 0;
+
         for (int groupIndex = 0; groupIndex < _groups.Count; groupIndex++)
         {
             var group = _groups[groupIndex];
@@ -126,8 +128,7 @@ public class Fixture
 
             for (int round = 0; round < 3; round++)
             {
-                var roundDate = _startDate.Date.AddDays(
-                    groupStartDayOffset + round * RoundDaysOffset);
+                var roundDate = _startDate.Date.AddDays(groupStartDayOffset + round * RoundDaysOffset);
 
                 var roundPairings = pairings
                     .Skip(round * MatchesPerRound)
@@ -138,19 +139,32 @@ public class Fixture
                 {
                     var matchDate = round == 2
                         ? roundDate.AddHours(FirstMatchHour)
-                        : roundDate.AddHours(FirstMatchHour)
-                            .AddHours(matchIndex * HoursBetweenMatches);
+                        : roundDate.AddHours(FirstMatchHour).AddHours(matchIndex * HoursBetweenMatches);
 
-                    group.AddMatch(new Match(
-                        matchDate,
-                        _stadiums[0],
-                        teamList[roundPairings[matchIndex].Item1],
-                        teamList[roundPairings[matchIndex].Item2],
-                        group: group.Label,
-                        phase: TournamentPhase.GroupStage
-                    ));
+                    AddMatchToGroup(group, teamList, roundPairings[matchIndex], matchDate, ref matchCounter);
                 }
             }
         }
+    }
+
+    private void AddMatchToGroup(
+        Group group,
+        List<Team> teamList,
+        (int homeIndex, int awayIndex) pairing,
+        DateTime matchDate,
+        ref int matchCounter)
+    {
+        var stadium = _stadiums[matchCounter % _stadiums.Count];
+
+        group.AddMatch(new Match(
+            matchDate,
+            stadium,
+            teamList[pairing.homeIndex],
+            teamList[pairing.awayIndex],
+            group: group.Label,
+            phase: TournamentPhase.GroupStage
+        ));
+
+        matchCounter++;
     }
 }
