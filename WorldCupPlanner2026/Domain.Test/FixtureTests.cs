@@ -90,4 +90,32 @@ public class FixtureTests
         foreach (var group in fixture.Groups)
             Assert.AreEqual(4, group.Teams.Count);
     }
+    
+    [TestMethod]
+    public void Generate_WithValidData_ShouldBalanceTeamsByConfederation()
+    {
+        var fixture = new Fixture(BuildValidPots(), BuildStadiums(4), StartDate);
+
+        fixture.Generate();
+
+        foreach (var confederation in new[] { "UEFA", "CONMEBOL", "AFC" })
+        {
+            var perGroup = fixture.Groups
+                .Select(g => g.Teams.Count(t => t.ConfederationName == confederation))
+                .ToList();
+
+            Assert.IsTrue(
+                perGroup.Max() - perGroup.Min() <= 1,
+                $"Reparto desbalanceado para {confederation}: {perGroup.Max()} vs {perGroup.Min()}.");
+        }
+
+        foreach (var group in fixture.Groups)
+        {
+            Assert.IsTrue(group.Teams.Count(t => t.ConfederationName == "UEFA") <= 2);
+
+            foreach (var other in new[] { "CONMEBOL", "AFC", "CAF", "CONCACAF", "OFC" })
+                Assert.IsTrue(group.Teams.Count(t => t.ConfederationName == other) <= 1);
+        }
+    }
+    
 }
