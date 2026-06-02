@@ -167,4 +167,10 @@ public class Fixture
 
         matchCounter++;
     }
+    
+    public void SimulateGroupStage(int seed)
+    {
+        foreach (var group in _groups)
+            group.SimulateMatches(seed);
+    }
 }
