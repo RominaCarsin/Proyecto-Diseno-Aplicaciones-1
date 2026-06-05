@@ -3,7 +3,6 @@
 @using DTOs
 @using IServices
 @inject ITeamService TeamService
-@inject IConfederationService ConfederationService
 @inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
@@ -251,13 +250,13 @@
         }
     }
 
-    private void RefreshUI()
-    {
-        var seed = int.TryParse(simulationSeed, out var parsed) ? parsed : 0;
+     private void RefreshUI()
+     {
+         var seed = int.TryParse(simulationSeed, out var parsed) ? parsed : 0;
 
-        teams = TeamService.GetTeamsOrdered(seed);
-        confederations = ConfederationService.GetAll();
-    }
+         teams = TeamService.GetTeamsOrdered(seed);
+         confederations = TeamService.GetConfederations();
+     }
 
     private void ClearMessages()
     {
