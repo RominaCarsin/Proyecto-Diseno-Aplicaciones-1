@@ -8,6 +8,7 @@ public abstract class MatchIncidence
     private const int MinMinute = 0;
     private const int MaxMinute = 130;
 
+    public int IncidenceId { get; private set; } 
     public Team Team { get; private set; }
     public int Minute { get; private set; }
 

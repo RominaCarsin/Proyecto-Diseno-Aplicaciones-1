@@ -14,7 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<Stadium> Stadiums { get; set; }
     public DbSet<Knockout> Knockouts { get; set; }
     public DbSet<User> Users { get; set; }
-
+    public DbSet<MatchIncidence> MatchIncidences { get; set; }
+  
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
