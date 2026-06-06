@@ -206,6 +206,22 @@ public class MatchTests
             group: group,
             phase: phase
         );
+    
+    [TestMethod]
+    public void RegisterIncidence_RedCard_ShouldBeCountedSeparatelyFromYellow()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, minute: 30));
+        match.RegisterIncidence(new RedCard(homeTeam, minute: 80));
+        match.RegisterIncidence(new RedCard(awayTeam, minute: 85));
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(awayTeam));
+    }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
         new(name, "MONTEVIDEO", "Historic stadium", 60000);
