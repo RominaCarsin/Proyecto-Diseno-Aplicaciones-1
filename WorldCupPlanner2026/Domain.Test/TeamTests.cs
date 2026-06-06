@@ -254,6 +254,15 @@ public class TeamTests
         Assert.AreEqual(validBase64, team.FlagBase64);
     }
     
+    [TestMethod]
+    public void UpdateFlag_WithInvalidBase64_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateFlag("esto no es base64 !!!"));
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
     
