@@ -13,7 +13,8 @@ public class Team
     private const string ConfederationRequiredErrorMessage = "La confederación es obligatoria.";
     private const string ConfederationInvalidErrorMessage = "La confederación es inválida.";
     private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
-
+    private const string FlagInvalidErrorMessage = "La bandera debe estar en formato base64 válido.";
+    
     private static readonly HashSet<string> ValidConfederations = new()
     {
         "AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"
@@ -101,7 +102,26 @@ public class Team
     
     public void UpdateFlag(string flagBase64)
     {
-        FlagBase64 = flagBase64;
+        FlagBase64 = NormalizeFlag(flagBase64);
+    }
+    
+    private static string NormalizeFlag(string flagBase64)
+    {
+        if (string.IsNullOrWhiteSpace(flagBase64))
+            return string.Empty;
+
+        var trimmed = flagBase64.Trim();
+
+        if (!IsValidBase64(trimmed))
+            throw new ArgumentException(FlagInvalidErrorMessage);
+
+        return trimmed;
+    }
+
+    private static bool IsValidBase64(string value)
+    {
+        var buffer = new Span<byte>(new byte[value.Length]);
+        return Convert.TryFromBase64String(value, buffer, out _);
     }
         
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
