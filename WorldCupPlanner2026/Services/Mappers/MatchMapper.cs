@@ -32,7 +32,11 @@ public static class MatchMapper
             MatchCode = match.MatchCode,
             IsLocked = match.IsLocked,
             Status = match.Status.ToString(),
-            HasResult = match.HasResult
+            HasResult = match.HasResult,
+            HomeYellowCards = match.YellowCardsOf(match.HomeTeam),
+            AwayYellowCards = match.YellowCardsOf(match.AwayTeam),
+            HomeRedCards = match.RedCardsOf(match.HomeTeam),
+            AwayRedCards = match.RedCardsOf(match.AwayTeam)
         };
     
 

@@ -7,7 +7,9 @@ public static class TeamMapper
 {
     public static Team ToEntity(TeamRequest request)
     {
-        return new Team(request.Name, request.ConfederationName, request.RankingFifa);
+        var team = new Team(request.Name, request.ConfederationName, request.RankingFifa);
+        team.UpdateFlag(request.FlagBase64);   
+        return team;
     }
     
     public static TeamResponse FromEntity(Team team)
@@ -20,7 +22,8 @@ public static class TeamMapper
             Points = team.Points,
             GoalDifference = team.GoalDifference,
             GoalsInFavor = team.GoalsInFavor,
-            GroupLabel = team.GroupLabel
+            GroupLabel = team.GroupLabel,
+            FlagBase64 = team.FlagBase64
         };
     }
 
@@ -28,6 +31,9 @@ public static class TeamMapper
     {
         var team = new Team(response.Name, response.ConfederationName, response.RankingFifa);
         team.UpdateGroupLabel(response.GroupLabel);
+        team.UpdateFlag(response.FlagBase64);
         return team;
     }
+    
+    
 }
