@@ -52,6 +52,21 @@ public class UpdateRankingServiceTests
         Assert.ThrowsException<InvalidOperationException>(() =>
             _service.UpdateAfterMatch(match));
     }
+    
+    [TestMethod]
+    public void UpdateAfterMatch_ShouldAuditRankingChangeForBothTeams()
+    {
+        var strong = BuildTeam("STRONG", 1500);
+        var weak = BuildTeam("WEAK", 1200);
+        var match = BuildFinishedMatch(home: weak, away: strong, homeGoals: 2, awayGoals: 0);
+
+        _service.UpdateAfterMatch(match);
+
+        var logs = _auditRepository.GetAll().ToList();
+        // Una entrada de auditoría por cada equipo cuyo ranking cambió.
+        Assert.AreEqual(2, logs.Count);
+        Assert.IsTrue(logs.All(log => log.Action.Contains("RANKING", StringComparison.OrdinalIgnoreCase)));
+    }
 
     private static Match BuildFinishedMatch(Team home, Team away, int homeGoals, int awayGoals)
     {
