@@ -33,6 +33,25 @@ public class UpdateRankingServiceTests
         Assert.AreEqual(1220, weak.RankingFifa);
         Assert.AreEqual(1480, strong.RankingFifa);
     }
+    
+    [TestMethod]
+    public void UpdateAfterMatch_WhenMatchIsNotFinished_ShouldThrowInvalidOperationException()
+    {
+        var strong = BuildTeam("STRONG", 1500);
+        var weak = BuildTeam("WEAK", 1200);
+
+        var match = new Match(
+            date: ValidDate,
+            stadium: new Stadium("CENTENARIO", "MONTEVIDEO", "Historic stadium", 60000),
+            homeTeam: weak,
+            awayTeam: strong,
+            group: 'A',
+            phase: TournamentPhase.GroupStage);
+        match.SetResult(2, 0);   // tiene resultado pero NO está finalizado
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _service.UpdateAfterMatch(match));
+    }
 
     private static Match BuildFinishedMatch(Team home, Team away, int homeGoals, int awayGoals)
     {
