@@ -263,6 +263,17 @@ public class TeamTests
             team.UpdateFlag("esto no es base64 !!!"));
     }
     
+    [TestMethod]
+    public void UpdateFlag_WithEmptyOrWhitespace_ShouldResetToEmpty()
+    {
+        var team = CreateValidTeam();
+        team.UpdateFlag(Convert.ToBase64String(new byte[] { 9, 9 }));
+
+        team.UpdateFlag("   ");
+
+        Assert.AreEqual(string.Empty, team.FlagBase64);
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
     
