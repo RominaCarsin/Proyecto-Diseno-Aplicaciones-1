@@ -222,6 +222,17 @@ public class MatchTests
         Assert.AreEqual(1, match.RedCardsOf(homeTeam));
         Assert.AreEqual(1, match.RedCardsOf(awayTeam));
     }
+    
+    [TestMethod]
+    public void RegisterIncidence_OnLockedMatch_ShouldThrowInvalidOperationException()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: BuildTeam("ARGENTINA"));
+        match.LockEdition();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.RegisterIncidence(new YellowCard(homeTeam, minute: 30)));
+    }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
         new(name, "MONTEVIDEO", "Historic stadium", 60000);
