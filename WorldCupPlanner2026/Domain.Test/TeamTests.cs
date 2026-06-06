@@ -235,6 +235,16 @@ public class TeamTests
         Assert.AreEqual("URUGUAY", result);
     }
     
+    [TestMethod]
+    public void CreateTeam_WithoutFlag_ShouldHaveEmptyFlag()
+    {
+        var team = new Team(ValidName, ValidConfederation, ValidRanking);
+
+        Assert.AreEqual(string.Empty, team.FlagBase64);
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
+    
+    
 }
