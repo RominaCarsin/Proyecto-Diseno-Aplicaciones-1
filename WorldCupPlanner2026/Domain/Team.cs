@@ -98,6 +98,11 @@ public class Team
 
     public static string Normalize(string value) =>
         value?.Trim().ToUpper() ?? string.Empty;
+    
+    public void UpdateFlag(string flagBase64)
+    {
+        FlagBase64 = flagBase64;
+    }
         
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
     {
