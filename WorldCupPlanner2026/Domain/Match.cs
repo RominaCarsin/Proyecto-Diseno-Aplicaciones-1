@@ -16,7 +16,9 @@ public class Match
     private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
     private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
+    private readonly List<MatchIncidence> _incidences = new();
     
+    public IReadOnlyCollection<MatchIncidence> Incidences => _incidences.AsReadOnly();
     public int MatchId { get; private set; }
     public int StadiumId { get; private set; }
     public int HomeTeamId { get; private set; }
@@ -109,6 +111,16 @@ public class Match
     {
         IsLocked = true;
     }
+    
+    public void RegisterIncidence(MatchIncidence incidence)
+    {
+        _incidences.Add(incidence);
+    }
+
+    public int YellowCardsOf(Team team) => CountIncidences<YellowCard>(team);
+
+    private int CountIncidences<TIncidence>(Team team) where TIncidence : MatchIncidence =>
+        _incidences.Count(incidence => incidence is TIncidence && ReferenceEquals(incidence.Team, team));
     
     private void ValidateIsEditable()
     {
