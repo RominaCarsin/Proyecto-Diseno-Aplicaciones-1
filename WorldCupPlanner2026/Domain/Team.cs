@@ -27,6 +27,7 @@ public class Team
     public int GoalDifference { get; private set; }
     public int GoalsInFavor { get; private set; }
     public string GroupLabel { get; private set; } = string.Empty;
+    public string FlagBase64 { get; private set; } = string.Empty;
 
     public Team (){}
     public Team(string name, string confederationName, int rankingFifa, string groupLabel = "")
