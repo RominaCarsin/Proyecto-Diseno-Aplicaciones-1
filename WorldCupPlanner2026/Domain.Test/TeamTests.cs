@@ -235,6 +235,28 @@ public class TeamTests
         Assert.AreEqual("URUGUAY", result);
     }
     
+    [TestMethod]
+    public void ApplyRankingChange_WithPositiveDelta_ShouldIncreaseRankingRounded()
+    {
+        var team = new Team(ValidName, ValidConfederation, 1200);
+
+        team.ApplyRankingChange(20.02);
+
+        // 1200 + 20.02 = 1220.02 → redondea a 1220
+        Assert.AreEqual(1220, team.RankingFifa);
+    }
+    
+    [TestMethod]
+    public void ApplyRankingChange_WithExactHalfDelta_ShouldRoundUp()
+    {
+        var team = new Team(ValidName, ValidConfederation, 1500);
+
+        team.ApplyRankingChange(10.5);
+
+        // 1510.5 → con AwayFromZero redondea a 1511 (no a 1510 como haría banker's rounding)
+        Assert.AreEqual(1511, team.RankingFifa);
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
 }
