@@ -177,6 +177,19 @@ public class MatchTests
         Assert.ThrowsException<InvalidOperationException>(() => match.Finish());
         Assert.ThrowsException<InvalidOperationException>(() => match.SetResult(1, 0));
     }
+    
+    [TestMethod]
+    public void RegisterIncidence_YellowCard_ShouldBeCountedForThatTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, minute: 30));
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(0, match.YellowCardsOf(awayTeam));
+    }
 
     private static Match CreateMatch(
         DateTime? date = null,
