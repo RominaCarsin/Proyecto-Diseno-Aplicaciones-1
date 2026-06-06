@@ -257,6 +257,28 @@ public class TeamTests
         Assert.AreEqual(1511, team.RankingFifa);
     }
     
+    [TestMethod]
+    public void ApplyRankingChange_ExceedingMaximum_ShouldClampTo2500()
+    {
+        var team = new Team(ValidName, ValidConfederation, 2490);
+
+        team.ApplyRankingChange(50);
+
+        // 2540 → clamp a 2500
+        Assert.AreEqual(2500, team.RankingFifa);
+    }
+    
+    [TestMethod]
+    public void ApplyRankingChange_BelowMinimum_ShouldClampTo300()
+    {
+        var team = new Team(ValidName, ValidConfederation, 320);
+
+        team.ApplyRankingChange(-50);
+
+        // 270 → clamp a 300
+        Assert.AreEqual(300, team.RankingFifa);
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
 }
