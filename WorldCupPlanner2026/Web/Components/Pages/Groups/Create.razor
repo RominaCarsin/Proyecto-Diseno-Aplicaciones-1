@@ -2,14 +2,12 @@
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
-@inject IGroupService GroupService
 @inject ITeamService TeamService
-@inject IFixtureService FixtureService
-
+@inject ITournamentService TournamentService
 <div class="page-wrap">
 
     <div class="ph">
-        <h1 class="pt">Fixture · Phase de grupos</h1>
+        <h1 class="pt">GroupPhase · Phase de grupos</h1>
         <p class="ps">12 grupos · WorldCupPlanner 2026</p>
     </div>
 
@@ -21,7 +19,7 @@
             </div>
             <div class="card-body">
                 <div class="fg">
-                    <label class="fl">Semilla (SemillaFixture) <span class="req">*</span></label>
+                    <label class="fl">Semilla (SemillaGroupPhase) <span class="req">*</span></label>
                     <input class="finput" type="number" @bind="_seed" />
                 </div>
                 <div class="fg">
@@ -386,9 +384,9 @@
 
     private void LoadData()
     {
-        _groups = GroupService.GetGroups().OrderBy(g => g.Label).ToList();
+        _groups = TournamentService.GetGroups().OrderBy(g => g.Label).ToList();
         _teamCount = TeamService.GetTeams().Count();
-        _stadiumCount = FixtureService.GetStadiumCount();
+        _stadiumCount = TournamentService.GetStadiumCount();
         _fixtureGenerated = _groups.Any();
 
         if (_selectedLabel.HasValue)
@@ -400,8 +398,8 @@
         ClearMessages();
         try
         {
-            FixtureService.GenerateFixture(_seed, _startDate);
-            _successMessage = "Fixture generado correctamente.";
+            TournamentService.GenerateFixture(_seed, _startDate);
+            _successMessage = "GroupPhase generado correctamente.";
             LoadData();
         }
         catch (Exception ex)
@@ -415,7 +413,7 @@
         ClearMessages();
         try
         {
-            FixtureService.SimulateGroupStage(_simulationSeed);
+            TournamentService.SimulateGroupStage(_simulationSeed);
             _simulationSuccessMessage = "Resultados simulados correctamente.";
             LoadData();
         }
@@ -453,7 +451,7 @@
         ClearMatchMessages();
         try
         {
-            GroupService.SetMatchResult(_selectedLabel!.Value, matchId, _editHomeGoals, _editAwayGoals);
+            TournamentService.SetGroupMatchResult(_selectedLabel!.Value, matchId, _editHomeGoals, _editAwayGoals);
             _matchSuccessMessage = "Resultado cargado correctamente.";
             CancelEdit();
             LoadData();
@@ -469,7 +467,7 @@
         ClearMatchMessages();
         try
         {
-            GroupService.FinishMatch(_selectedLabel!.Value, matchId);
+            TournamentService.FinishGroupMatch(_selectedLabel!.Value, matchId);
             _matchSuccessMessage = "Partido terminado correctamente.";
             LoadData();
         }

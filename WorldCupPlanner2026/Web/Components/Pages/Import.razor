@@ -5,7 +5,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Text
 @inject ISessionService SessionService
-@inject ITeamImportService TeamImportService
+@inject ITeamService TeamService
 
 <div class="row g-4">
     @if (!IsEditor)
@@ -170,49 +170,49 @@
         await LoadPreview();
     }
 
-    private async Task LoadPreview()
-    {
-        ClearMessages();
+     private async Task LoadPreview()
+     {
+         ClearMessages();
 
-        if (selectedFile == null)
-            return;
+         if (selectedFile == null)
+             return;
 
-        try
-        {
-            await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 1024 * 1024);
-            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-            csvContent = await reader.ReadToEndAsync();
-            previewResult = TeamImportService.Preview(csvContent);
-        }
-        catch (Exception ex)
-        {
-            previewResult = null;
-            errorMessage = ex.Message;
-        }
-    }
+         try
+         {
+             await using var stream = selectedFile.OpenReadStream(maxAllowedSize: 1024 * 1024);
+             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+             csvContent = await reader.ReadToEndAsync();
+             previewResult = TeamService.PreviewImport(csvContent);
+         }
+         catch (Exception ex)
+         {
+             previewResult = null;
+             errorMessage = ex.Message;
+         }
+     }
 
-    private void ProcessImport()
-    {
-        if (!IsEditor || string.IsNullOrWhiteSpace(csvContent))
-            return;
+     private void ProcessImport()
+     {
+         if (!IsEditor || string.IsNullOrWhiteSpace(csvContent))
+             return;
 
-        ClearMessages();
-        isImporting = true;
+         ClearMessages();
+         isImporting = true;
 
-        try
-        {
-            previewResult = TeamImportService.Import(csvContent);
-            successMessage = $"Importacion finalizada: {previewResult.SuccessfulRows} filas importadas, {previewResult.FailedRows} errores.";
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isImporting = false;
-        }
-    }
+         try
+         {
+             previewResult = TeamService.Import(csvContent);
+             successMessage = $"Importacion finalizada: {previewResult.SuccessfulRows} filas importadas, {previewResult.FailedRows} errores.";
+         }
+         catch (Exception ex)
+         {
+             errorMessage = ex.Message;
+         }
+         finally
+         {
+             isImporting = false;
+         }
+     }
 
     private void HandleDragOver() => isDragging = true;
     private void HandleDragLeave() => isDragging = false;

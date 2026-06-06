@@ -2,31 +2,31 @@
 @using DTOs
 @using IServices
 @page "/groups"
-@inject IGroupService GroupService
+@inject ITournamentService TournamentService
 @inject ITeamService TeamService
-@inject IFixtureService FixtureService
 @inject ISessionService SessionService
 
 <div class="container-fluid p-0 space-y-6">
     <div class="bg-white border-custom p-4 diagonal-corners">
         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
             <div>
-                <h3 class="mb-1">Fixture y grupos</h3>
+                <h3 class="mb-1">GroupPhase y grupos</h3>
                 <p class="text-muted mb-0">
                     Equipos: @teamCount / 48 - Estadios: @stadiumCount / 4 minimo
                 </p>
             </div>
             <span class="badge @(fixtureGenerated ? "bg-success" : "bg-secondary") px-3 py-2">
-                @(fixtureGenerated ? "Fixture generado" : "Fixture pendiente")
+                @(fixtureGenerated ? "GroupPhase generado" : "GroupPhase pendiente")
             </span>
         </div>
+
         <GeometricDivider />
 
         @if (!fixtureGenerated)
         {
             <div class="row g-3 align-items-end mt-2">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">SemillaFixture</label>
+                    <label class="form-label fw-bold">SemillaGroupPhase</label>
                     <input type="number" @bind="fixtureSeed" class="form-control border-custom-input" />
                 </div>
                 <div class="col-md-4">
@@ -79,6 +79,7 @@
         {
             <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
         }
+
         @if (!string.IsNullOrWhiteSpace(successMessage))
         {
             <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
@@ -132,7 +133,9 @@
                 <div class="bg-light px-4 py-3">
                     <h4 class="mb-0">Grupo @selectedGroup.Label - Posiciones</h4>
                 </div>
+
                 <GeometricDivider />
+
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
@@ -149,6 +152,7 @@
                             @for (var index = 0; index < selectedStandings.Count; index++)
                             {
                                 var team = selectedStandings[index];
+
                                 <tr class="@(index < 2 ? "bg-success-light" : "")">
                                     <td class="px-4 py-3">@(index + 1)</td>
                                     <td class="px-4 py-3 fw-bold">@team.Name</td>
@@ -167,7 +171,9 @@
                 <div class="bg-light px-4 py-3">
                     <h4 class="mb-0">Grupo @selectedGroup.Label - Partidos</h4>
                 </div>
+
                 <GeometricDivider />
+
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
@@ -265,7 +271,8 @@
     private int editHomeGoals;
     private int editAwayGoals;
 
-    private bool IsEditor => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
+    private bool IsEditor =>
+        SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
 
     private bool CanGenerateFixture =>
         IsEditor && teamCount == 48 && stadiumCount >= 4 && fixtureSeed.HasValue && !fixtureGenerated;
@@ -277,17 +284,21 @@
 
     private void LoadData()
     {
-        groups = GroupService.GetGroups().OrderBy(group => group.Label).ToList();
+        groups = TournamentService.GetGroups()
+            .OrderBy(group => group.Label)
+            .ToList();
+
         teamCount = TeamService.GetTeams().Count();
-        stadiumCount = FixtureService.GetStadiumCount();
+        stadiumCount = TournamentService.GetStadiumCount();
         fixtureGenerated = groups.Any();
 
         if (selectedLabel.HasValue)
         {
             selectedGroup = groups.FirstOrDefault(group => group.Label == selectedLabel.Value);
+
             selectedStandings = selectedGroup == null
                 ? new List<TeamResponse>()
-                : GroupService.GetGroupStandings(selectedLabel.Value).ToList();
+                : TournamentService.GetGroupStandings(selectedLabel.Value).ToList();
         }
     }
 
@@ -300,8 +311,8 @@
 
         try
         {
-            FixtureService.GenerateFixture(fixtureSeed!.Value, startDate);
-            successMessage = "Fixture generado correctamente.";
+            TournamentService.GenerateFixture(fixtureSeed!.Value, startDate);
+            successMessage = "GroupPhase generado correctamente.";
             LoadData();
         }
         catch (Exception ex)
@@ -319,7 +330,7 @@
 
         try
         {
-            FixtureService.SimulateGroupStage(simulationSeed.Value);
+            TournamentService.SimulateGroupStage(simulationSeed.Value);
             successMessage = "Resultados simulados correctamente.";
             LoadData();
         }
@@ -332,12 +343,15 @@
     private void SelectGroup(char label)
     {
         selectedLabel = selectedLabel == label ? null : label;
+
         selectedGroup = selectedLabel.HasValue
             ? groups.FirstOrDefault(group => group.Label == selectedLabel.Value)
             : null;
+
         selectedStandings = selectedLabel.HasValue
-            ? GroupService.GetGroupStandings(selectedLabel.Value).ToList()
+            ? TournamentService.GetGroupStandings(selectedLabel.Value).ToList()
             : new List<TeamResponse>();
+
         CancelEdit();
         ClearMessages();
     }
@@ -359,7 +373,12 @@
 
         try
         {
-            GroupService.SetMatchResult(selectedLabel.Value, matchId, editHomeGoals, editAwayGoals);
+            TournamentService.SetGroupMatchResult(
+                selectedLabel.Value,
+                matchId,
+                editHomeGoals,
+                editAwayGoals);
+
             successMessage = "Resultado cargado correctamente.";
             CancelEdit();
             LoadData();
@@ -379,7 +398,7 @@
 
         try
         {
-            GroupService.FinishMatch(selectedLabel.Value, matchId);
+            TournamentService.FinishGroupMatch(selectedLabel.Value, matchId);
             successMessage = "Partido terminado correctamente.";
             LoadData();
         }
@@ -409,47 +428,3 @@
             : "vs";
     }
 }
-
-<style>
-    .groups-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .group-card {
-        height: fit-content;
-    }
-
-    .group-card.expanded {
-        outline: 3px solid var(--wc-blue);
-    }
-
-    .group-card-button {
-        border: 0;
-        padding: 0;
-        width: 100%;
-        background: transparent;
-        text-align: left;
-    }
-
-    .bg-success-light {
-        background-color: rgba(25, 135, 84, 0.1) !important;
-    }
-
-    .border-custom-light {
-        border-color: #eee !important;
-    }
-
-    .last-no-border:last-child {
-        border-bottom: none !important;
-    }
-
-    .transition-all {
-        transition: all 0.2s ease-in-out;
-    }
-
-    .score-input {
-        width: 72px;
-    }
-</style>

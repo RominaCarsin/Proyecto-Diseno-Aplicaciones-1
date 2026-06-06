@@ -20,23 +20,40 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddScoped<IStadiumService, StadiumService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
-builder.Services.AddScoped<ITeamImportService, TeamImportService>();
-builder.Services.AddScoped<IConfederationService, ConfederationService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthStateService, AuthStateService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
-builder.Services.AddScoped<IMatchService, MatchService>();
-builder.Services.AddScoped<IGroupService, GroupService>();
-builder.Services.AddScoped<IPotService, PotService>();
-builder.Services.AddScoped<IFixtureService, FixtureService>();
-
+builder.Services.AddScoped<ITournamentService, TournamentService>();
 builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
 builder.Services.AddScoped<Domain.IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
 
 builder.Services.AddBlazoredLocalStorage();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    if (app.Environment.IsDevelopment())
+        dbContext.Database.EnsureDeleted();
+
+    dbContext.Database.Migrate();
+
+    if (!dbContext.Users.Any(user => user.Email == "admin@test.com"))
+    {
+        dbContext.Users.Add(new User(
+            name: "Admin",
+            surname: "Principal",
+            email: "admin@test.com",
+            dateOfBirth: new DateTime(2000, 1, 1),
+            plainPassword: "Password1!",
+            roles: Role.Admin | Role.Editor));
+
+        dbContext.SaveChanges();
+    }
+}
 
 if (!app.Environment.IsDevelopment())
 {

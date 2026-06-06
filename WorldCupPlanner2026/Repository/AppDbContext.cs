@@ -17,11 +17,6 @@ public class AppDbContext : DbContext
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
-        if (Database.IsRelational())
-        {
-            Database.EnsureDeleted();
-            Database.Migrate();
-        }
     }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)

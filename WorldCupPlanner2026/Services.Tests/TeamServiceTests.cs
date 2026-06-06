@@ -1,7 +1,6 @@
 using Domain;
 using DTOs;
 using IRepository;
-using IServices;
 using Repository;
 using Services;
 
@@ -18,17 +17,15 @@ public class TeamServiceTests
 
     private TeamService _service = null!;
     private IRepository<Team> _repository = null!;
-    private IConfederationService _confederationService = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _repository = new FakeRepository<Team>();
-        _confederationService = new ConfederationService();
         var auditService = new AuditService(new FakeRepository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
 
-        _service = new TeamService(_repository, _confederationService, auditService, sessionService);
+        _service = new TeamService(_repository, auditService, sessionService);
     }
     
     [TestMethod]
@@ -243,8 +240,7 @@ public class TeamServiceTests
         var repository = new FakeRepository<Team>();
         var auditService = new AuditService(new FakeRepository<AuditLog>());
         var sessionService = new SessionService(null!, new AuthStateService());
-        var confederationService = new ConfederationService();
-        return new TeamService(repository, confederationService, auditService, sessionService);
+        return new TeamService(repository, auditService, sessionService);
     }
 
     private Team? FindTeamByName(string name) =>
