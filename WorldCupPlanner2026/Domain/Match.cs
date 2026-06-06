@@ -115,11 +115,14 @@ public class Match
     
     public void RegisterIncidence(MatchIncidence incidence)
     {
+        ValidateIsEditable();
         _incidences.Add(incidence);
     }
 
     public int YellowCardsOf(Team team) => CountIncidences<YellowCard>(team);
 
+    
+    
     private int CountIncidences<TIncidence>(Team team) where TIncidence : MatchIncidence =>
         _incidences.Count(incidence => incidence is TIncidence && ReferenceEquals(incidence.Team, team));
     
