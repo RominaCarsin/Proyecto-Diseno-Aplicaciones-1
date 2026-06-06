@@ -243,6 +243,17 @@ public class TeamTests
         Assert.AreEqual(string.Empty, team.FlagBase64);
     }
     
+    [TestMethod]
+    public void UpdateFlag_WithValidBase64_ShouldAssignFlag()
+    {
+        var team = CreateValidTeam();
+        var validBase64 = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+
+        team.UpdateFlag(validBase64);
+
+        Assert.AreEqual(validBase64, team.FlagBase64);
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
     
