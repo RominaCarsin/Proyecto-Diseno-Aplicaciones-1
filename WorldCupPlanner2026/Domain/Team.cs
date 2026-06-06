@@ -100,8 +100,15 @@ public class Team
     
     public void ApplyRankingChange(double delta)
     {
-        var updated = Math.Round(RankingFifa + delta, MidpointRounding.AwayFromZero);
-        RankingFifa = (int)updated;
+        var updated = (int)Math.Round(RankingFifa + delta, MidpointRounding.AwayFromZero);
+        RankingFifa = Clamp(updated);
+    }
+    
+    private static int Clamp(int ranking)
+    {
+        if (ranking < MinRanking) return MinRanking;
+        if (ranking > MaxRanking) return MaxRanking;
+        return ranking;
     }
         
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
