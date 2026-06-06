@@ -233,6 +233,16 @@ public class MatchTests
         Assert.ThrowsException<InvalidOperationException>(() =>
             match.RegisterIncidence(new YellowCard(homeTeam, minute: 30)));
     }
+    
+    [TestMethod]
+    public void RegisterIncidence_ForTeamNotInMatch_ShouldThrowArgumentException()
+    {
+        var match = CreateMatch(homeTeam: BuildTeam("URUGUAY"), awayTeam: BuildTeam("ARGENTINA"));
+        var outsider = BuildTeam("BRAZIL");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            match.RegisterIncidence(new YellowCard(outsider, minute: 30)));
+    }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
         new(name, "MONTEVIDEO", "Historic stadium", 60000);
