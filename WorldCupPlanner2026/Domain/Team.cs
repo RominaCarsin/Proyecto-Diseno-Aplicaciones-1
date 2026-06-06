@@ -97,6 +97,12 @@ public class Team
 
     public static string Normalize(string value) =>
         value?.Trim().ToUpper() ?? string.Empty;
+    
+    public void ApplyRankingChange(double delta)
+    {
+        var updated = Math.Round(RankingFifa + delta, MidpointRounding.AwayFromZero);
+        RankingFifa = (int)updated;
+    }
         
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
     {
