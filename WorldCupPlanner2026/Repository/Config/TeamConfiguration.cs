@@ -14,5 +14,6 @@ public class TeamConfiguration : IEntityTypeConfiguration<Team>
         builder.Property(t => t.ConfederationName).IsRequired();
         builder.Property(t => t.RankingFifa).IsRequired();
         builder.Property(t => t.GroupLabel).HasMaxLength(1);
+        builder.Property(t => t.FlagBase64);
     }
 }

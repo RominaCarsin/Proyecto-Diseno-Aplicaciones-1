@@ -177,6 +177,19 @@ public class MatchTests
         Assert.ThrowsException<InvalidOperationException>(() => match.Finish());
         Assert.ThrowsException<InvalidOperationException>(() => match.SetResult(1, 0));
     }
+    
+    [TestMethod]
+    public void RegisterIncidence_YellowCard_ShouldBeCountedForThatTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, minute: 30));
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(0, match.YellowCardsOf(awayTeam));
+    }
 
     private static Match CreateMatch(
         DateTime? date = null,
@@ -193,6 +206,43 @@ public class MatchTests
             group: group,
             phase: phase
         );
+    
+    [TestMethod]
+    public void RegisterIncidence_RedCard_ShouldBeCountedSeparatelyFromYellow()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, minute: 30));
+        match.RegisterIncidence(new RedCard(homeTeam, minute: 80));
+        match.RegisterIncidence(new RedCard(awayTeam, minute: 85));
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(awayTeam));
+    }
+    
+    [TestMethod]
+    public void RegisterIncidence_OnLockedMatch_ShouldThrowInvalidOperationException()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: BuildTeam("ARGENTINA"));
+        match.LockEdition();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.RegisterIncidence(new YellowCard(homeTeam, minute: 30)));
+    }
+    
+    [TestMethod]
+    public void RegisterIncidence_ForTeamNotInMatch_ShouldThrowArgumentException()
+    {
+        var match = CreateMatch(homeTeam: BuildTeam("URUGUAY"), awayTeam: BuildTeam("ARGENTINA"));
+        var outsider = BuildTeam("BRAZIL");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            match.RegisterIncidence(new YellowCard(outsider, minute: 30)));
+    }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
         new(name, "MONTEVIDEO", "Historic stadium", 60000);

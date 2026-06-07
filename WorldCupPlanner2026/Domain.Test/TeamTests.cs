@@ -279,6 +279,45 @@ public class TeamTests
         Assert.AreEqual(300, team.RankingFifa);
     }
     
+    [TestMethod]
+    public void CreateTeam_WithoutFlag_ShouldHaveEmptyFlag()
+    {
+        var team = new Team(ValidName, ValidConfederation, ValidRanking);
+
+        Assert.AreEqual(string.Empty, team.FlagBase64);
+    }
+    
+    [TestMethod]
+    public void UpdateFlag_WithValidBase64_ShouldAssignFlag()
+    {
+        var team = CreateValidTeam();
+        var validBase64 = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+
+        team.UpdateFlag(validBase64);
+
+        Assert.AreEqual(validBase64, team.FlagBase64);
+    }
+    
+    [TestMethod]
+    public void UpdateFlag_WithInvalidBase64_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateFlag("esto no es base64 !!!"));
+    }
+    
+    [TestMethod]
+    public void UpdateFlag_WithEmptyOrWhitespace_ShouldResetToEmpty()
+    {
+        var team = CreateValidTeam();
+        team.UpdateFlag(Convert.ToBase64String(new byte[] { 9, 9 }));
+
+        team.UpdateFlag("   ");
+
+        Assert.AreEqual(string.Empty, team.FlagBase64);
+    }
+    
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
 }

@@ -16,7 +16,10 @@ public class Match
     private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
     private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
+    private readonly List<MatchIncidence> _incidences = new();
+    private const string IncidenceTeamNotInMatchErrorMessage = "La incidencia debe pertenecer a un equipo del partido.";
     
+    public IReadOnlyCollection<MatchIncidence> Incidences => _incidences.AsReadOnly();
     public int MatchId { get; private set; }
     public int StadiumId { get; private set; }
     public int HomeTeamId { get; private set; }
@@ -36,6 +39,7 @@ public class Match
     public char? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
     public string? MatchCode { get; private set; }
+    public int RedCardsOf(Team team) => CountIncidences<RedCard>(team);
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
 
@@ -109,6 +113,24 @@ public class Match
     {
         IsLocked = true;
     }
+    
+    public void RegisterIncidence(MatchIncidence incidence)
+    {
+        ValidateIsEditable();
+        ValidateIncidenceBelongsToMatch(incidence);
+        _incidences.Add(incidence);
+    }
+
+    public int YellowCardsOf(Team team) => CountIncidences<YellowCard>(team);
+    
+    private void ValidateIncidenceBelongsToMatch(MatchIncidence incidence)
+    {
+        if (!ReferenceEquals(incidence.Team, HomeTeam) && !ReferenceEquals(incidence.Team, AwayTeam))
+            throw new ArgumentException(IncidenceTeamNotInMatchErrorMessage);
+    }
+    
+    private int CountIncidences<TIncidence>(Team team) where TIncidence : MatchIncidence =>
+        _incidences.Count(incidence => incidence is TIncidence && ReferenceEquals(incidence.Team, team));
     
     private void ValidateIsEditable()
     {

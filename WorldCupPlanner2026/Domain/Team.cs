@@ -13,7 +13,8 @@ public class Team
     private const string ConfederationRequiredErrorMessage = "La confederación es obligatoria.";
     private const string ConfederationInvalidErrorMessage = "La confederación es inválida.";
     private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
-
+    private const string FlagInvalidErrorMessage = "La bandera debe estar en formato base64 válido.";
+    
     private static readonly HashSet<string> ValidConfederations = new()
     {
         "AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"
@@ -27,6 +28,7 @@ public class Team
     public int GoalDifference { get; private set; }
     public int GoalsInFavor { get; private set; }
     public string GroupLabel { get; private set; } = string.Empty;
+    public string FlagBase64 { get; private set; } = string.Empty;
 
     public Team (){}
     public Team(string name, string confederationName, int rankingFifa, string groupLabel = "")
@@ -98,19 +100,44 @@ public class Team
     public static string Normalize(string value) =>
         value?.Trim().ToUpper() ?? string.Empty;
     
+
     public void ApplyRankingChange(double delta)
     {
         var updated = (int)Math.Round(RankingFifa + delta, MidpointRounding.AwayFromZero);
         RankingFifa = Clamp(updated);
     }
-    
+
     private static int Clamp(int ranking)
     {
         if (ranking < MinRanking) return MinRanking;
         if (ranking > MaxRanking) return MaxRanking;
         return ranking;
     }
-        
+
+    public void UpdateFlag(string flagBase64)
+    {
+        FlagBase64 = NormalizeFlag(flagBase64);
+    }
+
+    private static string NormalizeFlag(string flagBase64)
+    {
+        if (string.IsNullOrWhiteSpace(flagBase64))
+            return string.Empty;
+
+        var trimmed = flagBase64.Trim();
+
+        if (!IsValidBase64(trimmed))
+            throw new ArgumentException(FlagInvalidErrorMessage);
+
+        return trimmed;
+    }
+
+    private static bool IsValidBase64(string value)
+    {
+        var buffer = new Span<byte>(new byte[value.Length]);
+        return Convert.TryFromBase64String(value, buffer, out _);
+    }
+
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
     {
         ValidateGoalsAreNotNegative(goalsScored, goalsConceded);

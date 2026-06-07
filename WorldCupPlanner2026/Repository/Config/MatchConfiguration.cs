@@ -21,5 +21,9 @@ public class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.HasOne(m => m.Winner).WithMany().HasForeignKey(m => m.WinnerId).OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne<Group>().WithMany(g => g.Matches).HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.NoAction);
+        
+        builder.HasMany(m => m.Incidences).WithOne().HasForeignKey("MatchId").OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata.FindNavigation(nameof(Match.Incidences))!.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }
