@@ -753,6 +753,41 @@ public class GroupTests
         Assert.AreEqual(MatchStatus.Finished, match.Status);
     }
     
+    [TestMethod]
+    public void FinishPlayedMatches_ShouldFinishOnlyMatchesWithResultAndReturnThem()
+    {
+        var group = CreateValidGroup();
+        var uruguay = CreateUruguayTeam();
+        var argentina = CreateArgentinaTeam();
+        var brazil = CreateBrazilTeam();
+        var chile = CreateChileTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+        group.AddTeam(brazil);
+        group.AddTeam(chile);
+
+        var matchWithResult = CreateMatch(group, uruguay, argentina);
+        var matchWithoutResult = CreateMatch(group, brazil, chile);
+        group.AddMatch(matchWithResult);
+        group.AddMatch(matchWithoutResult);
+
+        // Solo uno tiene resultado cargado.
+        group.SetMatchResult(matchWithResult, 2, 1);
+
+        var finished = group.FinishPlayedMatches().ToList();
+
+        // El que tenía resultado quedó finalizado y fue devuelto.
+        Assert.AreEqual(1, finished.Count);
+        Assert.AreSame(matchWithResult, finished[0]);
+        Assert.AreEqual(MatchStatus.Finished, matchWithResult.Status);
+
+        // El que NO tenía resultado sigue sin finalizar.
+        Assert.AreEqual(MatchStatus.NotFinished, matchWithoutResult.Status);
+    }
+    
+    
+    
     private static void AddFourTeams(Group group)
     {
         group.AddTeam(new Team("TEAM0", "AFC", 1000));
