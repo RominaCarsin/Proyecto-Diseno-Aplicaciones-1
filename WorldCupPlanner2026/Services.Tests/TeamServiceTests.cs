@@ -224,6 +224,22 @@ public class TeamServiceTests
         CollectionAssert.AreNotEqual(firstOrder, secondOrder);
     }
     
+    [TestMethod]
+    public void GetTeamsByRanking_ShouldReturnTeamsOrderedByRankingDescending()
+    {
+        AddTeams(
+            ("URUGUAY", "CONMEBOL", 1700),
+            ("FRANCE", "UEFA", 2100),
+            ("JAPAN", "AFC", 1300),
+            ("MOROCCO", "CAF", 1600));
+
+        var result = _service.GetTeamsByRanking().ToList();
+
+        CollectionAssert.AreEqual(
+            new[] { 2100, 1700, 1600, 1300 },
+            result.Select(t => t.RankingFifa).ToArray());
+    }
+    
     private static TeamRequest BuildTeamRequest(
         string name,
         string confederationName,

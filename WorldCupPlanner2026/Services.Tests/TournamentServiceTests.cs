@@ -949,4 +949,22 @@ public class TournamentServiceTests
         Assert.IsTrue(domainMatch.AwayTeam.RankingFifa < awayBefore);
     }
     
+    [TestMethod]
+    public void FinishGroupMatch_WithResult_ShouldRecalculateRanking()
+    {
+        AddTeams(48);
+        AddStadiums(4);
+        _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1));
+
+        var group = _groupRepository.GetAll().First();
+        var match = group.Matches.First();
+        _service.SetGroupMatchResult(group.Label, match.MatchId, 3, 0);
+
+        var homeBefore = match.HomeTeam.RankingFifa;
+
+        _service.FinishGroupMatch(group.Label, match.MatchId);
+
+        Assert.AreNotEqual(homeBefore, match.HomeTeam.RankingFifa);
+    }
+    
 }
