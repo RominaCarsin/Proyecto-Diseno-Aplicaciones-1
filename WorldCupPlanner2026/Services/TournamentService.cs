@@ -294,17 +294,36 @@ public class TournamentService : ITournamentService
     
     public void FinishAllMatches()
     {
-        var matchesToFinish = _matchRepository.GetAll()
+        var finishedCount = 0;
+
+        // Partidos de grupo: cada Group finaliza los suyos (Experto + Demeter).
+        foreach (var group in _groupRepository.GetAll())
+        {
+            var finishedGroupMatches = group.FinishPlayedMatches().ToList();
+
+            foreach (var match in finishedGroupMatches)
+                _updateRankingService.UpdateAfterMatch(match);
+
+            if (finishedGroupMatches.Any())
+                _groupRepository.Update(group);
+
+            finishedCount += finishedGroupMatches.Count;
+        }
+
+        // Partidos sueltos / knockout que viven en el match repository.
+        var standaloneMatches = _matchRepository.GetAll()
             .Where(match => match.HasResult && match.Status != MatchStatus.Finished)
             .ToList();
 
-        foreach (var match in matchesToFinish)
+        foreach (var match in standaloneMatches)
         {
             FinishAndRecalculate(match);
             _matchRepository.Update(match);
         }
 
-        LogAction("All matches finished", $"{matchesToFinish.Count} matches were finished and rankings recalculated");
+        finishedCount += standaloneMatches.Count;
+
+        LogAction("All matches finished", $"{finishedCount} matches were finished and rankings recalculated");
     }
 
     private void ValidateFixtureCanBeGenerated()
@@ -318,7 +337,7 @@ public class TournamentService : ITournamentService
         if (HasGroups())
             throw new InvalidOperationException(FixtureAlreadyGeneratedErrorMessage);
     }
-
+  
     private bool HasEnoughTeams() =>
         _teamRepository.GetAll().Count() >= GroupPhase.RequiredTeamCount;
 
