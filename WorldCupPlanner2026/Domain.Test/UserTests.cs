@@ -250,6 +250,16 @@ public class UserTests
     }
 
     [TestMethod]
+    public void AddRole_WithJournalistRole_ShouldAssignRoleToUser()
+    {
+        var user = CreateValidUser();
+
+        user.AddRole(Role.Journalist);
+
+        Assert.IsTrue(user.HasRole(Role.Journalist));
+    }
+
+    [TestMethod]
     public void AddRole_WithMultipleRoles_ShouldAssignAllRoles()
     {
         var user = CreateValidUser();

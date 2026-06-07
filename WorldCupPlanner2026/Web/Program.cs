@@ -53,6 +53,19 @@ using (var scope = app.Services.CreateScope())
 
         dbContext.SaveChanges();
     }
+
+    if (!dbContext.Users.Any(user => user.Email == "periodista@test.com"))
+    {
+        dbContext.Users.Add(new User(
+            name: "Periodista",
+            surname: "Prensa",
+            email: "periodista@test.com",
+            dateOfBirth: new DateTime(2000, 1, 1),
+            plainPassword: "Password1!",
+            roles: Role.Journalist));
+
+        dbContext.SaveChanges();
+    }
 }
 
 if (!app.Environment.IsDevelopment())
