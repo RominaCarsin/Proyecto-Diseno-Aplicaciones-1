@@ -6,7 +6,7 @@
 @inject ITeamService TeamService
 @inject ISessionService SessionService
 
-<div class="container-fluid p-0 space-y-6">
+<div class="container-fluid p-0 space-y-6 groups-page">
     <div class="bg-white border-custom p-4 diagonal-corners">
         <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
             <div>
@@ -99,30 +99,33 @@
             {
                 var isExpanded = selectedLabel == group.Label;
 
-                <div class="group-card bg-white border-custom diagonal-corners transition-all @(isExpanded ? "expanded" : "")">
+                <div class="group-card @(isExpanded ? "expanded" : "")">
                     <button type="button"
                             class="group-card-button"
                             @onclick="() => SelectGroup(group.Label)">
-                        <div class="bg-wc-blue text-white px-4 py-3 d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0">Grupo @group.Label</h3>
-                            <span>@group.Teams.Count/4</span>
+                        <div class="group-card-header">
+                            <h3 class="group-card-title">Grupo @group.Label</h3>
+                            <span class="group-card-count">@group.Teams.Count/4</span>
                         </div>
                     </button>
 
-                    <GeometricDivider />
-
-                    <div class="p-4">
-                        <ul class="list-unstyled mb-0">
+                    <div class="group-card-body">
+                        <ul class="group-team-list">
                             @foreach (var team in group.Teams)
                             {
-                                <li class="py-2 border-bottom border-custom-light last-no-border">
-                                    <i class="bi bi-shield-fill me-2 text-wc-blue"></i>
-                                    <strong>@team.Name</strong>
-                                    <span class="text-muted small ms-2">@team.ConfederationName - @team.RankingFifa</span>
+                                <li class="group-team-item">
+                                    <i class="bi bi-shield-fill group-team-icon"></i>
+
+                                    <div class="group-team-data">
+                                        <strong>@team.Name</strong>
+                                        <span>@team.ConfederationName - @team.RankingFifa</span>
+                                    </div>
                                 </li>
                             }
                         </ul>
                     </div>
+
+                    
                 </div>
             }
         </div>
@@ -251,6 +254,185 @@
         }
     }
 </div>
+
+<style>
+    .groups-page {
+        width: 100%;
+    }
+
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 300px));
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        justify-content: center;
+    }
+
+    .group-card {
+        display: grid;
+        grid-template-rows: 72px 1fr 58px;
+        width: 300px;
+        min-height: 360px;
+        border-radius: 18px;
+        background: white;
+        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.25);
+        font-family: 'Inter', sans-serif;
+        text-align: center;
+        cursor: pointer;
+        overflow: hidden;
+        border: 1px solid var(--g200);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .group-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 7px 7px 18px rgba(0, 0, 0, 0.30);
+        border-color: var(--p200);
+    }
+
+    .group-card.expanded {
+        border: 2px solid var(--wc-blue);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(27, 39, 137, 0.12),
+                    7px 7px 18px rgba(0, 0, 0, 0.30);
+    }
+
+    .group-card-button {
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        text-align: inherit;
+    }
+
+    .group-card-header {
+        height: 72px;
+        background: var(--wc-blue);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1.1rem;
+    }
+
+    .group-card-title {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .group-card-count {
+        font-size: 13px;
+        font-weight: 800;
+        color: white;
+        opacity: 0.95;
+        background: rgba(255, 255, 255, 0.18);
+        padding: 0.35rem 0.6rem;
+        border-radius: 999px;
+    }
+
+    .group-card-body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .group-team-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .group-team-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        text-align: left;
+        padding: 0.6rem 0.7rem;
+        border-radius: 10px;
+        background: var(--g100);
+        color: var(--g800);
+    }
+
+    .group-team-icon {
+        color: var(--wc-blue);
+        flex-shrink: 0;
+        font-size: 15px;
+    }
+
+    .group-team-data {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .group-team-data strong {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--g800);
+        line-height: 1.2;
+    }
+
+    .group-team-data span {
+        font-size: 11px;
+        color: var(--g600);
+        margin-top: 0.15rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .group-card-footer {
+        background: var(--wc-red);
+        color: white;
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .score-input {
+        width: 70px;
+    }
+
+    @@media (min-width: 1400px) {
+        .groups-grid {
+            grid-template-columns: repeat(4, 300px);
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .groups-grid {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+
+        .group-card {
+            width: 100%;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .groups-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .group-card {
+            width: 100%;
+            min-height: 340px;
+        }
+    }
+</style>
 
 @code {
     private List<GroupResponse> groups = new();
