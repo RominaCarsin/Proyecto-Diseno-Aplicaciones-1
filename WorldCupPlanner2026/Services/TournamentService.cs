@@ -35,6 +35,7 @@ public class TournamentService : ITournamentService
     private readonly IRepository<Pot> _potRepository;
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;
+    private readonly IUpdateRankingService _updateRankingService;
 
 
     public TournamentService(
@@ -44,7 +45,8 @@ public class TournamentService : ITournamentService
         IRepository<Team> teamRepository,
         IRepository<Pot> potRepository,
         IAuditService auditService,
-        ISessionService sessionService)
+        ISessionService sessionService,
+        IUpdateRankingService updateRankingService)
     {
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
@@ -53,6 +55,7 @@ public class TournamentService : ITournamentService
         _potRepository = potRepository;
         _auditService = auditService;
         _sessionService = sessionService;
+        _updateRankingService = updateRankingService;
     }
 
     public void GenerateFixture(int seed, DateTime startDate)
@@ -156,6 +159,7 @@ public class TournamentService : ITournamentService
         var match = FindMatchInGroupOrThrow(group, matchId);
 
         group.FinishMatch(match);
+        _updateRankingService.UpdateAfterMatch(match);
 
         _groupRepository.Update(group);
         _matchRepository.Update(match);
@@ -476,11 +480,17 @@ public class TournamentService : ITournamentService
     {
         var match = FindMatchByIdOrThrow(matchId);
 
-        match.Finish();
+        FinishAndRecalculate(match);
 
         _matchRepository.Update(match);
 
         LogAction("Match finished", $"Match {matchId} has been marked as finished");
+    }
+
+    private void FinishAndRecalculate(Match match)
+    {
+        match.Finish();
+        _updateRankingService.UpdateAfterMatch(match);
     }
 
     public IEnumerable<StadiumRequest> GetAvailableStadiumsForMatch(
