@@ -899,4 +899,32 @@ public class TournamentServiceTests
         Assert.AreEqual(1, domainMatch.YellowCardsOf(domainMatch.HomeTeam));
         Assert.AreEqual(0, domainMatch.YellowCardsOf(domainMatch.AwayTeam));
     }
+    
+    [TestMethod]
+    public void RegisterMatchIncidence_RedForAwayTeam_ShouldBeCountedSeparately()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        _service.RegisterMatchIncidence(saved.Id, "Red", isHomeTeam: false, minute: 80);
+
+        var domainMatch = _matchRepository.GetAll().First(m => m.MatchId == saved.Id);
+        Assert.AreEqual(1, domainMatch.RedCardsOf(domainMatch.AwayTeam));
+        Assert.AreEqual(0, domainMatch.RedCardsOf(domainMatch.HomeTeam));
+    }
+    
+    [TestMethod]
+    public void RegisterMatchIncidence_WithInvalidType_ShouldThrowArgumentException()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.RegisterMatchIncidence(saved.Id, "Penalty", isHomeTeam: true, minute: 30));
+    }
+    
+    [TestMethod]
+    public void RegisterMatchIncidence_WithNonExistingMatch_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.RegisterMatchIncidence(999, "Yellow", isHomeTeam: true, minute: 30));
+    }
 }
