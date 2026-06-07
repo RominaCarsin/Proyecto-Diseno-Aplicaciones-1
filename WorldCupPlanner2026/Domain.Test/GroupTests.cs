@@ -786,7 +786,53 @@ public class GroupTests
         Assert.AreEqual(MatchStatus.NotFinished, matchWithoutResult.Status);
     }
     
+    [TestMethod]
+    public void FinishPlayedMatches_CalledTwice_ShouldNotReturnAlreadyFinishedMatches()
+    {
+        var group = CreateValidGroup();
+        var uruguay = CreateUruguayTeam();
+        var argentina = CreateArgentinaTeam();
+        var brazil = CreateBrazilTeam();
+        var chile = CreateChileTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+        group.AddTeam(brazil);
+        group.AddTeam(chile);
+
+        var match1 = CreateMatch(group, uruguay, argentina);
+        var match2 = CreateMatch(group, brazil, chile);
+        group.AddMatch(match1);
+        group.AddMatch(match2);
+        group.SetMatchResult(match1, 1, 0);
+        group.SetMatchResult(match2, 0, 2);
+
+        var firstCall = group.FinishPlayedMatches().ToList();
+        var secondCall = group.FinishPlayedMatches().ToList();
+
+        Assert.AreEqual(2, firstCall.Count);   // ambos se finalizaron la primera vez
+        Assert.AreEqual(0, secondCall.Count);  // ya finalizados → no se devuelven de nuevo
+    }
     
+    [TestMethod]
+    public void FinishPlayedMatches_WithNoPlayedMatches_ShouldReturnEmpty()
+    {
+        var group = CreateValidGroup();
+        var uruguay = CreateUruguayTeam();
+        var argentina = CreateArgentinaTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        // Un partido agregado pero SIN resultado.
+        var match = CreateMatch(group, uruguay, argentina);
+        group.AddMatch(match);
+
+        var finished = group.FinishPlayedMatches().ToList();
+
+        Assert.AreEqual(0, finished.Count);
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+    }
     
     private static void AddFourTeams(Group group)
     {
