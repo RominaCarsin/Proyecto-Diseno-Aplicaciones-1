@@ -291,6 +291,21 @@ public class TournamentService : ITournamentService
         foreach (var match in knockout.Matches)
             _matchRepository.Update(match);
     }
+    
+    public void FinishAllMatches()
+    {
+        var matchesToFinish = _matchRepository.GetAll()
+            .Where(match => match.HasResult && match.Status != MatchStatus.Finished)
+            .ToList();
+
+        foreach (var match in matchesToFinish)
+        {
+            FinishAndRecalculate(match);
+            _matchRepository.Update(match);
+        }
+
+        LogAction("All matches finished", $"{matchesToFinish.Count} matches were finished and rankings recalculated");
+    }
 
     private void ValidateFixtureCanBeGenerated()
     {

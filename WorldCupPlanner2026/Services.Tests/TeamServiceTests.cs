@@ -240,6 +240,23 @@ public class TeamServiceTests
             result.Select(t => t.RankingFifa).ToArray());
     }
     
+    [TestMethod]
+    public void GetTeamsByRanking_WithTiedRankings_ShouldNotShuffleAndStayDeterministic()
+    {
+        AddTeams(
+            ("ALPHA", "UEFA", 1800),
+            ("BETA", "UEFA", 1800),
+            ("GAMMA", "CAF", 1500));
+
+        var firstResult = _service.GetTeamsByRanking().Select(t => t.Name).ToArray();
+        var secondResult = _service.GetTeamsByRanking().Select(t => t.Name).ToArray();
+
+        // Mismo orden en llamadas repetidas: sin aleatoriedad.
+        CollectionAssert.AreEqual(firstResult, secondResult);
+        // El de menor ranking siempre queda último.
+        Assert.AreEqual("GAMMA", firstResult[2]);
+    }
+    
     private static TeamRequest BuildTeamRequest(
         string name,
         string confederationName,

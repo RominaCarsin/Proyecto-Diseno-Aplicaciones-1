@@ -967,4 +967,28 @@ public class TournamentServiceTests
         Assert.AreNotEqual(homeBefore, match.HomeTeam.RankingFifa);
     }
     
+    // hay que sacar esto 
+    /// </summary>
+    [TestMethod]
+    public void FinishAllMatches_ShouldFinishMatchesWithResultAndRecalculateRanking()
+    {
+        AddTeams(48);
+        AddStadiums(4);
+        _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1));
+        _service.SimulateGroupStage(DefaultSeed);  // deja resultados, NO finaliza
+
+        // Tomamos un equipo cualquiera y su ranking antes de finalizar.
+        var sampleMatch = _groupRepository.GetAll().First().Matches.First();
+        var homeBefore = sampleMatch.HomeTeam.RankingFifa;
+
+        _service.FinishAllMatches();
+
+        // Todos los partidos de grupo quedaron finalizados.
+        var allGroupMatches = _groupRepository.GetAll().SelectMany(g => g.Matches).ToList();
+        Assert.IsTrue(allGroupMatches.All(m => m.Status == MatchStatus.Finished));
+
+        // Y el ranking del equipo de muestra cambió (se recalculó).
+        Assert.AreNotEqual(homeBefore, sampleMatch.HomeTeam.RankingFifa);
+    }
+    
 }
