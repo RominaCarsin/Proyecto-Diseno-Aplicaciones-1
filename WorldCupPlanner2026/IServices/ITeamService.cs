@@ -12,7 +12,8 @@ public interface ITeamService
     void AutoCompleteTeams(int seed);
 
     IEnumerable<ConfederationResponse> GetConfederations();
-
+    
     TeamImportResult PreviewImport(string csvContent);
     TeamImportResult Import(string csvContent);
+    IEnumerable<TeamResponse> GetTeamsByRanking();
 }

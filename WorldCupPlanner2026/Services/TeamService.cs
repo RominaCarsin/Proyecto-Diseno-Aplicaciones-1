@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Domain;
 using DTOs;
@@ -271,6 +271,11 @@ public class TeamService : ITeamService
             confederation.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
         ?? throw new ArgumentException($"No se encontro la confederacion '{name}'.");
 
+    public IEnumerable<TeamResponse> GetTeamsByRanking() =>
+        _repository.GetAll()
+            .OrderByDescending(team => team.RankingFifa)
+            .Select(TeamMapper.FromEntity);
+    
     private void AddFictionalTeamsToConfederation(
         string confederationName,
         int teamsToCreate,
