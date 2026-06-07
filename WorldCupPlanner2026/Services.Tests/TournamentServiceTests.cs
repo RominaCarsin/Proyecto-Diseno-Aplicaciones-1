@@ -887,4 +887,16 @@ public class TournamentServiceTests
         Assert.IsTrue(group.Matches.Any(m =>
             m.HomeTeam.Name == "EXTRA_HOME" && m.AwayTeam.Name == "EXTRA_AWAY"));
     }
+    
+    [TestMethod]
+    public void RegisterMatchIncidence_YellowForHomeTeam_ShouldBeCountedOnDomainMatch()
+    {
+        var saved = AddValidMatchAndGetResponse();
+
+        _service.RegisterMatchIncidence(saved.Id, "Yellow", isHomeTeam: true, minute: 30);
+
+        var domainMatch = _matchRepository.GetAll().First(m => m.MatchId == saved.Id);
+        Assert.AreEqual(1, domainMatch.YellowCardsOf(domainMatch.HomeTeam));
+        Assert.AreEqual(0, domainMatch.YellowCardsOf(domainMatch.AwayTeam));
+    }
 }
