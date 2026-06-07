@@ -4,6 +4,7 @@
 @using IServices
 @inject ITeamService TeamService
 @inject ISessionService SessionService
+@using Microsoft.AspNetCore.Components.Forms
 
 <div class="container-fluid p-0 space-y-6">
     @if (!IsAdmin)
@@ -42,6 +43,27 @@
                     <label class="form-label fw-bold">Ranking FIFA</label>
                     <input type="number" @bind="formData.RankingFifa" min="300" max="2500"
                            class="form-control border-custom-input" />
+                </div>
+                
+                <div class="col-md-12 mt-3">
+                    <label class="form-label fw-bold">Bandera (opcional)</label>
+                    <div class="d-flex align-items-center gap-3">
+                        <label class="btn btn-outline-dark border-custom px-3 mb-0 cursor-pointer position-relative overflow-hidden">
+                            <i class="bi bi-image"></i> Seleccionar imagen
+                            <InputFile OnChange="HandleFlagSelected" accept="image/*" class="hidden-input" />
+                        </label>
+
+                        @if (!string.IsNullOrWhiteSpace(formData.FlagBase64))
+                        {
+                            <img src="data:image/png;base64,@formData.FlagBase64"
+                                 alt="Bandera"
+                                 style="height: 32px; border: 1px solid var(--wc-border);" />
+                            <button type="button" @onclick="ClearFlag"
+                                    class="btn btn-sm btn-outline-danger border-custom">
+                                <i class="bi bi-x"></i> Quitar
+                            </button>
+                        }
+                    </div>
                 </div>
             </div>
 
@@ -99,6 +121,7 @@
                 <table class="table table-hover mb-0">
                     <thead class="bg-light border-bottom-2">
                         <tr>
+                            <th class="px-4 py-3">Bandera</th>
                             <th class="px-4 py-3">Nombre</th>
                             <th class="px-4 py-3">Confederacion</th>
                             <th class="px-4 py-3">Ranking</th>
@@ -109,7 +132,7 @@
                         @if (!teams.Any())
                         {
                             <tr>
-                                <td colspan="4" class="px-4 py-4 text-center text-muted">
+                                <td colspan="5" class="px-4 py-4 text-center text-muted">
                                     No hay equipos registrados.
                                 </td>
                             </tr>
@@ -119,6 +142,18 @@
                             @foreach (var team in teams)
                             {
                                 <tr>
+                                    <td class="px-4 py-3 align-middle">
+                                        @if (!string.IsNullOrWhiteSpace(team.FlagBase64))
+                                        {
+                                            <img src="data:image/png;base64,@team.FlagBase64"
+                                                 alt="Bandera de @team.Name"
+                                                 style="height: 24px; border: 1px solid var(--wc-border);" />
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
                                     <td class="px-4 py-3 align-middle fw-medium">@team.Name</td>
                                     <td class="px-4 py-3 align-middle">
                                         <span class="badge-conf @GetConfColor(team.ConfederationName)">
@@ -159,7 +194,8 @@
     private string errorMessage = "";
     private string successMessage = "";
     private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
-
+    private const long MaxFlagSizeBytes = 512 * 1024; // 512 KB
+    
     protected override void OnInitialized()
     {
         if (IsAdmin)
@@ -177,7 +213,8 @@
         {
             Name = team.Name,
             ConfederationName = team.ConfederationName,
-            RankingFifa = team.RankingFifa
+            RankingFifa = team.RankingFifa,
+            FlagBase64 = team.FlagBase64 
         };
         ClearMessages();
     }
@@ -280,4 +317,25 @@
         ConfederationName = "",
         RankingFifa = 300
     };
+    
+    private async Task HandleFlagSelected(InputFileChangeEventArgs e)
+    {
+        ClearMessages();
+        try
+        {
+            var file = e.File;
+
+            using var memoryStream = new MemoryStream();
+            await using var stream = file.OpenReadStream(maxAllowedSize: MaxFlagSizeBytes);
+            await stream.CopyToAsync(memoryStream);
+
+            formData.FlagBase64 = Convert.ToBase64String(memoryStream.ToArray());
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"No se pudo cargar la bandera: {ex.Message}";
+        }
+    }
+
+    private void ClearFlag() => formData.FlagBase64 = "";
 }
