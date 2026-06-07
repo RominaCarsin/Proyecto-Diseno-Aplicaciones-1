@@ -41,4 +41,6 @@ public interface ITournamentService
     void InitializeThirdPlace();
     void InitializeFinal();
     void SimulateKnockoutStage(int seed);
+    
+    void RegisterMatchIncidence(int matchId, string incidenceType, bool isHomeTeam, int minute);
 }

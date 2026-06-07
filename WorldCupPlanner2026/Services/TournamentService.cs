@@ -24,6 +24,7 @@ public class TournamentService : ITournamentService
     private const string StadiumRequestRequiredErrorMessage = "La solicitud de estadio no puede ser nula.";
     private const string MaxMatchesPerDayErrorMessage = "El estadio no puede tener más de 3 partidos por día.";
     private const string MinHoursBetweenMatchesErrorMessage = "Los partidos en el mismo estadio deben tener al menos 4 horas de diferencia.";
+    private const string InvalidIncidenceTypeErrorMessage = "El tipo de incidencia es inválido.";
 
 
 
@@ -504,6 +505,25 @@ public class TournamentService : ITournamentService
             }
         });
     }
+    
+    public void RegisterMatchIncidence(int matchId, string incidenceType, bool isHomeTeam, int minute)
+    {
+        var match = FindMatchByIdOrThrow(matchId);
+        var team = isHomeTeam ? match.HomeTeam : match.AwayTeam;
+
+        var incidence = BuildIncidence(incidenceType, team, minute);
+        match.RegisterIncidence(incidence);
+
+        _matchRepository.Update(match);
+    }
+
+    private static MatchIncidence BuildIncidence(string incidenceType, Team team, int minute) =>
+        incidenceType switch
+        {
+            "Yellow" => new YellowCard(team, minute),
+            "Red" => new RedCard(team, minute),
+            _ => throw new ArgumentException(InvalidIncidenceTypeErrorMessage)
+        };
 
 
     private void AddMatchToGroup(Match match, char groupLabel)
