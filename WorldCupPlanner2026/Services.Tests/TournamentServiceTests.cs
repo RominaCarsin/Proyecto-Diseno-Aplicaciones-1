@@ -31,6 +31,7 @@ public class TournamentServiceTests
 
     private IAuditService _auditService = null!;
     private ISessionService _sessionService = null!;
+    private IUpdateRankingService _updateRankingService = null!;
 
     [TestInitialize]
     public void Setup()
@@ -44,6 +45,7 @@ public class TournamentServiceTests
 
         _auditService = new AuditService(_auditRepository);
         _sessionService = new SessionService(null!, new AuthStateService());
+        _updateRankingService = new UpdateRankingService(_auditService);
 
         _service = new TournamentService(
             _groupRepository,
@@ -52,7 +54,8 @@ public class TournamentServiceTests
             _teamRepository,
             _potRepository,
             _auditService,
-            _sessionService);
+            _sessionService,
+            _updateRankingService);
     }
 
     // ─────────────────────────────────────────────
@@ -927,4 +930,23 @@ public class TournamentServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _service.RegisterMatchIncidence(999, "Yellow", isHomeTeam: true, minute: 30));
     }
+    
+    [TestMethod]
+    public void FinishMatch_WithResult_ShouldRecalculateBothTeamsRanking()
+    {
+        var saved = AddValidMatchAndGetResponse();
+        // El partido se crea con equipos de ranking 1800 (ver BuildTeamRequest).
+        _service.SetMatchResult(saved.Id, 2, 0);  // gana el local
+
+        var domainMatch = _matchRepository.GetAll().First(m => m.MatchId == saved.Id);
+        var homeBefore = domainMatch.HomeTeam.RankingFifa;
+        var awayBefore = domainMatch.AwayTeam.RankingFifa;
+
+        _service.FinishMatch(saved.Id);
+
+        // Tras finalizar, el ganador sube y el perdedor baja.
+        Assert.IsTrue(domainMatch.HomeTeam.RankingFifa > homeBefore);
+        Assert.IsTrue(domainMatch.AwayTeam.RankingFifa < awayBefore);
+    }
+    
 }
