@@ -139,6 +139,22 @@ public class Group
         return (finalDrawGoals, finalDrawGoals);
     }
     
+    public IEnumerable<Match> FinishPlayedMatches()
+    {
+        var playedMatches = _matches
+            .Where(match => match.HasResult && match.Status != MatchStatus.Finished)
+            .ToList();
+
+        foreach (var match in playedMatches)
+            match.Finish();
+
+        return playedMatches;
+    }
+    
+    
+    
+    
+    
     private static int SimulateGoals(Random random, int min, int max)
     {
         return random.Next(min, max + 1);
