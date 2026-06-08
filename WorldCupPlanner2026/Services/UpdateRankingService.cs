@@ -17,26 +17,31 @@ public class UpdateRankingService : IUpdateRankingService
 
     public void UpdateAfterMatch(Match match)
     {
-       if (match.Status != MatchStatus.Finished)
-           throw new InvalidOperationException(MatchNotFinishedErrorMessage);
-       
-       var homeTeam = match.HomeTeam;
-       var awayTeam = match.AwayTeam;
+        if (match.Status != MatchStatus.Finished)
+            throw new InvalidOperationException(MatchNotFinishedErrorMessage);
 
-       var homeRankingBefore = homeTeam.RankingFifa;
-       var awayRankingBefore = awayTeam.RankingFifa;
+        if (match.RankingApplied)
+            return;
 
-       var homeResult = ResultFor(homeTeam, match);
-       var awayResult = ResultFor(awayTeam, match);
+        var homeTeam = match.HomeTeam;
+        var awayTeam = match.AwayTeam;
 
-       var homeDelta = RankingCalculator.CalculateDelta(homeRankingBefore, awayRankingBefore, homeResult, match.Phase);
-       var awayDelta = RankingCalculator.CalculateDelta(awayRankingBefore, homeRankingBefore, awayResult, match.Phase);
+        var homeRankingBefore = homeTeam.RankingFifa;
+        var awayRankingBefore = awayTeam.RankingFifa;
 
-       homeTeam.ApplyRankingChange(homeDelta);
-       awayTeam.ApplyRankingChange(awayDelta);
-       
-       AuditRankingChange(homeTeam, homeRankingBefore);
-       AuditRankingChange(awayTeam, awayRankingBefore);
+        var homeResult = ResultFor(homeTeam, match);
+        var awayResult = ResultFor(awayTeam, match);
+
+        var homeDelta = RankingCalculator.CalculateDelta(homeRankingBefore, awayRankingBefore, homeResult, match.Phase);
+        var awayDelta = RankingCalculator.CalculateDelta(awayRankingBefore, homeRankingBefore, awayResult, match.Phase);
+
+        homeTeam.ApplyRankingChange(homeDelta);
+        awayTeam.ApplyRankingChange(awayDelta);
+
+        AuditRankingChange(homeTeam, homeRankingBefore);
+        AuditRankingChange(awayTeam, awayRankingBefore);
+
+        match.MarkRankingApplied();
     }
 
     private static double ResultFor(Team team, Match match)
