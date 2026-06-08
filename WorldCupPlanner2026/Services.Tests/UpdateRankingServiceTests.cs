@@ -67,6 +67,25 @@ public class UpdateRankingServiceTests
         Assert.AreEqual(2, logs.Count);
         Assert.IsTrue(logs.All(log => log.Action.Contains("RANKING", StringComparison.OrdinalIgnoreCase)));
     }
+    
+    [TestMethod]
+    public void UpdateAfterMatch_CalledTwiceOnSameMatch_ShouldApplyRankingOnlyOnce()
+    {
+        var home = BuildTeam("HOME", 1500);
+        var away = BuildTeam("AWAY", 1500);
+        var match = BuildFinishedMatch(home: home, away: away, homeGoals: 2, awayGoals: 0);
+
+        // Primera aplicación: mueve el ranking.
+        _service.UpdateAfterMatch(match);
+        var homeAfterFirst = home.RankingFifa;
+        var awayAfterFirst = away.RankingFifa;
+
+        // Segunda aplicación: no debe volver a moverlo.
+        _service.UpdateAfterMatch(match);
+
+        Assert.AreEqual(homeAfterFirst, home.RankingFifa);
+        Assert.AreEqual(awayAfterFirst, away.RankingFifa);
+    }
 
     private static Match BuildFinishedMatch(Team home, Team away, int homeGoals, int awayGoals)
     {
