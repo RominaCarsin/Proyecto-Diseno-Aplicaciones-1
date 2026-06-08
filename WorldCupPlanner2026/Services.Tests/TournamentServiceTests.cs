@@ -990,4 +990,19 @@ public class TournamentServiceTests
         Assert.AreNotEqual(homeBefore, sampleMatch.HomeTeam.RankingFifa);
     }
     
+    [TestMethod]
+    public void SimulateKnockoutStage_ShouldRecalculateRankingForFinishedMatches()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
+
+        var knockoutMatch = _matchRepository.GetAll()
+            .First(m => m.Phase != TournamentPhase.GroupStage);
+        var homeBefore = knockoutMatch.HomeTeam.RankingFifa;
+
+        _service.SimulateKnockoutStage(DefaultSeed);
+
+        Assert.AreNotEqual(homeBefore, knockoutMatch.HomeTeam.RankingFifa);
+    }
+    
 }
