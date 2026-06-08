@@ -243,6 +243,30 @@ public class MatchTests
         Assert.ThrowsException<ArgumentException>(() =>
             match.RegisterIncidence(new YellowCard(outsider, minute: 30)));
     }
+    
+    [TestMethod]
+    public void NewMatch_ShouldNotHaveRankingApplied()
+    {
+        var match = CreateMatch();
+        Assert.IsFalse(match.RankingApplied);
+    }
+
+    [TestMethod]
+    public void MarkRankingApplied_ShouldSetRankingAppliedToTrue()
+    {
+        var match = CreateMatch();
+        match.MarkRankingApplied();
+        Assert.IsTrue(match.RankingApplied);
+    }
+
+    [TestMethod]
+    public void MarkRankingApplied_CalledTwice_ShouldRemainTrue()
+    {
+        var match = CreateMatch();
+        match.MarkRankingApplied();
+        match.MarkRankingApplied();
+        Assert.IsTrue(match.RankingApplied);
+    }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
         new(name, "MONTEVIDEO", "Historic stadium", 60000);

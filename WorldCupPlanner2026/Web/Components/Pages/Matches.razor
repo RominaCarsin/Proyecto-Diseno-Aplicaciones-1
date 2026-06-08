@@ -71,6 +71,13 @@
         </div>
     </div>
 
+    <div class="bg-white border-custom p-4 diagonal-corners d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Finalizar todos los partidos con resultado cargado (recalcula el ranking)</span>
+        <button class="btn btn-wc-red px-4" disabled="@(!IsEditor)" @onclick="FinishAll">
+            <i class="bi bi-flag-fill"></i> Finalizar todos
+        </button>
+    </div>
+
     @if (!FilteredMatches.Any())
     {
         <div class="bg-white border-custom p-4 diagonal-corners text-muted">
@@ -166,10 +173,10 @@
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <span class="badge" style="background-color:#f1c40f;color:#000;">
-                                            @match.HomeYellowCards - @match.AwayYellowCards
+                                            🟨 @match.HomeYellowCards - @match.AwayYellowCards
                                         </span>
                                         <span class="badge bg-danger">
-                                            @match.HomeRedCards - @match.AwayRedCards
+                                            🟥 @match.HomeRedCards - @match.AwayRedCards
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 fw-bold">@match.AwayTeam.Name</td>
@@ -340,6 +347,21 @@
             var isHome = incidenceIsHome == "true";
             TournamentService.RegisterMatchIncidence(matchId, incidenceType, isHome, incidenceMinute);
             successMessage = "Tarjeta registrada correctamente.";
+            RefreshUI();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void FinishAll()
+    {
+        ClearMessages();
+        try
+        {
+            TournamentService.FinishAllMatches();
+            successMessage = "Todos los partidos con resultado fueron finalizados y el ranking recalculado.";
             RefreshUI();
         }
         catch (Exception ex)
