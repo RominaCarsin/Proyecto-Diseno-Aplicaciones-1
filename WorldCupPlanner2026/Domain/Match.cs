@@ -39,6 +39,8 @@ public class Match
     public char? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
     public string? MatchCode { get; private set; }
+    
+    public bool RankingApplied { get; private set; }
     public int RedCardsOf(Team team) => CountIncidences<RedCard>(team);
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
@@ -178,6 +180,11 @@ public class Match
     {
         ValidateSingleGoalValue(homeGoals, nameof(homeGoals));
         ValidateSingleGoalValue(awayGoals, nameof(awayGoals));
+    }
+    
+    public void MarkRankingApplied()
+    {
+        RankingApplied = true;
     }
 
     private void ValidateKnockoutMatchIsNotDraw(int homeGoals, int awayGoals)
