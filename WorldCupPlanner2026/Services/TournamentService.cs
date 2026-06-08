@@ -288,8 +288,22 @@ public class TournamentService : ITournamentService
         knockout.LoadExistingMatches(allMatches);
         knockout.SimulateMatches(seed);
 
+        RecalculateFinishedKnockoutRankings(allMatches);
+
         foreach (var match in knockout.Matches)
             _matchRepository.Update(match);
+    }
+
+    
+    private void RecalculateFinishedKnockoutRankings(IEnumerable<Match> matches)
+    {
+        var finishedKnockoutMatches = matches
+            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .Where(match => match.Status == MatchStatus.Finished)
+            .OrderBy(match => match.Date);
+
+        foreach (var match in finishedKnockoutMatches)
+            _updateRankingService.UpdateAfterMatch(match);
     }
     
     public void FinishAllMatches()
