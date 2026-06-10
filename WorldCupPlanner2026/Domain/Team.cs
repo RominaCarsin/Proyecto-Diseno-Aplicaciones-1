@@ -31,13 +31,14 @@ public class Team
     public string FlagBase64 { get; private set; } = string.Empty;
 
     public Team (){}
-    public Team(string name, string confederationName, int rankingFifa, string groupLabel = "")
+    public Team(string name, string confederationName, int rankingFifa, string groupLabel = "", string flagBase64 = "")
     {
         UpdateName(name);
         UpdateConfederationName(confederationName);
         UpdateRankingFifa(rankingFifa);
         UpdateGroupLabel(groupLabel);
-
+        UpdateFlag(flagBase64);
+        
         Points = 0;
         GoalDifference = 0;
         GoalsInFavor = 0;
