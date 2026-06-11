@@ -257,15 +257,214 @@ public class TeamServiceTests
         Assert.AreEqual("GAMMA", firstResult[2]);
     }
     
+    [TestMethod]
+    public void AddTeam_WithLowercaseName_ShouldNormalizeAndPersist()
+    {
+        _service.AddTeam(BuildTeamRequest("uruguay", "conmebol"));
+
+        var team = FindTeamByName("URUGUAY");
+
+        Assert.IsNotNull(team);
+        Assert.AreEqual("URUGUAY", team.Name);
+    }
+
+    [TestMethod]
+    public void AddTeam_WithInvalidConfederation_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddTeam(BuildTeamRequest(ValidTeamName, "INVALID")));
+    }
+
+    [TestMethod]
+    public void AddTeam_WhenConfederationIsFull_ShouldThrowException()
+    {
+        AddTeams(
+            ("CONMEBOL_1", "CONMEBOL", 501),
+            ("CONMEBOL_2", "CONMEBOL", 502),
+            ("CONMEBOL_3", "CONMEBOL", 503),
+            ("CONMEBOL_4", "CONMEBOL", 504),
+            ("CONMEBOL_5", "CONMEBOL", 505),
+            ("CONMEBOL_6", "CONMEBOL", 506),
+            ("CONMEBOL_7", "CONMEBOL", 507));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddTeam(BuildTeamRequest("CONMEBOL_8", "CONMEBOL", 508)));
+    }
+
+    [TestMethod]
+    public void UpdateTeam_WithSameName_ShouldNotThrowAndUpdateRanking()
+    {
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        _service.UpdateTeam(ValidTeamName, BuildTeamRequest(ValidTeamName, ValidConfederation, ranking: 800));
+
+        var updatedTeam = FindTeamByName(ValidTeamName);
+        Assert.AreEqual(800, updatedTeam!.RankingFifa);
+    }
+
+    [TestMethod]
+    public void DeleteTeam_ShouldReleaseConfederationSlot()
+    {
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        _service.DeleteTeam(ValidTeamName);
+        _service.AddTeam(BuildTeamRequest(OtherTeamName, ValidConfederation, ranking: OtherRanking));
+
+        Assert.IsNotNull(FindTeamByName(OtherTeamName));
+    }
+
+    [TestMethod]
+    public void PreviewImport_ShouldNotPersistTeams()
+    {
+        _service.PreviewImport("Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA,900");
+
+        Assert.IsNull(FindTeamByName("FRANCE"));
+    }
+
+    [TestMethod]
+    public void Import_WithValidCsv_ShouldPersistTeams()
+    {
+        var csv = "Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA,900\nJAPAN,AFC,850";
+
+        var result = _service.Import(csv);
+
+        Assert.AreEqual(2, result.SuccessfulRows);
+        Assert.IsNotNull(FindTeamByName("FRANCE"));
+        Assert.IsNotNull(FindTeamByName("JAPAN"));
+    }
+
+    [TestMethod]
+    public void Import_WithEmptyCsv_ShouldReturnGlobalError()
+    {
+        var result = _service.Import("");
+
+        Assert.AreEqual(0, result.SuccessfulRows);
+        Assert.AreEqual(1, result.FailedRows);
+        Assert.IsFalse(result.Rows[0].Success);
+    }
+
+    [TestMethod]
+    public void Import_WithInvalidHeader_ShouldReturnHeaderError()
+    {
+        var result = _service.Import("Name,Confederation,Ranking\nFRANCE,UEFA,900");
+
+        Assert.AreEqual(1, result.FailedRows);
+        StringAssert.Contains(result.Rows[0].ErrorMessage, "encabezado");
+    }
+
+    [TestMethod]
+    public void Import_WithHeaderHavingAccents_ShouldNormalizeAndSucceed()
+    {
+        var result = _service.Import("Nombre,Confederación,RankingFIFA\nFRANCE,UEFA,900");
+
+        Assert.AreEqual(1, result.SuccessfulRows);
+        Assert.IsNotNull(FindTeamByName("FRANCE"));
+    }
+
+    [TestMethod]
+    public void Import_WithNonNumericRanking_ShouldMarkRowAsFailed()
+    {
+        var result = _service.Import("Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA,NOT_A_NUMBER");
+
+        Assert.AreEqual(1, result.FailedRows);
+        StringAssert.Contains(result.Rows[0].ErrorMessage, "numerico");
+    }
+
+    [TestMethod]
+    public void Import_WithWrongColumnCount_ShouldMarkRowAsFailed()
+    {
+        var result = _service.Import("Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA");
+
+        Assert.AreEqual(1, result.FailedRows);
+        StringAssert.Contains(result.Rows[0].ErrorMessage, "columnas");
+    }
+
+    [TestMethod]
+    public void Import_WithDuplicateNameInCsv_ShouldMarkSecondRowAsFailed()
+    {
+        var result = _service.Import("Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA,900\nFRANCE,UEFA,901");
+
+        Assert.AreEqual(1, result.SuccessfulRows);
+        Assert.AreEqual(1, result.FailedRows);
+        Assert.AreEqual(1, _repository.GetAll().Count(team => team.Name == "FRANCE"));
+    }
+
+    [TestMethod]
+    public void Import_WithMixedValidAndInvalidRows_ShouldPersistOnlyValidOnes()
+    {
+        var csv = "Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA,900\nBROKEN,UEFA\nJAPAN,AFC,850";
+
+        var result = _service.Import(csv);
+
+        Assert.AreEqual(3, result.TotalRows);
+        Assert.AreEqual(2, result.SuccessfulRows);
+        Assert.AreEqual(1, result.FailedRows);
+        Assert.IsNotNull(FindTeamByName("FRANCE"));
+        Assert.IsNotNull(FindTeamByName("JAPAN"));
+        Assert.IsNull(FindTeamByName("BROKEN"));
+    }
+
+    [TestMethod]
+    public void GetTeams_WithNoTeams_ShouldReturnEmptyCollection()
+    {
+        var result = _service.GetTeams();
+
+        Assert.AreEqual(0, result.Count());
+    }
+
+    [TestMethod]
+    public void GetConfederations_ShouldReturnAllSixConfederations()
+    {
+        var result = _service.GetConfederations().ToList();
+
+        Assert.AreEqual(6, result.Count);
+        Assert.IsTrue(result.Any(confederation => confederation.Name == "UEFA"));
+        Assert.IsTrue(result.Any(confederation => confederation.Name == "CONMEBOL"));
+    }
+
+    [TestMethod]
+    public void AutoCompleteTeams_WhenAlreadyAt48_ShouldNotAddMoreTeams()
+    {
+        _service.AutoCompleteTeams(seed: 1);
+
+        _service.AutoCompleteTeams(seed: 2);
+
+        Assert.AreEqual(48, _service.GetTeams().Count());
+    }
+
+    [TestMethod]
+    public void PreviewImport_WithValidCsv_ShouldReturnParsedRows()
+    {
+        var result = _service.PreviewImport("Nombre,Confederacion,RankingFIFA\nFRANCE,UEFA,900");
+
+        Assert.AreEqual(1, result.TotalRows);
+        Assert.AreEqual(1, result.SuccessfulRows);
+        Assert.AreEqual("FRANCE", result.Rows[0].Team!.Name);
+    }
+
+    [TestMethod]
+    public void UpdateTeam_WithFlag_ShouldPersistFlag()
+    {
+        var flagBase64 = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+        _service.AddTeam(BuildTeamRequest(ValidTeamName, ValidConfederation));
+
+        _service.UpdateTeam(ValidTeamName, BuildTeamRequest(ValidTeamName, ValidConfederation, flagBase64: flagBase64));
+
+        var updatedTeam = FindTeamByName(ValidTeamName);
+        Assert.AreEqual(flagBase64, updatedTeam!.FlagBase64);
+    }
+
     private static TeamRequest BuildTeamRequest(
         string name,
         string confederationName,
-        int ranking = ValidRanking) =>
+        int ranking = ValidRanking,
+        string flagBase64 = "") =>
         new TeamRequest
         {
             Name = name,
             ConfederationName = confederationName,
-            RankingFifa = ranking
+            RankingFifa = ranking,
+            FlagBase64 = flagBase64
         };
 
     private static TeamService BuildTeamService()
