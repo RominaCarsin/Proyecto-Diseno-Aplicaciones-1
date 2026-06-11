@@ -278,22 +278,28 @@ public class TeamService : ITeamService
             .OrderByDescending(team => team.RankingFifa)
             .Select(TeamMapper.FromEntity);
     
-    private void AddFictionalTeamsToConfederation(
-        string confederationName,
-        int teamsToCreate,
-        Random random)
+    private void AddFictionalTeamsToConfederation(string confederationName, int teamsToCreate, Random random)
     {
-        var startingIndex = _repository.GetAll()
-            .Count(team => team.Name.StartsWith($"{confederationName}_", StringComparison.OrdinalIgnoreCase));
+        var existingNames = _repository.GetAll()
+            .Where(t => t.Name.StartsWith($"{confederationName}_", StringComparison.OrdinalIgnoreCase))
+            .Select(t => t.Name)
+            .ToHashSet();
 
-        for (var index = 1; index <= teamsToCreate; index++)
+        int nextIndex = 1;
+        for (int i = 0; i < teamsToCreate; i++)
         {
+            while (existingNames.Contains($"{confederationName}_{nextIndex:00}"))
+                nextIndex++;
+
             AddTeam(new TeamRequest
             {
-                Name = $"{confederationName}_{startingIndex + index:00}",
+                Name = $"{confederationName}_{nextIndex:00}",
                 ConfederationName = confederationName,
                 RankingFifa = random.Next(FirstFifaRanking, LastFifaRanking + 1)
             });
+
+            existingNames.Add($"{confederationName}_{nextIndex:00}");
+            nextIndex++;
         }
     }
 
