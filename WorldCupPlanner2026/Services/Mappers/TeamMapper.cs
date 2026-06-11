@@ -26,14 +26,6 @@ public static class TeamMapper
             FlagBase64 = team.FlagBase64
         };
     }
-
-    public static Team ToEntity(TeamResponse response)
-    {
-        var team = new Team(response.Name, response.ConfederationName, response.RankingFifa);
-        team.UpdateGroupLabel(response.GroupLabel);
-        team.UpdateFlag(response.FlagBase64);
-        return team;
-    }
     
     
 }
