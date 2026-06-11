@@ -93,6 +93,8 @@ public class TeamService : ITeamService
 
         team.UpdateName(updatedTeamData.Name);
         team.UpdateRankingFifa(updatedTeamData.RankingFifa);
+        team.UpdateFlag(updatedTeamData.FlagBase64);
+        _repository.Update(team);
 
         LogAction("Team updated",
             $"Team '{currentName}' updated. New name: '{updatedTeamData.Name}', confederation: {updatedTeamData.ConfederationName}, ranking: {updatedTeamData.RankingFifa}");
