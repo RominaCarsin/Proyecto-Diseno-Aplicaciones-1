@@ -290,6 +290,21 @@ public class TeamServiceTests
         Assert.ThrowsException<ArgumentException>(() =>
             _service.AddTeam(BuildTeamRequest("CONMEBOL_8", "CONMEBOL", 508)));
     }
+    
+    [TestMethod]
+    public void AutoCompleteTeams_AfterDeletingOneGeneratedTeam_ShouldRefillTo48WithoutNameConflict()
+    {
+        _service.AutoCompleteTeams(seed: 10);
+        var teams = _service.GetTeams().ToList();
+        Assert.AreEqual(48, teams.Count);
+        
+        var conmebolFictional = teams.First(t => t.Name.StartsWith("CONMEBOL_"));
+        _service.DeleteTeam(conmebolFictional.Name);
+        Assert.AreEqual(47, _service.GetTeams().Count());
+        
+        _service.AutoCompleteTeams(seed: 20);
+        Assert.AreEqual(48, _service.GetTeams().Count());
+    }
 
     [TestMethod]
     public void UpdateTeam_WithSameName_ShouldNotThrowAndUpdateRanking()
