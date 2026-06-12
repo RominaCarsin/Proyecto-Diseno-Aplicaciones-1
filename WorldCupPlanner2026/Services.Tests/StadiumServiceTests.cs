@@ -59,16 +59,144 @@ public class StadiumServiceTests
     }
 
     [TestMethod]
-    public void UpdateStadium_WithValidData_ShouldReplaceOldStadiumWithUpdatedOne()
+    public void UpdateStadium_WithValidData_ShouldUpdateStadiumWithExpectedProperties()
+    {
+        _service.AddStadium(BuildStadiumRequest(
+            "CENTENARIO",
+            "MONTEVIDEO",
+            "Old description",
+            60000));
+
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+            "CAMPEON DEL SIGLO",
+            "CANELONES",
+            "Updated description",
+            70000));
+
+        Assert.IsNull(GetStadiumByName("CENTENARIO"));
+
+        var updatedStadium = GetStadiumByName("CAMPEON DEL SIGLO");
+
+        Assert.IsNotNull(updatedStadium);
+        Assert.AreEqual("CAMPEON DEL SIGLO", updatedStadium.Name);
+        Assert.AreEqual("CANELONES", updatedStadium.City);
+        Assert.AreEqual("Updated description", updatedStadium.Description);
+        Assert.AreEqual(70000, updatedStadium.Capacity);
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithLowercaseAndSpaces_ShouldNormalizeUpdatedNameAndCity()
     {
         _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
 
-        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest("CAMPEON", "BUENOS AIRES"));
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+            "  gran parque central  ",
+            "  montevideo  ",
+            "Updated description",
+            50000));
 
-        Assert.IsNull(GetStadiumByName("CENTENARIO"));
-        Assert.IsNotNull(GetStadiumByName("CAMPEON"));
+        var updatedStadium = GetStadiumByName("GRAN PARQUE CENTRAL");
+
+        Assert.IsNotNull(updatedStadium);
+        Assert.AreEqual("GRAN PARQUE CENTRAL", updatedStadium.Name);
+        Assert.AreEqual("MONTEVIDEO", updatedStadium.City);
+    }
+    
+    [TestMethod]
+    public void UpdateStadium_WithNullDescription_ShouldUpdateDescriptionToNull()
+    {
+        _service.AddStadium(BuildStadiumRequest(
+            "CENTENARIO",
+            "MONTEVIDEO",
+            "Old description",
+            60000));
+
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+            "CENTENARIO",
+            "MONTEVIDEO",
+            null,
+            60000));
+
+        var updatedStadium = GetStadiumByName("CENTENARIO");
+
+        Assert.IsNotNull(updatedStadium);
+        Assert.IsNull(updatedStadium.Description);
     }
 
+    [TestMethod]
+    public void UpdateStadium_WithEmptyDescription_ShouldUpdateDescriptionToEmpty()
+    {
+        _service.AddStadium(BuildStadiumRequest(
+            "CENTENARIO",
+            "MONTEVIDEO",
+            "Old description",
+            60000));
+
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+            "CENTENARIO",
+            "MONTEVIDEO",
+            "",
+            60000));
+
+        var updatedStadium = GetStadiumByName("CENTENARIO");
+
+        Assert.IsNotNull(updatedStadium);
+        Assert.AreEqual("", updatedStadium.Description);
+    }
+    
+    [TestMethod]
+    public void UpdateStadium_WithInvalidName_ShouldThrowArgumentException()
+    {
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+                "",
+                "MONTEVIDEO",
+                "Description",
+                60000)));
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithInvalidCity_ShouldThrowArgumentException()
+    {
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+                "CENTENARIO",
+                "",
+                "Description",
+                60000)));
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithDescriptionOneAboveMaxLength_ShouldThrowArgumentException()
+    {
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
+        var descriptionOneAboveMaxLength = new string('A', 401);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+                "CENTENARIO",
+                "MONTEVIDEO",
+                descriptionOneAboveMaxLength,
+                60000)));
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithCapacityOneBelowMinimum_ShouldThrowArgumentException()
+    {
+        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+                "CENTENARIO",
+                "MONTEVIDEO",
+                "Description",
+                19999)));
+    }
+    
     [TestMethod]
     public void UpdateStadium_WithNameAlreadyTakenByAnotherStadium_ShouldThrowArgumentException()
     {
@@ -82,13 +210,25 @@ public class StadiumServiceTests
     [TestMethod]
     public void UpdateStadium_WithSameNameAsOriginal_ShouldUpdateRemainingDataSuccessfully()
     {
-        _service.AddStadium(BuildStadiumRequest("CENTENARIO", "MONTEVIDEO"));
+        _service.AddStadium(BuildStadiumRequest(
+            "CENTENARIO",
+            "MONTEVIDEO",
+            "Old description",
+            60000));
 
-        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest("CENTENARIO", "BUENOS AIRES"));
+        _service.UpdateStadium("CENTENARIO", BuildStadiumRequest(
+            "CENTENARIO",
+            "BUENOS AIRES",
+            "New description",
+            80000));
 
         var updatedStadium = GetStadiumByName("CENTENARIO");
+
         Assert.IsNotNull(updatedStadium);
+        Assert.AreEqual("CENTENARIO", updatedStadium.Name);
         Assert.AreEqual("BUENOS AIRES", updatedStadium.City);
+        Assert.AreEqual("New description", updatedStadium.Description);
+        Assert.AreEqual(80000, updatedStadium.Capacity);
     }
 
     [TestMethod]
