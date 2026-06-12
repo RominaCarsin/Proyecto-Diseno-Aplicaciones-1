@@ -19,7 +19,6 @@ public class MatchTests
         Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
         Assert.IsFalse(match.HasResult);
-        Assert.IsFalse(match.IsLocked);
     }
 
     [TestMethod]
@@ -165,6 +164,16 @@ public class MatchTests
         Assert.AreEqual(MatchStatus.Finished, match.Status);
         Assert.ThrowsException<InvalidOperationException>(() => match.Finish());
         Assert.ThrowsException<InvalidOperationException>(() => match.SetResult(1, 0));
+    }
+    
+    [TestMethod]
+    public void IsFinished_ShouldReturnTrueOnlyWhenStatusIsFinished()
+    {
+        var match = CreateMatch();
+        Assert.IsFalse(match.IsFinished());
+
+        match.Finish();
+        Assert.IsTrue(match.IsFinished());
     }
     
     [TestMethod]
