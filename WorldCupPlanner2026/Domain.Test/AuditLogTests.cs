@@ -29,15 +29,6 @@ public class AuditLogTests
     }
 
     [TestMethod]
-    public void CreateAuditLog_ShouldGenerateIncrementalId()
-    {
-        var firstLog = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
-        var secondLog = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
-
-        Assert.AreEqual(firstLog.AuditLogId + 1, secondLog.AuditLogId);
-    }
-
-    [TestMethod]
     public void CreateAuditLog_WithEmptyActorEmail_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>

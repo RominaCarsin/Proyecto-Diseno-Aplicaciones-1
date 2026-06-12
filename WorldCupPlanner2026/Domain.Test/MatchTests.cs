@@ -156,16 +156,6 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void LockedMatch_ShouldRejectEditableChanges()
-    {
-        var match = CreateMatch();
-        match.LockEdition();
-
-        Assert.ThrowsException<InvalidOperationException>(() => match.UpdateDate(AnotherValidDate));
-        Assert.ThrowsException<InvalidOperationException>(() => match.UpdateStadium(BuildStadium("MARACANA")));
-    }
-
-    [TestMethod]
     public void Finish_ShouldSetStatusAndLockMatch()
     {
         var match = CreateMatch();
@@ -173,7 +163,6 @@ public class MatchTests
         match.Finish();
 
         Assert.AreEqual(MatchStatus.Finished, match.Status);
-        Assert.IsTrue(match.IsLocked);
         Assert.ThrowsException<InvalidOperationException>(() => match.Finish());
         Assert.ThrowsException<InvalidOperationException>(() => match.SetResult(1, 0));
     }
@@ -224,11 +213,11 @@ public class MatchTests
     }
     
     [TestMethod]
-    public void RegisterIncidence_OnLockedMatch_ShouldThrowInvalidOperationException()
+    public void RegisterIncidence_OnFineshedMatch_ShouldThrowInvalidOperationException()
     {
         var homeTeam = BuildTeam("URUGUAY");
         var match = CreateMatch(homeTeam: homeTeam, awayTeam: BuildTeam("ARGENTINA"));
-        match.LockEdition();
+        match.Finish();
 
         Assert.ThrowsException<InvalidOperationException>(() =>
             match.RegisterIncidence(new YellowCard(homeTeam, minute: 30)));

@@ -41,7 +41,6 @@ public class Match
     public string? MatchCode { get; private set; }
     
     public bool RankingApplied { get; private set; }
-    public int RedCardsOf(Team team) => CountIncidences<RedCard>(team);
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
 
@@ -92,7 +91,6 @@ public class Match
     {
         ValidateIsNotFinished();
         Status = MatchStatus.Finished;
-        IsLocked = true;
     }
 
     public void UpdateDate(DateTime newDate)
@@ -110,11 +108,7 @@ public class Match
 
         Stadium = newStadium!;
     }
-
-    public void LockEdition()
-    {
-        IsLocked = true;
-    }
+    
     
     public void RegisterIncidence(MatchIncidence incidence)
     {
@@ -124,6 +118,7 @@ public class Match
     }
 
     public int YellowCardsOf(Team team) => CountIncidences<YellowCard>(team);
+    public int RedCardsOf(Team team) => CountIncidences<RedCard>(team);
     
     private void ValidateIncidenceBelongsToMatch(MatchIncidence incidence)
     {
@@ -137,19 +132,12 @@ public class Match
     private void ValidateIsEditable()
     {
         ValidateIsNotFinished();
-        ValidateIsNotLocked();
     }
 
     private void ValidateIsNotFinished()
     {
         if (Status == MatchStatus.Finished)
             throw new InvalidOperationException(FinishedMatchErrorMessage);
-    }
-
-    private void ValidateIsNotLocked()
-    {
-        if (IsLocked)
-            throw new InvalidOperationException(LockedMatchErrorMessage);
     }
 
     private static void ValidateDate(DateTime date)
