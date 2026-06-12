@@ -236,50 +236,6 @@ public class TeamTests
     }
     
     [TestMethod]
-    public void ApplyRankingChange_WithPositiveDelta_ShouldIncreaseRankingRounded()
-    {
-        var team = new Team(ValidName, ValidConfederation, 1200);
-
-        team.ApplyRankingChange(20.02);
-
-        // 1200 + 20.02 = 1220.02 → redondea a 1220
-        Assert.AreEqual(1220, team.RankingFifa);
-    }
-    
-    [TestMethod]
-    public void ApplyRankingChange_WithExactHalfDelta_ShouldRoundUp()
-    {
-        var team = new Team(ValidName, ValidConfederation, 1500);
-
-        team.ApplyRankingChange(10.5);
-
-        // 1510.5 → con AwayFromZero redondea a 1511 (no a 1510 como haría banker's rounding)
-        Assert.AreEqual(1511, team.RankingFifa);
-    }
-    
-    [TestMethod]
-    public void ApplyRankingChange_ExceedingMaximum_ShouldClampTo2500()
-    {
-        var team = new Team(ValidName, ValidConfederation, 2490);
-
-        team.ApplyRankingChange(50);
-
-        // 2540 → clamp a 2500
-        Assert.AreEqual(2500, team.RankingFifa);
-    }
-    
-    [TestMethod]
-    public void ApplyRankingChange_BelowMinimum_ShouldClampTo300()
-    {
-        var team = new Team(ValidName, ValidConfederation, 320);
-
-        team.ApplyRankingChange(-50);
-
-        // 270 → clamp a 300
-        Assert.AreEqual(300, team.RankingFifa);
-    }
-    
-    [TestMethod]
     public void CreateTeam_WithoutFlag_ShouldHaveEmptyFlag()
     {
         var team = new Team(ValidName, ValidConfederation, ValidRanking);
@@ -357,26 +313,6 @@ public class TeamTests
 
         Assert.ThrowsException<ArgumentException>(() =>
             team.RevertDraw(goalsScored: -1));
-    }
-
-    [TestMethod]
-    public void ApplyRankingChange_WithNegativeDelta_ShouldDecreaseRankingRounded()
-    {
-        var team = new Team(ValidName, ValidConfederation, 1200);
-
-        team.ApplyRankingChange(-20.6);
-
-        Assert.AreEqual(1179, team.RankingFifa);
-    }
-
-    [TestMethod]
-    public void ApplyRankingChange_WithZeroDelta_ShouldNotChangeRanking()
-    {
-        var team = new Team(ValidName, ValidConfederation, 1500);
-
-        team.ApplyRankingChange(0);
-
-        Assert.AreEqual(1500, team.RankingFifa);
     }
 
     [TestMethod]

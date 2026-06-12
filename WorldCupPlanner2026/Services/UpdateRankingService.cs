@@ -32,11 +32,11 @@ public class UpdateRankingService : IUpdateRankingService
         var homeResult = ResultFor(homeTeam, match);
         var awayResult = ResultFor(awayTeam, match);
 
-        var homeDelta = RankingCalculator.CalculateDelta(homeRankingBefore, awayRankingBefore, homeResult, match.Phase);
-        var awayDelta = RankingCalculator.CalculateDelta(awayRankingBefore, homeRankingBefore, awayResult, match.Phase);
+        var homeNewRanking = RankingCalculator.CalculateNewRanking(homeRankingBefore, awayRankingBefore, homeResult, match.Phase);
+        var awayNewRanking = RankingCalculator.CalculateNewRanking(awayRankingBefore, homeRankingBefore, awayResult, match.Phase);
 
-        homeTeam.ApplyRankingChange(homeDelta);
-        awayTeam.ApplyRankingChange(awayDelta);
+        homeTeam.UpdateRankingFifa(homeNewRanking);
+        awayTeam.UpdateRankingFifa(awayNewRanking);
 
         AuditRankingChange(homeTeam, homeRankingBefore);
         AuditRankingChange(awayTeam, awayRankingBefore);

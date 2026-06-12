@@ -100,20 +100,6 @@ public class Team
 
     public static string Normalize(string value) =>
         value?.Trim().ToUpper() ?? string.Empty;
-    
-
-    public void ApplyRankingChange(double delta)
-    {
-        var updated = (int)Math.Round(RankingFifa + delta, MidpointRounding.AwayFromZero);
-        RankingFifa = Clamp(updated);
-    }
-
-    private static int Clamp(int ranking)
-    {
-        if (ranking < MinRanking) return MinRanking;
-        if (ranking > MaxRanking) return MaxRanking;
-        return ranking;
-    }
 
     public void UpdateFlag(string flagBase64)
     {
