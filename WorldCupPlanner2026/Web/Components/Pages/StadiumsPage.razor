@@ -32,6 +32,11 @@
                     <input type="text" @bind="formData.City" maxlength="60" placeholder="Ciudad"
                            class="form-control border-custom-input" />
                 </div>
+                
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Descripción</label>
+                    <textarea @bind="formData.Description" maxlength="400" placeholder="Descripción del estadio" class="form-control border-custom-input" rows="3"> </textarea>
+                </div>
 
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Capacidad</label>
@@ -73,6 +78,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left">Nombre</th>
                             <th class="px-6 py-3 text-left">Ciudad</th>
+                            <th class="px-6 py-3 text-left">Descripción</th>
                             <th class="px-6 py-3 text-left">Capacidad</th>
                             <th class="px-6 py-3 text-center">Acciones</th>
                         </tr>
@@ -81,7 +87,7 @@
                         @if (!stadiums.Any())
                         {
                             <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-muted">
+                                <td colspan="5" class="px-6 py-4 text-center text-muted">
                                     No hay estadios registrados.
                                 </td>
                             </tr>
@@ -93,6 +99,7 @@
                                 <tr class="hover-bg-custom">
                                     <td class="px-6 py-3 align-middle fw-medium">@stadium.Name</td>
                                     <td class="px-6 py-3 align-middle">@stadium.City</td>
+                                    <td class="px-6 py-3 align-middle">@stadium.Description</td>
                                     <td class="px-6 py-3 align-middle font-monospace">@stadium.Capacity.ToString("N0")</td>
                                     <td class="px-6 py-3 align-middle">
                                         <div class="d-flex justify-content-center gap-2">
