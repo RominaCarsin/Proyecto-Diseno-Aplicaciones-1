@@ -95,17 +95,17 @@ public class TournamentService : ITournamentService
     {
         var group = FindGroupByLabelOrThrow(groupLabel);
 
-        return group.GetStandings()
+        return group.GetOrderedTeamsByPosition()
             .Select(TeamMapper.FromEntity);
     }
 
-    public TeamResponse GetTeamByPosition(char groupLabel, int position)
-    {
-        var group = FindGroupByLabelOrThrow(groupLabel);
-        var team = group.GetTeamByPosition(position);
-
-        return TeamMapper.FromEntity(team);
-    }
+    // public TeamResponse GetTeamByPosition(char groupLabel, int position)
+    // {
+    //     var group = FindGroupByLabelOrThrow(groupLabel);
+    //     var team = group.GetTeamByPosition(position);
+    //
+    //     return TeamMapper.FromEntity(team);
+    // }
 
     public IEnumerable<TeamResponse> GetQualifiedTeams()
     {
@@ -169,7 +169,7 @@ public class TournamentService : ITournamentService
     {
         var groups = _groupRepository.GetAll().ToList();
 
-        var groupPhase = GroupPhase.FromExistingGroups(groups);
+        var groupPhase = GroupPhase.GetGroups(groups); //deberia agarrar grupos del repo
         groupPhase.SimulateGroupStage(seed);
 
         foreach (var group in groupPhase.Groups)

@@ -60,7 +60,7 @@ public class GroupPhase
             group.SimulateMatches(seed);
     }
 
-    public static GroupPhase FromExistingGroups(IEnumerable<Group> groups)
+    public static GroupPhase GetGroups(IEnumerable<Group> groups)
     {
         var fixture = new GroupPhase();
 

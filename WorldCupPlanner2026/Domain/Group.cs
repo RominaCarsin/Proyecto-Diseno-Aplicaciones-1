@@ -33,7 +33,7 @@ public class Group
         UpdateLabel(label);
     }
 
-    public void UpdateLabel(char label)
+    private void UpdateLabel(char label)
     {
         var normalizedLabel = NormalizeLabel(label);
         ValidateLabel(normalizedLabel);
@@ -66,14 +66,6 @@ public class Group
             throw new ArgumentException(TooManyTeamsFromSameConfederationErrorMessage);
     }
 
-    public void RemoveTeam(Team? team)
-    {
-        ValidateRequiredTeam(team);
-
-        if (!_teams.Remove(team!))
-            throw new ArgumentException(TeamNotFoundErrorMessage);
-    }
-
 
     public void AddMatch(Match? match)
     {
@@ -87,9 +79,9 @@ public class Group
     public Team GetTeamByPosition(int position)
     {
         ValidatePosition(position);
-        return GetStandings().ElementAt(position - 1);
+        return GetOrderedTeamsByPosition().ElementAt(position - 1);
     }
-    public IEnumerable<Team> GetStandings()
+    public IEnumerable<Team> GetOrderedTeamsByPosition()
     {
         return _teams
             .OrderByDescending(t => t.Points)

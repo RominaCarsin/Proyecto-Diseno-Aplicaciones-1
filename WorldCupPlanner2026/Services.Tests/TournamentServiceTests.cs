@@ -236,19 +236,6 @@ public class TournamentServiceTests
     }
 
     [TestMethod]
-    public void GetTeamByPosition_WithGeneratedFixture_ShouldReturnTeamAtPosition()
-    {
-        AddTeams(48);
-        AddStadiums(4);
-        _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1));
-
-        var team = _service.GetTeamByPosition('A', 1);
-
-        Assert.IsNotNull(team);
-        Assert.IsFalse(string.IsNullOrWhiteSpace(team.Name));
-    }
-
-    [TestMethod]
     public void SimulateGroupStage_WithNoFixtureGenerated_ShouldThrowInvalidOperationException()
     {
         Assert.ThrowsException<InvalidOperationException>(() =>

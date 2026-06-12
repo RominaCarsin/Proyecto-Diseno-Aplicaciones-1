@@ -12,7 +12,7 @@ public interface ITournamentService
     IEnumerable<GroupResponse> GetGroups();
     GroupResponse GetGroupByLabel(char label);
     IEnumerable<TeamResponse> GetGroupStandings(char groupLabel);
-    TeamResponse GetTeamByPosition(char groupLabel, int position);
+    //TeamResponse GetTeamByPosition(char groupLabel, int position);
     IEnumerable<TeamResponse> GetQualifiedTeams();
 
     IEnumerable<MatchResponse> GetMatches();

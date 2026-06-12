@@ -208,7 +208,7 @@ public class GroupPhaseTests
     {
         var groups = new List<Group> { new('A'), new('B') };
 
-        var fixture = GroupPhase.FromExistingGroups(groups);
+        var fixture = GroupPhase.GetGroups(groups);
 
         Assert.AreEqual(2, fixture.Groups.Count);
         Assert.AreSame(groups[0], fixture.Groups.ElementAt(0));

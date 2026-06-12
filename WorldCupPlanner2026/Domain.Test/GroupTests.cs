@@ -46,25 +46,6 @@ public class GroupTests
 
         Assert.AreEqual(ValidLabel, group.Label);
     }
-
-    [TestMethod]
-    public void UpdateLabel_WithLowercaseLabel_ShouldStoreUppercaseLabel()
-    {
-        var group = CreateValidGroup();
-
-        group.UpdateLabel('b');
-
-        Assert.AreEqual('B', group.Label);
-    }
-
-    [TestMethod]
-    public void UpdateLabel_WithInvalidLabel_ShouldThrowArgumentException()
-    {
-        var group = CreateValidGroup();
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            group.UpdateLabel(InvalidLabel));
-    }
     
 
     [TestMethod]
@@ -121,52 +102,6 @@ public class GroupTests
 
         Assert.ThrowsException<ArgumentException>(() =>
             group.AddTeam(extraTeam));
-    }
-
-    [TestMethod]
-    public void RemoveTeam_WithExistingTeam_ShouldRemoveTeam()
-    {
-        var group = CreateValidGroup();
-        var team = CreateArgentinaTeam();
-
-        group.AddTeam(team);
-        group.RemoveTeam(team);
-
-        Assert.AreEqual(0, group.Teams.Count);
-    }
-
-    [TestMethod]
-    public void RemoveTeam_WithNonExistingTeam_ShouldThrowArgumentException()
-    {
-        var group = CreateValidGroup();
-        var team = CreateChileTeam();
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            group.RemoveTeam(team));
-    }
-
-    [TestMethod]
-    public void RemoveTeam_WithNullTeam_ShouldThrowArgumentException()
-    {
-        var group = CreateValidGroup();
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            group.RemoveTeam(null));
-    }
-
-    [TestMethod]
-    public void RemoveTeam_WithMultipleTeams_ShouldRemoveOnlySpecifiedTeam()
-    {
-        var group = CreateValidGroup();
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-
-        group.AddTeam(argentina);
-        group.AddTeam(brazil);
-        group.RemoveTeam(argentina);
-
-        Assert.AreEqual(1, group.Teams.Count);
-        Assert.AreEqual(brazil, group.Teams[0]);
     }
 
     [TestMethod]
@@ -293,7 +228,7 @@ public class GroupTests
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
 
-        var standings = group.GetStandings().ToList();
+        var standings = group.GetOrderedTeamsByPosition().ToList();
 
         Assert.AreEqual(2, standings.Count);
         Assert.IsTrue(standings.All(t => t.Points == 0));
@@ -313,7 +248,7 @@ public class GroupTests
         match.SetResult(2, 0);
         group.AddMatch(match);
 
-        var standings = group.GetStandings().ToList();
+        var standings = group.GetOrderedTeamsByPosition().ToList();
 
         Assert.AreEqual(uruguay, standings[0]);
     }
@@ -340,7 +275,7 @@ public class GroupTests
         match2.SetResult(3, 0);
         group.AddMatch(match2);
 
-        var standings = group.GetStandings().ToList();
+        var standings = group.GetOrderedTeamsByPosition().ToList();
 
         Assert.AreEqual(argentina, standings[0]);
         Assert.AreEqual(uruguay, standings[1]);
@@ -368,7 +303,7 @@ public class GroupTests
         match2.SetResult(3, 2);
         group.AddMatch(match2);
 
-        var standings = group.GetStandings().ToList();
+        var standings = group.GetOrderedTeamsByPosition().ToList();
 
         Assert.AreEqual(brazil, standings[0]);
         Assert.AreEqual(uruguay, standings[1]);
@@ -396,7 +331,7 @@ public class GroupTests
         match2.SetResult(2, 0);
         group.AddMatch(match2);
 
-        var standings = group.GetStandings().ToList();
+        var standings = group.GetOrderedTeamsByPosition().ToList();
 
         Assert.AreEqual(uruguay, standings[0]);
         Assert.AreEqual(6, uruguay.Points);
