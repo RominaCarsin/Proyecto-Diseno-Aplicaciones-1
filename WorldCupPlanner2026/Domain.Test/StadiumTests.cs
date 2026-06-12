@@ -271,6 +271,190 @@ public class StadiumTests
         Assert.AreEqual("BUENOS AIRES", stadium.City);
     }
 
+    // ─── Update Name ─────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void UpdateName_WithValidName_ShouldUpdateName()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateName("CAMPEON DEL SIGLO");
+
+        Assert.AreEqual("CAMPEON DEL SIGLO", stadium.Name);
+    }
+
+    [TestMethod]
+    public void UpdateName_WithLowercaseAndSpaces_ShouldNormalizeName()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateName("  gran parque central  ");
+
+        Assert.AreEqual("GRAN PARQUE CENTRAL", stadium.Name);
+    }
+
+    [TestMethod]
+    public void UpdateName_WithEmptyName_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateName(""));
+    }
+
+    [TestMethod]
+    public void UpdateName_WithNullName_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateName(null));
+    }
+
+    [TestMethod]
+    public void UpdateName_WithNameOneAboveMaxLength_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+        var nameOneAboveMaxLength = new string('A', 81);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateName(nameOneAboveMaxLength));
+    }
+    
+    // ─── Update City ─────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void UpdateCity_WithValidCity_ShouldUpdateCity()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateCity("MALDONADO");
+
+        Assert.AreEqual("MALDONADO", stadium.City);
+    }
+
+    [TestMethod]
+    public void UpdateCity_WithLowercaseAndSpaces_ShouldNormalizeCity()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateCity("  punta del este  ");
+
+        Assert.AreEqual("PUNTA DEL ESTE", stadium.City);
+    }
+
+    [TestMethod]
+    public void UpdateCity_WithEmptyCity_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateCity(""));
+    }
+
+    [TestMethod]
+    public void UpdateCity_WithNullCity_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateCity(null));
+    }
+
+    [TestMethod]
+    public void UpdateCity_WithCityOneAboveMaxLength_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+        var cityOneAboveMaxLength = new string('A', 61);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateCity(cityOneAboveMaxLength));
+    }
+    
+    // ─── Update Description ──────────────────────────────────────────────────
+
+    [TestMethod]
+    public void UpdateDescription_WithValidDescription_ShouldUpdateDescription()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateDescription("Updated description");
+
+        Assert.AreEqual("Updated description", stadium.Description);
+    }
+
+    [TestMethod]
+    public void UpdateDescription_WithNullDescription_ShouldUpdateDescriptionToNull()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateDescription(null);
+
+        Assert.IsNull(stadium.Description);
+    }
+
+    [TestMethod]
+    public void UpdateDescription_WithEmptyDescription_ShouldUpdateDescriptionToEmpty()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateDescription("");
+
+        Assert.AreEqual("", stadium.Description);
+    }
+
+    [TestMethod]
+    public void UpdateDescription_WithDescriptionExactlyAtMaxLength_ShouldUpdateDescriptionSuccessfully()
+    {
+        var stadium = CreateValidStadium();
+        var descriptionWithMaxLength = new string('A', 400);
+
+        stadium.UpdateDescription(descriptionWithMaxLength);
+
+        Assert.AreEqual(descriptionWithMaxLength, stadium.Description);
+    }
+
+    [TestMethod]
+    public void UpdateDescription_WithDescriptionOneAboveMaxLength_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+        var descriptionOneAboveMaxLength = new string('A', 401);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateDescription(descriptionOneAboveMaxLength));
+    }
+    
+    // ─── Update Capacity ─────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void UpdateCapacity_WithValidCapacity_ShouldUpdateCapacity()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateCapacity(70000);
+
+        Assert.AreEqual(70000, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void UpdateCapacity_WithCapacityExactlyAtMinimum_ShouldUpdateCapacitySuccessfully()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateCapacity(20000);
+
+        Assert.AreEqual(20000, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void UpdateCapacity_WithCapacityOneBelowMinimum_ShouldThrowException()
+    {
+        var stadium = CreateValidStadium();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            stadium.UpdateCapacity(19999));
+    }
+    
     // ─── Builders ─────────────────────────────────────────────────────────────
 
     private static Stadium CreateValidStadium() =>
