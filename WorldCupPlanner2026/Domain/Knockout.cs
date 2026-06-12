@@ -350,40 +350,7 @@ public class Knockout
         match.SetResult(homeGoals, awayGoals);
         match.Finish();
     }
-
-    public void SimulateMatches(int seed)
-    {
-        var random = new Random(seed);
-
-        foreach (var match in _matches)
-        {
-            if (match.Status == MatchStatus.Finished)
-                continue;
-
-            var (homeGoals, awayGoals) = SimulateKnockoutResult(
-                match.HomeTeam.RankingFifa,
-                match.AwayTeam.RankingFifa,
-                random);
-
-            match.SetResult(homeGoals, awayGoals);
-            match.Finish();
-        }
-    }
-
-    private static (int homeGoals, int awayGoals) SimulateKnockoutResult(
-        int homeRanking, int awayRanking, Random random)
-    {
-        int total = homeRanking + awayRanking;
-        double homeProbability = (double)homeRanking / total;
-
-        if (random.NextDouble() < homeProbability)
-            return (SimulateGoals(random, 2, 3), SimulateGoals(random, 0, 1));
-        else
-            return (SimulateGoals(random, 0, 1), SimulateGoals(random, 2, 3));
-    }
-
-    private static int SimulateGoals(Random random, int min, int max) =>
-        random.Next(min, max + 1);
+    
 
     private static Match CreateKnockoutMatch(Team homeTeam, Team awayTeam, string matchCode, TournamentPhase phase) =>
         new(KnockoutPhaseDefaultDate, BuildDefaultStadium(), homeTeam, awayTeam, group: null, phase: phase, matchCode: matchCode);

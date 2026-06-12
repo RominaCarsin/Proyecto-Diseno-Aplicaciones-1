@@ -177,43 +177,43 @@ public class GroupPhaseTests
             Assert.AreSame(stadiums[i % stadiums.Count], matches[i].Stadium);
     }
     
-    [TestMethod]
-    public void SimulateGroupStage_WithValidSeed_ShouldSetResultOnAllMatchesAndUpdateStandings()
-    {
-        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
-        fixture.Generate();
-
-        fixture.SimulateGroupStage(seed: 42);
-
-        var allMatches = fixture.Groups.SelectMany(g => g.Matches).ToList();
-        var allTeams = fixture.Groups.SelectMany(g => g.Teams).ToList();
-
-        Assert.IsTrue(allMatches.All(m => m.HasResult));
-        Assert.IsTrue(allTeams.Any(t => t.Points > 0));
-    }
-
-    [TestMethod]
-    public void SimulateGroupStage_WithoutGeneratedFixture_ShouldThrowInvalidOperationException()
-    {
-        var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
-
-        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
-            fixture.SimulateGroupStage(seed: 1));
-
-        Assert.AreEqual("No se ha generado el fixture todavía.", exception.Message);
-    }
-    
-    [TestMethod]
-    public void FromExistingGroups_WithValidGroups_ShouldCreateFixtureWithThoseGroups()
-    {
-        var groups = new List<Group> { new('A'), new('B') };
-
-        var fixture = GroupPhase.GetGroups(groups);
-
-        Assert.AreEqual(2, fixture.Groups.Count);
-        Assert.AreSame(groups[0], fixture.Groups.ElementAt(0));
-        Assert.AreSame(groups[1], fixture.Groups.ElementAt(1));
-    }
+    // [TestMethod]
+    // public void SimulateGroupStage_WithValidSeed_ShouldSetResultOnAllMatchesAndUpdateStandings()
+    // {
+    //     var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+    //     fixture.Generate();
+    //
+    //     fixture.SimulateGroupStage(seed: 42);
+    //
+    //     var allMatches = fixture.Groups.SelectMany(g => g.Matches).ToList();
+    //     var allTeams = fixture.Groups.SelectMany(g => g.Teams).ToList();
+    //
+    //     Assert.IsTrue(allMatches.All(m => m.HasResult));
+    //     Assert.IsTrue(allTeams.Any(t => t.Points > 0));
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateGroupStage_WithoutGeneratedFixture_ShouldThrowInvalidOperationException()
+    // {
+    //     var fixture = new GroupPhase(BuildValidPots(), BuildStadiums(count: 4), StartDate);
+    //
+    //     var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+    //         fixture.SimulateGroupStage(seed: 1));
+    //
+    //     Assert.AreEqual("No se ha generado el fixture todavía.", exception.Message);
+    // }
+    //
+    // [TestMethod]
+    // public void FromExistingGroups_WithValidGroups_ShouldCreateFixtureWithThoseGroups()
+    // {
+    //     var groups = new List<Group> { new('A'), new('B') };
+    //
+    //     var fixture = GroupPhase.GetGroups(groups);
+    //
+    //     Assert.AreEqual(2, fixture.Groups.Count);
+    //     Assert.AreSame(groups[0], fixture.Groups.ElementAt(0));
+    //     Assert.AreSame(groups[1], fixture.Groups.ElementAt(1));
+    // }
     
     private static List<Pot> BuildValidPots() => new()
     {

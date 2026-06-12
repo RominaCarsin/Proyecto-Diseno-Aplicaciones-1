@@ -36,6 +36,7 @@ public class TournamentService : ITournamentService
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;
     private readonly IUpdateRankingService _updateRankingService;
+    
 
 
     public TournamentService(
@@ -169,10 +170,13 @@ public class TournamentService : ITournamentService
     {
         var groups = _groupRepository.GetAll().ToList();
 
-        var groupPhase = GroupPhase.GetGroups(groups); //deberia agarrar grupos del repo
-        groupPhase.SimulateGroupStage(seed);
+        if (!groups.Any())
+            throw new InvalidOperationException("No se ha generado la fase de grupos.");
 
-        foreach (var group in groupPhase.Groups)
+        var simulator = new GroupStageSimulator(seed);
+        simulator.Simulate(groups);
+
+        foreach (var group in groups)
             _groupRepository.Update(group);
     }
 
@@ -279,18 +283,19 @@ public class TournamentService : ITournamentService
     {
         var allMatches = _matchRepository.GetAll().ToList();
 
-        if (!allMatches.Any(match => match.Phase != TournamentPhase.GroupStage))
+        var knockoutMatches = allMatches
+            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .ToList();
+
+        if (!knockoutMatches.Any())
             throw new InvalidOperationException(KnockoutNotInitializedErrorMessage);
 
-        var shuffleService = new ShuffleService(seed);
-        var knockout = new Knockout(seed, shuffleService);
-
-        knockout.LoadExistingMatches(allMatches);
-        knockout.SimulateMatches(seed);
+        var simulator = new KnockoutSimulator(seed);
+        simulator.Simulate(knockoutMatches);
 
         RecalculateFinishedKnockoutRankings(allMatches);
 
-        foreach (var match in knockout.Matches)
+        foreach (var match in knockoutMatches)
             _matchRepository.Update(match);
     }
 

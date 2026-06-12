@@ -90,46 +90,6 @@ public class Group
             .ToList();
     }
     
-    public void SimulateMatches(int seed)
-    {
-        var random = new Random(seed + Label);
-
-        foreach (var match in _matches)
-        {
-            var (homeGoals, awayGoals) = SimulateResult(
-                match.HomeTeam.RankingFifa,
-                match.AwayTeam.RankingFifa,
-                random);
-
-            SetMatchResult(match, homeGoals, awayGoals);
-        }
-    }
-    
-    private static (int homeGoals, int awayGoals) SimulateResult(
-        int homeRanking,
-        int awayRanking,
-        Random random)
-    {
-        if (homeRanking == awayRanking)
-        {
-            int drawGoals = SimulateGoals(random, 0, 2);
-            return (drawGoals, drawGoals);
-        }
-        
-        int total = homeRanking + awayRanking;
-        double homeProbability = (double)homeRanking / total;
-
-        double roll = random.NextDouble();
-
-        if (roll < homeProbability - DrawZone)
-            return (SimulateGoals(random, 2, 4), SimulateGoals(random, 0, 2));
-
-        if (roll > homeProbability + DrawZone)
-            return (SimulateGoals(random, 0, 2), SimulateGoals(random, 2, 4));
-        
-        int finalDrawGoals = SimulateGoals(random, 0, 2);
-        return (finalDrawGoals, finalDrawGoals);
-    }
     
     public IEnumerable<Match> FinishPlayedMatches()
     {
@@ -141,15 +101,6 @@ public class Group
             match.Finish();
 
         return playedMatches;
-    }
-    
-    
-    
-    
-    
-    private static int SimulateGoals(Random random, int min, int max)
-    {
-        return random.Next(min, max + 1);
     }
 
     private static char NormalizeLabel(char label) => char.ToUpperInvariant(label);

@@ -19,8 +19,6 @@ public class GroupPhase
         "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string TeamNotAssignedErrorMessage =
         "No se pudo asignar el equipo {0} a ningún grupo.";
-    private const string FixtureNotGeneratedErrorMessage =
-        "No se ha generado el fixture todavía.";
 
     private static readonly List<(int homeIndex, int awayIndex)> GroupStagePairings = new()
     {
@@ -51,24 +49,6 @@ public class GroupPhase
         AssignTeamsToGroupsFromPots();
         GenerateMatchesForGroups();
     }
-
-    public void SimulateGroupStage(int seed)
-    {
-        ValidateFixtureWasGenerated();
-
-        foreach (var group in _groups)
-            group.SimulateMatches(seed);
-    }
-
-    public static GroupPhase GetGroups(IEnumerable<Group> groups)
-    {
-        var fixture = new GroupPhase();
-
-        if (groups is not null)
-            fixture._groups.AddRange(groups);
-
-        return fixture;
-    }
     
     private void ValidateTeamCount()
     {
@@ -82,12 +62,6 @@ public class GroupPhase
     {
         if (_stadiums.Count < MinStadiumCount)
             throw new InvalidOperationException(NotEnoughStadiumsErrorMessage);
-    }
-
-    private void ValidateFixtureWasGenerated()
-    {
-        if (_groups.Count == 0)
-            throw new InvalidOperationException(FixtureNotGeneratedErrorMessage);
     }
     
     private void CreateGroups()
@@ -195,11 +169,5 @@ public class GroupPhase
         ));
 
         matchCounter++;
-    }
-    
-    private GroupPhase()
-    {
-        _pots = new List<Pot>();
-        _stadiums = new List<Stadium>();
     }
 }

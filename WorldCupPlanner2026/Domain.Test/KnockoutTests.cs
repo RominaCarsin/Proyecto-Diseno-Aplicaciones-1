@@ -518,116 +518,116 @@ public class KnockoutTests
     // RED: SimulateMatches — casos de prueba
     // ──────────────────────────────────────────────
 
-    [TestMethod]
-    public void SimulateMatches_WhenNoMatches_ShouldNotThrow()
-    {
-        var knockout = CreateValidKnockout();
-
-        knockout.SimulateMatches(42);
-    }
-
-    [TestMethod]
-    public void SimulateMatches_WhenAllMatchesAlreadyFinished_ShouldNotThrow()
-    {
-        var knockout = CreateKnockoutWithFinishedRoundOf32();
-
-        knockout.SimulateMatches(42);
-    }
-
-    [TestMethod]
-    public void SimulateMatches_ShouldSetResultsOnAllUnfinishedKnockoutMatches()
-    {
-        var knockout = CreateKnockoutWithFinishedRoundOf32();
-        knockout.InitializeRoundOf16();
-
-        knockout.SimulateMatches(42);
-
-        var roundOf16Matches = knockout.Matches
-            .Where(m => m.Phase == TournamentPhase.RoundOf16)
-            .ToList();
-        Assert.IsTrue(roundOf16Matches.All(m => m.HomeGoals.HasValue),
-            "Todos los partidos de octavos deben tener resultado.");
-        Assert.IsTrue(roundOf16Matches.All(m => m.AwayGoals.HasValue),
-            "Todos los partidos de octavos deben tener resultado.");
-    }
-
-    [TestMethod]
-    public void SimulateMatches_ShouldFinishAllSimulatedMatches()
-    {
-        var knockout = CreateKnockoutWithFinishedRoundOf32();
-        knockout.InitializeRoundOf16();
-
-        knockout.SimulateMatches(42);
-
-        var roundOf16Matches = knockout.Matches
-            .Where(m => m.Phase == TournamentPhase.RoundOf16)
-            .ToList();
-        Assert.IsTrue(roundOf16Matches.All(m => m.Status == MatchStatus.Finished),
-            "Todos los partidos simulados deben estar finalizados.");
-    }
-
-    [TestMethod]
-    public void SimulateMatches_ShouldProduceNoDraws()
-    {
-        var knockout = CreateKnockoutWithFinishedRoundOf32();
-        knockout.InitializeRoundOf16();
-
-        knockout.SimulateMatches(42);
-
-        var simulated = knockout.Matches.Where(m => m.Phase == TournamentPhase.RoundOf16).ToList();
-        Assert.IsTrue(simulated.All(m => m.Winner != null),
-            "Ningún partido de knockout puede terminar en empate tras la simulación.");
-    }
-
-    [TestMethod]
-    public void SimulateMatches_WithSameSeed_ShouldProduceDeterministicResults()
-    {
-        var knockout1 = CreateKnockoutWithFinishedRoundOf32();
-        knockout1.InitializeRoundOf16();
-        knockout1.SimulateMatches(42);
-        var results1 = knockout1.Matches
-            .Where(m => m.Phase == TournamentPhase.RoundOf16)
-            .OrderBy(m => m.MatchCode)
-            .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
-            .ToList();
-
-        var knockout2 = CreateKnockoutWithFinishedRoundOf32();
-        knockout2.InitializeRoundOf16();
-        knockout2.SimulateMatches(42);
-        var results2 = knockout2.Matches
-            .Where(m => m.Phase == TournamentPhase.RoundOf16)
-            .OrderBy(m => m.MatchCode)
-            .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
-            .ToList();
-
-        CollectionAssert.AreEqual(results1, results2,
-            "Misma semilla debe producir los mismos resultados.");
-    }
-
-    [TestMethod]
-    public void SimulateMatches_WithDifferentSeed_ShouldProduceDifferentResults()
-    {
-        var knockout1 = CreateKnockoutWithFinishedRoundOf32();
-        knockout1.InitializeRoundOf16();
-        knockout1.SimulateMatches(42);
-        var results1 = knockout1.Matches
-            .Where(m => m.Phase == TournamentPhase.RoundOf16)
-            .OrderBy(m => m.MatchCode)
-            .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
-            .ToList();
-
-        var knockout2 = CreateKnockoutWithFinishedRoundOf32();
-        knockout2.InitializeRoundOf16();
-        knockout2.SimulateMatches(99);
-        var results2 = knockout2.Matches
-            .Where(m => m.Phase == TournamentPhase.RoundOf16)
-            .OrderBy(m => m.MatchCode)
-            .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
-            .ToList();
-
-        CollectionAssert.AreNotEqual(results1, results2,
-            "Distinta semilla debe producir resultados diferentes (altamente probable).");
-    }
+    // [TestMethod]
+    // public void SimulateMatches_WhenNoMatches_ShouldNotThrow()
+    // {
+    //     var knockout = CreateValidKnockout();
+    //
+    //     knockout.SimulateMatches(42);
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateMatches_WhenAllMatchesAlreadyFinished_ShouldNotThrow()
+    // {
+    //     var knockout = CreateKnockoutWithFinishedRoundOf32();
+    //
+    //     knockout.SimulateMatches(42);
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateMatches_ShouldSetResultsOnAllUnfinishedKnockoutMatches()
+    // {
+    //     var knockout = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout.InitializeRoundOf16();
+    //
+    //     knockout.SimulateMatches(42);
+    //
+    //     var roundOf16Matches = knockout.Matches
+    //         .Where(m => m.Phase == TournamentPhase.RoundOf16)
+    //         .ToList();
+    //     Assert.IsTrue(roundOf16Matches.All(m => m.HomeGoals.HasValue),
+    //         "Todos los partidos de octavos deben tener resultado.");
+    //     Assert.IsTrue(roundOf16Matches.All(m => m.AwayGoals.HasValue),
+    //         "Todos los partidos de octavos deben tener resultado.");
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateMatches_ShouldFinishAllSimulatedMatches()
+    // {
+    //     var knockout = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout.InitializeRoundOf16();
+    //
+    //     knockout.SimulateMatches(42);
+    //
+    //     var roundOf16Matches = knockout.Matches
+    //         .Where(m => m.Phase == TournamentPhase.RoundOf16)
+    //         .ToList();
+    //     Assert.IsTrue(roundOf16Matches.All(m => m.Status == MatchStatus.Finished),
+    //         "Todos los partidos simulados deben estar finalizados.");
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateMatches_ShouldProduceNoDraws()
+    // {
+    //     var knockout = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout.InitializeRoundOf16();
+    //
+    //     knockout.SimulateMatches(42);
+    //
+    //     var simulated = knockout.Matches.Where(m => m.Phase == TournamentPhase.RoundOf16).ToList();
+    //     Assert.IsTrue(simulated.All(m => m.Winner != null),
+    //         "Ningún partido de knockout puede terminar en empate tras la simulación.");
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateMatches_WithSameSeed_ShouldProduceDeterministicResults()
+    // {
+    //     var knockout1 = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout1.InitializeRoundOf16();
+    //     knockout1.SimulateMatches(42);
+    //     var results1 = knockout1.Matches
+    //         .Where(m => m.Phase == TournamentPhase.RoundOf16)
+    //         .OrderBy(m => m.MatchCode)
+    //         .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
+    //         .ToList();
+    //
+    //     var knockout2 = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout2.InitializeRoundOf16();
+    //     knockout2.SimulateMatches(42);
+    //     var results2 = knockout2.Matches
+    //         .Where(m => m.Phase == TournamentPhase.RoundOf16)
+    //         .OrderBy(m => m.MatchCode)
+    //         .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
+    //         .ToList();
+    //
+    //     CollectionAssert.AreEqual(results1, results2,
+    //         "Misma semilla debe producir los mismos resultados.");
+    // }
+    //
+    // [TestMethod]
+    // public void SimulateMatches_WithDifferentSeed_ShouldProduceDifferentResults()
+    // {
+    //     var knockout1 = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout1.InitializeRoundOf16();
+    //     knockout1.SimulateMatches(42);
+    //     var results1 = knockout1.Matches
+    //         .Where(m => m.Phase == TournamentPhase.RoundOf16)
+    //         .OrderBy(m => m.MatchCode)
+    //         .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
+    //         .ToList();
+    //
+    //     var knockout2 = CreateKnockoutWithFinishedRoundOf32();
+    //     knockout2.InitializeRoundOf16();
+    //     knockout2.SimulateMatches(99);
+    //     var results2 = knockout2.Matches
+    //         .Where(m => m.Phase == TournamentPhase.RoundOf16)
+    //         .OrderBy(m => m.MatchCode)
+    //         .Select(m => $"{m.MatchCode}:{m.HomeGoals}-{m.AwayGoals}")
+    //         .ToList();
+    //
+    //     CollectionAssert.AreNotEqual(results1, results2,
+    //         "Distinta semilla debe producir resultados diferentes (altamente probable).");
+    // }
 
     //Helpers--------------------------------
     private static List<Team> CreateOrderedQualifiedTeams()
