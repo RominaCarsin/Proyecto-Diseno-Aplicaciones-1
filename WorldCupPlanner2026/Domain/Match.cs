@@ -169,11 +169,6 @@ public class Match
         ValidateSingleGoalValue(homeGoals, nameof(homeGoals));
         ValidateSingleGoalValue(awayGoals, nameof(awayGoals));
     }
-    
-    public void MarkRankingApplied()
-    {
-        RankingApplied = true;
-    }
 
     private void ValidateKnockoutMatchIsNotDraw(int homeGoals, int awayGoals)
     {

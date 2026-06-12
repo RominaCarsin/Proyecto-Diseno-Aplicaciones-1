@@ -533,6 +533,7 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
 
         LogAction("Match finished", $"Match {matchId} has been marked as finished");
+ 
     }
 
     private void FinishAndRecalculate(Match match)
