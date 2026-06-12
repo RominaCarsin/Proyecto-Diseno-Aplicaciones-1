@@ -27,6 +27,7 @@ public class MatchResponse
     public string? MatchCode { get; set; }
     
     public string Status { get; set; } = "NotFinished";
+    public bool IsFinished { get; set; }
     
     public bool HasResult { get; set; }
     

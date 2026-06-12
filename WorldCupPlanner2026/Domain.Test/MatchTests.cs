@@ -170,10 +170,10 @@ public class MatchTests
     public void IsFinished_ShouldReturnTrueOnlyWhenStatusIsFinished()
     {
         var match = CreateMatch();
-        Assert.IsFalse(match.IsFinished());
+        Assert.IsFalse(match.IsFinished);
 
         match.Finish();
-        Assert.IsTrue(match.IsFinished());
+        Assert.IsTrue(match.IsFinished);
     }
     
     [TestMethod]

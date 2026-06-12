@@ -233,12 +233,12 @@
                                             else
                                             {
                                                 <button class="btn btn-sm btn-light border-custom"
-                                                        disabled="@(!IsEditor || match.IsLocked)"
+                                                        disabled="@(!IsEditor || match.IsFinished)"
                                                         @onclick="() => StartEdit(match)">
                                                     Cargar resultado
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-warning border-custom"
-                                                        disabled="@(!IsEditor || match.IsLocked || !match.HasResult)"
+                                                        disabled="@(!IsEditor || match.IsFinished|| !match.HasResult)"
                                                         @onclick="() => FinishMatch(match.Id)">
                                                     Terminar
                                                 </button>

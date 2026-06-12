@@ -34,7 +34,6 @@ public class Match
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
     public Team? Loser => Winner is null ? null : ReferenceEquals(Winner, HomeTeam) ? AwayTeam : HomeTeam;
-    public bool IsLocked { get; private set; }
     public MatchStatus Status { get; private set; }
     public char? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
@@ -43,6 +42,7 @@ public class Match
     public bool RankingApplied { get; private set; }
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
+    public bool IsFinished => Status == MatchStatus.Finished;
 
     private Match() {}
     public Match(
