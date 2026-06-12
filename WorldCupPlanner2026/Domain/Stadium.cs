@@ -31,6 +31,26 @@ public class Stadium
         Capacity = ValidateCapacity(capacity);
     }
     
+    public void UpdateName(string name)
+    {
+        Name = NormalizeAndValidateName(name);
+    }
+
+    public void UpdateCity(string city)
+    {
+        City = NormalizeAndValidateCity(city);
+    }
+
+    public void UpdateDescription(string? description)
+    {
+        Description = NormalizeDescription(description);
+    }
+
+    public void UpdateCapacity(int capacity)
+    {
+        Capacity = ValidateCapacity(capacity);
+    }
+    
     private static string NormalizeAndValidateName(string name) =>
         NormalizeAndValidateTextField(name, MaxNameLength, NameEmptyErrorMessage, NameTooLongErrorMessage);
 
