@@ -6,5 +6,7 @@ public sealed class ProbabilisticEngine : ISimulationEngine
 
     public (int homeGoals, int awayGoals) SimulateResult(
         int homeRanking, int awayRanking, bool allowDraw, Random random)
-        => throw new NotImplementedException();
+        => (random.Next(0, 5), random.Next(0, 5));
+    
+    
 }
