@@ -454,7 +454,7 @@ public class KnockoutTests
     // ──────────────────────────────────────────────
 
     [TestMethod]
-    public void SetMatchResult_WhenMatchExists_ShouldUpdateGoalsAndFinishMatch()
+    public void SetMatchResult_WhenMatchExists_ShouldUpdateGoalsWithoutFinishingMatch()
     {
         var knockout = CreateValidKnockout();
         var qualifiedTeams = CreateOrderedQualifiedTeams();
@@ -468,9 +468,11 @@ public class KnockoutTests
         knockout.SetMatchResult(targetCode, homeGoals, awayGoals);
 
         var match = knockout.Matches.Single(m => m.MatchCode == targetCode);
+
         Assert.AreEqual(homeGoals, match.HomeGoals);
         Assert.AreEqual(awayGoals, match.AwayGoals);
-        Assert.AreEqual(MatchStatus.Finished, match.Status);
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+        Assert.IsFalse(match.IsFinished);
         Assert.IsNotNull(match.Winner);
     }
 
@@ -507,11 +509,13 @@ public class KnockoutTests
         var knockout = CreateValidKnockout();
         knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
         knockout.InitializeRoundOf32();
+
         knockout.SetMatchResult("A1", 3, 0);
+        knockout.FinishMatch("A1");
 
         Assert.ThrowsException<InvalidOperationException>(() =>
-            knockout.SetMatchResult("A1", 1, 2),
-            "No se debería poder cambiar el resultado de un partido ya finalizado (bloqueo de integridad).");
+                knockout.SetMatchResult("A1", 1, 2),
+            "No se debería poder cambiar el resultado de un partido ya finalizado.");
     }
 
     //Helpers--------------------------------
@@ -707,6 +711,23 @@ public class KnockoutTests
                 end++;
             return end;
         }
+    }
+    
+    [TestMethod]
+    public void FinishMatch_WhenMatchHasResult_ShouldFinishMatch()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        knockout.SetMatchResult("A1", 3, 0);
+
+        knockout.FinishMatch("A1");
+
+        var match = knockout.Matches.Single(m => m.MatchCode == "A1");
+
+        Assert.AreEqual(MatchStatus.Finished, match.Status);
+        Assert.IsTrue(match.IsFinished);
     }
 
     private sealed class TeamRequest
