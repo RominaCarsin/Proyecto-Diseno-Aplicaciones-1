@@ -10,6 +10,8 @@ public class PureRandomSimulationEngine : ISimulationEngine
         TournamentPhase phase,
         Random random)
     {
-        throw new NotImplementedException();
+        return new SimulationResult(
+            random.Next(0, 5),
+            random.Next(0, 5));
     }
 }
