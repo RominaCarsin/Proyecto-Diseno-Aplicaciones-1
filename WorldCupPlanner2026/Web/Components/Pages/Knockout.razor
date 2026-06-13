@@ -117,13 +117,17 @@
                                     <div class="match-actions border-top pt-2 mt-2 d-flex justify-content-center gap-2">
                                         @if (editingMatchCode == match.MatchCode)
                                         {
-                                            <button class="btn btn-xs btn-wc-green" @onclick="() => SaveResult(match.MatchCode)">OK</button>
-                                            <button class="btn btn-xs btn-light border-custom" @onclick="CancelEdit">X</button>
+                                            <button class="btn btn-sm btn-success" @onclick="() => SaveResult(match.MatchCode)">
+                                                <i class="bi bi-check2 me-1"></i>Guardar
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary border-custom" @onclick="CancelEdit">
+                                                <i class="bi bi-x me-1"></i>Cancelar
+                                            </button>
                                         }
                                         else if (match.Status != "Finished")
                                         {
-                                            <button class="btn btn-xs btn-light border-custom" @onclick="() => StartEdit(match)">
-                                                <i class="bi bi-pencil"></i>
+                                            <button class="btn btn-sm btn-outline-primary border-custom" @onclick="() => StartEdit(match)">
+                                                <i class="bi bi-pencil me-1"></i>Cargar resultado
                                             </button>
                                         }
                                     </div>

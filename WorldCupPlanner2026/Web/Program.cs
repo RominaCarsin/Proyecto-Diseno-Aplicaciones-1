@@ -25,6 +25,7 @@ builder.Services.AddScoped<IAuthStateService, AuthStateService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
 builder.Services.AddScoped<Domain.IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
 
