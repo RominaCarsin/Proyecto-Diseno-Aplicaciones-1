@@ -55,24 +55,49 @@
         }
         else
         {
-            <div class="row g-3 align-items-end mt-2">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">SemillaSimulation</label>
-                    <input type="number" @bind="simulationSeed" class="form-control border-custom-input" />
-                </div>
-                <div class="col-md-4">
-                    <button class="btn btn-wc-green w-100"
-                            disabled="@(!IsEditor || !simulationSeed.HasValue)"
-                            @onclick="SimulateGroupStage">
-                        Simular fase de grupos
-                    </button>
-                </div>
-                <div class="col-md-4">
-                    <a class="btn btn-outline-dark border-custom w-100" href="/knockout">
+            @if (groupStageWasFinished)
+            {
+                <div class="single-action-wrapper mt-3">
+                    <a class="btn cta-next-stage" href="/knockout">
+                        <i class="bi bi-arrow-right-circle-fill me-2"></i>
                         Ver segunda fase
                     </a>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="row g-3 align-items-end mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">SemillaSimulation</label>
+                        <input type="number" @bind="simulationSeed" class="form-control border-custom-input" />
+                    </div>
+
+                    <div class="col-md-4">
+                        @if (!groupStageWasSimulated)
+                        {
+                            <button class="btn btn-wc-green w-100"
+                                    disabled="@(!IsEditor || !simulationSeed.HasValue)"
+                                    @onclick="SimulateGroupStage">
+                                Simular fase de grupos
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-wc-red w-100"
+                                    disabled="@(!IsEditor)"
+                                    @onclick="FinishAllGroupStageMatches">
+                                <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
+                            </button>
+                        }
+                    </div>
+
+                    <div class="col-md-4">
+                        <a class="btn btn-outline-dark border-custom w-100" href="/knockout">
+                            Ver segunda fase
+                        </a>
+                    </div>
+                </div>
+            }
         }
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -124,8 +149,6 @@
                             }
                         </ul>
                     </div>
-
-                    
                 </div>
             }
         </div>
@@ -221,7 +244,13 @@
                                     <td class="px-4 py-3">@(match.Winner?.Name ?? "-")</td>
                                     <td class="px-4 py-3">
                                         <div class="d-flex justify-content-center gap-2">
-                                            @if (editingMatchId == match.Id)
+                                            @if (match.IsFinished)
+                                            {
+                                                <span class="badge bg-success px-3 py-2">
+                                                    Partido finalizado
+                                                </span>
+                                            }
+                                            else if (editingMatchId == match.Id)
                                             {
                                                 <button class="btn btn-sm btn-wc-green" @onclick="() => SaveResult(match.Id)">
                                                     Guardar
@@ -233,12 +262,12 @@
                                             else
                                             {
                                                 <button class="btn btn-sm btn-light border-custom"
-                                                        disabled="@(!IsEditor || match.IsFinished)"
+                                                        disabled="@(!IsEditor)"
                                                         @onclick="() => StartEdit(match)">
                                                     Cargar resultado
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-warning border-custom"
-                                                        disabled="@(!IsEditor || match.IsFinished|| !match.HasResult)"
+                                                        disabled="@(!IsEditor || !match.HasResult)"
                                                         @onclick="() => FinishMatch(match.Id)">
                                                     Terminar
                                                 </button>
@@ -256,6 +285,43 @@
 </div>
 
 <style>
+
+    .single-action-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cta-next-stage {
+        width: 100%;
+        max-width: 420px;
+        min-height: 52px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--wc-blue);
+        color: white;
+        border: 2px solid var(--wc-blue);
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 1rem;
+        text-decoration: none;
+        box-shadow: 0 6px 14px rgba(27, 39, 137, 0.22);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .cta-next-stage:hover {
+        background: #16257a;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(27, 39, 137, 0.28);
+    }
+
+    .cta-next-stage:focus {
+        color: white;
+        box-shadow: 0 0 0 0.2rem rgba(27, 39, 137, 0.25);
+    }
     .groups-page {
         width: 100%;
     }
@@ -443,6 +509,8 @@
     private int teamCount;
     private int stadiumCount;
     private bool fixtureGenerated;
+    private bool groupStageWasSimulated;
+    private bool groupStageWasFinished;
     private int? fixtureSeed;
     private int? simulationSeed;
     private DateTime startDate = new(2026, 6, 1);
@@ -473,6 +541,16 @@
         teamCount = TeamService.GetTeams().Count();
         stadiumCount = TournamentService.GetStadiumCount();
         fixtureGenerated = groups.Any();
+
+        var groupMatches = groups
+            .SelectMany(group => group.Matches)
+            .ToList();
+
+        groupStageWasFinished = groupMatches.Any() &&
+                                groupMatches.All(match => match.IsFinished);
+
+        if (groupStageWasFinished)
+            groupStageWasSimulated = false;
 
         if (selectedLabel.HasValue)
         {
@@ -513,7 +591,29 @@
         try
         {
             TournamentService.SimulateGroupStage(simulationSeed.Value);
-            successMessage = "Resultados simulados correctamente.";
+            groupStageWasSimulated = true;
+            successMessage = "Resultados simulados correctamente. Ahora podés finalizar todos los partidos.";
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private void FinishAllGroupStageMatches()
+    {
+        ClearMessages();
+
+        if (!IsEditor || !groupStageWasSimulated)
+            return;
+
+        try
+        {
+            TournamentService.FinishAllMatches();
+            groupStageWasSimulated = false;
+            groupStageWasFinished = true;
+            successMessage = "Todos los partidos simulados fueron finalizados correctamente.";
             LoadData();
         }
         catch (Exception ex)
