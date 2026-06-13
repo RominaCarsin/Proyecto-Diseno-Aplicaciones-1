@@ -20,4 +20,13 @@ public class SimulationEngineFactoryTests
         Assert.IsInstanceOfType(engine, typeof(PureRandomSimulationEngine));
         Assert.AreEqual("Aleatorio Puro", engine.Name);
     }
+    
+    [TestMethod]
+    public void Create_WithInvalidType_ShouldThrowArgumentException()
+    {
+        var invalidType = (SimulationEngineType)999;
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            SimulationEngineFactory.Create(invalidType));
+    }
 }
