@@ -10,22 +10,32 @@ public class PureRandomSimulationEngine : ISimulationEngine
         TournamentPhase phase,
         Random random)
     {
-        if (phase == TournamentPhase.GroupStage)
-        {
-            return new SimulationResult(
-                random.Next(0, 5),
-                random.Next(0, 5));
-        }
+        return phase == TournamentPhase.GroupStage
+            ? SimulateGroupStageResult(random)
+            : SimulateKnockoutResult(random);
+    }
 
+    private static SimulationResult SimulateGroupStageResult(Random random)
+    {
+        return new SimulationResult(
+            SimulateGoals(random, 0, 4),
+            SimulateGoals(random, 0, 4));
+    }
+
+    private static SimulationResult SimulateKnockoutResult(Random random)
+    {
         bool homeWins = random.Next(0, 2) == 0;
 
         if (homeWins)
             return new SimulationResult(
-                random.Next(2, 4),
-                random.Next(0, 2));
+                SimulateGoals(random, 2, 3),
+                SimulateGoals(random, 0, 1));
 
         return new SimulationResult(
-            random.Next(0, 2),
-            random.Next(2, 4));
+            SimulateGoals(random, 0, 1),
+            SimulateGoals(random, 2, 3));
     }
+
+    private static int SimulateGoals(Random random, int min, int max) =>
+        random.Next(min, max + 1);
 }

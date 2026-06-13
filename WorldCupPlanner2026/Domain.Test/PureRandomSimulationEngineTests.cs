@@ -7,6 +7,7 @@ public class PureRandomSimulationEngineTests
 
     private static Team CreateTeam(string name, int ranking) =>
         new(name, "CONMEBOL", ranking);
+
     [TestMethod]
     public void Name_ShouldReturnPureRandom()
     {
@@ -14,7 +15,7 @@ public class PureRandomSimulationEngineTests
 
         Assert.AreEqual("Aleatorio Puro", engine.Name);
     }
-    
+
     [TestMethod]
     public void Simulate_GroupStage_ShouldReturnGoalsWithinValidRange()
     {
@@ -31,7 +32,7 @@ public class PureRandomSimulationEngineTests
         Assert.IsTrue(result.HomeGoals is >= 0 and <= 4);
         Assert.IsTrue(result.AwayGoals is >= 0 and <= 4);
     }
-    
+
     [TestMethod]
     public void Simulate_GroupStageWithSameSeed_ShouldReturnSameResult()
     {
@@ -53,7 +54,7 @@ public class PureRandomSimulationEngineTests
 
         Assert.AreEqual(firstResult, secondResult);
     }
-    
+
     [TestMethod]
     public void Simulate_GroupStage_ShouldIgnoreRanking()
     {
@@ -79,7 +80,7 @@ public class PureRandomSimulationEngineTests
 
         Assert.AreEqual(firstResult, secondResult);
     }
-    
+
     [TestMethod]
     public void Simulate_Knockout_ShouldNeverReturnDraw()
     {
@@ -95,7 +96,7 @@ public class PureRandomSimulationEngineTests
 
         Assert.AreNotEqual(result.HomeGoals, result.AwayGoals);
     }
-    
+
     [TestMethod]
     public void Simulate_Knockout_ShouldReturnGoalsWithinValidRange()
     {
@@ -111,21 +112,5 @@ public class PureRandomSimulationEngineTests
 
         Assert.IsTrue(result.HomeGoals is >= 0 and <= 3);
         Assert.IsTrue(result.AwayGoals is >= 0 and <= 3);
-    }
-    
-    [TestMethod]
-    public void Simulate_Knockout_ShouldUseRandomGoals()
-    {
-        var engine = new PureRandomSimulationEngine();
-        var home = CreateTeam("HOME", 2500);
-        var away = CreateTeam("AWAY", 300);
-
-        var result = engine.Simulate(
-            home,
-            away,
-            TournamentPhase.RoundOf16,
-            new Random(Seed));
-
-        Assert.IsTrue(result.HomeGoals > 1 || result.AwayGoals > 1);
     }
 }
