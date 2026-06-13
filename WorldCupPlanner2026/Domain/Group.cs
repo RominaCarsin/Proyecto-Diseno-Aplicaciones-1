@@ -9,13 +9,11 @@ public class Group
     private const int MaxTeams = 4;
     private const int MaxUEFATeamsPerGroup = 2;
     private const int MaxOtherConfederationTeamsPerGroup = 1;
-    private const double DrawZone = 0.10;
     
     private const string TooManyTeamsFromSameConfederationErrorMessage = "El grupo no puede tener más de 2 equipos de la misma confederación.";
     private const string LabelOutOfRangeErrorMessage = "La etiqueta debe ser una letra mayúscula entre 'A' y 'L'.";
     private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
     private const string FullGroupErrorMessage = "El grupo no puede tener más de 4 equipos.";
-    private const string TeamNotFoundErrorMessage = "El equipo no existe en el grupo.";
     private const string InvalidPositionErrorMessage = "La posición es inválida.";
     private const string NullMatchErrorMessage = "El partido no puede ser nulo.";
 
