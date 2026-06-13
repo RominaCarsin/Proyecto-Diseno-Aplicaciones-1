@@ -3,10 +3,17 @@
 public class KnockoutSimulator
 {
     private readonly int _seed;
+    private readonly ISimulationEngine _simulationEngine;
 
     public KnockoutSimulator(int seed)
+        : this(seed, new ProbabilisticSimulationEngine())
+    {
+    }
+
+    public KnockoutSimulator(int seed, ISimulationEngine simulationEngine)
     {
         _seed = seed;
+        _simulationEngine = simulationEngine;
     }
 
     public void Simulate(IEnumerable<Match> matches)
@@ -18,27 +25,13 @@ public class KnockoutSimulator
             if (match.Status == MatchStatus.Finished)
                 continue;
 
-            var (homeGoals, awayGoals) = SimulateResult(
-                match.HomeTeam.RankingFifa,
-                match.AwayTeam.RankingFifa,
+            var result = _simulationEngine.Simulate(
+                match.HomeTeam,
+                match.AwayTeam,
+                match.Phase,
                 random);
 
-            match.SetResult(homeGoals, awayGoals);
+            match.SetResult(result.HomeGoals, result.AwayGoals);
         }
     }
-
-    private static (int homeGoals, int awayGoals) SimulateResult(
-        int homeRanking, int awayRanking, Random random)
-    {
-        int total = homeRanking + awayRanking;
-        double homeProbability = (double)homeRanking / total;
-
-        if (random.NextDouble() < homeProbability)
-            return (SimulateGoals(random, 2, 3), SimulateGoals(random, 0, 1));
-
-        return (SimulateGoals(random, 0, 1), SimulateGoals(random, 2, 3));
-    }
-
-    private static int SimulateGoals(Random random, int min, int max) =>
-        random.Next(min, max + 1);
 }

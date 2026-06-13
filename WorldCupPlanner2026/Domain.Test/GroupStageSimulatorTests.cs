@@ -166,4 +166,42 @@ public class GroupStageSimulatorTests
         Assert.IsTrue(matchA.HasResult);
         Assert.IsTrue(matchB.HasResult);
     }
+    
+    [TestMethod]
+    public void Simulate_WithCustomEngine_ShouldUseEngineResult()
+    {
+        var home = CreateTeam("HOME", "CONMEBOL", 1500);
+        var away = CreateTeam("AWAY", "UEFA", 1700);
+        var group = CreateGroupWithMatch(LabelA, home, away, out var match);
+
+        var engine = new FixedSimulationEngine(homeGoals: 4, awayGoals: 1);
+
+        new GroupStageSimulator(Seed, engine).Simulate(new[] { group });
+
+        Assert.AreEqual(4, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+    }
+    
+    private sealed class FixedSimulationEngine : ISimulationEngine
+    {
+        private readonly int _homeGoals;
+        private readonly int _awayGoals;
+
+        public FixedSimulationEngine(int homeGoals, int awayGoals)
+        {
+            _homeGoals = homeGoals;
+            _awayGoals = awayGoals;
+        }
+
+        public string Name => "Fixed";
+
+        public SimulationResult Simulate(
+            Team homeTeam,
+            Team awayTeam,
+            TournamentPhase phase,
+            Random random)
+        {
+            return new SimulationResult(_homeGoals, _awayGoals);
+        }
+    }
 }

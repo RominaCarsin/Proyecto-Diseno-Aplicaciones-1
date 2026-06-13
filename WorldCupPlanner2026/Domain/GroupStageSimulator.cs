@@ -2,13 +2,18 @@
 
 public class GroupStageSimulator
 {
-    private const double DrawZone = 0.10;
-
     private readonly int _seed;
+    private readonly ISimulationEngine _simulationEngine;
 
     public GroupStageSimulator(int seed)
+        : this(seed, new ProbabilisticSimulationEngine())
+    {
+    }
+
+    public GroupStageSimulator(int seed, ISimulationEngine simulationEngine)
     {
         _seed = seed;
+        _simulationEngine = simulationEngine;
     }
 
     public void Simulate(IEnumerable<Group> groups)
@@ -23,40 +28,13 @@ public class GroupStageSimulator
 
         foreach (var match in group.Matches)
         {
-            var (homeGoals, awayGoals) = SimulateResult(
-                match.HomeTeam.RankingFifa,
-                match.AwayTeam.RankingFifa,
+            var result = _simulationEngine.Simulate(
+                match.HomeTeam,
+                match.AwayTeam,
+                match.Phase,
                 random);
 
-            group.SetMatchResult(match, homeGoals, awayGoals);
+            group.SetMatchResult(match, result.HomeGoals, result.AwayGoals);
         }
     }
-
-    private static (int homeGoals, int awayGoals) SimulateResult(
-        int homeRanking,
-        int awayRanking,
-        Random random)
-    {
-        if (homeRanking == awayRanking)
-        {
-            int drawGoals = SimulateGoals(random, 0, 2);
-            return (drawGoals, drawGoals);
-        }
-
-        int total = homeRanking + awayRanking;
-        double homeProbability = (double)homeRanking / total;
-        double roll = random.NextDouble();
-
-        if (roll < homeProbability - DrawZone)
-            return (SimulateGoals(random, 2, 4), SimulateGoals(random, 0, 2));
-
-        if (roll > homeProbability + DrawZone)
-            return (SimulateGoals(random, 0, 2), SimulateGoals(random, 2, 4));
-
-        int finalDrawGoals = SimulateGoals(random, 0, 2);
-        return (finalDrawGoals, finalDrawGoals);
-    }
-
-    private static int SimulateGoals(Random random, int min, int max) =>
-        random.Next(min, max + 1);
 }

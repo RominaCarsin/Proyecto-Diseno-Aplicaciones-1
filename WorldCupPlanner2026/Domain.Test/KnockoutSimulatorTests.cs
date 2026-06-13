@@ -186,4 +186,40 @@ public class KnockoutSimulatorTests
         Assert.IsFalse(match.IsFinished);
         Assert.IsNotNull(match.Winner);
     }
+    
+    [TestMethod]
+    public void Simulate_WithCustomEngine_ShouldUseEngineResult()
+    {
+        var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
+        var engine = new FixedSimulationEngine(homeGoals: 2, awayGoals: 1);
+
+        new KnockoutSimulator(Seed, engine).Simulate(new[] { match });
+
+        Assert.AreEqual(2, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+    }
+    
+    private sealed class FixedSimulationEngine : ISimulationEngine
+    {
+        private readonly int _homeGoals;
+        private readonly int _awayGoals;
+
+        public FixedSimulationEngine(int homeGoals, int awayGoals)
+        {
+            _homeGoals = homeGoals;
+            _awayGoals = awayGoals;
+        }
+
+        public string Name => "Fixed";
+
+        public SimulationResult Simulate(
+            Team homeTeam,
+            Team awayTeam,
+            TournamentPhase phase,
+            Random random)
+        {
+            return new SimulationResult(_homeGoals, _awayGoals);
+        }
+    }
 }
