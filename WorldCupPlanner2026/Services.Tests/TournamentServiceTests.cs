@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -31,6 +31,7 @@ public class TournamentServiceTests
 
     private IAuditService _auditService = null!;
     private ISessionService _sessionService = null!;
+    private INotificationService _notificationService = null!;
 
     [TestInitialize]
     public void Setup()
@@ -44,6 +45,7 @@ public class TournamentServiceTests
 
         _auditService = new AuditService(_auditRepository);
         _sessionService = new SessionService(null!, new AuthStateService());
+        _notificationService = new FakeNotificationService();
 
         _service = new TournamentService(
             _groupRepository,
@@ -52,7 +54,8 @@ public class TournamentServiceTests
             _teamRepository,
             _potRepository,
             _auditService,
-            _sessionService);
+            _sessionService,
+            _notificationService);
     }
 
     // ─────────────────────────────────────────────
@@ -887,4 +890,16 @@ public class TournamentServiceTests
         Assert.IsTrue(group.Matches.Any(m =>
             m.HomeTeam.Name == "EXTRA_HOME" && m.AwayTeam.Name == "EXTRA_AWAY"));
     }
+}
+
+// Fake implementation of INotificationService for testing
+internal class FakeNotificationService : INotificationService
+{
+    public void NotifyMatchResult(int matchId, string homeTeam, string awayTeam, int homeGoals, int awayGoals) { }
+    public void NotifySimulationCompleted(string phase, int matchCount) { }
+    public IEnumerable<NotificationResponse> GetUnreadNotifications(int userId) => [];
+    public IEnumerable<NotificationResponse> GetAllNotifications(int userId) => [];
+    public void MarkAsRead(int notificationId) { }
+    public void MarkAllAsRead(int userId) { }
+    public int GetUnreadCount(int userId) => 0;
 }

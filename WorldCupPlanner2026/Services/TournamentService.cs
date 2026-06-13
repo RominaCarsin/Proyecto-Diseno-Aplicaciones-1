@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -34,6 +34,7 @@ public class TournamentService : ITournamentService
     private readonly IRepository<Pot> _potRepository;
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;
+    private readonly INotificationService _notificationService;
 
 
     public TournamentService(
@@ -43,7 +44,8 @@ public class TournamentService : ITournamentService
         IRepository<Team> teamRepository,
         IRepository<Pot> potRepository,
         IAuditService auditService,
-        ISessionService sessionService)
+        ISessionService sessionService,
+        INotificationService notificationService)
     {
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
@@ -52,6 +54,7 @@ public class TournamentService : ITournamentService
         _potRepository = potRepository;
         _auditService = auditService;
         _sessionService = sessionService;
+        _notificationService = notificationService;
     }
 
     public void GenerateFixture(int seed, DateTime startDate)
@@ -147,6 +150,9 @@ public class TournamentService : ITournamentService
 
         _groupRepository.Update(group);
         _matchRepository.Update(match);
+
+        _notificationService.NotifyMatchResult(
+            matchId, match.HomeTeam.Name, match.AwayTeam.Name, homeGoals, awayGoals);
     }
 
     public void FinishGroupMatch(char groupLabel, int matchId)
@@ -169,6 +175,9 @@ public class TournamentService : ITournamentService
 
         foreach (var group in groupPhase.Groups)
             _groupRepository.Update(group);
+
+        var matchCount = groups.SelectMany(g => g.Matches).Count();
+        _notificationService.NotifySimulationCompleted("Fase de grupos", matchCount);
     }
 
     public void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0)
@@ -217,6 +226,10 @@ public class TournamentService : ITournamentService
 
         var updatedMatch = allMatches.Single(match => match.MatchCode == matchCode);
         _matchRepository.Update(updatedMatch);
+
+        _notificationService.NotifyMatchResult(
+            updatedMatch.MatchId, updatedMatch.HomeTeam.Name, updatedMatch.AwayTeam.Name,
+            homeGoals, awayGoals);
     }
 
     public IEnumerable<MatchResponse> GetKnockoutMatches() =>
@@ -285,6 +298,9 @@ public class TournamentService : ITournamentService
 
         foreach (var match in knockout.Matches)
             _matchRepository.Update(match);
+
+        var knockoutMatchCount = knockout.Matches.Count;
+        _notificationService.NotifySimulationCompleted("Fase eliminatoria", knockoutMatchCount);
     }
 
     private void ValidateFixtureCanBeGenerated()
@@ -428,6 +444,9 @@ public class TournamentService : ITournamentService
         match.SetResult(homeGoals, awayGoals);
 
         _matchRepository.Update(match);
+
+        _notificationService.NotifyMatchResult(
+            matchId, match.HomeTeam.Name, match.AwayTeam.Name, homeGoals, awayGoals);
 
         LogAction(
             "Match result set",
