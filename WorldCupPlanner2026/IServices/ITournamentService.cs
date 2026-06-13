@@ -26,6 +26,8 @@ public interface ITournamentService
     void UpdateMatchDate(int matchId, DateTime newDate);
     void UpdateMatchStadium(int matchId, StadiumRequest newStadium);
     void FinishMatch(int matchId);
+    void FinishKnockoutMatch(string matchCode);
+    void FinishAllKnockoutMatches();
 
     IEnumerable<StadiumRequest> GetAvailableStadiumsForMatch(
         int matchId,

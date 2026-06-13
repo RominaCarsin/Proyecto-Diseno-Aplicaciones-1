@@ -729,6 +729,19 @@ public class KnockoutTests
         Assert.AreEqual(MatchStatus.Finished, match.Status);
         Assert.IsTrue(match.IsFinished);
     }
+    
+    [TestMethod]
+    public void GivenRoundOf32WithResultsButNotFinished_WhenInitializeRoundOf16_ThenThrowsInvalidOperationException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        foreach (var match in knockout.Matches.Where(m => m.Phase == TournamentPhase.RoundOf32))
+            knockout.SetMatchResult(match.MatchCode!, 1, 0);
+
+        Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf16());
+    }
 
     private sealed class TeamRequest
     {

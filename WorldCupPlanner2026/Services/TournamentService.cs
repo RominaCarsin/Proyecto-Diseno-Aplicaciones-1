@@ -227,6 +227,44 @@ public class TournamentService : ITournamentService
         var updatedMatch = allMatches.Single(match => match.MatchCode == matchCode);
         _matchRepository.Update(updatedMatch);
     }
+    
+    public void FinishKnockoutMatch(string matchCode)
+    {
+        var match = FindKnockoutMatchByCodeOrThrow(matchCode);
+
+        FinishAndRecalculate(match);
+
+        _matchRepository.Update(match);
+
+        LogAction(
+            "Knockout match finished",
+            $"Knockout match {matchCode} has been marked as finished");
+    }
+    
+    public void FinishAllKnockoutMatches()
+    {
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .ToList();
+
+        if (!knockoutMatches.Any())
+            throw new InvalidOperationException(KnockoutNotInitializedErrorMessage);
+
+        var matchesToFinish = knockoutMatches
+            .Where(match => match.HasResult)
+            .Where(match => match.Status != MatchStatus.Finished)
+            .ToList();
+
+        foreach (var match in matchesToFinish)
+        {
+            FinishAndRecalculate(match);
+            _matchRepository.Update(match);
+        }
+
+        LogAction(
+            "All knockout matches finished",
+            $"{matchesToFinish.Count} knockout matches were finished and rankings recalculated");
+    }
 
     public IEnumerable<MatchResponse> GetKnockoutMatches() =>
         _matchRepository.GetAll()
@@ -632,5 +670,10 @@ public class TournamentService : ITournamentService
         _auditService.Log(actorEmail, action, details);
     }
     
-    
+    private Match FindKnockoutMatchByCodeOrThrow(string matchCode) =>
+        _matchRepository.GetAll()
+            .FirstOrDefault(match =>
+                match.Phase != TournamentPhase.GroupStage &&
+                match.MatchCode == matchCode)
+        ?? throw new ArgumentException(MatchNotFoundErrorMessage);
 }

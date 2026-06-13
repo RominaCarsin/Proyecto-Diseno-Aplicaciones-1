@@ -24,7 +24,6 @@ public class KnockoutSimulator
                 random);
 
             match.SetResult(homeGoals, awayGoals);
-            match.Finish();
         }
     }
 

@@ -33,13 +33,14 @@ public class KnockoutSimulatorTests
     }
 
     [TestMethod]
-    public void Simulate_OnUnfinishedMatch_ShouldFinishIt()
+    public void Simulate_OnUnfinishedMatch_ShouldKeepMatchEditable()
     {
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
 
         new KnockoutSimulator(Seed).Simulate(new[] { match });
 
-        Assert.AreEqual(MatchStatus.Finished, match.Status);
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+        Assert.IsFalse(match.IsFinished);
     }
 
     [TestMethod]
@@ -90,7 +91,7 @@ public class KnockoutSimulatorTests
     }
 
     [TestMethod]
-    public void Simulate_WithMixOfFinishedAndUnfinishedMatches_ShouldOnlySimulateUnfinished()
+    public void Simulate_WithMixOfFinishedAndUnfinishedMatches_ShouldOnlySimulateUnfinishedAndKeepItEditable()
     {
         var finishedMatch = CreateMatch(CreateTeam("HOME1", 1500), CreateTeam("AWAY1", 1700), "C1");
         finishedMatch.SetResult(3, 0);
@@ -102,20 +103,30 @@ public class KnockoutSimulatorTests
 
         Assert.AreEqual(3, finishedMatch.HomeGoals);
         Assert.AreEqual(0, finishedMatch.AwayGoals);
+        Assert.AreEqual(MatchStatus.Finished, finishedMatch.Status);
+
         Assert.IsNotNull(pendingMatch.HomeGoals);
-        Assert.AreEqual(MatchStatus.Finished, pendingMatch.Status);
+        Assert.IsNotNull(pendingMatch.AwayGoals);
+        Assert.AreEqual(MatchStatus.NotFinished, pendingMatch.Status);
+        Assert.IsFalse(pendingMatch.IsFinished);
     }
 
     [TestMethod]
-    public void Simulate_WithMultipleUnfinishedMatches_ShouldSetResultForAll()
+    public void Simulate_WithMultipleUnfinishedMatches_ShouldSetResultForAllAndKeepThemEditable()
     {
         var match1 = CreateMatch(CreateTeam("HOME1", 1500), CreateTeam("AWAY1", 1700), "C1");
         var match2 = CreateMatch(CreateTeam("HOME2", 1800), CreateTeam("AWAY2", 1400), "C2");
 
         new KnockoutSimulator(Seed).Simulate(new[] { match1, match2 });
 
-        Assert.AreEqual(MatchStatus.Finished, match1.Status);
-        Assert.AreEqual(MatchStatus.Finished, match2.Status);
+        Assert.IsTrue(match1.HasResult);
+        Assert.IsTrue(match2.HasResult);
+
+        Assert.AreEqual(MatchStatus.NotFinished, match1.Status);
+        Assert.AreEqual(MatchStatus.NotFinished, match2.Status);
+
+        Assert.IsFalse(match1.IsFinished);
+        Assert.IsFalse(match2.IsFinished);
     }
 
     [TestMethod]
@@ -160,5 +171,19 @@ public class KnockoutSimulatorTests
 
         Assert.IsTrue(match.HomeGoals is >= 0 and <= 3);
         Assert.IsTrue(match.AwayGoals is >= 0 and <= 3);
+    }
+    
+    [TestMethod]
+    public void Simulate_WhenMatchHasResultButIsNotFinished_ShouldAllowResultUpdate()
+    {
+        var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
+        match.SetResult(3, 0);
+
+        new KnockoutSimulator(Seed).Simulate(new[] { match });
+
+        Assert.IsTrue(match.HasResult);
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+        Assert.IsFalse(match.IsFinished);
+        Assert.IsNotNull(match.Winner);
     }
 }
