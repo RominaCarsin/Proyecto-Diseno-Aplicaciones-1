@@ -11,4 +11,13 @@ public class SimulationEngineFactoryTests
         Assert.IsInstanceOfType(engine, typeof(ProbabilisticSimulationEngine));
         Assert.AreEqual("Probabilístico", engine.Name);
     }
+    
+    [TestMethod]
+    public void Create_WithPureRandomType_ShouldReturnPureRandomEngine()
+    {
+        var engine = SimulationEngineFactory.Create(SimulationEngineType.PureRandom);
+
+        Assert.IsInstanceOfType(engine, typeof(PureRandomSimulationEngine));
+        Assert.AreEqual("Aleatorio Puro", engine.Name);
+    }
 }
