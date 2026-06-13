@@ -75,55 +75,61 @@
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="bg-light border-bottom-2">
-                        <tr>
-                            <th class="px-6 py-3 text-left">Nombre</th>
-                            <th class="px-6 py-3 text-left">Ciudad</th>
-                            <th class="px-6 py-3 text-left">Descripción</th>
-                            <th class="px-6 py-3 text-left">Capacidad</th>
-                            <th class="px-6 py-3 text-center">Acciones</th>
-                        </tr>
+                    <tr>
+                        <th class="px-6 py-3 text-left">Nombre</th>
+                        <th class="px-6 py-3 text-left">Ciudad</th>
+                        <th class="px-6 py-3 text-left">Descripción</th>
+                        <th class="px-6 py-3 text-left">Capacidad</th>
+                        <th class="px-6 py-3 text-center">Acciones</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        @if (!stadiums.Any())
+                    @if (!stadiums.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-muted">
+                                No hay estadios registrados.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var stadium in stadiums)
                         {
-                            <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-muted">
-                                    No hay estadios registrados.
+                            <tr class="hover-bg-custom">
+                                <td class="px-6 py-3 align-middle fw-medium">@stadium.Name</td>
+                                <td class="px-6 py-3 align-middle">@stadium.City</td>
+                                <td class="px-6 py-3 align-middle">@stadium.Description</td>
+                                <td class="px-6 py-3 align-middle font-monospace">@stadium.Capacity.ToString("N0")</td>
+                                <td class="px-6 py-3 align-middle">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <button @onclick="() => EditStadium(stadium)"
+                                                title="Editar estadio"
+                                                class="btn btn-sm btn-light border-custom d-flex align-items-center gap-1">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span class="d-none d-lg-inline">Editar</span>
+                                        </button>
+                                        <button @onclick="() => DeleteStadium(stadium.Name)"
+                                                title="Eliminar estadio"
+                                                class="btn btn-sm btn-outline-danger border-custom d-flex align-items-center gap-1">
+                                            <i class="bi bi-trash3"></i>
+                                            <span class="d-none d-lg-inline">Eliminar</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
-                        else
-                        {
-                            @foreach (var stadium in stadiums)
-                            {
-                                <tr class="hover-bg-custom">
-                                    <td class="px-6 py-3 align-middle fw-medium">@stadium.Name</td>
-                                    <td class="px-6 py-3 align-middle">@stadium.City</td>
-                                    <td class="px-6 py-3 align-middle">@stadium.Description</td>
-                                    <td class="px-6 py-3 align-middle font-monospace">@stadium.Capacity.ToString("N0")</td>
-                                    <td class="px-6 py-3 align-middle">
-                                        <div class="d-flex justify-content-center gap-2">
-                                            <button @onclick="() => EditStadium(stadium)"
-                                                    title="Editar estadio"
-                                                    class="btn btn-sm btn-light border-custom d-flex align-items-center gap-1">
-                                                <i class="bi bi-pencil-square"></i>
-                                                <span class="d-none d-lg-inline">Editar</span>
-                                            </button>
-                                            <button @onclick="() => DeleteStadium(stadium.Name)"
-                                                    title="Eliminar estadio"
-                                                    class="btn btn-sm btn-outline-danger border-custom d-flex align-items-center gap-1">
-                                                <i class="bi bi-trash3"></i>
-                                                <span class="d-none d-lg-inline">Eliminar</span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
+                    }
                     </tbody>
                 </table>
             </div>
         </div>
+        
+        //SOLO PARA TESTEAR RAPIDO, BORRARLO QUE ESTO VA EN EL SQL
+        <button @onclick="LoadTestStadiums"
+                class="btn btn-outline-secondary px-4">
+            Cargar estadios de prueba
+        </button>
     }
 </div>
 
@@ -219,4 +225,24 @@
         errorMessage = "";
         successMessage = "";
     }
+    
+    //ACCION DEL BOTON SOLO PARA PROBAR; BORRAR
+    private void LoadTestStadiums()
+    {
+        try
+        {
+            StadiumService.AddStadium(new StadiumRequest { Name = "Centenario", City = "Montevideo", Description = "Estadio histórico", Capacity = 60000 });
+            StadiumService.AddStadium(new StadiumRequest { Name = "Campeón del Siglo", City = "Montevideo", Description = "Estadio de Peñarol", Capacity = 40000 });
+            StadiumService.AddStadium(new StadiumRequest { Name = "Gallinero Central", City = "Montevideo", Description = "Estadio de Naciomal", Capacity = 38000 });
+            StadiumService.AddStadium(new StadiumRequest { Name = "Luis Franzini", City = "Montevideo", Description = "Estadio de los TussiWarriors", Capacity = 20000 });
+
+            RefreshUI();
+            successMessage = "Estadios de prueba cargados.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+    //SOLO PARA PROBAR; BORRAR
 }
