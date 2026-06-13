@@ -219,8 +219,7 @@ public class TeamService : ITeamService
     }
 
     private Team? FindByName(string name) =>
-        _repository.GetAll().FirstOrDefault(team => team.Name == Team.Normalize(name));
-
+        _repository.GetAll().FirstOrDefault(team => team.Name == TextNormalizer.Normalize(name));
     private Team FindTeamByNameOrThrow(string name) =>
         FindByName(name) ?? throw new ArgumentException(TeamNotFoundErrorMessage);
 
@@ -233,7 +232,7 @@ public class TeamService : ITeamService
     private void EnsureTeamNameIsNotTakenByAnotherTeam(string currentName, string newName)
     {
         var teamWithNewName = FindByName(newName);
-        if (teamWithNewName is not null && teamWithNewName.Name != Team.Normalize(currentName))
+        if (teamWithNewName is not null && teamWithNewName.Name != TextNormalizer.Normalize(currentName))
             throw new ArgumentException(TeamNameAlreadyExistsErrorMessage);
     }
 

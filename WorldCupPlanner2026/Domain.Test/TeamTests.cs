@@ -228,14 +228,6 @@ public class TeamTests
     }
     
     [TestMethod]
-    public void Normalize_WithLowercaseAndSpaces_ShouldReturnNormalizedString()
-    {
-        var result = Team.Normalize("  uruguay  ");
-
-        Assert.AreEqual("URUGUAY", result);
-    }
-    
-    [TestMethod]
     public void CreateTeam_WithoutFlag_ShouldHaveEmptyFlag()
     {
         var team = new Team(ValidName, ValidConfederation, ValidRanking);
@@ -350,14 +342,6 @@ public class TeamTests
         var team = new Team(ValidName, ValidConfederation, ValidRanking, "group b");
 
         Assert.AreEqual("GROUP B", team.GroupLabel);
-    }
-
-    [TestMethod]
-    public void Normalize_WithNull_ShouldReturnEmpty()
-    {
-        var result = Team.Normalize(null!);
-
-        Assert.AreEqual(string.Empty, result);
     }
 
     [TestMethod]

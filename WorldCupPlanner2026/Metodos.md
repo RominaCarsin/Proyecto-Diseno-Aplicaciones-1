@@ -77,8 +77,11 @@ Clase: Team
 - RevertWin(int goalsScored, int goalsConceded)
 - RevertDraw(int goalsScored)
 - RevertLoss(int goalsScored, int goalsConceded)
-- Normalize(string value)
 - UpdateFlag(string flagBase64)
+
+Clase: TextNormalizer
+
+- Normalize(string value)
 
 Clase: User
 

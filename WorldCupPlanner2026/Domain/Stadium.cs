@@ -57,13 +57,9 @@ public class Stadium
     private static string NormalizeAndValidateCity(string city) =>
         NormalizeAndValidateTextField(city, MaxCityLength, CityEmptyErrorMessage, CityTooLongErrorMessage);
 
-    private static string NormalizeAndValidateTextField(
-        string value,
-        int maxLength,
-        string emptyErrorMessage,
-        string tooLongErrorMessage)
+    private static string NormalizeAndValidateTextField(string value, int maxLength, string emptyErrorMessage, string tooLongErrorMessage)
     {
-        var normalized = Normalize(value);
+        var normalized = TextNormalizer.Normalize(value);
 
         if (string.IsNullOrWhiteSpace(normalized))
             throw new ArgumentException(emptyErrorMessage);
@@ -92,7 +88,4 @@ public class Stadium
 
         return capacity;
     }
-    
-    private static string Normalize(string value) =>
-        value?.Trim().ToUpper() ?? string.Empty;
 }

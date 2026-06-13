@@ -46,7 +46,7 @@ public class Team
 
     public void UpdateName(string name)
     {
-        var normalized = Normalize(name);
+        var normalized = TextNormalizer. Normalize(name);
 
         if (string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength)
             throw new ArgumentException(NameInvalidErrorMessage);
@@ -56,7 +56,7 @@ public class Team
 
     public void UpdateConfederationName(string confederationName)
     {
-        var normalized = Normalize(confederationName);
+        var normalized = TextNormalizer.Normalize(confederationName);
 
         if (string.IsNullOrWhiteSpace(normalized))
             throw new ArgumentException(ConfederationRequiredErrorMessage);
@@ -77,7 +77,7 @@ public class Team
     
     public void UpdateGroupLabel(string groupLabel)
     {
-        GroupLabel = Normalize(groupLabel);
+        GroupLabel = TextNormalizer.Normalize(groupLabel);
     }
 
     public void RecordWin(int goalsScored, int goalsConceded) =>
@@ -97,9 +97,6 @@ public class Team
 
     public void RevertLoss(int goalsScored, int goalsConceded) =>
         RevertStatsChange(0, goalsScored, goalsConceded);
-
-    public static string Normalize(string value) =>
-        value?.Trim().ToUpper() ?? string.Empty;
 
     public void UpdateFlag(string flagBase64)
     {
