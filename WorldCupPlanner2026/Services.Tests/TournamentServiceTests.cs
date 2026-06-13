@@ -623,6 +623,45 @@ public class TournamentServiceTests
         Assert.AreEqual(MatchStatus.Finished, knockoutMatch.Status);
         Assert.AreNotEqual(homeRankingBefore, knockoutMatch.HomeTeam.RankingFifa);
     }
+    
+    [TestMethod]
+    public void FinishAllKnockoutMatches_WithResults_ShouldFinishAllKnockoutMatchesAndRecalculateRanking()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
+
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .ToList();
+
+        foreach (var match in knockoutMatches)
+            _service.SetKnockoutMatchResult(match.MatchCode!, 1, 0);
+
+        var sampleMatch = knockoutMatches.First();
+        var homeRankingBefore = sampleMatch.HomeTeam.RankingFifa;
+
+        _service.FinishAllKnockoutMatches();
+
+        Assert.IsTrue(knockoutMatches.All(match => match.Status == MatchStatus.Finished));
+        Assert.AreNotEqual(homeRankingBefore, sampleMatch.HomeTeam.RankingFifa);
+    }
+    
+    [TestMethod]
+    public void FinishAllKnockoutMatches_WithMatchesWithoutResult_ShouldNotFinishThem()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
+
+        _service.FinishAllKnockoutMatches();
+
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .ToList();
+
+        Assert.IsTrue(knockoutMatches.All(match => match.Status == MatchStatus.NotFinished));
+        Assert.IsTrue(knockoutMatches.All(match => !match.HasResult));
+    }
+    
     [TestMethod]
     public void SetKnockoutMatchResult_WithInitializedKnockout_ShouldApplyResult()
     {
@@ -650,7 +689,7 @@ public class TournamentServiceTests
     }
 
     [TestMethod]
-    public void SimulateKnockoutStage_WithInitializedKnockout_ShouldFinishAllKnockoutMatches()
+    public void SimulateKnockoutStage_WithInitializedKnockout_ShouldSetResultsWithoutFinishingMatches()
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
@@ -661,8 +700,9 @@ public class TournamentServiceTests
             .Where(match => match.Phase != TournamentPhase.GroupStage)
             .ToList();
 
-        Assert.IsTrue(knockoutMatches.All(match => match.Status == MatchStatus.Finished));
+        Assert.IsTrue(knockoutMatches.All(match => match.HasResult));
         Assert.IsTrue(knockoutMatches.All(match => match.Winner != null));
+        Assert.IsTrue(knockoutMatches.All(match => match.Status == MatchStatus.NotFinished));
     }
 
     [TestMethod]
@@ -670,7 +710,7 @@ public class TournamentServiceTests
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
-        _service.SimulateKnockoutStage(DefaultSeed); // finaliza RoundOf32
+        SimulateAndFinishKnockoutStage();
 
         _service.InitializeRoundOf16();
 
@@ -686,11 +726,11 @@ public class TournamentServiceTests
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
-        _service.SimulateKnockoutStage(DefaultSeed); // R32
 
+        SimulateAndFinishKnockoutStage();
         _service.InitializeRoundOf16();
-        _service.SimulateKnockoutStage(DefaultSeed); // R16
 
+        SimulateAndFinishKnockoutStage();
         _service.InitializeQuarterFinals();
 
         var quarterFinals = _matchRepository.GetAll()
@@ -705,12 +745,14 @@ public class TournamentServiceTests
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
-        _service.SimulateKnockoutStage(DefaultSeed); // R32
-        _service.InitializeRoundOf16();
-        _service.SimulateKnockoutStage(DefaultSeed); // R16
-        _service.InitializeQuarterFinals();
-        _service.SimulateKnockoutStage(DefaultSeed); // QF
 
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeRoundOf16();
+
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeQuarterFinals();
+
+        SimulateAndFinishKnockoutStage();
         _service.InitializeSemiFinals();
 
         var semiFinals = _matchRepository.GetAll()
@@ -725,14 +767,17 @@ public class TournamentServiceTests
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
-        _service.SimulateKnockoutStage(DefaultSeed); // R32
-        _service.InitializeRoundOf16();
-        _service.SimulateKnockoutStage(DefaultSeed); // R16
-        _service.InitializeQuarterFinals();
-        _service.SimulateKnockoutStage(DefaultSeed); // QF
-        _service.InitializeSemiFinals();
-        _service.SimulateKnockoutStage(DefaultSeed); // SF
 
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeRoundOf16();
+
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeQuarterFinals();
+
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeSemiFinals();
+
+        SimulateAndFinishKnockoutStage();
         _service.InitializeThirdPlace();
 
         var thirdPlace = _matchRepository.GetAll()
@@ -747,14 +792,17 @@ public class TournamentServiceTests
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
-        _service.SimulateKnockoutStage(DefaultSeed); // R32
-        _service.InitializeRoundOf16();
-        _service.SimulateKnockoutStage(DefaultSeed); // R16
-        _service.InitializeQuarterFinals();
-        _service.SimulateKnockoutStage(DefaultSeed); // QF
-        _service.InitializeSemiFinals();
-        _service.SimulateKnockoutStage(DefaultSeed); // SF
 
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeRoundOf16();
+
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeQuarterFinals();
+
+        SimulateAndFinishKnockoutStage();
+        _service.InitializeSemiFinals();
+
+        SimulateAndFinishKnockoutStage();
         _service.InitializeFinal();
 
         var final = _matchRepository.GetAll()
@@ -762,7 +810,7 @@ public class TournamentServiceTests
             .ToList();
 
         Assert.AreEqual(1, final.Count);
-    }
+    }  
 
     // ─────────────────────────────────────────────
     // Helpers
@@ -997,19 +1045,26 @@ public class TournamentServiceTests
         Assert.AreNotEqual(homeBefore, sampleMatch.HomeTeam.RankingFifa);
     }
     
+    
     [TestMethod]
-    public void SimulateKnockoutStage_ShouldRecalculateRankingForFinishedMatches()
+    public void SimulateKnockoutStage_ShouldNotRecalculateRankingBeforeMatchesAreFinished()
     {
         CreateFixtureAndSimulateGroupStage();
         _service.InitializeKnockoutStage(DefaultSeed);
 
         var knockoutMatch = _matchRepository.GetAll()
-            .First(m => m.Phase != TournamentPhase.GroupStage);
-        var homeBefore = knockoutMatch.HomeTeam.RankingFifa;
+            .First(match => match.Phase != TournamentPhase.GroupStage);
+
+        var homeRankingBefore = knockoutMatch.HomeTeam.RankingFifa;
 
         _service.SimulateKnockoutStage(DefaultSeed);
 
-        Assert.AreNotEqual(homeBefore, knockoutMatch.HomeTeam.RankingFifa);
+        Assert.AreEqual(homeRankingBefore, knockoutMatch.HomeTeam.RankingFifa);
     }
     
+    private void SimulateAndFinishKnockoutStage()
+    {
+        _service.SimulateKnockoutStage(DefaultSeed);
+        _service.FinishAllKnockoutMatches();
+    }
 }

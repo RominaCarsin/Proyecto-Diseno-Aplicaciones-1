@@ -319,9 +319,7 @@ public class TournamentService : ITournamentService
 
     public void SimulateKnockoutStage(int seed)
     {
-        var allMatches = _matchRepository.GetAll().ToList();
-
-        var knockoutMatches = allMatches
+        var knockoutMatches = _matchRepository.GetAll()
             .Where(match => match.Phase != TournamentPhase.GroupStage)
             .ToList();
 
@@ -331,10 +329,12 @@ public class TournamentService : ITournamentService
         var simulator = new KnockoutSimulator(seed);
         simulator.Simulate(knockoutMatches);
 
-        RecalculateFinishedKnockoutRankings(allMatches);
-
         foreach (var match in knockoutMatches)
             _matchRepository.Update(match);
+
+        LogAction(
+            "Knockout simulation executed",
+            $"Knockout simulation executed with seed {seed}");
     }
 
     
