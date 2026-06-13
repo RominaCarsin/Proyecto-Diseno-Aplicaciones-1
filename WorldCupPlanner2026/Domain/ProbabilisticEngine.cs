@@ -9,6 +9,11 @@ public sealed class ProbabilisticEngine : ISimulationEngine
     public (int homeGoals, int awayGoals) SimulateResult(
         int homeRanking, int awayRanking, bool allowDraw, Random random)
     {
+        if (allowDraw && homeRanking == awayRanking)
+        {
+            int forced = random.Next(0, 3);
+            return (forced, forced);
+        }
         double chance = (double)homeRanking / (homeRanking + awayRanking);
         double roll = random.NextDouble();
 
