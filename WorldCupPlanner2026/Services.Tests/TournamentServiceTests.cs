@@ -602,7 +602,27 @@ public class TournamentServiceTests
         Assert.IsNotNull(matches.First().AwayTeam);
         Assert.IsFalse(string.IsNullOrWhiteSpace(matches.First().MatchCode));
     }
+    
+    [TestMethod]
+    public void FinishKnockoutMatch_WithResult_ShouldFinishMatchAndRecalculateRanking()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
 
+        var knockoutMatch = _matchRepository.GetAll()
+            .First(match => match.Phase != TournamentPhase.GroupStage);
+
+        var matchCode = knockoutMatch.MatchCode!;
+
+        _service.SetKnockoutMatchResult(matchCode, 2, 0);
+
+        var homeRankingBefore = knockoutMatch.HomeTeam.RankingFifa;
+
+        _service.FinishKnockoutMatch(matchCode);
+
+        Assert.AreEqual(MatchStatus.Finished, knockoutMatch.Status);
+        Assert.AreNotEqual(homeRankingBefore, knockoutMatch.HomeTeam.RankingFifa);
+    }
     [TestMethod]
     public void SetKnockoutMatchResult_WithInitializedKnockout_ShouldApplyResult()
     {
