@@ -348,6 +348,15 @@ public class Knockout
             throw new ArgumentException(KnockoutDrawErrorMessage);
 
         match.SetResult(homeGoals, awayGoals);
+    }
+    
+    public void FinishMatch(string matchCode)
+    {
+        var match = _matches.SingleOrDefault(m => m.MatchCode == matchCode);
+
+        if (match is null)
+            throw new ArgumentException(string.Format(MatchNotFoundErrorMessage, matchCode));
+
         match.Finish();
     }
     
