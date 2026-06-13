@@ -21,6 +21,7 @@ public static class UserMapper
     {
         return new UserResponse
         {
+            Id = user.UserId,
             Name = user.Name,
             Surname = user.Surname,
             Email = user.Email,
