@@ -1101,5 +1101,135 @@ public class TournamentServiceTests
         Assert.AreEqual(expectedResult.AwayGoals, match.AwayGoals);
     }
     
+    [TestMethod]
+    public void SimulateKnockoutStage_WithPureRandomEngine_ShouldUseSelectedEngine()
+    {
+        var home = new Team("HOME", "CONMEBOL", 2500, "A");
+        var away = new Team("AWAY", "UEFA", 300, "B");
+
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home,
+            away,
+            group: null,
+            phase: TournamentPhase.RoundOf16,
+            matchCode: "C1");
+
+        _matchRepository.Add(match);
+
+        var expectedResult = new PureRandomSimulationEngine().Simulate(
+            home,
+            away,
+            TournamentPhase.RoundOf16,
+            new Random(DefaultSeed));
+
+        _service.SimulateKnockoutStage(DefaultSeed, SimulationEngineTypeDto.PureRandom);
+
+        Assert.AreEqual(expectedResult.HomeGoals, match.HomeGoals);
+        Assert.AreEqual(expectedResult.AwayGoals, match.AwayGoals);
+        Assert.AreEqual(MatchStatus.NotFinished, match.Status);
+    }
     
+    [TestMethod]
+    public void SimulateGroupStage_WithInvalidSimulationEngineType_ShouldThrowArgumentException()
+    {
+        var group = new Group('A');
+        var home = new Team("HOME", "CONMEBOL", 1500);
+        var away = new Team("AWAY", "UEFA", 1700);
+
+        group.AddTeam(home);
+        group.AddTeam(away);
+
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home,
+            away,
+            group: group.Label,
+            phase: TournamentPhase.GroupStage);
+
+        group.AddMatch(match);
+        _groupRepository.Add(group);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.SimulateGroupStage(DefaultSeed, (SimulationEngineTypeDto)999));
+    }
+    
+    [TestMethod]
+    public void SimulateKnockoutStage_WithInvalidSimulationEngineType_ShouldThrowArgumentException()
+    {
+        var home = new Team("HOME", "CONMEBOL", 1500, "A");
+        var away = new Team("AWAY", "UEFA", 1700, "B");
+
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home,
+            away,
+            group: null,
+            phase: TournamentPhase.RoundOf16,
+            matchCode: "C1");
+
+        _matchRepository.Add(match);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.SimulateKnockoutStage(DefaultSeed, (SimulationEngineTypeDto)999));
+    }
+    
+    [TestMethod]
+    public void SimulateGroupStage_WithSelectedEngine_ShouldLogSeedAndEngineName()
+    {
+        var group = new Group('A');
+        var home = new Team("HOME", "CONMEBOL", 1500);
+        var away = new Team("AWAY", "UEFA", 1700);
+
+        group.AddTeam(home);
+        group.AddTeam(away);
+
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home,
+            away,
+            group: group.Label,
+            phase: TournamentPhase.GroupStage);
+
+        group.AddMatch(match);
+        _groupRepository.Add(group);
+
+        _service.SimulateGroupStage(DefaultSeed, SimulationEngineTypeDto.PureRandom);
+
+        var auditLog = _auditRepository.GetAll().Last();
+
+        Assert.AreEqual("Group stage simulation executed", auditLog.Action);
+        StringAssert.Contains(auditLog.Details, DefaultSeed.ToString());
+        StringAssert.Contains(auditLog.Details, "Aleatorio Puro");
+    }
+    
+    [TestMethod]
+    public void SimulateKnockoutStage_WithSelectedEngine_ShouldLogSeedAndEngineName()
+    {
+        var home = new Team("HOME", "CONMEBOL", 2500, "A");
+        var away = new Team("AWAY", "UEFA", 300, "B");
+
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home,
+            away,
+            group: null,
+            phase: TournamentPhase.RoundOf16,
+            matchCode: "C1");
+
+        _matchRepository.Add(match);
+
+        _service.SimulateKnockoutStage(DefaultSeed, SimulationEngineTypeDto.PureRandom);
+
+        var auditLog = _auditRepository.GetAll().Last();
+
+        Assert.AreEqual("Knockout simulation executed", auditLog.Action);
+        StringAssert.Contains(auditLog.Details, DefaultSeed.ToString());
+        StringAssert.Contains(auditLog.Details, "Aleatorio Puro");
+    }
 }
