@@ -14,7 +14,15 @@
                 <p class="text-muted mb-0">
                     Equipos: @teamCount / 48 - Estadios: @stadiumCount / 4 minimo
                 </p>
+
+                @if (showLastSimulationEngine)
+                {
+                <p class="text-muted mb-0 mt-1">
+                    Motor usado: <strong>@lastSimulationEngineName</strong>
+                </p>
+                }
             </div>
+
             <span class="badge @(fixtureGenerated ? "bg-success" : "bg-secondary") px-3 py-2">
                 @(fixtureGenerated ? "GroupPhase generado" : "GroupPhase pendiente")
             </span>
@@ -24,268 +32,293 @@
 
         @if (!fixtureGenerated)
         {
-            <div class="row g-3 align-items-end mt-2">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">SemillaGroupPhase</label>
-                    <input type="number" @bind="fixtureSeed" class="form-control border-custom-input" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold">Fecha de inicio</label>
-                    <input type="date" @bind="startDate" class="form-control border-custom-input" />
-                </div>
-                <div class="col-md-4">
-                    <button class="btn btn-wc-blue w-100"
-                            disabled="@(!CanGenerateFixture)"
-                            @onclick="GenerateFixture">
-                        Generar fixture
-                    </button>
-                </div>
+        <div class="row g-3 align-items-end mt-2">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">SemillaGroupPhase</label>
+                <input type="number" @bind="fixtureSeed" class="form-control border-custom-input" />
             </div>
 
-            @if (!IsEditor)
-            {
-                <div class="text-muted mt-3">Solo un Editor puede generar el fixture.</div>
-            }
-            else if (!CanGenerateFixture)
-            {
-                <div class="text-muted mt-3">
-                    Se requieren 48 equipos, al menos 4 estadios y una semilla.
-                </div>
-            }
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Fecha de inicio</label>
+                <input type="date" @bind="startDate" class="form-control border-custom-input" />
+            </div>
+
+            <div class="col-md-4">
+                <button class="btn btn-wc-blue w-100"
+                        disabled="@(!CanGenerateFixture)"
+                        @onclick="GenerateFixture">
+                    Generar fixture
+                </button>
+            </div>
+        </div>
+
+        @if (!IsEditor)
+        {
+        <div class="text-muted mt-3">Solo un Editor puede generar el fixture.</div>
+        }
+        else if (!CanGenerateFixture)
+        {
+        <div class="text-muted mt-3">
+            Se requieren 48 equipos, al menos 4 estadios y una semilla.
+        </div>
+        }
         }
         else
         {
-            @if (groupStageWasFinished)
-            {
-                <div class="single-action-wrapper mt-3">
-                    <a class="btn cta-next-stage" href="/knockout">
-                        <i class="bi bi-arrow-right-circle-fill me-2"></i>
-                        Ver segunda fase
-                    </a>
-                </div>
-            }
-            else
-            {
-                <div class="row g-3 align-items-end mt-2">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">SemillaSimulation</label>
-                        <input type="number" @bind="simulationSeed" class="form-control border-custom-input" />
-                    </div>
+        @if (groupStageWasFinished)
+        {
+        <div class="single-action-wrapper mt-3">
+            <a class="btn cta-next-stage" href="/knockout">
+                <i class="bi bi-arrow-right-circle-fill me-2"></i>
+                Ver segunda fase
+            </a>
+        </div>
+        }
+        else
+        {
+        <div class="row g-3 align-items-end mt-2">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">SemillaSimulation</label>
+                <input type="number" @bind="simulationSeed" class="form-control border-custom-input" />
+            </div>
 
-                    <div class="col-md-4">
-                        @if (!groupStageWasSimulated)
-                        {
-                            <button class="btn btn-wc-green w-100"
-                                    disabled="@(!IsEditor || !simulationSeed.HasValue)"
-                                    @onclick="SimulateGroupStage">
-                                Simular fase de grupos
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-wc-red w-100"
-                                    disabled="@(!IsEditor)"
-                                    @onclick="FinishAllGroupStageMatches">
-                                <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
-                            </button>
-                        }
-                    </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Motor de simulación</label>
 
-                    <div class="col-md-4">
-                        <a class="btn btn-outline-dark border-custom w-100" href="/knockout">
-                            Ver segunda fase
-                        </a>
-                    </div>
+                @if (!groupStageWasSimulated)
+                {
+                <select class="form-select border-custom-input"
+                        @bind="selectedSimulationEngine">
+                    <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
+                    <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
+                </select>
+                }
+                else
+                {
+                <div class="simulation-engine-display">
+                    @lastSimulationEngineName
                 </div>
-            }
+                }
+            </div>
+
+            <div class="col-md-3">
+                @if (!groupStageWasSimulated)
+                {
+                <button class="btn btn-wc-green w-100"
+                        disabled="@(!IsEditor || !simulationSeed.HasValue)"
+                        @onclick="SimulateGroupStage">
+                    Simular fase de grupos
+                </button>
+                }
+                else
+                {
+                <button class="btn btn-wc-red w-100"
+                        disabled="@(!IsEditor)"
+                        @onclick="FinishAllGroupStageMatches">
+                    <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
+                </button>
+                }
+            </div>
+
+            <div class="col-md-3">
+                <a class="btn btn-outline-dark border-custom w-100" href="/knockout">
+                    Ver segunda fase
+                </a>
+            </div>
+        </div>
+        }
         }
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
-            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
+        <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
         }
 
         @if (!string.IsNullOrWhiteSpace(successMessage))
         {
-            <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
+        <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
         }
     </div>
 
     @if (!groups.Any())
     {
-        <div class="bg-white border-custom diagonal-corners p-4 text-muted">
-            No hay grupos para mostrar.
-        </div>
+    <div class="bg-white border-custom diagonal-corners p-4 text-muted">
+        No hay grupos para mostrar.
+    </div>
     }
     else
     {
-        <div class="groups-grid">
-            @foreach (var group in groups)
-            {
-                var isExpanded = selectedLabel == group.Label;
+    <div class="groups-grid">
+        @foreach (var group in groups)
+        {
+        var isExpanded = selectedLabel == group.Label;
 
-                <div class="group-card @(isExpanded ? "expanded" : "")">
-                    <button type="button"
-                            class="group-card-button"
-                            @onclick="() => SelectGroup(group.Label)">
-                        <div class="group-card-header">
-                            <h3 class="group-card-title">Grupo @group.Label</h3>
-                            <span class="group-card-count">@group.Teams.Count/4</span>
-                        </div>
-                    </button>
-
-                    <div class="group-card-body">
-                        <ul class="group-team-list">
-                            @foreach (var team in group.Teams)
-                            {
-                                <li class="group-team-item">
-                                    <i class="bi bi-shield-fill group-team-icon"></i>
-
-                                    <div class="group-team-data">
-                                        <strong>@team.Name</strong>
-                                        <span>@team.ConfederationName - @team.RankingFifa</span>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    </div>
+        <div class="group-card @(isExpanded ? "expanded" : "")">
+            <button type="button"
+                    class="group-card-button"
+                    @onclick="() => SelectGroup(group.Label)">
+                <div class="group-card-header">
+                    <h3 class="group-card-title">Grupo @group.Label</h3>
+                    <span class="group-card-count">@group.Teams.Count/4</span>
                 </div>
-            }
+            </button>
+
+            <div class="group-card-body">
+                <ul class="group-team-list">
+                    @foreach (var team in group.Teams)
+                    {
+                    <li class="group-team-item">
+                        <i class="bi bi-shield-fill group-team-icon"></i>
+
+                        <div class="group-team-data">
+                            <strong>@team.Name</strong>
+                            <span>@team.ConfederationName - @team.RankingFifa</span>
+                        </div>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        }
+    </div>
+
+    @if (selectedGroup != null)
+    {
+    <div class="bg-white border-custom diagonal-corners overflow-hidden">
+        <div class="bg-light px-4 py-3">
+            <h4 class="mb-0">Grupo @selectedGroup.Label - Posiciones</h4>
         </div>
 
-        @if (selectedGroup != null)
-        {
-            <div class="bg-white border-custom diagonal-corners overflow-hidden">
-                <div class="bg-light px-4 py-3">
-                    <h4 class="mb-0">Grupo @selectedGroup.Label - Posiciones</h4>
-                </div>
+        <GeometricDivider />
 
-                <GeometricDivider />
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th class="px-4 py-3">#</th>
+                    <th class="px-4 py-3">Equipo</th>
+                    <th class="px-4 py-3">Pts</th>
+                    <th class="px-4 py-3">GF</th>
+                    <th class="px-4 py-3">DG</th>
+                    <th class="px-4 py-3">Confederacion</th>
+                </tr>
+                </thead>
+                <tbody>
+                @for (var index = 0; index < selectedStandings.Count; index++)
+                {
+                var team = selectedStandings[index];
 
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-3">#</th>
-                                <th class="px-4 py-3">Equipo</th>
-                                <th class="px-4 py-3">Pts</th>
-                                <th class="px-4 py-3">GF</th>
-                                <th class="px-4 py-3">DG</th>
-                                <th class="px-4 py-3">Confederacion</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (var index = 0; index < selectedStandings.Count; index++)
+                <tr class="@(index < 2 ? "bg-success-light" : "")">
+                    <td class="px-4 py-3">@(index + 1)</td>
+                    <td class="px-4 py-3 fw-bold">@team.Name</td>
+                    <td class="px-4 py-3">@team.Points</td>
+                    <td class="px-4 py-3">@team.GoalsInFavor</td>
+                    <td class="px-4 py-3">@team.GoalDifference</td>
+                    <td class="px-4 py-3">@team.ConfederationName</td>
+                </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-white border-custom diagonal-corners overflow-hidden">
+        <div class="bg-light px-4 py-3">
+            <h4 class="mb-0">Grupo @selectedGroup.Label - Partidos</h4>
+        </div>
+
+        <GeometricDivider />
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th class="px-4 py-3">Fecha</th>
+                    <th class="px-4 py-3">Estadio</th>
+                    <th class="px-4 py-3">Local</th>
+                    <th class="px-4 py-3">Resultado</th>
+                    <th class="px-4 py-3">Visitante</th>
+                    <th class="px-4 py-3">Ganador</th>
+                    <th class="px-4 py-3 text-center">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var match in selectedGroup.Matches.OrderBy(match => match.Date))
+                {
+                <tr>
+                    <td class="px-4 py-3">@match.Date.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="px-4 py-3">@match.Stadium.Name</td>
+                    <td class="px-4 py-3 fw-bold">@match.HomeTeam.Name</td>
+
+                    <td class="px-4 py-3">
+                        @if (editingMatchId == match.Id)
+                        {
+                        <div class="d-flex align-items-center gap-2">
+                            <input class="form-control border-custom-input score-input"
+                                   type="number"
+                                   min="0"
+                                   @bind="editHomeGoals" />
+                            <span>-</span>
+                            <input class="form-control border-custom-input score-input"
+                                   type="number"
+                                   min="0"
+                                   @bind="editAwayGoals" />
+                        </div>
+                        }
+                        else
+                        {
+                        @FormatResult(match)
+                        }
+                    </td>
+
+                    <td class="px-4 py-3 fw-bold">@match.AwayTeam.Name</td>
+                    <td class="px-4 py-3">@(match.Winner?.Name ?? "-")</td>
+
+                    <td class="px-4 py-3">
+                        <div class="d-flex justify-content-center gap-2">
+                            @if (match.IsFinished)
                             {
-                                var team = selectedStandings[index];
-
-                                <tr class="@(index < 2 ? "bg-success-light" : "")">
-                                    <td class="px-4 py-3">@(index + 1)</td>
-                                    <td class="px-4 py-3 fw-bold">@team.Name</td>
-                                    <td class="px-4 py-3">@team.Points</td>
-                                    <td class="px-4 py-3">@team.GoalsInFavor</td>
-                                    <td class="px-4 py-3">@team.GoalDifference</td>
-                                    <td class="px-4 py-3">@team.ConfederationName</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white border-custom diagonal-corners overflow-hidden">
-                <div class="bg-light px-4 py-3">
-                    <h4 class="mb-0">Grupo @selectedGroup.Label - Partidos</h4>
-                </div>
-
-                <GeometricDivider />
-
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-3">Fecha</th>
-                                <th class="px-4 py-3">Estadio</th>
-                                <th class="px-4 py-3">Local</th>
-                                <th class="px-4 py-3">Resultado</th>
-                                <th class="px-4 py-3">Visitante</th>
-                                <th class="px-4 py-3">Ganador</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var match in selectedGroup.Matches.OrderBy(match => match.Date))
-                            {
-                                <tr>
-                                    <td class="px-4 py-3">@match.Date.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td class="px-4 py-3">@match.Stadium.Name</td>
-                                    <td class="px-4 py-3 fw-bold">@match.HomeTeam.Name</td>
-                                    <td class="px-4 py-3">
-                                        @if (editingMatchId == match.Id)
-                                        {
-                                            <div class="d-flex align-items-center gap-2">
-                                                <input class="form-control border-custom-input score-input"
-                                                       type="number"
-                                                       min="0"
-                                                       @bind="editHomeGoals" />
-                                                <span>-</span>
-                                                <input class="form-control border-custom-input score-input"
-                                                       type="number"
-                                                       min="0"
-                                                       @bind="editAwayGoals" />
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            @FormatResult(match)
-                                        }
-                                    </td>
-                                    <td class="px-4 py-3 fw-bold">@match.AwayTeam.Name</td>
-                                    <td class="px-4 py-3">@(match.Winner?.Name ?? "-")</td>
-                                    <td class="px-4 py-3">
-                                        <div class="d-flex justify-content-center gap-2">
-                                            @if (match.IsFinished)
-                                            {
-                                                <span class="badge bg-success px-3 py-2">
+                            <span class="badge bg-success px-3 py-2">
                                                     Partido finalizado
                                                 </span>
-                                            }
-                                            else if (editingMatchId == match.Id)
-                                            {
-                                                <button class="btn btn-sm btn-wc-green" @onclick="() => SaveResult(match.Id)">
-                                                    Guardar
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-dark border-custom" @onclick="CancelEdit">
-                                                    Cancelar
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <button class="btn btn-sm btn-light border-custom"
-                                                        disabled="@(!IsEditor)"
-                                                        @onclick="() => StartEdit(match)">
-                                                    Cargar resultado
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-warning border-custom"
-                                                        disabled="@(!IsEditor || !match.HasResult)"
-                                                        @onclick="() => FinishMatch(match.Id)">
-                                                    Terminar
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
+                            else if (editingMatchId == match.Id)
+                            {
+                            <button class="btn btn-sm btn-wc-green" @onclick="() => SaveResult(match.Id)">
+                                Guardar
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-dark border-custom" @onclick="CancelEdit">
+                                Cancelar
+                            </button>
+                            }
+                            else
+                            {
+                            <button class="btn btn-sm btn-light border-custom"
+                                    disabled="@(!IsEditor)"
+                                    @onclick="() => StartEdit(match)">
+                                Cargar resultado
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-warning border-custom"
+                                    disabled="@(!IsEditor || !match.HasResult)"
+                                    @onclick="() => FinishMatch(match.Id)">
+                                Terminar
+                            </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    }
     }
 </div>
 
 <style>
-
     .single-action-wrapper {
         display: flex;
         justify-content: center;
@@ -322,6 +355,19 @@
         color: white;
         box-shadow: 0 0 0 0.2rem rgba(27, 39, 137, 0.25);
     }
+
+    .simulation-engine-display {
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--g300);
+        border-radius: 0.375rem;
+        background: var(--g100);
+        font-weight: 700;
+        color: var(--g800);
+    }
+
     .groups-page {
         width: 100%;
     }
@@ -360,7 +406,7 @@
         border: 2px solid var(--wc-blue);
         background: white;
         box-shadow: 0 0 0 4px rgba(27, 39, 137, 0.12),
-                    7px 7px 18px rgba(0, 0, 0, 0.30);
+        7px 7px 18px rgba(0, 0, 0, 0.30);
     }
 
     .group-card-button {
@@ -501,212 +547,234 @@
 </style>
 
 @code {
-    private List<GroupResponse> groups = new();
-    private GroupResponse? selectedGroup;
-    private List<TeamResponse> selectedStandings = new();
-    private char? selectedLabel;
+private List<GroupResponse> groups = new();
+private GroupResponse? selectedGroup;
+private List<TeamResponse> selectedStandings = new();
+private char? selectedLabel;
 
-    private int teamCount;
-    private int stadiumCount;
-    private bool fixtureGenerated;
-    private bool groupStageWasSimulated;
-    private bool groupStageWasFinished;
-    private int? fixtureSeed;
-    private int? simulationSeed;
-    private DateTime startDate = new(2026, 6, 1);
-    private string errorMessage = string.Empty;
-    private string successMessage = string.Empty;
+private int teamCount;
+private int stadiumCount;
+private bool fixtureGenerated;
+private bool groupStageWasSimulated;
+private bool groupStageWasFinished;
+private int? fixtureSeed;
+private int? simulationSeed;
+private DateTime startDate = new(2026, 6, 1);
+private string errorMessage = string.Empty;
+private string successMessage = string.Empty;
 
-    private int? editingMatchId;
-    private int editHomeGoals;
-    private int editAwayGoals;
+private SimulationEngineTypeDto selectedSimulationEngine = SimulationEngineTypeDto.Probabilistic;
+private string lastSimulationEngineName = "Probabilístico";
+private bool showLastSimulationEngine;
 
-    private bool IsEditor =>
-        SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
+private int? editingMatchId;
+private int editHomeGoals;
+private int editAwayGoals;
 
-    private bool CanGenerateFixture =>
-        IsEditor && teamCount == 48 && stadiumCount >= 4 && fixtureSeed.HasValue && !fixtureGenerated;
+private bool IsEditor =>
+SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Editor);
 
-    protected override void OnInitialized()
-    {
-        LoadData();
-    }
+private bool CanGenerateFixture =>
+IsEditor && teamCount == 48 && stadiumCount >= 4 && fixtureSeed.HasValue && !fixtureGenerated;
 
-    private void LoadData()
-    {
-        groups = TournamentService.GetGroups()
-            .OrderBy(group => group.Label)
-            .ToList();
+protected override void OnInitialized()
+{
+LoadData();
+}
 
-        teamCount = TeamService.GetTeams().Count();
-        stadiumCount = TournamentService.GetStadiumCount();
-        fixtureGenerated = groups.Any();
+private void LoadData()
+{
+groups = TournamentService.GetGroups()
+.OrderBy(group => group.Label)
+.ToList();
 
-        var groupMatches = groups
-            .SelectMany(group => group.Matches)
-            .ToList();
+teamCount = TeamService.GetTeams().Count();
+stadiumCount = TournamentService.GetStadiumCount();
+fixtureGenerated = groups.Any();
 
-        groupStageWasFinished = groupMatches.Any() &&
-                                groupMatches.All(match => match.IsFinished);
+var groupMatches = groups
+.SelectMany(group => group.Matches)
+.ToList();
 
-        if (groupStageWasFinished)
-            groupStageWasSimulated = false;
+groupStageWasFinished = groupMatches.Any() &&
+groupMatches.All(match => match.IsFinished);
 
-        if (selectedLabel.HasValue)
-        {
-            selectedGroup = groups.FirstOrDefault(group => group.Label == selectedLabel.Value);
+groupStageWasSimulated = groupMatches.Any() &&
+groupMatches.All(match => match.HasResult) &&
+!groupStageWasFinished;
 
-            selectedStandings = selectedGroup == null
-                ? new List<TeamResponse>()
-                : TournamentService.GetGroupStandings(selectedLabel.Value).ToList();
-        }
-    }
+if (groupStageWasFinished)
+groupStageWasSimulated = false;
 
-    private void GenerateFixture()
-    {
-        ClearMessages();
+if (selectedLabel.HasValue)
+{
+selectedGroup = groups.FirstOrDefault(group => group.Label == selectedLabel.Value);
 
-        if (!CanGenerateFixture)
-            return;
+selectedStandings = selectedGroup == null
+? new List<TeamResponse>()
+: TournamentService.GetGroupStandings(selectedLabel.Value).ToList();
+}
+}
 
-        try
-        {
-            TournamentService.GenerateFixture(fixtureSeed!.Value, startDate);
-            successMessage = "GroupPhase generado correctamente.";
-            LoadData();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-    }
+private void GenerateFixture()
+{
+ClearMessages();
 
-    private void SimulateGroupStage()
-    {
-        ClearMessages();
+if (!CanGenerateFixture)
+return;
 
-        if (!IsEditor || !simulationSeed.HasValue)
-            return;
+try
+{
+TournamentService.GenerateFixture(fixtureSeed!.Value, startDate);
+successMessage = "GroupPhase generado correctamente.";
+LoadData();
+}
+catch (Exception ex)
+{
+errorMessage = ex.Message;
+}
+}
 
-        try
-        {
-            TournamentService.SimulateGroupStage(simulationSeed.Value);
-            groupStageWasSimulated = true;
-            successMessage = "Resultados simulados correctamente. Ahora podés finalizar todos los partidos.";
-            LoadData();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-    }
+private void SimulateGroupStage()
+{
+ClearMessages();
 
-    private void FinishAllGroupStageMatches()
-    {
-        ClearMessages();
+if (!IsEditor || !simulationSeed.HasValue)
+return;
 
-        if (!IsEditor || !groupStageWasSimulated)
-            return;
+try
+{
+TournamentService.SimulateGroupStage(simulationSeed.Value, selectedSimulationEngine);
 
-        try
-        {
-            TournamentService.FinishAllMatches();
-            groupStageWasSimulated = false;
-            groupStageWasFinished = true;
-            successMessage = "Todos los partidos simulados fueron finalizados correctamente.";
-            LoadData();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-    }
+groupStageWasSimulated = true;
+lastSimulationEngineName = GetSimulationEngineName(selectedSimulationEngine);
+showLastSimulationEngine = true;
 
-    private void SelectGroup(char label)
-    {
-        selectedLabel = selectedLabel == label ? null : label;
+successMessage =
+$"Resultados simulados correctamente con motor {lastSimulationEngineName}. Ahora podés finalizar todos los partidos.";
 
-        selectedGroup = selectedLabel.HasValue
-            ? groups.FirstOrDefault(group => group.Label == selectedLabel.Value)
-            : null;
+LoadData();
+}
+catch (Exception ex)
+{
+errorMessage = ex.Message;
+}
+}
 
-        selectedStandings = selectedLabel.HasValue
-            ? TournamentService.GetGroupStandings(selectedLabel.Value).ToList()
-            : new List<TeamResponse>();
+private void FinishAllGroupStageMatches()
+{
+ClearMessages();
 
-        CancelEdit();
-        ClearMessages();
-    }
+if (!IsEditor || !groupStageWasSimulated)
+return;
 
-    private void StartEdit(MatchResponse match)
-    {
-        editingMatchId = match.Id;
-        editHomeGoals = match.HomeGoals ?? 0;
-        editAwayGoals = match.AwayGoals ?? 0;
-        ClearMessages();
-    }
+try
+{
+TournamentService.FinishAllMatches();
+groupStageWasSimulated = false;
+groupStageWasFinished = true;
+successMessage = "Todos los partidos simulados fueron finalizados correctamente.";
+LoadData();
+}
+catch (Exception ex)
+{
+errorMessage = ex.Message;
+}
+}
 
-    private void SaveResult(int matchId)
-    {
-        if (!selectedLabel.HasValue)
-            return;
+private void SelectGroup(char label)
+{
+selectedLabel = selectedLabel == label ? null : label;
 
-        ClearMessages();
+selectedGroup = selectedLabel.HasValue
+? groups.FirstOrDefault(group => group.Label == selectedLabel.Value)
+: null;
 
-        try
-        {
-            TournamentService.SetGroupMatchResult(
-                selectedLabel.Value,
-                matchId,
-                editHomeGoals,
-                editAwayGoals);
+selectedStandings = selectedLabel.HasValue
+? TournamentService.GetGroupStandings(selectedLabel.Value).ToList()
+: new List<TeamResponse>();
 
-            successMessage = "Resultado cargado correctamente.";
-            CancelEdit();
-            LoadData();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-    }
+CancelEdit();
+ClearMessages();
+}
 
-    private void FinishMatch(int matchId)
-    {
-        if (!selectedLabel.HasValue)
-            return;
+private void StartEdit(MatchResponse match)
+{
+editingMatchId = match.Id;
+editHomeGoals = match.HomeGoals ?? 0;
+editAwayGoals = match.AwayGoals ?? 0;
+ClearMessages();
+}
 
-        ClearMessages();
+private void SaveResult(int matchId)
+{
+if (!selectedLabel.HasValue)
+return;
 
-        try
-        {
-            TournamentService.FinishGroupMatch(selectedLabel.Value, matchId);
-            successMessage = "Partido terminado correctamente.";
-            LoadData();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-    }
+ClearMessages();
 
-    private void CancelEdit()
-    {
-        editingMatchId = null;
-        editHomeGoals = 0;
-        editAwayGoals = 0;
-    }
+try
+{
+TournamentService.SetGroupMatchResult(
+selectedLabel.Value,
+matchId,
+editHomeGoals,
+editAwayGoals);
 
-    private void ClearMessages()
-    {
-        errorMessage = string.Empty;
-        successMessage = string.Empty;
-    }
+successMessage = "Resultado cargado correctamente.";
+CancelEdit();
+LoadData();
+}
+catch (Exception ex)
+{
+errorMessage = ex.Message;
+}
+}
 
-    private static string FormatResult(MatchResponse match)
-    {
-        return match.HomeGoals.HasValue && match.AwayGoals.HasValue
-            ? $"{match.HomeGoals} - {match.AwayGoals}"
-            : "vs";
-    }
+private void FinishMatch(int matchId)
+{
+if (!selectedLabel.HasValue)
+return;
+
+ClearMessages();
+
+try
+{
+TournamentService.FinishGroupMatch(selectedLabel.Value, matchId);
+successMessage = "Partido terminado correctamente.";
+LoadData();
+}
+catch (Exception ex)
+{
+errorMessage = ex.Message;
+}
+}
+
+private void CancelEdit()
+{
+editingMatchId = null;
+editHomeGoals = 0;
+editAwayGoals = 0;
+}
+
+private void ClearMessages()
+{
+errorMessage = string.Empty;
+successMessage = string.Empty;
+}
+
+private static string FormatResult(MatchResponse match)
+{
+return match.HomeGoals.HasValue && match.AwayGoals.HasValue
+? $"{match.HomeGoals} - {match.AwayGoals}"
+: "vs";
+}
+
+private static string GetSimulationEngineName(SimulationEngineTypeDto simulationEngineType) =>
+simulationEngineType switch
+{
+SimulationEngineTypeDto.Probabilistic => "Probabilístico",
+SimulationEngineTypeDto.PureRandom => "Aleatorio Puro",
+_ => "Desconocido"
+};
 }

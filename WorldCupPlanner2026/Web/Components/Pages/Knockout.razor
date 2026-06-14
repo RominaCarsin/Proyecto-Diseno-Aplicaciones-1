@@ -11,501 +11,536 @@
             <div>
                 <h3 class="mb-1">Fase Eliminatoria</h3>
                 <p class="text-muted mb-0">Gestión de llaves y progresión del torneo.</p>
+
+                @if (showLastSimulationEngine)
+                {
+                    <p class="text-muted mb-0 mt-1">
+                        Motor usado: <strong>@lastSimulationEngineName</strong>
+                    </p>
+                }
             </div>
 
             <div class="d-flex gap-2 align-items-end flex-wrap">
                 @if (!AllMatches.Any())
                 {
-                <div class="d-flex align-items-end gap-2">
-                    <div>
-                        <label class="small fw-bold">Semilla Cruces</label>
-                        <input type="number"
-                               @bind="knockoutSeed"
-                               class="form-control form-control-sm border-custom-input"
-                               style="width: 100px;" />
-                    </div>
+                    <div class="d-flex align-items-end gap-2">
+                        <div>
+                            <label class="small fw-bold">Semilla Cruces</label>
+                            <input type="number"
+                                   @bind="knockoutSeed"
+                                   class="form-control form-control-sm border-custom-input"
+                                   style="width: 100px;" />
+                        </div>
 
-                    <button class="btn btn-wc-blue btn-sm"
-                            disabled="@(!IsEditor)"
-                            @onclick="InitializeKnockoutStage">
-                        Inicializar 16vos (R32)
-                    </button>
-                </div>
+                        <button class="btn btn-wc-blue btn-sm"
+                                disabled="@(!IsEditor)"
+                                @onclick="InitializeKnockoutStage">
+                            Inicializar 16vos (R32)
+                        </button>
+                    </div>
                 }
                 else
                 {
-                @if (TournamentIsComplete)
-                {
-                <span class="badge bg-success px-3 py-2">
+                    @if (TournamentIsComplete)
+                    {
+                        <span class="badge bg-success px-3 py-2">
                             Torneo finalizado
                         </span>
-                }
-                else if (CanFinishCurrentRound)
-                {
-                <button class="btn btn-wc-red btn-sm"
-                        disabled="@(!IsEditor)"
-                        @onclick="FinishAllKnockoutMatches">
-                    <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
-                </button>
-                }
-                else if (CanGoToNextPhase)
-                {
-                <button class="btn btn-outline-dark btn-sm border-custom"
-                        @onclick="CheckAndInitializeNextPhase">
-                    Siguiente Fase <i class="bi bi-arrow-right"></i>
-                </button>
-                }
-                else
-                {
-                <div class="d-flex align-items-end gap-2">
-                    <div>
-                        <label class="small fw-bold">SemillaSimulation</label>
-                        <input type="number"
-                               @bind="simulationSeed"
-                               class="form-control form-control-sm border-custom-input"
-                               style="width: 100px;" />
-                    </div>
+                    }
+                    else if (CanFinishCurrentRound)
+                    {
+                        <button class="btn btn-wc-red btn-sm"
+                                disabled="@(!IsEditor)"
+                                @onclick="FinishAllKnockoutMatches">
+                            <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
+                        </button>
+                    }
+                    else if (CanGoToNextPhase)
+                    {
+                        <button class="btn btn-outline-dark btn-sm border-custom"
+                                @onclick="CheckAndInitializeNextPhase">
+                            Siguiente Fase <i class="bi bi-arrow-right"></i>
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-end gap-2">
+                            <div>
+                                <label class="small fw-bold">SemillaSimulation</label>
+                                <input type="number"
+                                       @bind="simulationSeed"
+                                       class="form-control form-control-sm border-custom-input"
+                                       style="width: 100px;" />
+                            </div>
 
-                    <button class="btn btn-wc-green btn-sm"
-                            disabled="@(!CanSimulateCurrentRound)"
-                            @onclick="SimulateKnockout">
-                        <i class="bi bi-shuffle"></i> Simular fase eliminatoria
-                    </button>
-                </div>
-                }
+                            <div>
+                                <label class="small fw-bold">Motor</label>
+                                <select class="form-select form-select-sm border-custom-input"
+                                        @bind="selectedSimulationEngine"
+                                        style="width: 150px;">
+                                    <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
+                                    <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
+                                </select>
+                            </div>
+
+                            <button class="btn btn-wc-green btn-sm"
+                                    disabled="@(!CanSimulateCurrentRound)"
+                                    @onclick="SimulateKnockout">
+                                <i class="bi bi-shuffle"></i> Simular fase eliminatoria
+                            </button>
+                        </div>
+                    }
                 }
             </div>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
         {
-        <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
+            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
         }
 
         @if (!string.IsNullOrWhiteSpace(successMessage))
         {
-        <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
+            <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
         }
     </div>
 
     @if (!AllMatches.Any())
     {
-    <div class="bg-white border-custom p-5 text-center diagonal-corners">
-        <i class="bi bi-trophy text-light display-1"></i>
-        <p class="mt-3 text-muted">Aún no se ha generado la fase de eliminación directa.</p>
+        <div class="bg-white border-custom p-5 text-center diagonal-corners">
+            <i class="bi bi-trophy text-light display-1"></i>
+            <p class="mt-3 text-muted">Aún no se ha generado la fase de eliminación directa.</p>
 
-        @if (!IsEditor)
-        {
-        <p class="text-muted mb-0">Solo un Editor puede inicializar la fase eliminatoria.</p>
-        }
-    </div>
+            @if (!IsEditor)
+            {
+                <p class="text-muted mb-0">Solo un Editor puede inicializar la fase eliminatoria.</p>
+            }
+        </div>
     }
     else
     {
-    <div class="bracket-container p-4">
-        @foreach (var phaseGroup in GroupedMatches)
-        {
-        <div class="bracket-column @(phaseGroup.Key == "Final" ? "match-final" : "")">
-            <h5 class="text-center mb-4 phase-title">@TranslatePhase(phaseGroup.Key)</h5>
+        <div class="bracket-container p-4">
+            @foreach (var phaseGroup in GroupedMatches)
+            {
+                <div class="bracket-column @(phaseGroup.Key == "Final" ? "match-final" : "")">
+                    <h5 class="text-center mb-4 phase-title">@TranslatePhase(phaseGroup.Key)</h5>
 
-            <div class="matches-list">
-                @foreach (var match in phaseGroup.OrderBy(m => m.MatchCode))
-                {
-                <div class="match-card @(IsFinished(match) ? "match-finished" : "match-pending") @(editingMatchCode == match.MatchCode ? "match-editing" : "")">
-                    <div class="match-header d-flex justify-content-between">
-                        <span class="badge bg-light text-dark border-custom">@match.MatchCode</span>
-                        <span class="small text-muted">@match.Date.ToString("dd/MM HH:mm")</span>
-                    </div>
+                    <div class="matches-list">
+                        @foreach (var match in phaseGroup.OrderBy(m => m.MatchCode))
+                        {
+                            <div class="match-card @(IsFinished(match) ? "match-finished" : "match-pending") @(editingMatchCode == match.MatchCode ? "match-editing" : "")">
+                                <div class="match-header d-flex justify-content-between">
+                                    <span class="badge bg-light text-dark border-custom">@match.MatchCode</span>
+                                    <span class="small text-muted">@match.Date.ToString("dd/MM HH:mm")</span>
+                                </div>
 
-                    <div class="match-body my-2">
-                        <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.HomeTeam) ? "fw-bold text-success" : "")">
+                                <div class="match-body my-2">
+                                    <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.HomeTeam) ? "fw-bold text-success" : "")">
                                         <span>
                                             <i class="bi bi-shield-fill me-1"></i> @match.HomeTeam.Name
                                         </span>
 
-                            @if (editingMatchCode == match.MatchCode)
-                            {
-                            <input type="number"
-                                   min="0"
-                                   @bind="editHomeGoals"
-                                   class="score-input-sm" />
-                            }
-                            else
-                            {
-                            <span class="score-box">@(match.HomeGoals?.ToString() ?? "-")</span>
-                            }
-                        </div>
+                                        @if (editingMatchCode == match.MatchCode)
+                                        {
+                                            <input type="number"
+                                                   min="0"
+                                                   @bind="editHomeGoals"
+                                                   class="score-input-sm" />
+                                        }
+                                        else
+                                        {
+                                            <span class="score-box">@(match.HomeGoals?.ToString() ?? "-")</span>
+                                        }
+                                    </div>
 
-                        <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.AwayTeam) ? "fw-bold text-success" : "")">
+                                    <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.AwayTeam) ? "fw-bold text-success" : "")">
                                         <span>
                                             <i class="bi bi-shield-fill me-1"></i> @match.AwayTeam.Name
                                         </span>
 
-                            @if (editingMatchCode == match.MatchCode)
-                            {
-                            <input type="number"
-                                   min="0"
-                                   @bind="editAwayGoals"
-                                   class="score-input-sm" />
-                            }
-                            else
-                            {
-                            <span class="score-box">@(match.AwayGoals?.ToString() ?? "-")</span>
-                            }
-                        </div>
-                    </div>
+                                        @if (editingMatchCode == match.MatchCode)
+                                        {
+                                            <input type="number"
+                                                   min="0"
+                                                   @bind="editAwayGoals"
+                                                   class="score-input-sm" />
+                                        }
+                                        else
+                                        {
+                                            <span class="score-box">@(match.AwayGoals?.ToString() ?? "-")</span>
+                                        }
+                                    </div>
+                                </div>
 
-                    @if (IsEditor)
-                    {
-                    <div class="match-actions border-top pt-2 mt-2 d-flex justify-content-center gap-2">
-                        @if (IsFinished(match))
-                        {
-                        <span class="badge bg-success px-2 py-1">
+                                @if (IsEditor)
+                                {
+                                    <div class="match-actions border-top pt-2 mt-2 d-flex justify-content-center gap-2">
+                                        @if (IsFinished(match))
+                                        {
+                                            <span class="badge bg-success px-2 py-1">
                                                 Partido finalizado
                                             </span>
-                        }
-                        else if (editingMatchCode == match.MatchCode)
-                        {
-                        <button class="btn btn-xs btn-wc-green"
-                                @onclick="() => SaveResult(match.MatchCode)">
-                            OK
-                        </button>
+                                        }
+                                        else if (editingMatchCode == match.MatchCode)
+                                        {
+                                            <button class="btn btn-xs btn-wc-green"
+                                                    @onclick="() => SaveResult(match.MatchCode)">
+                                                OK
+                                            </button>
 
-                        <button class="btn btn-xs btn-light border-custom"
-                                @onclick="CancelEdit">
-                            X
-                        </button>
-                        }
-                        else
-                        {
-                        <button class="btn btn-xs btn-light border-custom"
-                                @onclick="() => StartEdit(match)">
-                            <i class="bi bi-pencil"></i>
-                            Editar
-                        </button>
+                                            <button class="btn btn-xs btn-light border-custom"
+                                                    @onclick="CancelEdit">
+                                                X
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-xs btn-light border-custom"
+                                                    @onclick="() => StartEdit(match)">
+                                                <i class="bi bi-pencil"></i>
+                                                Editar
+                                            </button>
 
-                        <button class="btn btn-xs btn-outline-warning border-custom"
-                                disabled="@(!HasResult(match))"
-                                @onclick="() => FinishMatch(match.MatchCode)">
-                            Terminar
-                        </button>
+                                            <button class="btn btn-xs btn-outline-warning border-custom"
+                                                    disabled="@(!HasResult(match))"
+                                                    @onclick="() => FinishMatch(match.MatchCode)">
+                                                Terminar
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         }
                     </div>
-                    }
                 </div>
-                }
-            </div>
+            }
         </div>
-        }
-    </div>
 
-    @if (HasFinalWinner)
-    {
-    <div class="winner-banner text-center p-5">
-        <i class="bi bi-trophy-fill winner-trophy"></i>
-        <h2 class="winner-title">¡@(FinalMatch!.Winner!.Name) es el Campeón del Mundo!</h2>
-        <p class="winner-subtitle">Ganador de la Copa Mundial 2026</p>
-    </div>
-    }
+        @if (HasFinalWinner)
+        {
+            <div class="winner-banner text-center p-5">
+                <i class="bi bi-trophy-fill winner-trophy"></i>
+                <h2 class="winner-title">¡@(FinalMatch!.Winner!.Name) es el Campeón del Mundo!</h2>
+                <p class="winner-subtitle">Ganador de la Copa Mundial 2026</p>
+            </div>
+        }
     }
 </div>
 
 @code {
-private List<MatchResponse> AllMatches = new();
+    private List<MatchResponse> AllMatches = new();
 
-private IEnumerable<IGrouping<string, MatchResponse>> GroupedMatches =>
-AllMatches
-.GroupBy(match => match.Phase)
-.OrderBy(group => GetPhaseOrder(group.Key));
+    private IEnumerable<IGrouping<string, MatchResponse>> GroupedMatches =>
+        AllMatches
+            .GroupBy(match => match.Phase)
+            .OrderBy(group => GetPhaseOrder(group.Key));
 
-private string? editingMatchCode;
-private int editHomeGoals;
-private int editAwayGoals;
-private int knockoutSeed = 42;
-private int? simulationSeed;
-private string errorMessage = "";
-private string successMessage = "";
+    private string? editingMatchCode;
+    private int editHomeGoals;
+    private int editAwayGoals;
+    private int knockoutSeed = 42;
+    private int? simulationSeed;
+    private string errorMessage = "";
+    private string successMessage = "";
 
-private bool IsEditor =>
-SessionService.IsLoggedIn() &&
-SessionService.CurrentUserHasRole(RoleDto.Editor);
+    private SimulationEngineTypeDto selectedSimulationEngine = SimulationEngineTypeDto.Probabilistic;
+    private string lastSimulationEngineName = "Probabilístico";
+    private bool showLastSimulationEngine;
 
-private MatchResponse? FinalMatch =>
-AllMatches.FirstOrDefault(match => match.Phase == "Final" && IsFinished(match));
+    private bool IsEditor =>
+        SessionService.IsLoggedIn() &&
+        SessionService.CurrentUserHasRole(RoleDto.Editor);
 
-private bool HasFinalWinner =>
-FinalMatch?.Winner != null;
+    private MatchResponse? FinalMatch =>
+        AllMatches.FirstOrDefault(match => match.Phase == "Final" && IsFinished(match));
 
-private List<MatchResponse> FinalStageMatches =>
-AllMatches
-.Where(match => match.Phase is "Final" or "ThirdPlace")
-.ToList();
+    private bool HasFinalWinner =>
+        FinalMatch?.Winner != null;
 
-private bool TournamentIsComplete =>
-HasFinalWinner &&
-FinalStageMatches.Any() &&
-FinalStageMatches.All(IsFinished);
+    private List<MatchResponse> FinalStageMatches =>
+        AllMatches
+            .Where(match => match.Phase is "Final" or "ThirdPlace")
+            .ToList();
 
-private List<MatchResponse> CurrentRoundMatches =>
-GetCurrentRoundMatches();
+    private bool TournamentIsComplete =>
+        HasFinalWinner &&
+        FinalStageMatches.Any() &&
+        FinalStageMatches.All(IsFinished);
 
-private bool CurrentRoundHasMatches =>
-CurrentRoundMatches.Any();
+    private List<MatchResponse> CurrentRoundMatches =>
+        GetCurrentRoundMatches();
 
-private bool CurrentRoundIsFinished =>
-CurrentRoundHasMatches &&
-CurrentRoundMatches.All(IsFinished);
+    private bool CurrentRoundHasMatches =>
+        CurrentRoundMatches.Any();
 
-private bool CurrentRoundHasUnfinishedMatches =>
-CurrentRoundMatches.Any(match => !IsFinished(match));
+    private bool CurrentRoundIsFinished =>
+        CurrentRoundHasMatches &&
+        CurrentRoundMatches.All(IsFinished);
 
-private bool CurrentRoundHasEditableResult =>
-CurrentRoundMatches.Any(match => !IsFinished(match) && HasResult(match));
+    private bool CurrentRoundHasUnfinishedMatches =>
+        CurrentRoundMatches.Any(match => !IsFinished(match));
 
-private bool CurrentRoundUnfinishedMatchesHaveResults =>
-CurrentRoundHasUnfinishedMatches &&
-CurrentRoundMatches
-.Where(match => !IsFinished(match))
-.All(HasResult);
+    private bool CurrentRoundHasEditableResult =>
+        CurrentRoundMatches.Any(match => !IsFinished(match) && HasResult(match));
 
-private bool CanFinishCurrentRound =>
-IsEditor &&
-CurrentRoundUnfinishedMatchesHaveResults;
+    private bool CurrentRoundUnfinishedMatchesHaveResults =>
+        CurrentRoundHasUnfinishedMatches &&
+        CurrentRoundMatches
+            .Where(match => !IsFinished(match))
+            .All(HasResult);
 
-private bool CanSimulateCurrentRound =>
-IsEditor &&
-simulationSeed.HasValue &&
-CurrentRoundHasUnfinishedMatches &&
-!CurrentRoundHasEditableResult;
+    private bool CanFinishCurrentRound =>
+        IsEditor &&
+        CurrentRoundUnfinishedMatchesHaveResults;
 
-private bool CanGoToNextPhase =>
-CurrentRoundIsFinished &&
-!TournamentIsComplete;
+    private bool CanSimulateCurrentRound =>
+        IsEditor &&
+        simulationSeed.HasValue &&
+        CurrentRoundHasUnfinishedMatches &&
+        !CurrentRoundHasEditableResult;
 
-protected override void OnInitialized()
-{
-LoadData();
-}
+    private bool CanGoToNextPhase =>
+        CurrentRoundIsFinished &&
+        !TournamentIsComplete;
 
-private void LoadData()
-{
-AllMatches = TournamentService
-.GetKnockoutMatches()
-.ToList();
-}
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
 
-private void InitializeKnockoutStage()
-{
-RunPhaseAction(() =>
-{
-TournamentService.InitializeKnockoutStage(1, knockoutSeed);
-successMessage = "Fase eliminatoria inicializada correctamente.";
-});
-}
+    private void LoadData()
+    {
+        AllMatches = TournamentService
+            .GetKnockoutMatches()
+            .ToList();
+    }
 
-private void SimulateKnockout()
-{
-ClearMessages();
+    private void InitializeKnockoutStage()
+    {
+        RunPhaseAction(() =>
+        {
+            TournamentService.InitializeKnockoutStage(1, knockoutSeed);
+            successMessage = "Fase eliminatoria inicializada correctamente.";
+        });
+    }
 
-if (!CanSimulateCurrentRound)
-return;
+    private void SimulateKnockout()
+    {
+        ClearMessages();
 
-try
-{
-TournamentService.SimulateKnockoutStage(simulationSeed!.Value);
-successMessage = "Resultados simulados correctamente. Ahora podés revisar o editar los resultados antes de finalizar.";
-CancelEdit();
-LoadData();
-}
-catch (Exception ex)
-{
-errorMessage = ex.Message;
-}
-}
+        if (!CanSimulateCurrentRound)
+            return;
 
-private void FinishAllKnockoutMatches()
-{
-ClearMessages();
+        try
+        {
+            TournamentService.SimulateKnockoutStage(simulationSeed!.Value, selectedSimulationEngine);
 
-if (!CanFinishCurrentRound)
-return;
+            lastSimulationEngineName = GetSimulationEngineName(selectedSimulationEngine);
+            showLastSimulationEngine = true;
 
-try
-{
-TournamentService.FinishAllKnockoutMatches();
-successMessage = "Todos los partidos con resultado fueron finalizados correctamente.";
-CancelEdit();
-LoadData();
-}
-catch (Exception ex)
-{
-errorMessage = ex.Message;
-}
-}
+            successMessage =
+                $"Resultados simulados correctamente con motor {lastSimulationEngineName}. Ahora podés revisar o editar los resultados antes de finalizar.";
 
-private void StartEdit(MatchResponse match)
-{
-editingMatchCode = match.MatchCode;
-editHomeGoals = match.HomeGoals ?? 0;
-editAwayGoals = match.AwayGoals ?? 0;
-ClearMessages();
-}
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
 
-private void CancelEdit()
-{
-editingMatchCode = null;
-editHomeGoals = 0;
-editAwayGoals = 0;
-}
+    private void FinishAllKnockoutMatches()
+    {
+        ClearMessages();
 
-private void SaveResult(string? matchCode)
-{
-if (string.IsNullOrWhiteSpace(matchCode))
-return;
+        if (!CanFinishCurrentRound)
+            return;
 
-ClearMessages();
+        try
+        {
+            TournamentService.FinishAllKnockoutMatches();
+            successMessage = "Todos los partidos con resultado fueron finalizados correctamente.";
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
 
-try
-{
-TournamentService.SetKnockoutMatchResult(matchCode, editHomeGoals, editAwayGoals);
-successMessage = "Resultado cargado correctamente. El partido sigue editable hasta que sea finalizado.";
-CancelEdit();
-LoadData();
-}
-catch (Exception ex)
-{
-errorMessage = ex.Message;
-}
-}
+    private void StartEdit(MatchResponse match)
+    {
+        editingMatchCode = match.MatchCode;
+        editHomeGoals = match.HomeGoals ?? 0;
+        editAwayGoals = match.AwayGoals ?? 0;
+        ClearMessages();
+    }
 
-private void FinishMatch(string? matchCode)
-{
-if (string.IsNullOrWhiteSpace(matchCode))
-return;
+    private void CancelEdit()
+    {
+        editingMatchCode = null;
+        editHomeGoals = 0;
+        editAwayGoals = 0;
+    }
 
-ClearMessages();
+    private void SaveResult(string? matchCode)
+    {
+        if (string.IsNullOrWhiteSpace(matchCode))
+            return;
 
-try
-{
-TournamentService.FinishKnockoutMatch(matchCode);
-successMessage = "Partido finalizado correctamente.";
-CancelEdit();
-LoadData();
-}
-catch (Exception ex)
-{
-errorMessage = ex.Message;
-}
-}
+        ClearMessages();
 
-private void CheckAndInitializeNextPhase()
-{
-if (!CanGoToNextPhase)
-return;
+        try
+        {
+            TournamentService.SetKnockoutMatchResult(matchCode, editHomeGoals, editAwayGoals);
+            successMessage = "Resultado cargado correctamente. El partido sigue editable hasta que sea finalizado.";
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
 
-var lastPhase = AllMatches
-.OrderByDescending(match => GetPhaseOrder(match.Phase))
-.FirstOrDefault()?.Phase;
+    private void FinishMatch(string? matchCode)
+    {
+        if (string.IsNullOrWhiteSpace(matchCode))
+            return;
 
-RunPhaseAction(() =>
-{
-switch (lastPhase)
-{
-case "RoundOf32":
-TournamentService.InitializeRoundOf16();
-successMessage = "Octavos generados correctamente.";
-break;
+        ClearMessages();
 
-case "RoundOf16":
-TournamentService.InitializeQuarterFinals();
-successMessage = "Cuartos generados correctamente.";
-break;
+        try
+        {
+            TournamentService.FinishKnockoutMatch(matchCode);
+            successMessage = "Partido finalizado correctamente.";
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
 
-case "QuarterFinals":
-TournamentService.InitializeSemiFinals();
-successMessage = "Semifinales generadas correctamente.";
-break;
+    private void CheckAndInitializeNextPhase()
+    {
+        if (!CanGoToNextPhase)
+            return;
 
-case "SemiFinals":
-TournamentService.InitializeThirdPlace();
-TournamentService.InitializeFinal();
-successMessage = "Final y tercer puesto generados correctamente.";
-break;
-}
-});
-}
+        var lastPhase = AllMatches
+            .OrderByDescending(match => GetPhaseOrder(match.Phase))
+            .FirstOrDefault()?.Phase;
 
-private void RunPhaseAction(Action action)
-{
-try
-{
-ClearMessages();
-action();
-CancelEdit();
-LoadData();
-}
-catch (Exception ex)
-{
-errorMessage = ex.Message;
-}
-}
+        RunPhaseAction(() =>
+        {
+            switch (lastPhase)
+            {
+                case "RoundOf32":
+                    TournamentService.InitializeRoundOf16();
+                    successMessage = "Octavos generados correctamente.";
+                    break;
 
-private List<MatchResponse> GetCurrentRoundMatches()
-{
-if (!AllMatches.Any())
-return new List<MatchResponse>();
+                case "RoundOf16":
+                    TournamentService.InitializeQuarterFinals();
+                    successMessage = "Cuartos generados correctamente.";
+                    break;
 
-if (FinalStageMatches.Any(match => !IsFinished(match)))
-return FinalStageMatches;
+                case "QuarterFinals":
+                    TournamentService.InitializeSemiFinals();
+                    successMessage = "Semifinales generadas correctamente.";
+                    break;
 
-var currentPhase = AllMatches
-.OrderByDescending(match => GetPhaseOrder(match.Phase))
-.First()
-.Phase;
+                case "SemiFinals":
+                    TournamentService.InitializeThirdPlace();
+                    TournamentService.InitializeFinal();
+                    successMessage = "Final y tercer puesto generados correctamente.";
+                    break;
+            }
+        });
+    }
 
-return AllMatches
-.Where(match => match.Phase == currentPhase)
-.ToList();
-}
+    private void RunPhaseAction(Action action)
+    {
+        try
+        {
+            ClearMessages();
+            action();
+            CancelEdit();
+            LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
 
-private bool IsWinner(MatchResponse match, TeamResponse team) =>
-IsFinished(match) &&
-match.Winner?.Name == team.Name;
+    private List<MatchResponse> GetCurrentRoundMatches()
+    {
+        if (!AllMatches.Any())
+            return new List<MatchResponse>();
 
-private static bool IsFinished(MatchResponse match) =>
-match.Status == "Finished";
+        if (FinalStageMatches.Any(match => !IsFinished(match)))
+            return FinalStageMatches;
 
-private static bool HasResult(MatchResponse match) =>
-match.HomeGoals.HasValue &&
-match.AwayGoals.HasValue;
+        var currentPhase = AllMatches
+            .OrderByDescending(match => GetPhaseOrder(match.Phase))
+            .First()
+            .Phase;
 
-private void ClearMessages()
-{
-errorMessage = "";
-successMessage = "";
-}
+        return AllMatches
+            .Where(match => match.Phase == currentPhase)
+            .ToList();
+    }
 
-private static int GetPhaseOrder(string phase) => phase switch
-{
-"RoundOf32" => 1,
-"RoundOf16" => 2,
-"QuarterFinals" => 3,
-"SemiFinals" => 4,
-"ThirdPlace" => 5,
-"Final" => 6,
-_ => 99
-};
+    private bool IsWinner(MatchResponse match, TeamResponse team) =>
+        IsFinished(match) &&
+        match.Winner?.Name == team.Name;
 
-private static string TranslatePhase(string phase) => phase switch
-{
-"RoundOf32" => "Dieciseisavos",
-"RoundOf16" => "Octavos",
-"QuarterFinals" => "Cuartos",
-"SemiFinals" => "Semis",
-"ThirdPlace" => "Tercer Puesto",
-"Final" => "Final",
-_ => phase
-};
+    private static bool IsFinished(MatchResponse match) =>
+        match.Status == "Finished";
+
+    private static bool HasResult(MatchResponse match) =>
+        match.HomeGoals.HasValue &&
+        match.AwayGoals.HasValue;
+
+    private void ClearMessages()
+    {
+        errorMessage = "";
+        successMessage = "";
+    }
+
+    private static int GetPhaseOrder(string phase) => phase switch
+    {
+        "RoundOf32" => 1,
+        "RoundOf16" => 2,
+        "QuarterFinals" => 3,
+        "SemiFinals" => 4,
+        "ThirdPlace" => 5,
+        "Final" => 6,
+        _ => 99
+    };
+
+    private static string TranslatePhase(string phase) => phase switch
+    {
+        "RoundOf32" => "Dieciseisavos",
+        "RoundOf16" => "Octavos",
+        "QuarterFinals" => "Cuartos",
+        "SemiFinals" => "Semis",
+        "ThirdPlace" => "Tercer Puesto",
+        "Final" => "Final",
+        _ => phase
+    };
+
+    private static string GetSimulationEngineName(SimulationEngineTypeDto simulationEngineType) =>
+        simulationEngineType switch
+        {
+            SimulationEngineTypeDto.Probabilistic => "Probabilístico",
+            SimulationEngineTypeDto.PureRandom => "Aleatorio Puro",
+            _ => "Desconocido"
+        };
 }
 
 <style>
