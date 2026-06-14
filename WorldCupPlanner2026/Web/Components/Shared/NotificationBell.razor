@@ -10,10 +10,14 @@
 {
     <Dropdown @ref="_dropdown" EndAligned Display="Display.InlineBlock">
         <DropdownToggle Color="Color.Light" Class="notification-bell-toggle">
-            <i class="bi bi-bell-fill"></i>
             @if (_unreadCount > 0)
             {
+                <i class="fa-solid fa-bell"></i>
                 <Badge Color="Color.Danger" Pill Class="notification-badge">@(_unreadCount > 9 ? "9+" : _unreadCount)</Badge>
+            }
+            else
+            {
+                <i class="fa-regular fa-bell"></i>
             }
         </DropdownToggle>
         <DropdownMenu Class="notification-dropdown-menu">
@@ -35,7 +39,7 @@
             @if (!_notifications.Any())
             {
                 <div class="notification-empty">
-                    <i class="bi bi-bell-slash"></i>
+                    <i class="fa-solid fa-bell-slash"></i>
                     <p>Sin notificaciones</p>
                 </div>
             }
@@ -49,11 +53,11 @@
                                 <div class="notification-item-icon">
                                     @if (notification.IsRead)
                                     {
-                                        <i class="bi bi-envelope-open text-muted"></i>
+                                        <i class="fa-regular fa-envelope-open text-muted"></i>
                                     }
                                     else
                                     {
-                                        <i class="bi bi-envelope-fill text-primary"></i>
+                                        <i class="fa-solid fa-envelope text-primary"></i>
                                     }
                                 </div>
                                 <div class="notification-item-text">
@@ -71,7 +75,7 @@
                                         Class="notification-mark-btn"
                                         Clicked="() => MarkAsRead(notification.Id)"
                                         Title="Marcar como leída">
-                                    <i class="bi bi-check2"></i>
+                                    <i class="fa-solid fa-check"></i>
                                 </Button>
                             }
                         </div>
@@ -193,12 +197,14 @@
     {
         NotificationService.MarkAsRead(notificationId);
         LoadNotifications();
+        StateHasChanged();
     }
 
     private void MarkAllAsRead()
     {
         NotificationService.MarkAllAsRead(CurrentUserId);
         LoadNotifications();
+        StateHasChanged();
     }
 
     private static string GetRelativeTime(DateTime dateTime)
