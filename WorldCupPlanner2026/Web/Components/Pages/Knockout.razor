@@ -73,15 +73,18 @@
                                        style="width: 100px;" />
                             </div>
 
-                            <div>
-                                <label class="small fw-bold">Motor</label>
-                                <select class="form-select form-select-sm border-custom-input"
-                                        @bind="selectedSimulationEngine"
-                                        style="width: 150px;">
-                                    <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
-                                    <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
-                                </select>
-                            </div>
+                            @if (!SimulationEngineIsLocked)
+                            {
+                                <div>
+                                    <label class="small fw-bold">Motor</label>
+                                    <select class="form-select form-select-sm border-custom-input"
+                                            @bind="selectedSimulationEngine"
+                                            style="width: 150px;">
+                                        <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
+                                        <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
+                                    </select>
+                                </div>
+                            }
 
                             <button class="btn btn-wc-green btn-sm"
                                     disabled="@(!CanSimulateCurrentRound)"
@@ -244,9 +247,12 @@
     private string successMessage = "";
 
     private SimulationEngineTypeDto selectedSimulationEngine = SimulationEngineTypeDto.Probabilistic;
+    private SimulationEngineTypeDto lockedSimulationEngine = SimulationEngineTypeDto.Probabilistic;
     private string lastSimulationEngineName = "Probabilístico";
     private bool showLastSimulationEngine;
 
+    private bool SimulationEngineIsLocked =>
+        AllMatches.Any(match => HasResult(match) || IsFinished(match));
     private bool IsEditor =>
         SessionService.IsLoggedIn() &&
         SessionService.CurrentUserHasRole(RoleDto.Editor);
@@ -333,9 +339,14 @@
 
         try
         {
-            TournamentService.SimulateKnockoutStage(simulationSeed!.Value, selectedSimulationEngine);
+            if (!SimulationEngineIsLocked)
+                lockedSimulationEngine = selectedSimulationEngine;
+            else
+                selectedSimulationEngine = lockedSimulationEngine;
 
-            lastSimulationEngineName = GetSimulationEngineName(selectedSimulationEngine);
+            TournamentService.SimulateKnockoutStage(simulationSeed!.Value, lockedSimulationEngine);
+
+            lastSimulationEngineName = GetSimulationEngineName(lockedSimulationEngine);
             showLastSimulationEngine = true;
 
             successMessage =
