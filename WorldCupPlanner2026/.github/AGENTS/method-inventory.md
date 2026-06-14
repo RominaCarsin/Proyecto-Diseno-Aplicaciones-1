@@ -1,4 +1,14 @@
-﻿# Skill: Inventario de Métodos Públicos
+---
+name: method-inventory
+description: >
+  Skill de solo lectura que analiza el proyecto y genera un inventario de métodos públicos
+  de las clases de dominio y servicios. Úsala cuando el usuario pida "listá los métodos",
+  "generá el inventario de métodos", "qué métodos públicos tiene X clase" o cualquier
+  variante. Produce un archivo Metodos.md agrupado por clase. No modifica ningún archivo
+  de código fuente.
+---
+
+# Skill: Inventario de Métodos Públicos
 
 ## Objetivo
 
@@ -37,6 +47,7 @@ Analizar un proyecto de software únicamente en modo lectura y generar un "Metod
 - Incluir constructores salvo que se solicite explícitamente.
 - Incluir controladores, repositorios, DTOs, mappers, migraciones, infraestructura, configuración o pruebas, salvo que se solicite explícitamente.
 - Commitear a git o realizar cualquier acción de control de versiones.
+
 ---
 
 ## Criterios de Identificación

@@ -1,4 +1,4 @@
-﻿---
+---
 name: tdd-missing-tests
 description: >
   Agente TDD que analiza una clase de dominio en C# y su archivo de tests existente,
