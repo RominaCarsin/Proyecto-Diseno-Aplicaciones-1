@@ -45,7 +45,7 @@ public interface ITournamentService
     void InitializeFinal();
 
     void SimulateKnockoutStage(int seed);
-    //void SimulateKnockoutStage(int seed, SimulationEngineTypeDto simulationEngineType);
+    void SimulateKnockoutStage(int seed, SimulationEngineTypeDto simulationEngineType);
 
     void FinishAllMatches();
 

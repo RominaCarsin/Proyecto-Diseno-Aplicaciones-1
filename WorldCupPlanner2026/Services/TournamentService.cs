@@ -184,6 +184,10 @@ public class TournamentService : ITournamentService
 
         foreach (var group in groups)
             _groupRepository.Update(group);
+        
+        LogAction(
+            "Group stage simulation executed",
+            $"Group stage simulation executed with seed {seed} using {simulationEngine.Name}");
     }
 
     public void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0)
@@ -221,6 +225,8 @@ public class TournamentService : ITournamentService
 
         foreach (var match in knockout.Matches)
             _matchRepository.Add(match);
+        
+        
     }
 
     public void SetKnockoutMatchResult(string matchCode, int homeGoals, int awayGoals)
@@ -323,7 +329,10 @@ public class TournamentService : ITournamentService
         AddNewMatchesByPhase(knockout, TournamentPhase.Final);
     }
 
-    public void SimulateKnockoutStage(int seed)
+    public void SimulateKnockoutStage(int seed) =>
+        SimulateKnockoutStage(seed, SimulationEngineTypeDto.Probabilistic);
+
+    public void SimulateKnockoutStage(int seed, SimulationEngineTypeDto simulationEngineType)
     {
         var knockoutMatches = _matchRepository.GetAll()
             .Where(match => match.Phase != TournamentPhase.GroupStage)
@@ -332,7 +341,10 @@ public class TournamentService : ITournamentService
         if (!knockoutMatches.Any())
             throw new InvalidOperationException(KnockoutNotInitializedErrorMessage);
 
-        var simulator = new KnockoutSimulator(seed);
+        var domainEngineType = SimulationEngineTypeMapper.ToDomain(simulationEngineType);
+        var simulationEngine = SimulationEngineFactory.Create(domainEngineType);
+
+        var simulator = new KnockoutSimulator(seed, simulationEngine);
         simulator.Simulate(knockoutMatches);
 
         foreach (var match in knockoutMatches)
@@ -340,7 +352,7 @@ public class TournamentService : ITournamentService
 
         LogAction(
             "Knockout simulation executed",
-            $"Knockout simulation executed with seed {seed}");
+            $"Knockout simulation executed with seed {seed} using {simulationEngine.Name}");
     }
 
     
