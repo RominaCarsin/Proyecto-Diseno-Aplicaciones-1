@@ -9,6 +9,16 @@ namespace Services;
 
 public class ExportService : IExportService
 {
+    private const string ExportAction = "EXPORT";
+
+    private readonly IAuditService _auditService;
+    private readonly ISessionService _sessionService;
+
+    public ExportService(IAuditService auditService, ISessionService sessionService)
+    {
+        _auditService = auditService;
+        _sessionService = sessionService;
+    }
     public byte[] ExportAuditLogToCsv(IEnumerable<AuditLog> logs)
     {
         using var memoryStream = new MemoryStream();
@@ -34,7 +44,9 @@ public class ExportService : IExportService
         }
 
         writer.Flush();
-        return memoryStream.ToArray();
+        var result = memoryStream.ToArray();
+        LogExport("AuditLog", "CSV");
+        return result;
     }
 
     public byte[] ExportAuditLogToXlsx(IEnumerable<AuditLog> logs)
@@ -65,7 +77,9 @@ public class ExportService : IExportService
 
         using var memoryStream = new MemoryStream();
         workbook.SaveAs(memoryStream);
-        return memoryStream.ToArray();
+        var result = memoryStream.ToArray();
+        LogExport("AuditLog", "XLSX");
+        return result;
     }
 
     public byte[] ExportFixtureToCsv(IEnumerable<MatchResponseRow> matches)
@@ -105,7 +119,9 @@ public class ExportService : IExportService
         }
 
         writer.Flush();
-        return memoryStream.ToArray();
+        var fixtureCsvResult = memoryStream.ToArray();
+        LogExport("Fixture", "CSV");
+        return fixtureCsvResult;
     }
 
     public byte[] ExportFixtureToXlsx(IEnumerable<MatchResponseRow> matches)
@@ -146,8 +162,16 @@ public class ExportService : IExportService
 
         ws.Columns().AdjustToContents();
 
-        using var memoryStream = new MemoryStream();
-        workbook.SaveAs(memoryStream);
-        return memoryStream.ToArray();
+        using var memoryStream2 = new MemoryStream();
+        workbook.SaveAs(memoryStream2);
+        var fixtureXlsxResult = memoryStream2.ToArray();
+        LogExport("Fixture", "XLSX");
+        return fixtureXlsxResult;
+    }
+
+    private void LogExport(string fileName, string format)
+    {
+        var actor = _sessionService.GetCurrentUserEmail() ?? "system";
+        _auditService.Log(actor, ExportAction, $"{fileName} exported as {format}");
     }
 }

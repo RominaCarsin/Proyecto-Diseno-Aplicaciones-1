@@ -2,7 +2,10 @@ using System.Globalization;
 using System.Text;
 using ClosedXML.Excel;
 using Domain;
+using IRepository;
 using IServices;
+using Repository;
+using Services;
 
 namespace Services.Tests;
 
@@ -11,10 +14,17 @@ public class ExportServiceTests
 {
     private ExportService _service = null!;
 
+    private IRepository<AuditLog> _auditRepository = null!;
+    private IAuditService _auditService = null!;
+    private ISessionService _sessionService = null!;
+
     [TestInitialize]
     public void Setup()
     {
-        _service = new ExportService();
+        _auditRepository = new FakeRepository<AuditLog>();
+        _auditService = new AuditService(_auditRepository);
+        _sessionService = new SessionService(null!, new AuthStateService());
+        _service = new ExportService(_auditService, _sessionService);
     }
 
     [TestMethod]
@@ -391,5 +401,47 @@ public class ExportServiceTests
         using var workbook = new XLWorkbook(stream);
 
         Assert.IsTrue(workbook.Worksheets.Any(ws => ws.Name == "Audit Log"));
+    }
+
+    // ─── Audit ───
+
+    [TestMethod]
+    public void ExportAuditLogToCsv_ShouldLogAuditEntry()
+    {
+        _service.ExportAuditLogToCsv(Enumerable.Empty<AuditLog>());
+
+        var logs = _auditRepository.GetAll().ToList();
+        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Details.Contains("AuditLog") && l.Details.Contains("CSV")));
+    }
+
+    [TestMethod]
+    public void ExportAuditLogToXlsx_ShouldLogAuditEntry()
+    {
+        _service.ExportAuditLogToXlsx(Enumerable.Empty<AuditLog>());
+
+        var logs = _auditRepository.GetAll().ToList();
+        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Details.Contains("AuditLog") && l.Details.Contains("XLSX")));
+    }
+
+    [TestMethod]
+    public void ExportFixtureToCsv_ShouldLogAuditEntry()
+    {
+        _service.ExportFixtureToCsv(Enumerable.Empty<MatchResponseRow>());
+
+        var logs = _auditRepository.GetAll().ToList();
+        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Details.Contains("Fixture") && l.Details.Contains("CSV")));
+    }
+
+    [TestMethod]
+    public void ExportFixtureToXlsx_ShouldLogAuditEntry()
+    {
+        _service.ExportFixtureToXlsx(Enumerable.Empty<MatchResponseRow>());
+
+        var logs = _auditRepository.GetAll().ToList();
+        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Details.Contains("Fixture") && l.Details.Contains("XLSX")));
     }
 }

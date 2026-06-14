@@ -9,16 +9,20 @@ namespace Services;
 public class NotificationService : INotificationService
 {
     private const string NotificationNotFoundErrorMessage = "No se encontró la notificación.";
+    private const string NotificationReadAction = "NOTIFICATION_READ";
 
     private readonly IRepository<Notification> _notificationRepository;
     private readonly IRepository<User> _userRepository;
+    private readonly IAuditService _auditService;
 
     public NotificationService(
         IRepository<Notification> notificationRepository,
-        IRepository<User> userRepository)
+        IRepository<User> userRepository,
+        IAuditService auditService)
     {
         _notificationRepository = notificationRepository;
         _userRepository = userRepository;
+        _auditService = auditService;
     }
 
     public void NotifyMatchResult(int matchId, string homeTeam, string awayTeam, int homeGoals, int awayGoals)
@@ -54,6 +58,7 @@ public class NotificationService : INotificationService
         var notification = FindNotificationByIdOrThrow(notificationId);
         notification.MarkAsRead();
         _notificationRepository.Update(notification);
+        _auditService.Log("SYSTEM", NotificationReadAction, $"Notification {notificationId} marked as read");
     }
 
     public void MarkAllAsRead(int userId)
@@ -67,6 +72,8 @@ public class NotificationService : INotificationService
             notification.MarkAsRead();
             _notificationRepository.Update(notification);
         }
+
+        _auditService.Log("SYSTEM", NotificationReadAction, $"All notifications marked as read for user {userId}");
     }
 
     public int GetUnreadCount(int userId)

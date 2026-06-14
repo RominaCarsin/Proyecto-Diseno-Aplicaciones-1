@@ -1,6 +1,7 @@
 using Domain;
 using IRepository;
 using IServices;
+using Repository;
 using Services;
 
 namespace Services.Tests;
@@ -15,12 +16,17 @@ public class NotificationServiceTests
     private IRepository<Notification> _notificationRepository = null!;
     private IRepository<User> _userRepository = null!;
 
+    private IRepository<AuditLog> _auditRepository = null!;
+    private IAuditService _auditService = null!;
+
     [TestInitialize]
     public void Setup()
     {
         _notificationRepository = new FakeRepository<Notification>();
         _userRepository = new FakeRepository<User>();
-        _service = new NotificationService(_notificationRepository, _userRepository);
+        _auditRepository = new FakeRepository<AuditLog>();
+        _auditService = new AuditService(_auditRepository);
+        _service = new NotificationService(_notificationRepository, _userRepository, _auditService);
     }
 
     // ─── NotifyMatchResult ───
@@ -259,6 +265,33 @@ public class NotificationServiceTests
         _service.MarkAsRead(firstNotification.NotificationId);
 
         Assert.AreEqual(1, _service.GetUnreadCount(journalist.UserId));
+    }
+
+    // ─── Audit ───
+
+    [TestMethod]
+    public void MarkAsRead_ShouldLogAuditEntry()
+    {
+        var journalist = AddJournalist("journalist@test.com");
+        _service.NotifyMatchResult(1, HomeTeamName, AwayTeamName, 2, 1);
+        var notification = _notificationRepository.GetAll().First();
+
+        _service.MarkAsRead(notification.NotificationId);
+
+        var logs = _auditRepository.GetAll().ToList();
+        Assert.IsTrue(logs.Any(l => l.Action == "NOTIFICATION_READ"));
+    }
+
+    [TestMethod]
+    public void MarkAllAsRead_ShouldLogAuditEntry()
+    {
+        var journalist = AddJournalist("journalist@test.com");
+        _service.NotifyMatchResult(1, HomeTeamName, AwayTeamName, 2, 1);
+
+        _service.MarkAllAsRead(journalist.UserId);
+
+        var logs = _auditRepository.GetAll().ToList();
+        Assert.IsTrue(logs.Any(l => l.Action == "NOTIFICATION_READ"));
     }
 
     // ─── Helpers ───
