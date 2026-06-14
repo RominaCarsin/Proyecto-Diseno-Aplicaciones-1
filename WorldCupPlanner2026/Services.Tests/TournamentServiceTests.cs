@@ -796,7 +796,7 @@ public class TournamentServiceTests
         SimulateAndFinishKnockoutStage();
         _service.InitializeRoundOf16();
 
-        SimulateAndFinishKnockoutStage();
+        SimulateAndFinishKnockoutStage(); 
         _service.InitializeQuarterFinals();
 
         SimulateAndFinishKnockoutStage();
@@ -1067,4 +1067,39 @@ public class TournamentServiceTests
         _service.SimulateKnockoutStage(DefaultSeed);
         _service.FinishAllKnockoutMatches();
     }
+    
+    [TestMethod]
+    public void SimulateGroupStage_WithPureRandomEngine_ShouldUseSelectedEngine()
+    {
+        var group = new Group('A');
+        var home = new Team("HOME", "CONMEBOL", 2500);
+        var away = new Team("AWAY", "UEFA", 300);
+
+        group.AddTeam(home);
+        group.AddTeam(away);
+
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home,
+            away,
+            group: group.Label,
+            phase: TournamentPhase.GroupStage);
+
+        group.AddMatch(match);
+        _groupRepository.Add(group);
+
+        var expectedResult = new PureRandomSimulationEngine().Simulate(
+            home,
+            away,
+            TournamentPhase.GroupStage,
+            new Random(DefaultSeed + group.Label));
+
+        _service.SimulateGroupStage(DefaultSeed, SimulationEngineTypeDto.PureRandom);
+
+        Assert.AreEqual(expectedResult.HomeGoals, match.HomeGoals);
+        Assert.AreEqual(expectedResult.AwayGoals, match.AwayGoals);
+    }
+    
+    
 }
