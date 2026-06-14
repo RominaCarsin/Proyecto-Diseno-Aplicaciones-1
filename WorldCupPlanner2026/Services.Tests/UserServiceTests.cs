@@ -172,10 +172,34 @@ public class UserServiceTests
     }
 
     [TestMethod]
+    public void AddRoleToUser_WithAdminPerformingAction_ShouldAssignJournalistRoleToTargetUser()
+    {
+        CreateAdminUser();
+        _service.AddUser(BuildValidUserRequest());
+
+        _service.AddRoleToUser(AdminEmail, ValidEmail, RoleDto.Journalist);
+
+        Assert.IsTrue(_service.UserHasRole(ValidEmail, RoleDto.Journalist));
+    }
+
+    [TestMethod]
     public void AddRoleToUser_WithNonAdminPerformingAction_ShouldThrowArgumentException()
     {
         _service.AddUser(BuildValidUserRequest());
         _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddRoleToUser(OtherEmail, ValidEmail, RoleDto.Admin));
+    }
+
+    [TestMethod]
+    public void AddRoleToUser_WithJournalistPerformingAction_ShouldThrowArgumentException()
+    {
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
+
+        var actor = FindUserByEmail(OtherEmail);
+        actor!.AddRole(Role.Journalist);
 
         Assert.ThrowsException<ArgumentException>(() =>
             _service.AddRoleToUser(OtherEmail, ValidEmail, RoleDto.Admin));
@@ -191,6 +215,18 @@ public class UserServiceTests
         _service.RemoveRoleFromUser(AdminEmail, ValidEmail, RoleDto.Admin);
 
         Assert.IsFalse(_service.UserHasRole(ValidEmail, RoleDto.Admin));
+    }
+
+    [TestMethod]
+    public void RemoveRoleFromUser_WithAdminPerformingAction_ShouldRemoveJournalistRoleFromTargetUser()
+    {
+        CreateAdminUser();
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddRoleToUser(AdminEmail, ValidEmail, RoleDto.Journalist);
+
+        _service.RemoveRoleFromUser(AdminEmail, ValidEmail, RoleDto.Journalist);
+
+        Assert.IsFalse(_service.UserHasRole(ValidEmail, RoleDto.Journalist));
     }
 
     [TestMethod]
@@ -246,6 +282,74 @@ public class UserServiceTests
 
         Assert.ThrowsException<ArgumentException>(() =>
             _service.ResetPassword(OtherEmail, ValidEmail, "NewPass1!"));
+    }
+
+    [TestMethod]
+    public void ResetPassword_WithJournalistPerformingAction_ShouldThrowArgumentException()
+    {
+        _service.AddUser(BuildValidUserRequest());
+        _service.AddUser(BuildUserRequest(OtherName, OtherSurname, OtherEmail));
+
+        var actor = FindUserByEmail(OtherEmail);
+        actor!.AddRole(Role.Journalist);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.ResetPassword(OtherEmail, ValidEmail, "NewPass1!"));
+    }
+
+    [TestMethod]
+    public void Login_AsJournalist_ShouldReturnUserWithJournalistRole()
+    {
+        var journalistRequest = BuildUserRequest(
+            name: "Periodista",
+            surname: "Prensa",
+            email: "journalist@test.com");
+        _service.AddUser(journalistRequest);
+        var journalist = FindUserByEmail("journalist@test.com");
+        journalist!.AddRole(Role.Journalist);
+
+        var result = _service.Login("journalist@test.com", ValidPassword);
+
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.Roles.HasFlag(RoleDto.Journalist));
+        Assert.IsFalse(result.Roles.HasFlag(RoleDto.Editor));
+        Assert.IsFalse(result.Roles.HasFlag(RoleDto.Admin));
+    }
+
+    [TestMethod]
+    public void ChangePassword_AsJournalist_WithCorrectCurrentPassword_ShouldUpdatePassword()
+    {
+        var journalistRequest = BuildUserRequest(
+            name: "Periodista",
+            surname: "Prensa",
+            email: "journalist@test.com");
+        _service.AddUser(journalistRequest);
+        var journalist = FindUserByEmail("journalist@test.com");
+        journalist!.AddRole(Role.Journalist);
+
+        _service.ChangePassword("journalist@test.com", ValidPassword, "Newpass1!");
+
+        var user = FindUserByEmail("journalist@test.com");
+        Assert.IsTrue(user!.VerifyPassword("Newpass1!"));
+        Assert.IsFalse(user.VerifyPassword(ValidPassword));
+    }
+
+    [TestMethod]
+    public void GetUserByEmail_AsJournalistTarget_ShouldReturnUserRegardlessOfRole()
+    {
+        var journalistRequest = BuildUserRequest(
+            name: "Periodista",
+            surname: "Prensa",
+            email: "journalist@test.com");
+        _service.AddUser(journalistRequest);
+        var journalist = FindUserByEmail("journalist@test.com");
+        journalist!.AddRole(Role.Journalist);
+
+        var result = _service.GetUserByEmail("journalist@test.com");
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("journalist@test.com", result.Email);
+        Assert.IsTrue(result.Roles.HasFlag(RoleDto.Journalist));
     }
     
     private static UserRequest BuildValidUserRequest() =>

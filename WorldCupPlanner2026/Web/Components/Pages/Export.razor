@@ -1,0 +1,171 @@
+@using DTOs
+@using IServices
+@using Domain
+@page "/export"
+@inject ISessionService SessionService
+@inject IAuditService AuditService
+@inject ITournamentService TournamentService
+@inject IExportService ExportService
+@inject IJSRuntime JS
+
+<div class="container-fluid p-0 space-y-6">
+
+    @if (!CanExport)
+    {
+        <div class="bg-white border-custom p-4 diagonal-corners text-muted">
+            No tienes permisos para exportar datos.
+        </div>
+    }
+    else
+    {
+        @* --- EXPORTAR AUDITORÍA --- *@
+        <div class="bg-white border-custom p-6 diagonal-corners">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h3 class="mb-0"><i class="fa-solid fa-file-shield me-2 text-wc-blue"></i>Exportar Log de Auditoría</h3>
+            </div>
+
+            <GeometricDivider />
+
+            <div class="row g-4 mt-2">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Desde</label>
+                    <input type="datetime-local" class="form-control border-custom-input" @bind="auditFrom" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Hasta</label>
+                    <input type="datetime-local" class="form-control border-custom-input" @bind="auditTo" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Exportar</label>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success border-custom w-100" @onclick="ExportAuditCsv">
+                            <i class="fa-solid fa-file-csv me-1"></i> CSV
+                        </button>
+                        <button class="btn btn-outline-primary border-custom w-100" @onclick="ExportAuditXlsx">
+                            <i class="fa-solid fa-file-excel me-1"></i> XLSX
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* --- EXPORTAR FIXTURE --- *@
+        <div class="bg-white border-custom p-6 diagonal-corners">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h3 class="mb-0"><i class="fa-solid fa-trophy me-2 text-wc-red"></i>Exportar Fixture Final</h3>
+            </div>
+
+            <GeometricDivider />
+
+            <div class="row g-4 mt-2">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">&nbsp;</label>
+                    <p class="text-muted mb-0">
+                        Exporta todos los partidos del fixture (fase de grupos y eliminatoria) en el formato deseado.
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Exportar</label>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success border-custom w-100" @onclick="ExportFixtureCsv">
+                            <i class="fa-solid fa-file-csv me-1"></i> CSV
+                        </button>
+                        <button class="btn btn-outline-primary border-custom w-100" @onclick="ExportFixtureXlsx">
+                            <i class="fa-solid fa-file-excel me-1"></i> XLSX
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DateTime? auditFrom;
+    private DateTime? auditTo;
+
+    private bool CanExport =>
+        SessionService.IsLoggedIn() &&
+        (SessionService.CurrentUserHasRole(RoleDto.Admin) ||
+         SessionService.CurrentUserHasRole(RoleDto.Journalist));
+
+    private IEnumerable<AuditLog> GetFilteredAuditLogs()
+    {
+        var logs = AuditService.GetAll();
+
+        if (auditFrom.HasValue)
+        {
+            var fromUtc = DateTime.SpecifyKind(auditFrom.Value, DateTimeKind.Local).ToUniversalTime();
+            logs = logs.Where(l => l.Timestamp >= fromUtc);
+        }
+
+        if (auditTo.HasValue)
+        {
+            var toUtc = DateTime.SpecifyKind(auditTo.Value, DateTimeKind.Local).ToUniversalTime();
+            logs = logs.Where(l => l.Timestamp <= toUtc);
+        }
+
+        return logs.OrderByDescending(l => l.Timestamp).ToList();
+    }
+
+    private List<MatchResponseRow> GetMatchesForExport()
+    {
+        return TournamentService.GetMatches()
+            .OrderBy(m => m.Date)
+            .Select(m => new MatchResponseRow(
+                m.MatchCode ?? "",
+                m.Date.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+                m.Phase,
+                m.Group?.ToString() ?? "",
+                m.HomeTeam.Name,
+                m.AwayTeam.Name,
+                m.HomeGoals.HasValue ? m.HomeGoals.Value.ToString() : "-",
+                m.AwayGoals.HasValue ? m.AwayGoals.Value.ToString() : "-",
+                m.Stadium.Name,
+                m.Status
+            ))
+            .ToList();
+    }
+
+    private async Task ExportAuditCsv()
+    {
+        var logs = GetFilteredAuditLogs();
+        var data = ExportService.ExportAuditLogToCsv(logs);
+        await DownloadFile(data, "audit_log.csv", "text/csv");
+    }
+
+    private async Task ExportAuditXlsx()
+    {
+        var logs = GetFilteredAuditLogs();
+        var data = ExportService.ExportAuditLogToXlsx(logs);
+        await DownloadFile(data, "audit_log.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    private async Task ExportFixtureCsv()
+    {
+        var matches = GetMatchesForExport();
+        var data = ExportService.ExportFixtureToCsv(matches);
+        await DownloadFile(data, "fixture.csv", "text/csv");
+    }
+
+    private async Task ExportFixtureXlsx()
+    {
+        var matches = GetMatchesForExport();
+        var data = ExportService.ExportFixtureToXlsx(matches);
+        await DownloadFile(data, "fixture.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    }
+
+    private async Task DownloadFile(byte[] data, string fileName, string contentType)
+    {
+        var base64 = Convert.ToBase64String(data);
+        await JS.InvokeVoidAsync("eval",
+            $@"
+            var link = document.createElement('a');
+            link.href = 'data:{contentType};base64,{base64}';
+            link.download = '{fileName}';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        ");
+    }
+}

@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using DTOs;
 using IRepository;
 using IServices;
@@ -36,7 +36,7 @@ public class TournamentService : ITournamentService
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;
     private readonly IUpdateRankingService _updateRankingService;
-    
+    private readonly INotificationService _notificationService;
 
 
     public TournamentService(
@@ -47,7 +47,8 @@ public class TournamentService : ITournamentService
         IRepository<Pot> potRepository,
         IAuditService auditService,
         ISessionService sessionService,
-        IUpdateRankingService updateRankingService)
+        IUpdateRankingService updateRankingService,
+        INotificationService notificationService)
     {
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
@@ -57,6 +58,7 @@ public class TournamentService : ITournamentService
         _auditService = auditService;
         _sessionService = sessionService;
         _updateRankingService = updateRankingService;
+        _notificationService = notificationService;
     }
 
     public void GenerateFixture(int seed, DateTime startDate)
@@ -152,6 +154,9 @@ public class TournamentService : ITournamentService
 
         _groupRepository.Update(group);
         _matchRepository.Update(match);
+
+        _notificationService.NotifyMatchResult(
+            matchId, match.HomeTeam.Name, match.AwayTeam.Name, homeGoals, awayGoals);
     }
 
     public void FinishGroupMatch(char groupLabel, int matchId)
@@ -184,10 +189,13 @@ public class TournamentService : ITournamentService
 
         foreach (var group in groups)
             _groupRepository.Update(group);
-        
+
         LogAction(
             "Group stage simulation executed",
             $"Group stage simulation executed with seed {seed} using {simulationEngine.Name}");
+
+        var matchCount = groups.SelectMany(g => g.Matches).Count();
+        _notificationService.NotifySimulationCompleted("Fase de grupos", matchCount);
     }
 
     public void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0)
@@ -238,6 +246,10 @@ public class TournamentService : ITournamentService
 
         var updatedMatch = allMatches.Single(match => match.MatchCode == matchCode);
         _matchRepository.Update(updatedMatch);
+
+        _notificationService.NotifyMatchResult(
+            updatedMatch.MatchId, updatedMatch.HomeTeam.Name, updatedMatch.AwayTeam.Name,
+            homeGoals, awayGoals);
     }
     
     public void FinishKnockoutMatch(string matchCode)
@@ -353,9 +365,11 @@ public class TournamentService : ITournamentService
         LogAction(
             "Knockout simulation executed",
             $"Knockout simulation executed with seed {seed} using {simulationEngine.Name}");
+
+        var knockoutMatchCount = knockoutMatches.Count;
+        _notificationService.NotifySimulationCompleted("Fase eliminatoria", knockoutMatchCount);
     }
 
-    
     private void RecalculateFinishedKnockoutRankings(IEnumerable<Match> matches)
     {
         var finishedKnockoutMatches = matches
@@ -366,12 +380,11 @@ public class TournamentService : ITournamentService
         foreach (var match in finishedKnockoutMatches)
             _updateRankingService.UpdateAfterMatch(match);
     }
-    
+
     public void FinishAllMatches()
     {
         var finishedCount = 0;
 
-        // Partidos de grupo: cada Group finaliza los suyos (Experto + Demeter).
         foreach (var group in _groupRepository.GetAll())
         {
             var finishedGroupMatches = group.FinishPlayedMatches().ToList();
@@ -385,7 +398,6 @@ public class TournamentService : ITournamentService
             finishedCount += finishedGroupMatches.Count;
         }
 
-        // Partidos sueltos / knockout que viven en el match repository.
         var standaloneMatches = _matchRepository.GetAll()
             .Where(match => match.HasResult && match.Status != MatchStatus.Finished)
             .ToList();
@@ -542,6 +554,9 @@ public class TournamentService : ITournamentService
         match.SetResult(homeGoals, awayGoals);
 
         _matchRepository.Update(match);
+
+        _notificationService.NotifyMatchResult(
+            matchId, match.HomeTeam.Name, match.AwayTeam.Name, homeGoals, awayGoals);
 
         LogAction(
             "Match result set",

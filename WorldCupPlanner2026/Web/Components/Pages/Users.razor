@@ -1,4 +1,4 @@
-﻿@page "/users"
+@page "/users"
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
@@ -153,6 +153,12 @@
                                                     title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Editor) ? "Quitar rol Editor" : "Asignar rol Editor"))"
                                                     class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Editor) ? "btn-success" : "btn-outline-secondary") border-custom">
                                                 Editor
+                                            </button>
+                                            <button @onclick="() => ToggleRole(user, RoleDto.Journalist)"
+                                                    disabled="@isSelf"
+                                                    title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Journalist) ? "Quitar rol Periodista" : "Asignar rol Periodista"))"
+                                                    class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Journalist) ? "btn-success" : "btn-outline-secondary") border-custom">
+                                                Periodista
                                             </button>
                                         </div>
                                     </td>

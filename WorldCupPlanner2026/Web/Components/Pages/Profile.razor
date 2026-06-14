@@ -61,7 +61,11 @@
                         {
                             <span class="badge bg-success-soft text-success px-3 py-2">Editor</span>
                         }
-                        @if (!currentUser.Roles.HasFlag(RoleDto.Admin) && !currentUser.Roles.HasFlag(RoleDto.Editor))
+                        @if (currentUser.Roles.HasFlag(RoleDto.Journalist))
+                        {
+                            <span class="badge bg-success-soft text-success px-3 py-2">Periodista</span>
+                        }
+                        @if (currentUser.Roles == RoleDto.None)
                         {
                             <span class="badge bg-secondary text-white px-3 py-2">Sin roles asignados</span>
                         }

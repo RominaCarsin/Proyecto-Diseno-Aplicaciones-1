@@ -21,23 +21,21 @@
             </div>
 
             <div class="d-flex gap-2 align-items-end flex-wrap">
-                @if (!AllMatches.Any())
+                @if (IsEditor)
                 {
-                    <div class="d-flex align-items-end gap-2">
-                        <div>
-                            <label class="small fw-bold">Semilla Cruces</label>
-                            <input type="number"
-                                   @bind="knockoutSeed"
-                                   class="form-control form-control-sm border-custom-input"
-                                   style="width: 100px;" />
-                        </div>
-
-                        <button class="btn btn-wc-blue btn-sm"
-                                disabled="@(!IsEditor)"
-                                @onclick="InitializeKnockoutStage">
-                            Inicializar 16vos (R32)
-                        </button>
+                    <div>
+                        <label class="small fw-bold">Semilla Cruces</label>
+                        <input type="number"
+                               @bind="knockoutSeed"
+                               class="form-control form-control-sm border-custom-input"
+                               style="width: 100px;" />
                     </div>
+
+                    <button class="btn btn-wc-blue btn-sm"
+                            disabled="@(!IsEditor)"
+                            @onclick="InitializeKnockoutStage">
+                        Inicializar 16vos (R32)
+                    </button>
                 }
                 else
                 {
@@ -95,18 +93,17 @@
                     }
                 }
             </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
+            }
         </div>
-
-        @if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
-        }
-
-        @if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
-        }
-    </div>
 
     @if (!AllMatches.Any())
     {
@@ -228,6 +225,7 @@
             </div>
         }
     }
+    </div>
 </div>
 
 @code {
@@ -251,8 +249,6 @@
     private string lastSimulationEngineName = "Probabilístico";
     private bool showLastSimulationEngine;
 
-    private bool SimulationEngineIsLocked =>
-        AllMatches.Any(match => HasResult(match) || IsFinished(match));
     private bool IsEditor =>
         SessionService.IsLoggedIn() &&
         SessionService.CurrentUserHasRole(RoleDto.Editor);
@@ -308,6 +304,9 @@
     private bool CanGoToNextPhase =>
         CurrentRoundIsFinished &&
         !TournamentIsComplete;
+
+    private bool SimulationEngineIsLocked =>
+        CurrentRoundMatches.Any(match => HasResult(match) && !IsFinished(match));
 
     protected override void OnInitialized()
     {
