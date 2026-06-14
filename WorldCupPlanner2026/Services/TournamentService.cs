@@ -166,14 +166,20 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
     }
 
-    public void SimulateGroupStage(int seed)
+    public void SimulateGroupStage(int seed) =>
+        SimulateGroupStage(seed, SimulationEngineTypeDto.Probabilistic);
+
+    public void SimulateGroupStage(int seed, SimulationEngineTypeDto simulationEngineType)
     {
         var groups = _groupRepository.GetAll().ToList();
 
         if (!groups.Any())
             throw new InvalidOperationException("No se ha generado la fase de grupos.");
 
-        var simulator = new GroupStageSimulator(seed);
+        var domainEngineType = SimulationEngineTypeMapper.ToDomain(simulationEngineType);
+        var simulationEngine = SimulationEngineFactory.Create(domainEngineType);
+
+        var simulator = new GroupStageSimulator(seed, simulationEngine);
         simulator.Simulate(groups);
 
         foreach (var group in groups)

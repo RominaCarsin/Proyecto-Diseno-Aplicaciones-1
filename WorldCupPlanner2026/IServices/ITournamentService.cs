@@ -6,13 +6,12 @@ public interface ITournamentService
 {
     void GenerateFixture(int seed, DateTime startDate);
     bool CanGenerateFixture();
-    void GenerateFixture(int seed);   // ← agregar esta
+    void GenerateFixture(int seed);
     int GetStadiumCount();
 
     IEnumerable<GroupResponse> GetGroups();
     GroupResponse GetGroupByLabel(char label);
     IEnumerable<TeamResponse> GetGroupStandings(char groupLabel);
-    //TeamResponse GetTeamByPosition(char groupLabel, int position);
     IEnumerable<TeamResponse> GetQualifiedTeams();
 
     IEnumerable<MatchResponse> GetMatches();
@@ -21,6 +20,8 @@ public interface ITournamentService
     void FinishGroupMatch(char groupLabel, int matchId);
 
     void SimulateGroupStage(int seed);
+    void SimulateGroupStage(int seed, SimulationEngineTypeDto simulationEngineType);
+
     void AddMatch(MatchRequest matchRequest);
     void SetMatchResult(int matchId, int homeGoals, int awayGoals);
     void UpdateMatchDate(int matchId, DateTime newDate);
@@ -42,8 +43,11 @@ public interface ITournamentService
     void InitializeSemiFinals();
     void InitializeThirdPlace();
     void InitializeFinal();
+
     void SimulateKnockoutStage(int seed);
+    //void SimulateKnockoutStage(int seed, SimulationEngineTypeDto simulationEngineType);
+
     void FinishAllMatches();
-    
+
     void RegisterMatchIncidence(int matchId, string incidenceType, bool isHomeTeam, int minute);
 }

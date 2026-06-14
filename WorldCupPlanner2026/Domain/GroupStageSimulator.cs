@@ -6,7 +6,7 @@ public class GroupStageSimulator
     private readonly ISimulationEngine _simulationEngine;
 
     public GroupStageSimulator(int seed)
-        : this(seed, new ProbabilisticSimulationEngine())
+        : this(seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic))
     {
     }
 
