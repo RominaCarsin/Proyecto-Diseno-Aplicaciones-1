@@ -21,7 +21,7 @@
             </div>
 
             <div class="d-flex gap-2 align-items-end flex-wrap">
-                @if (IsEditor)
+                @if (IsEditor && !AllMatches.Any())
                 {
                     <div>
                         <label class="small fw-bold">Semilla Cruces</label>
@@ -32,65 +32,60 @@
                     </div>
 
                     <button class="btn btn-wc-blue btn-sm"
-                            disabled="@(!IsEditor)"
                             @onclick="InitializeKnockoutStage">
                         Inicializar 16vos (R32)
                     </button>
                 }
-                else
+                else if (TournamentIsComplete)
                 {
-                    @if (TournamentIsComplete)
-                    {
-                        <span class="badge bg-success px-3 py-2">
-                            Torneo finalizado
-                        </span>
-                    }
-                    else if (CanFinishCurrentRound)
-                    {
-                        <button class="btn btn-wc-red btn-sm"
-                                disabled="@(!IsEditor)"
-                                @onclick="FinishAllKnockoutMatches">
-                            <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
-                        </button>
-                    }
-                    else if (CanGoToNextPhase)
-                    {
-                        <button class="btn btn-outline-dark btn-sm border-custom"
-                                @onclick="CheckAndInitializeNextPhase">
-                            Siguiente Fase <i class="bi bi-arrow-right"></i>
-                        </button>
-                    }
-                    else
-                    {
-                        <div class="d-flex align-items-end gap-2">
-                            <div>
-                                <label class="small fw-bold">SemillaSimulation</label>
-                                <input type="number"
-                                       @bind="simulationSeed"
-                                       class="form-control form-control-sm border-custom-input"
-                                       style="width: 100px;" />
-                            </div>
-
-                            @if (!SimulationEngineIsLocked)
-                            {
-                                <div>
-                                    <label class="small fw-bold">Motor</label>
-                                    <select class="form-select form-select-sm border-custom-input"
-                                            @bind="selectedSimulationEngine"
-                                            style="width: 150px;">
-                                        <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
-                                        <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
-                                    </select>
-                                </div>
-                            }
-
-                            <button class="btn btn-wc-green btn-sm"
-                                    disabled="@(!CanSimulateCurrentRound)"
-                                    @onclick="SimulateKnockout">
-                                <i class="bi bi-shuffle"></i> Simular fase eliminatoria
-                            </button>
+                    <span class="badge bg-success px-3 py-2">
+                        Torneo finalizado
+                    </span>
+                }
+                else if (CanFinishCurrentRound)
+                {
+                    <button class="btn btn-wc-red btn-sm"
+                            @onclick="FinishAllKnockoutMatches">
+                        <i class="bi bi-flag-fill"></i> Finalizar todos los partidos
+                    </button>
+                }
+                else if (CanGoToNextPhase)
+                {
+                    <button class="btn btn-outline-dark btn-sm border-custom"
+                            @onclick="CheckAndInitializeNextPhase">
+                        Siguiente Fase <i class="bi bi-arrow-right"></i>
+                    </button>
+                }
+                else if (IsEditor && AllMatches.Any())
+                {
+                    <div class="d-flex align-items-end gap-2">
+                        <div>
+                            <label class="small fw-bold">SemillaSimulation</label>
+                            <input type="number"
+                                   @bind="simulationSeed"
+                                   class="form-control form-control-sm border-custom-input"
+                                   style="width: 100px;" />
                         </div>
-                    }
+
+                        @if (!SimulationEngineIsLocked)
+                        {
+                            <div>
+                                <label class="small fw-bold">Motor</label>
+                                <select class="form-select form-select-sm border-custom-input"
+                                        @bind="selectedSimulationEngine"
+                                        style="width: 150px;">
+                                    <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
+                                    <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
+                                </select>
+                            </div>
+                        }
+
+                        <button class="btn btn-wc-green btn-sm"
+                                disabled="@(!CanSimulateCurrentRound)"
+                                @onclick="SimulateKnockout">
+                            <i class="bi bi-shuffle"></i> Simular fase eliminatoria
+                        </button>
+                    </div>
                 }
             </div>
 
@@ -333,8 +328,23 @@
     {
         ClearMessages();
 
-        if (!CanSimulateCurrentRound)
+        if (!IsEditor)
+        {
+            errorMessage = "Solo un Editor puede simular la fase eliminatoria.";
             return;
+        }
+
+        if (!simulationSeed.HasValue)
+        {
+            errorMessage = "Debés ingresar una semilla de simulación.";
+            return;
+        }
+
+        if (!CurrentRoundHasUnfinishedMatches)
+        {
+            errorMessage = "No hay partidos pendientes para simular en la fase actual.";
+            return;
+        }
 
         try
         {
@@ -364,8 +374,23 @@
     {
         ClearMessages();
 
-        if (!CanFinishCurrentRound)
+        if (!IsEditor)
+        {
+            errorMessage = "Solo un Editor puede finalizar partidos de la fase eliminatoria.";
             return;
+        }
+
+        if (!CurrentRoundHasUnfinishedMatches)
+        {
+            errorMessage = "No hay partidos pendientes para finalizar en la fase actual.";
+            return;
+        }
+
+        if (!CurrentRoundUnfinishedMatchesHaveResults)
+        {
+            errorMessage = "Todos los partidos pendientes deben tener resultado antes de finalizarlos.";
+            return;
+        }
 
         try
         {
@@ -398,7 +423,10 @@
     private void SaveResult(string? matchCode)
     {
         if (string.IsNullOrWhiteSpace(matchCode))
+        {
+            errorMessage = "No se pudo identificar el partido a actualizar.";
             return;
+        }
 
         ClearMessages();
 
@@ -418,7 +446,10 @@
     private void FinishMatch(string? matchCode)
     {
         if (string.IsNullOrWhiteSpace(matchCode))
+        {
+            errorMessage = "No se pudo identificar el partido a finalizar.";
             return;
+        }
 
         ClearMessages();
 
@@ -437,8 +468,17 @@
 
     private void CheckAndInitializeNextPhase()
     {
-        if (!CanGoToNextPhase)
+        if (!CurrentRoundIsFinished)
+        {
+            errorMessage = "Debés finalizar todos los partidos de la fase actual antes de avanzar.";
             return;
+        }
+
+        if (TournamentIsComplete)
+        {
+            errorMessage = "El torneo ya está completo.";
+            return;
+        }
 
         var lastPhase = AllMatches
             .OrderByDescending(match => GetPhaseOrder(match.Phase))
@@ -468,6 +508,9 @@
                     TournamentService.InitializeFinal();
                     successMessage = "Final y tercer puesto generados correctamente.";
                     break;
+
+                default:
+                    throw new InvalidOperationException($"No se puede avanzar desde la fase actual: {lastPhase ?? "desconocida"}.");
             }
         });
     }

@@ -18,6 +18,10 @@
     }
     else
     {
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger border-custom py-2">@errorMessage</div>
+        }
         @* --- EXPORTAR AUDITORÍA --- *@
         <div class="bg-white border-custom p-6 diagonal-corners">
             <div class="d-flex align-items-center justify-content-between mb-4">
@@ -83,6 +87,7 @@
 @code {
     private DateTime? auditFrom;
     private DateTime? auditTo;
+    private string errorMessage = string.Empty;
 
     private bool CanExport =>
         SessionService.IsLoggedIn() &&
@@ -129,30 +134,46 @@
 
     private async Task ExportAuditCsv()
     {
-        var logs = GetFilteredAuditLogs();
-        var data = ExportService.ExportAuditLogToCsv(logs);
-        await DownloadFile(data, "audit_log.csv", "text/csv");
+        try
+        {
+            var logs = GetFilteredAuditLogs();
+            var data = ExportService.ExportAuditLogToCsv(logs);
+            await DownloadFile(data, "audit_log.csv", "text/csv");
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
     }
 
     private async Task ExportAuditXlsx()
     {
-        var logs = GetFilteredAuditLogs();
-        var data = ExportService.ExportAuditLogToXlsx(logs);
-        await DownloadFile(data, "audit_log.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        try
+        {
+            var logs = GetFilteredAuditLogs();
+            var data = ExportService.ExportAuditLogToXlsx(logs);
+            await DownloadFile(data, "audit_log.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
     }
 
     private async Task ExportFixtureCsv()
     {
-        var matches = GetMatchesForExport();
-        var data = ExportService.ExportFixtureToCsv(matches);
-        await DownloadFile(data, "fixture.csv", "text/csv");
+        try
+        {
+            var matches = GetMatchesForExport();
+            var data = ExportService.ExportFixtureToCsv(matches);
+            await DownloadFile(data, "fixture.csv", "text/csv");
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
     }
 
     private async Task ExportFixtureXlsx()
     {
-        var matches = GetMatchesForExport();
-        var data = ExportService.ExportFixtureToXlsx(matches);
-        await DownloadFile(data, "fixture.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        try
+        {
+            var matches = GetMatchesForExport();
+            var data = ExportService.ExportFixtureToXlsx(matches);
+            await DownloadFile(data, "fixture.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
     }
 
     private async Task DownloadFile(byte[] data, string fileName, string contentType)

@@ -85,12 +85,11 @@
 @code {
     private IEnumerable<TeamResponse> teams = Enumerable.Empty<TeamResponse>();
 
-    // Caso 2: visible para Admin y Editor. Cuando C agregue RoleDto.Periodista,
-    // sumar ese rol aca:  || SessionService.CurrentUserHasRole(RoleDto.Periodista)
     private bool CanView =>
         SessionService.IsLoggedIn() &&
         (SessionService.CurrentUserHasRole(RoleDto.Admin) ||
-         SessionService.CurrentUserHasRole(RoleDto.Editor));
+         SessionService.CurrentUserHasRole(RoleDto.Editor) ||
+         SessionService.CurrentUserHasRole(RoleDto.Journalist));
 
     protected override void OnInitialized()
     {
