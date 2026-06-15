@@ -55,6 +55,31 @@ using (var scope = app.Services.CreateScope())
 
     dbContext.Database.Migrate();
 
+    if (!dbContext.Users.Any(user => user.Email == "solo.admin@test.com"))
+    {
+        dbContext.Users.Add(new User(
+            name: "Solo",
+            surname: "Admin",
+            email: "solo.admin@test.com",
+            dateOfBirth: new DateTime(2000, 1, 1),
+            plainPassword: "Password1!",
+            roles: Role.Admin));
+
+        dbContext.SaveChanges();
+    }
+
+    if (!dbContext.Users.Any(user => user.Email == "solo.editor@test.com"))
+    {
+        dbContext.Users.Add(new User(
+            name: "Solo",
+            surname: "Editor",
+            email: "solo.editor@test.com",
+            dateOfBirth: new DateTime(2000, 1, 1),
+            plainPassword: "Password1!",
+            roles: Role.Editor));
+
+        dbContext.SaveChanges();
+    }
     if (!dbContext.Users.Any(user => user.Email == "admin@test.com"))
     {
         dbContext.Users.Add(new User(

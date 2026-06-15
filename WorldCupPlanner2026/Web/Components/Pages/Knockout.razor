@@ -6,6 +6,14 @@
 @inject ITournamentService TournamentService
 
 <div class="container-fluid p-0 space-y-6">
+    @if (HasFinalWinner)
+    {
+        <div class="winner-banner text-center p-5">
+            <i class="bi bi-trophy-fill winner-trophy"></i>
+            <h2 class="winner-title">¡@(FinalMatch!.Winner!.Name) es el Campeón del Mundo!</h2>
+            <p class="winner-subtitle">Ganador de la Copa Mundial 2026</p>
+        </div>
+    }
     <div class="bg-white border-custom p-4 diagonal-corners">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
@@ -28,7 +36,7 @@
                         <input type="number"
                                @bind="knockoutSeed"
                                class="form-control form-control-sm border-custom-input"
-                               style="width: 100px;" />
+                               style="width: 100px;"/>
                     </div>
 
                     <button class="btn btn-wc-blue btn-sm"
@@ -64,21 +72,28 @@
                             <input type="number"
                                    @bind="simulationSeed"
                                    class="form-control form-control-sm border-custom-input"
-                                   style="width: 100px;" />
+                                   style="width: 100px;"/>
                         </div>
 
-                        @if (!SimulationEngineIsLocked)
-                        {
-                            <div>
-                                <label class="small fw-bold">Motor</label>
+                        <div>
+                            <label class="small fw-bold">Motor</label>
+
+                            @if (!KnockoutSimulationEngineIsLocked)
+                            {
                                 <select class="form-select form-select-sm border-custom-input"
                                         @bind="selectedSimulationEngine"
                                         style="width: 150px;">
                                     <option value="@SimulationEngineTypeDto.Probabilistic">Probabilístico</option>
                                     <option value="@SimulationEngineTypeDto.PureRandom">Aleatorio Puro</option>
                                 </select>
-                            </div>
-                        }
+                            }
+                            else
+                            {
+                                <div class="simulation-engine-display">
+                                    @lastSimulationEngineName
+                                </div>
+                            }
+                        </div>
 
                         <button class="btn btn-wc-green btn-sm"
                                 disabled="@(!CanSimulateCurrentRound)"
@@ -100,126 +115,119 @@
             }
         </div>
 
-    @if (!AllMatches.Any())
-    {
-        <div class="bg-white border-custom p-5 text-center diagonal-corners">
-            <i class="bi bi-trophy text-light display-1"></i>
-            <p class="mt-3 text-muted">Aún no se ha generado la fase de eliminación directa.</p>
-
-            @if (!IsEditor)
-            {
-                <p class="text-muted mb-0">Solo un Editor puede inicializar la fase eliminatoria.</p>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="bracket-container p-4">
-            @foreach (var phaseGroup in GroupedMatches)
-            {
-                <div class="bracket-column @(phaseGroup.Key == "Final" ? "match-final" : "")">
-                    <h5 class="text-center mb-4 phase-title">@TranslatePhase(phaseGroup.Key)</h5>
-
-                    <div class="matches-list">
-                        @foreach (var match in phaseGroup.OrderBy(m => m.MatchCode))
-                        {
-                            <div class="match-card @(IsFinished(match) ? "match-finished" : "match-pending") @(editingMatchCode == match.MatchCode ? "match-editing" : "")">
-                                <div class="match-header d-flex justify-content-between">
-                                    <span class="badge bg-light text-dark border-custom">@match.MatchCode</span>
-                                    <span class="small text-muted">@match.Date.ToString("dd/MM HH:mm")</span>
-                                </div>
-
-                                <div class="match-body my-2">
-                                    <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.HomeTeam) ? "fw-bold text-success" : "")">
-                                        <span>
-                                            <i class="bi bi-shield-fill me-1"></i> @match.HomeTeam.Name
-                                        </span>
-
-                                        @if (editingMatchCode == match.MatchCode)
-                                        {
-                                            <input type="number"
-                                                   min="0"
-                                                   @bind="editHomeGoals"
-                                                   class="score-input-sm" />
-                                        }
-                                        else
-                                        {
-                                            <span class="score-box">@(match.HomeGoals?.ToString() ?? "-")</span>
-                                        }
-                                    </div>
-
-                                    <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.AwayTeam) ? "fw-bold text-success" : "")">
-                                        <span>
-                                            <i class="bi bi-shield-fill me-1"></i> @match.AwayTeam.Name
-                                        </span>
-
-                                        @if (editingMatchCode == match.MatchCode)
-                                        {
-                                            <input type="number"
-                                                   min="0"
-                                                   @bind="editAwayGoals"
-                                                   class="score-input-sm" />
-                                        }
-                                        else
-                                        {
-                                            <span class="score-box">@(match.AwayGoals?.ToString() ?? "-")</span>
-                                        }
-                                    </div>
-                                </div>
-
-                                @if (IsEditor)
-                                {
-                                    <div class="match-actions border-top pt-2 mt-2 d-flex justify-content-center gap-2">
-                                        @if (IsFinished(match))
-                                        {
-                                            <span class="badge bg-success px-2 py-1">
-                                                Partido finalizado
-                                            </span>
-                                        }
-                                        else if (editingMatchCode == match.MatchCode)
-                                        {
-                                            <button class="btn btn-xs btn-wc-green"
-                                                    @onclick="() => SaveResult(match.MatchCode)">
-                                                OK
-                                            </button>
-
-                                            <button class="btn btn-xs btn-light border-custom"
-                                                    @onclick="CancelEdit">
-                                                X
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button class="btn btn-xs btn-light border-custom"
-                                                    @onclick="() => StartEdit(match)">
-                                                <i class="bi bi-pencil"></i>
-                                                Editar
-                                            </button>
-
-                                            <button class="btn btn-xs btn-outline-warning border-custom"
-                                                    disabled="@(!HasResult(match))"
-                                                    @onclick="() => FinishMatch(match.MatchCode)">
-                                                Terminar
-                                            </button>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-        </div>
-
-        @if (HasFinalWinner)
+        @if (!AllMatches.Any())
         {
-            <div class="winner-banner text-center p-5">
-                <i class="bi bi-trophy-fill winner-trophy"></i>
-                <h2 class="winner-title">¡@(FinalMatch!.Winner!.Name) es el Campeón del Mundo!</h2>
-                <p class="winner-subtitle">Ganador de la Copa Mundial 2026</p>
+            <div class="bg-white border-custom p-5 text-center diagonal-corners">
+                <i class="bi bi-trophy text-light display-1"></i>
+                <p class="mt-3 text-muted">Aún no se ha generado la fase de eliminación directa.</p>
+
+                @if (!IsEditor)
+                {
+                    <p class="text-muted mb-0">Solo un Editor puede inicializar la fase eliminatoria.</p>
+                }
             </div>
         }
-    }
+        else
+        {
+            <div class="bracket-container p-4">
+                @foreach (var phaseGroup in GroupedMatches)
+                {
+                    <div class="bracket-column @(phaseGroup.Key == "Final" ? "match-final" : "")">
+                        <h5 class="text-center mb-4 phase-title">@TranslatePhase(phaseGroup.Key)</h5>
+
+                        <div class="matches-list">
+                            @foreach (var match in phaseGroup.OrderBy(m => m.MatchCode))
+                            {
+                                <div class="match-card @(IsFinished(match) ? "match-finished" : "match-pending") @(editingMatchCode == match.MatchCode ? "match-editing" : "")">
+                                    <div class="match-header d-flex justify-content-between">
+                                        <span class="badge bg-light text-dark border-custom">@match.MatchCode</span>
+                                        <span class="small text-muted">@match.Date.ToString("dd/MM HH:mm")</span>
+                                    </div>
+
+                                    <div class="match-body my-2">
+                                        <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.HomeTeam) ? "fw-bold text-success" : "")">
+                                            <span>
+                                                <i class="bi bi-shield-fill me-1"></i> @match.HomeTeam.Name
+                                            </span>
+
+                                            @if (editingMatchCode == match.MatchCode)
+                                            {
+                                                <input type="number"
+                                                       min="0"
+                                                       @bind="editHomeGoals"
+                                                       class="score-input-sm"/>
+                                            }
+                                            else
+                                            {
+                                                <span class="score-box">@(match.HomeGoals?.ToString() ?? "-")</span>
+                                            }
+                                        </div>
+
+                                        <div class="team-row d-flex justify-content-between align-items-center @(IsWinner(match, match.AwayTeam) ? "fw-bold text-success" : "")">
+                                            <span>
+                                                <i class="bi bi-shield-fill me-1"></i> @match.AwayTeam.Name
+                                            </span>
+
+                                            @if (editingMatchCode == match.MatchCode)
+                                            {
+                                                <input type="number"
+                                                       min="0"
+                                                       @bind="editAwayGoals"
+                                                       class="score-input-sm"/>
+                                            }
+                                            else
+                                            {
+                                                <span class="score-box">@(match.AwayGoals?.ToString() ?? "-")</span>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    @if (IsEditor)
+                                    {
+                                        <div class="match-actions border-top pt-2 mt-2 d-flex justify-content-center gap-2">
+                                            @if (IsFinished(match))
+                                            {
+                                                <span class="badge bg-success px-2 py-1">
+                                                    Partido finalizado
+                                                </span>
+                                            }
+                                            else if (editingMatchCode == match.MatchCode)
+                                            {
+                                                <button class="btn btn-xs btn-wc-green"
+                                                        @onclick="() => SaveResult(match.MatchCode)">
+                                                    OK
+                                                </button>
+
+                                                <button class="btn btn-xs btn-light border-custom"
+                                                        @onclick="CancelEdit">
+                                                    X
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-xs btn-light border-custom"
+                                                        @onclick="() => StartEdit(match)">
+                                                    <i class="bi bi-pencil"></i>
+                                                    Editar
+                                                </button>
+
+                                                <button class="btn btn-xs btn-outline-warning border-custom"
+                                                        disabled="@(!HasResult(match))"
+                                                        @onclick="() => FinishMatch(match.MatchCode)">
+                                                    Terminar
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+
+        }
     </div>
 </div>
 
@@ -300,8 +308,8 @@
         CurrentRoundIsFinished &&
         !TournamentIsComplete;
 
-    private bool SimulationEngineIsLocked =>
-        CurrentRoundMatches.Any(match => HasResult(match) && !IsFinished(match));
+    private bool KnockoutSimulationEngineIsLocked =>
+        AllMatches.Any(HasResult);
 
     protected override void OnInitialized()
     {
@@ -348,10 +356,14 @@
 
         try
         {
-            if (!SimulationEngineIsLocked)
+            if (!KnockoutSimulationEngineIsLocked)
+            {
                 lockedSimulationEngine = selectedSimulationEngine;
+            }
             else
+            {
                 selectedSimulationEngine = lockedSimulationEngine;
+            }
 
             TournamentService.SimulateKnockoutStage(simulationSeed!.Value, lockedSimulationEngine);
 
@@ -713,5 +725,18 @@
     .team-winner-gold {
         color: #8b6914 !important;
         font-weight: bold;
+    }
+
+    .simulation-engine-display {
+        min-height: 31px;
+        display: flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid var(--g300);
+        border-radius: 0.375rem;
+        background: var(--g100);
+        font-weight: 700;
+        color: var(--g800);
+        font-size: 0.875rem;
     }
 </style>
