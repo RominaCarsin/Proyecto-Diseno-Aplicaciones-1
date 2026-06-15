@@ -113,4 +113,101 @@ public class PureRandomSimulationEngineTests
         Assert.IsTrue(result.HomeGoals is >= 0 and <= 3);
         Assert.IsTrue(result.AwayGoals is >= 0 and <= 3);
     }
+
+    [TestMethod]
+    public void Simulate_GroupStage_ShouldReturnYellowCardsWithinValidRange()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 2500);
+        var away = CreateTeam("AWAY", 300);
+
+        var result = engine.Simulate(
+            home,
+            away,
+            TournamentPhase.GroupStage,
+            new Random(Seed));
+
+        Assert.IsTrue(result.HomeYellowCards >= 0 && result.HomeYellowCards <= 5,
+            $"HomeYellowCards {result.HomeYellowCards} is out of range [0, 5]");
+        Assert.IsTrue(result.AwayYellowCards >= 0 && result.AwayYellowCards <= 5,
+            $"AwayYellowCards {result.AwayYellowCards} is out of range [0, 5]");
+    }
+
+    [TestMethod]
+    public void Simulate_GroupStage_ShouldReturnRedCardsWithinValidRange()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 2500);
+        var away = CreateTeam("AWAY", 300);
+
+        var result = engine.Simulate(
+            home,
+            away,
+            TournamentPhase.GroupStage,
+            new Random(Seed));
+
+        Assert.IsTrue(result.HomeRedCards >= 0 && result.HomeRedCards <= 1,
+            $"HomeRedCards {result.HomeRedCards} is out of range [0, 1]");
+        Assert.IsTrue(result.AwayRedCards >= 0 && result.AwayRedCards <= 1,
+            $"AwayRedCards {result.AwayRedCards} is out of range [0, 1]");
+    }
+
+    [TestMethod]
+    public void Simulate_Knockout_ShouldReturnYellowCardsWithinValidRange()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 2500);
+        var away = CreateTeam("AWAY", 300);
+
+        var result = engine.Simulate(
+            home,
+            away,
+            TournamentPhase.RoundOf16,
+            new Random(Seed));
+
+        Assert.IsTrue(result.HomeYellowCards >= 0 && result.HomeYellowCards <= 5);
+        Assert.IsTrue(result.AwayYellowCards >= 0 && result.AwayYellowCards <= 5);
+    }
+
+    [TestMethod]
+    public void Simulate_Knockout_ShouldReturnRedCardsWithinValidRange()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 2500);
+        var away = CreateTeam("AWAY", 300);
+
+        var result = engine.Simulate(
+            home,
+            away,
+            TournamentPhase.RoundOf16,
+            new Random(Seed));
+
+        Assert.IsTrue(result.HomeRedCards >= 0 && result.HomeRedCards <= 1);
+        Assert.IsTrue(result.AwayRedCards >= 0 && result.AwayRedCards <= 1);
+    }
+
+    [TestMethod]
+    public void Simulate_GroupStageWithSameSeed_ShouldReturnSameResultIncludingCards()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 2500);
+        var away = CreateTeam("AWAY", 300);
+
+        var firstResult = engine.Simulate(
+            home,
+            away,
+            TournamentPhase.GroupStage,
+            new Random(Seed));
+
+        var secondResult = engine.Simulate(
+            home,
+            away,
+            TournamentPhase.GroupStage,
+            new Random(Seed));
+
+        Assert.AreEqual(firstResult.HomeYellowCards, secondResult.HomeYellowCards);
+        Assert.AreEqual(firstResult.AwayYellowCards, secondResult.AwayYellowCards);
+        Assert.AreEqual(firstResult.HomeRedCards, secondResult.HomeRedCards);
+        Assert.AreEqual(firstResult.AwayRedCards, secondResult.AwayRedCards);
+    }
 }

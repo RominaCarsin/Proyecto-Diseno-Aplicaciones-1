@@ -31,7 +31,7 @@ public class KnockoutSimulator
                 match.Phase,
                 random);
 
-            match.SetResult(result.HomeGoals, result.AwayGoals);
+            match.SetSimulationResult(result, random);
         }
     }
 }

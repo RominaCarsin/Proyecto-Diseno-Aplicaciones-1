@@ -3,6 +3,8 @@
 public class ProbabilisticSimulationEngine : ISimulationEngine
 {
     private const double DrawZone = 0.10;
+    private const int MaxYellowCards = 5;
+    private const int MaxRedCards = 1;
 
     public string Name => "Probabilístico";
 
@@ -18,6 +20,46 @@ public class ProbabilisticSimulationEngine : ISimulationEngine
     }
 
     private static SimulationResult SimulateGroupStageResult(
+        int homeRanking,
+        int awayRanking,
+        Random random)
+    {
+        SimulationResult goals = GetGroupStageGoals(homeRanking, awayRanking, random);
+        int homeYellow = random.Next(0, MaxYellowCards + 1);
+        int awayYellow = random.Next(0, MaxYellowCards + 1);
+        int homeRed = random.Next(0, MaxRedCards + 1);
+        int awayRed = random.Next(0, MaxRedCards + 1);
+
+        return new SimulationResult(
+            goals.HomeGoals,
+            goals.AwayGoals,
+            homeYellow,
+            awayYellow,
+            homeRed,
+            awayRed);
+    }
+
+    private static SimulationResult SimulateKnockoutResult(
+        int homeRanking,
+        int awayRanking,
+        Random random)
+    {
+        SimulationResult goals = GetKnockoutGoals(homeRanking, awayRanking, random);
+        int homeYellow = random.Next(0, MaxYellowCards + 1);
+        int awayYellow = random.Next(0, MaxYellowCards + 1);
+        int homeRed = random.Next(0, MaxRedCards + 1);
+        int awayRed = random.Next(0, MaxRedCards + 1);
+
+        return new SimulationResult(
+            goals.HomeGoals,
+            goals.AwayGoals,
+            homeYellow,
+            awayYellow,
+            homeRed,
+            awayRed);
+    }
+
+    private static SimulationResult GetGroupStageGoals(
         int homeRanking,
         int awayRanking,
         Random random)
@@ -46,7 +88,7 @@ public class ProbabilisticSimulationEngine : ISimulationEngine
         return new SimulationResult(finalDrawGoals, finalDrawGoals);
     }
 
-    private static SimulationResult SimulateKnockoutResult(
+    private static SimulationResult GetKnockoutGoals(
         int homeRanking,
         int awayRanking,
         Random random)

@@ -181,6 +181,46 @@ public class GroupStageSimulatorTests
         Assert.AreEqual(4, match.HomeGoals);
         Assert.AreEqual(1, match.AwayGoals);
     }
+
+    [TestMethod]
+    public void Simulate_WithCustomEngine_ShouldRegisterCardsFromSimulationResult()
+    {
+        var home = CreateTeam("HOME", "CONMEBOL", 1500);
+        var away = CreateTeam("AWAY", "UEFA", 1700);
+        var group = CreateGroupWithMatch(LabelA, home, away, out var match);
+
+        var engine = new FixedSimulationEngineWithCards(
+            homeGoals: 2,
+            awayGoals: 1,
+            homeYellow: 3,
+            awayYellow: 2,
+            homeRed: 1,
+            awayRed: 0);
+
+        new GroupStageSimulator(Seed, engine).Simulate(new[] { group });
+
+        Assert.AreEqual(2, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(3, match.YellowCardsOf(home));
+        Assert.AreEqual(2, match.YellowCardsOf(away));
+        Assert.AreEqual(1, match.RedCardsOf(home));
+        Assert.AreEqual(0, match.RedCardsOf(away));
+    }
+
+    [TestMethod]
+    public void Simulate_ShouldGenerateCardsWithinValidRange()
+    {
+        var home = CreateTeam("HOME", "CONMEBOL", 2500);
+        var away = CreateTeam("AWAY", "UEFA", 300);
+        var group = CreateGroupWithMatch(LabelA, home, away, out var match);
+
+        new GroupStageSimulator(Seed).Simulate(new[] { group });
+
+        Assert.IsTrue(match.YellowCardsOf(home) >= 0 && match.YellowCardsOf(home) <= 5);
+        Assert.IsTrue(match.YellowCardsOf(away) >= 0 && match.YellowCardsOf(away) <= 5);
+        Assert.IsTrue(match.RedCardsOf(home) >= 0 && match.RedCardsOf(home) <= 1);
+        Assert.IsTrue(match.RedCardsOf(away) >= 0 && match.RedCardsOf(away) <= 1);
+    }
     
     private sealed class FixedSimulationEngine : ISimulationEngine
     {
@@ -202,6 +242,49 @@ public class GroupStageSimulatorTests
             Random random)
         {
             return new SimulationResult(_homeGoals, _awayGoals);
+        }
+    }
+
+    private sealed class FixedSimulationEngineWithCards : ISimulationEngine
+    {
+        private readonly int _homeGoals;
+        private readonly int _awayGoals;
+        private readonly int _homeYellowCards;
+        private readonly int _awayYellowCards;
+        private readonly int _homeRedCards;
+        private readonly int _awayRedCards;
+
+        public FixedSimulationEngineWithCards(
+            int homeGoals,
+            int awayGoals,
+            int homeYellow,
+            int awayYellow,
+            int homeRed,
+            int awayRed)
+        {
+            _homeGoals = homeGoals;
+            _awayGoals = awayGoals;
+            _homeYellowCards = homeYellow;
+            _awayYellowCards = awayYellow;
+            _homeRedCards = homeRed;
+            _awayRedCards = awayRed;
+        }
+
+        public string Name => "FixedWithCards";
+
+        public SimulationResult Simulate(
+            Team homeTeam,
+            Team awayTeam,
+            TournamentPhase phase,
+            Random random)
+        {
+            return new SimulationResult(
+                _homeGoals,
+                _awayGoals,
+                _homeYellowCards,
+                _awayYellowCards,
+                _homeRedCards,
+                _awayRedCards);
         }
     }
 }

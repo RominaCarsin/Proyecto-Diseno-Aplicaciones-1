@@ -34,7 +34,7 @@ public class GroupStageSimulator
                 match.Phase,
                 random);
 
-            group.SetMatchResult(match, result.HomeGoals, result.AwayGoals);
+            group.SetMatchSimulationResult(match, result, random);
         }
     }
 }

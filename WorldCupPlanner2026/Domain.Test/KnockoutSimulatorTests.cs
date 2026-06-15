@@ -199,6 +199,59 @@ public class KnockoutSimulatorTests
         Assert.AreEqual(1, match.AwayGoals);
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
     }
+
+    [TestMethod]
+    public void Simulate_WithCustomEngine_ShouldRegisterCardsFromSimulationResult()
+    {
+        var homeTeam = CreateTeam("HOME", 1500);
+        var awayTeam = CreateTeam("AWAY", 1700);
+        var match = CreateMatch(homeTeam, awayTeam);
+
+        var engine = new FixedSimulationEngineWithCards(
+            homeGoals: 2,
+            awayGoals: 1,
+            homeYellow: 2,
+            awayYellow: 3,
+            homeRed: 0,
+            awayRed: 1);
+
+        new KnockoutSimulator(Seed, engine).Simulate(new[] { match });
+
+        Assert.AreEqual(2, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(2, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(3, match.YellowCardsOf(awayTeam));
+        Assert.AreEqual(0, match.RedCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(awayTeam));
+    }
+
+    [TestMethod]
+    public void Simulate_ShouldGenerateCardsWithinValidRange()
+    {
+        var match = CreateMatch(CreateTeam("HOME", 2500), CreateTeam("AWAY", 300));
+
+        new KnockoutSimulator(Seed).Simulate(new[] { match });
+
+        Assert.IsTrue(match.YellowCardsOf(match.HomeTeam) >= 0 && match.YellowCardsOf(match.HomeTeam) <= 5);
+        Assert.IsTrue(match.YellowCardsOf(match.AwayTeam) >= 0 && match.YellowCardsOf(match.AwayTeam) <= 5);
+        Assert.IsTrue(match.RedCardsOf(match.HomeTeam) >= 0 && match.RedCardsOf(match.HomeTeam) <= 1);
+        Assert.IsTrue(match.RedCardsOf(match.AwayTeam) >= 0 && match.RedCardsOf(match.AwayTeam) <= 1);
+    }
+
+    [TestMethod]
+    public void Simulate_WithSameSeed_ShouldProduceDeterministicCardsResult()
+    {
+        var match1 = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700), "C1");
+        var match2 = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700), "C1");
+
+        new KnockoutSimulator(Seed).Simulate(new[] { match1 });
+        new KnockoutSimulator(Seed).Simulate(new[] { match2 });
+
+        Assert.AreEqual(match1.YellowCardsOf(match1.HomeTeam), match2.YellowCardsOf(match2.HomeTeam));
+        Assert.AreEqual(match1.YellowCardsOf(match1.AwayTeam), match2.YellowCardsOf(match2.AwayTeam));
+        Assert.AreEqual(match1.RedCardsOf(match1.HomeTeam), match2.RedCardsOf(match2.HomeTeam));
+        Assert.AreEqual(match1.RedCardsOf(match1.AwayTeam), match2.RedCardsOf(match2.AwayTeam));
+    }
     
     private sealed class FixedSimulationEngine : ISimulationEngine
     {
@@ -220,6 +273,49 @@ public class KnockoutSimulatorTests
             Random random)
         {
             return new SimulationResult(_homeGoals, _awayGoals);
+        }
+    }
+
+    private sealed class FixedSimulationEngineWithCards : ISimulationEngine
+    {
+        private readonly int _homeGoals;
+        private readonly int _awayGoals;
+        private readonly int _homeYellowCards;
+        private readonly int _awayYellowCards;
+        private readonly int _homeRedCards;
+        private readonly int _awayRedCards;
+
+        public FixedSimulationEngineWithCards(
+            int homeGoals,
+            int awayGoals,
+            int homeYellow,
+            int awayYellow,
+            int homeRed,
+            int awayRed)
+        {
+            _homeGoals = homeGoals;
+            _awayGoals = awayGoals;
+            _homeYellowCards = homeYellow;
+            _awayYellowCards = awayYellow;
+            _homeRedCards = homeRed;
+            _awayRedCards = awayRed;
+        }
+
+        public string Name => "FixedWithCards";
+
+        public SimulationResult Simulate(
+            Team homeTeam,
+            Team awayTeam,
+            TournamentPhase phase,
+            Random random)
+        {
+            return new SimulationResult(
+                _homeGoals,
+                _awayGoals,
+                _homeYellowCards,
+                _awayYellowCards,
+                _homeRedCards,
+                _awayRedCards);
         }
     }
 }

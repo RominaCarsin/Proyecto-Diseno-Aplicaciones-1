@@ -74,6 +74,12 @@ public class Group
     public void SetMatchResult(Match match, int homeGoals, int awayGoals) =>
         match.SetResult(homeGoals, awayGoals);
 
+    public void SetMatchSimulationResult(Match? match, SimulationResult result, Random random)
+    {
+        ValidateRequiredMatch(match);
+        match!.SetSimulationResult(result, random);
+    }
+
     public Team GetTeamByPosition(int position)
     {
         ValidatePosition(position);
