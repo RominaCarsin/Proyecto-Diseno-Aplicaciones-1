@@ -14,7 +14,7 @@ public class Pot
     
     public int PotId  { get; private set; }
     public int Number { get; private set; }
-    public IReadOnlyList<Team> Teams { get; private set; }
+    public IReadOnlyList<Team> Teams { get; private set; } = null!;
 
     public bool IsFull() => Teams.Count == MaxTeams;
 

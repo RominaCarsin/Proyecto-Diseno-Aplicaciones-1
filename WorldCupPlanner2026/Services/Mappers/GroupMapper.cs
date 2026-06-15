@@ -18,7 +18,7 @@ public static class GroupMapper
         {
             Label = group.Label,
             Teams = group.Teams.Select(TeamMapper.FromEntity).ToList(),
-            Matches = group.Matches.Select(MatchMapper.ToResponse).ToList()
+            Matches = group.Matches.Select(m => MatchMapper.ToResponse(m)).ToList()
 
         };
     }

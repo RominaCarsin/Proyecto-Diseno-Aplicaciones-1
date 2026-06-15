@@ -9,7 +9,7 @@ public abstract class MatchIncidence
     private const int MaxMinute = 130;
 
     public int IncidenceId { get; private set; } 
-    public Team Team { get; private set; }
+    public Team Team { get; private set; } = null!;
     public int Minute { get; private set; }
 
     protected MatchIncidence() { }

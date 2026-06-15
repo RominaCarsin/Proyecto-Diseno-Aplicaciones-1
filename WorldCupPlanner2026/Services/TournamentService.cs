@@ -134,9 +134,14 @@ public class TournamentService : ITournamentService
             .Select(TeamMapper.FromEntity);
     }
 
-    public IEnumerable<MatchResponse> GetMatches() =>
-        _matchRepository.GetAll()
-            .Select(MatchMapper.ToResponse);
+    public IEnumerable<MatchResponse> GetMatches()
+    {
+        var allMatches = _matchRepository.GetAll().ToList();
+        var knockoutExists = allMatches.Any(m => m.Phase != TournamentPhase.GroupStage);
+
+        return allMatches.Select(m =>
+            MatchMapper.ToResponse(m, isLocked: knockoutExists && m.Phase == TournamentPhase.GroupStage));
+    }
 
     public MatchResponse GetMatchById(int matchId)
     {
@@ -198,7 +203,7 @@ public class TournamentService : ITournamentService
         _notificationService.NotifySimulationCompleted("Fase de grupos", matchCount);
     }
 
-    public void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0)
+    public void InitializeKnockoutStage(int simulationSeed, int crossesSeed = 0)
     {
         var groups = _groupRepository.GetAll().ToList();
 
@@ -226,7 +231,7 @@ public class TournamentService : ITournamentService
             .ToList();
 
         var shuffleService = new ShuffleService(simulationSeed);
-        var knockout = new Knockout(simulationSeed, shuffleService, semillaCrucesFase);
+        var knockout = new Knockout(simulationSeed, shuffleService, crossesSeed);
 
         knockout.SetQualifiedTeams(qualifiedTeams);
         knockout.InitializeRoundOf32();
@@ -293,7 +298,7 @@ public class TournamentService : ITournamentService
     public IEnumerable<MatchResponse> GetKnockoutMatches() =>
         _matchRepository.GetAll()
             .Where(match => match.Phase != TournamentPhase.GroupStage)
-            .Select(MatchMapper.ToResponse)
+            .Select(m => MatchMapper.ToResponse(m))
             .ToList();
 
     public void InitializeRoundOf16()

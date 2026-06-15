@@ -7,8 +7,8 @@ public class Notification
 
     public int NotificationId { get; private set; }
     public int UserId { get; private set; }
-    public User User { get; private set; }
-    public string Message { get; private set; }
+    public User User { get; private set; } = null!;
+    public string Message { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
     public bool IsRead { get; private set; }
     public int MatchId { get; private set; }

@@ -16,7 +16,7 @@ public static class MatchMapper
             phase: ResolvePhase(matchRequest.Phase)
         );
 
-    public static MatchResponse ToResponse(Match match) =>
+    public static MatchResponse ToResponse(Match match, bool isLocked = false) =>
         new()
         {
             Id = match.MatchId,
@@ -33,6 +33,7 @@ public static class MatchMapper
             Status = match.Status.ToString(),
             HasResult = match.HasResult,
             IsFinished = match.IsFinished,
+            IsLocked = isLocked,
             HomeYellowCards = match.YellowCardsOf(match.HomeTeam),
             AwayYellowCards = match.YellowCardsOf(match.AwayTeam),
             HomeRedCards = match.RedCardsOf(match.HomeTeam),

@@ -4,15 +4,15 @@ namespace Domain.Test;
 public class KnockoutTests
 {
     private const int SimulationSeed = 12345;
-    private const int SemillaCrucesFase = 98765;
+    private const int CrossesSeed = 98765;
     private static readonly DateTime ValidMatchDate = new(2026, 7, 1);
 
     private static Knockout CreateValidKnockout(
         int simulationSeed = SimulationSeed,
-        int semillaCrucesFase = SemillaCrucesFase)
+        int crossesSeed = CrossesSeed)
     {
-        var shuffleService = new TestShuffleService(semillaCrucesFase);
-        return new Knockout(simulationSeed, shuffleService, semillaCrucesFase);
+        var shuffleService = new TestShuffleService(crossesSeed);
+        return new Knockout(simulationSeed, shuffleService, crossesSeed);
     }
 
     [TestMethod]
@@ -24,11 +24,11 @@ public class KnockoutTests
     }
 
     [TestMethod]
-    public void GivenSemillaCrucesFase_WhenCreateKnockout_ThenSemillaCrucesFaseIsAssigned()
+    public void GivenCrossesSeed_WhenCreateKnockout_ThenCrossesSeedIsAssigned()
     {
         var knockout = CreateValidKnockout();
 
-        Assert.AreEqual(SemillaCrucesFase, knockout.SemillaCrucesFase);
+        Assert.AreEqual(CrossesSeed, knockout.CrossesSeed);
     }
 
     [TestMethod]
@@ -159,10 +159,10 @@ public class KnockoutTests
     }
 
     [TestMethod]
-    public void GivenSameSemillaCrucesFase_WhenInitializeRoundOf32_ThenFixtureIsDeterministic()
+    public void GivenSameCrossesSeed_WhenInitializeRoundOf32_ThenFixtureIsDeterministic()
     {
-        var firstKnockout = CreateValidKnockout(simulationSeed: 111, semillaCrucesFase: 777);
-        var secondKnockout = CreateValidKnockout(simulationSeed: 999, semillaCrucesFase: 777);
+        var firstKnockout = CreateValidKnockout(simulationSeed: 111, crossesSeed: 777);
+        var secondKnockout = CreateValidKnockout(simulationSeed: 999, crossesSeed: 777);
         firstKnockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
         secondKnockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
 
@@ -175,10 +175,10 @@ public class KnockoutTests
     }
 
     [TestMethod]
-    public void GivenDifferentSemillaCrucesFase_WhenInitializeRoundOf32_ThenFixtureCanChange()
+    public void GivenDifferentCrossesSeed_WhenInitializeRoundOf32_ThenFixtureCanChange()
     {
-        var firstKnockout = CreateValidKnockout(semillaCrucesFase: 101);
-        var secondKnockout = CreateValidKnockout(semillaCrucesFase: 202);
+        var firstKnockout = CreateValidKnockout(crossesSeed: 101);
+        var secondKnockout = CreateValidKnockout(crossesSeed: 202);
         firstKnockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
         secondKnockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
 

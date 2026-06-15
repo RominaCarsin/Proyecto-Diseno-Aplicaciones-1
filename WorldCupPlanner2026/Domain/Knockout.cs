@@ -33,20 +33,20 @@ public class Knockout
 
     private readonly List<Team> _qualifiedTeams = new();
     private readonly List<Match> _matches = new();
-    private readonly IShuffleService _shuffleService;
+    private readonly IShuffleService _shuffleService = null!;
     
     public int KnockoutId { get; private set; }
     public int SimulationSeed { get; private set; }
-    public int SemillaCrucesFase { get; private set; }
+    public int CrossesSeed { get; private set; }
     public IReadOnlyList<Team> QualifiedTeams => _qualifiedTeams;
     public IReadOnlyList<Match> Matches => _matches;
 
     private Knockout() { }
-    public Knockout(int simulationSeed, IShuffleService shuffleService, int semillaCrucesFase = 0)
+    public Knockout(int simulationSeed, IShuffleService shuffleService, int crossesSeed = 0)
     {
         SimulationSeed = simulationSeed;
         _shuffleService = shuffleService;
-        SemillaCrucesFase = semillaCrucesFase;
+        CrossesSeed = crossesSeed;
     }
 
     public void UpdateSimulationSeed(int newSeed) => SimulationSeed = newSeed;

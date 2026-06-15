@@ -8,7 +8,7 @@ public class KnockoutConfiguration : IEntityTypeConfiguration<Knockout>
     {
         builder.HasKey(p => p.KnockoutId);
         builder.Property(k => k.SimulationSeed).IsRequired();
-        builder.Property(k => k.SemillaCrucesFase).IsRequired();
+        builder.Property(k => k.CrossesSeed).IsRequired();
         builder.HasMany(k => k.QualifiedTeams).WithOne().OnDelete(DeleteBehavior.NoAction);
         builder.HasMany(k => k.Matches).WithOne().OnDelete(DeleteBehavior.NoAction);
 

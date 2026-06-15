@@ -13,7 +13,12 @@ public class AuditLog
     public string Action { get; private set; }
     public string Details { get; private set; }
 
-    private AuditLog() {}
+    private AuditLog()
+    {
+        ActorEmail = string.Empty;
+        Action = string.Empty;
+        Details = string.Empty;
+    }
     public AuditLog(string actorEmail, string action, string details)
     {
         ValidateActorEmail(actorEmail);

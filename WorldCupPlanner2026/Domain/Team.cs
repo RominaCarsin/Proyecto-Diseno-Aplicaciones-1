@@ -21,8 +21,8 @@ public class Team
     };
     
     public int TeamId { get; private set; }
-    public string Name { get; private set; }
-    public string ConfederationName { get; private set; }
+    public string Name { get; private set; } = null!;
+    public string ConfederationName { get; private set; } = null!;
     public int RankingFifa { get; private set; }
     public int Points { get; private set; }
     public int GoalDifference { get; private set; }

@@ -172,12 +172,12 @@
             Navigation.NavigateTo("/");
     }
 
-    private async Task DoLogin()
+    private Task DoLogin()
     {
         _errorMessage   = string.Empty;
         _successMessage = string.Empty;
 
-        if (!ValidateLoginForm()) return;
+        if (!ValidateLoginForm()) return Task.CompletedTask;
 
         try
         {
@@ -188,6 +188,8 @@
         {
             _errorMessage = "Email o contrasena invalidos.";
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task DoRegister()

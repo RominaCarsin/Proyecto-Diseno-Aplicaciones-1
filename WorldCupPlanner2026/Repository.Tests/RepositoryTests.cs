@@ -8,9 +8,9 @@ namespace Repository.Tests;
 [TestClass]
 public class RepositoryTests
 {
-    private AppDbContext _context;
-    private Repository<Team> _repository;
-    private Team _team;
+    private AppDbContext _context = null!;
+    private Repository<Team> _repository = null!;
+    private Team _team = null!;
 
     [TestInitialize]
     public void Setup()

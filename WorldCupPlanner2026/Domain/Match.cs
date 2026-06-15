@@ -27,9 +27,9 @@ public class Match
     public int? WinnerId { get; private set; }
     public int? GroupId { get; private set; }
     public DateTime Date { get; private set; }
-    public Stadium Stadium { get; private set; }
-    public Team HomeTeam { get; private set; }
-    public Team AwayTeam { get; private set; }
+    public Stadium Stadium { get; private set; } = null!;
+    public Team HomeTeam { get; private set; } = null!;
+    public Team AwayTeam { get; private set; } = null!;
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }

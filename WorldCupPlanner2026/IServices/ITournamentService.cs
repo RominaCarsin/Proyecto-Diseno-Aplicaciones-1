@@ -34,7 +34,7 @@ public interface ITournamentService
         int matchId,
         IEnumerable<StadiumRequest> candidateStadiums);
 
-    void InitializeKnockoutStage(int simulationSeed, int semillaCrucesFase = 0);
+    void InitializeKnockoutStage(int simulationSeed, int crossesSeed = 0);
     void SetKnockoutMatchResult(string matchCode, int homeGoals, int awayGoals);
     IEnumerable<MatchResponse> GetKnockoutMatches();
 
