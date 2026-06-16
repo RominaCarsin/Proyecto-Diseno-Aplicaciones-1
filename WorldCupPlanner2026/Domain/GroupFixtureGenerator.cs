@@ -21,6 +21,7 @@ public class GroupFixtureGenerator
     public void Generate(List<Group> groups, List<Stadium> stadiums, DateTime startDate)
     {
         int matchCounter = 0;
+        var allScheduledMatches = new List<Match>();
 
         for (int groupIndex = 0; groupIndex < groups.Count; groupIndex++)
         {
@@ -39,7 +40,7 @@ public class GroupFixtureGenerator
                 for (int matchIndex = 0; matchIndex < roundPairings.Count; matchIndex++)
                 {
                     var matchDate = CalculateMatchDate(roundDate, round, matchIndex);
-                    AddMatchToGroup(group, groupTeams, roundPairings[matchIndex], matchDate, stadiums, ref matchCounter);
+                    AddMatchToGroup(group, groupTeams, roundPairings[matchIndex], matchDate, stadiums, ref matchCounter, allScheduledMatches);
                 }
             }
         }
@@ -60,9 +61,10 @@ public class GroupFixtureGenerator
         (int homeIndex, int awayIndex) pairing,
         DateTime matchDate,
         List<Stadium> stadiums,
-        ref int matchCounter)
+        ref int matchCounter,
+        List<Match> allScheduledMatches)
     {
-        var stadium = stadiums[matchCounter % stadiums.Count];
+        var stadium = FindAvailableStadium(stadiums, matchDate, matchCounter, allScheduledMatches);
         var match = _matchFactory.CreateGroupMatch(
             matchDate,
             stadium,
@@ -72,6 +74,19 @@ public class GroupFixtureGenerator
         );
 
         group.AddMatch(match);
+        allScheduledMatches.Add(match);
         matchCounter++;
+    }
+
+    private static Stadium FindAvailableStadium(List<Stadium> stadiums, DateTime matchDate, int matchCounter, List<Match> allScheduledMatches)
+    {
+        for (int offset = 0; offset < stadiums.Count; offset++)
+        {
+            var candidate = stadiums[(matchCounter + offset) % stadiums.Count];
+            if (StadiumAvailability.IsAvailable(allScheduledMatches, candidate, matchDate))
+                return candidate;
+        }
+
+        throw new InvalidOperationException("No hay estadios disponibles para este horario.");
     }
 }

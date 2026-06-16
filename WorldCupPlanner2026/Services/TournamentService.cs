@@ -22,8 +22,7 @@ public class TournamentService : ITournamentService
     private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string MatchRequestRequiredErrorMessage = "La solicitud de partido no puede ser nula.";
     private const string StadiumRequestRequiredErrorMessage = "La solicitud de estadio no puede ser nula.";
-    private const string MaxMatchesPerDayErrorMessage = "El estadio no puede tener más de 3 partidos por día.";
-    private const string MinHoursBetweenMatchesErrorMessage = "Los partidos en el mismo estadio deben tener al menos 4 horas de diferencia.";
+
     private const string InvalidIncidenceTypeErrorMessage = "El tipo de incidencia es inválido.";
 
     private readonly IRepository<Group> _groupRepository;
@@ -637,20 +636,10 @@ public class TournamentService : ITournamentService
 
     private void ValidateStadiumAvailability(int? excludeMatchId, Stadium stadium, DateTime matchDate)
     {
-        var matchesInSameStadiumAndDay = _matchRepository.GetAll()
-            .Where(m => excludeMatchId == null || m.MatchId != excludeMatchId.Value)
-            .Where(m => m.Stadium.Name == stadium.Name)
-            .Where(m => m.Date.Date == matchDate.Date)
-            .ToList();
+        var scheduledMatches = _matchRepository.GetAll()
+            .Where(m => excludeMatchId == null || m.MatchId != excludeMatchId.Value);
 
-        if (matchesInSameStadiumAndDay.Count >= 3)
-            throw new InvalidOperationException(MaxMatchesPerDayErrorMessage);
-
-        var tooClose = matchesInSameStadiumAndDay.Any(m =>
-            Math.Abs((m.Date - matchDate).TotalHours) < 4);
-
-        if (tooClose)
-            throw new InvalidOperationException(MinHoursBetweenMatchesErrorMessage);
+        StadiumAvailability.Validate(scheduledMatches, stadium, matchDate);
     }
 
     private static void ValidateNotNull<T>(T? value, string errorMessage)
