@@ -44,6 +44,14 @@ public class Group
         Label = normalizedLabel;
     }
 
+    public bool CanAddTeam(Team? team)
+    {
+        if (team is null) return false;
+        if (_teams.Count >= MaxTeams) return false;
+        if (!_compositionPolicy.CanAdd(_teams, team)) return false;
+        return true;
+    }
+
     public void AddTeam(Team? team)
     {
         ValidateRequiredTeam(team);
