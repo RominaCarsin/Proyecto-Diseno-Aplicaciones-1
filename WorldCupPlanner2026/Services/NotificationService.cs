@@ -58,7 +58,7 @@ public class NotificationService : INotificationService
         var notification = FindNotificationByIdOrThrow(notificationId);
         notification.MarkAsRead();
         _notificationRepository.Update(notification);
-        _auditService.Log("SYSTEM", NotificationReadAction, $"Notification {notificationId} marked as read");
+        _auditService.Log("SYSTEM", NotificationReadAction, $"Notificación {notificationId} marcada como leída");
     }
 
     public void MarkAllAsRead(int userId)
@@ -73,7 +73,7 @@ public class NotificationService : INotificationService
             _notificationRepository.Update(notification);
         }
 
-        _auditService.Log("SYSTEM", NotificationReadAction, $"All notifications marked as read for user {userId}");
+        _auditService.Log("SYSTEM", NotificationReadAction, $"Todas las notificaciones marcadas como leídas para el usuario {userId}");
     }
 
     public int GetUnreadCount(int userId)

@@ -172,6 +172,6 @@ public class ExportService : IExportService
     private void LogExport(string fileName, string format)
     {
         var actor = _sessionService.GetCurrentUserEmail() ?? "system";
-        _auditService.Log(actor, ExportAction, $"{fileName} exported as {format}");
+        _auditService.Log(actor, ExportAction, $"{fileName} exportado como {format}");
     }
 }

@@ -348,7 +348,7 @@
                TournamentService.SetMatchResult(_editingMatchId.Value, _editHomeGoals, _editAwayGoals);
 
 
-           _successMessage = "Match updated successfully!";
+           _successMessage = "Partido actualizado correctamente.";
            CancelEdit();
            LoadData();
        }
@@ -378,7 +378,7 @@
        try
        {
            TournamentService.AddMatch(BuildMatchRequest());
-           _successMessage = "Match created successfully!";
+           _successMessage = "Partido creado correctamente.";
            ClearCreateForm();
            LoadData();
        }

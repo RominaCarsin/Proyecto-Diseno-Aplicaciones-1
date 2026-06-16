@@ -199,8 +199,8 @@ public class TournamentService : ITournamentService
             _groupRepository.Update(group);
 
         LogAction(
-            "Group stage simulation executed",
-            $"Group stage simulation executed with seed {seed} using {simulationEngine.Name}");
+            "Simulación de fase de grupos ejecutada",
+            $"Simulación de fase de grupos ejecutada con semilla {seed} usando {simulationEngine.Name}");
 
         var matchCount = groups.SelectMany(g => g.Matches).Count();
         _notificationService.NotifySimulationCompleted("Fase de grupos", matchCount);
@@ -269,8 +269,8 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
 
         LogAction(
-            "Knockout match finished",
-            $"Knockout match {matchCode} has been marked as finished");
+            "Partido de eliminación finalizado",
+            $"Partido de eliminación {matchCode} marcado como finalizado");
     }
     
     public void FinishAllKnockoutMatches()
@@ -294,8 +294,8 @@ public class TournamentService : ITournamentService
         }
 
         LogAction(
-            "All knockout matches finished",
-            $"{matchesToFinish.Count} knockout matches were finished and rankings recalculated");
+            "Todos los partidos de eliminación finalizados",
+            $"{matchesToFinish.Count} partidos de eliminación finalizados y rankings recalculados");
     }
 
     public IEnumerable<MatchResponse> GetKnockoutMatches() =>
@@ -371,8 +371,8 @@ public class TournamentService : ITournamentService
             _matchRepository.Update(match);
 
         LogAction(
-            "Knockout simulation executed",
-            $"Knockout simulation executed with seed {seed} using {simulationEngine.Name}");
+            "Simulación de fase eliminatoria ejecutada",
+            $"Simulación de fase eliminatoria ejecutada con semilla {seed} usando {simulationEngine.Name}");
 
         var knockoutMatchCount = knockoutMatches.Count;
         _notificationService.NotifySimulationCompleted("Fase eliminatoria", knockoutMatchCount);
@@ -418,7 +418,7 @@ public class TournamentService : ITournamentService
 
         finishedCount += standaloneMatches.Count;
 
-        LogAction("All matches finished", $"{finishedCount} matches were finished and rankings recalculated");
+        LogAction("Todos los partidos finalizados", $"{finishedCount} partidos finalizados y rankings recalculados");
     }
 
     private void ValidateFixtureCanBeGenerated()
@@ -551,8 +551,8 @@ public class TournamentService : ITournamentService
             AddMatchToGroup(match, matchRequest.Group.Value);
 
         LogAction(
-            "Match created",
-            $"Match added: {match.HomeTeam.Name} vs {match.AwayTeam.Name} at {match.Stadium.Name} on {match.Date}");
+            "Partido creado",
+            $"Partido agregado: {match.HomeTeam.Name} vs {match.AwayTeam.Name} en {match.Stadium.Name} el {match.Date}");
     }
 
     public void SetMatchResult(int matchId, int homeGoals, int awayGoals)
@@ -567,8 +567,8 @@ public class TournamentService : ITournamentService
             matchId, match.HomeTeam.Name, match.AwayTeam.Name, homeGoals, awayGoals);
 
         LogAction(
-            "Match result set",
-            $"Result for match {matchId} ({match.HomeTeam.Name} vs {match.AwayTeam.Name}) set to {homeGoals}-{awayGoals}");
+            "Resultado de partido establecido",
+            $"Resultado del partido {matchId} ({match.HomeTeam.Name} vs {match.AwayTeam.Name}) establecido a {homeGoals}-{awayGoals}");
     }
 
     public void UpdateMatchDate(int matchId, DateTime newDate)
@@ -584,8 +584,8 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
 
         LogAction(
-            "Match date updated",
-            $"Match {matchId} date changed from {oldDate} to {newDate}");
+            "Fecha de partido actualizada",
+            $"Fecha del partido {matchId} cambiada de {oldDate} a {newDate}");
     }
 
     public void UpdateMatchStadium(int matchId, StadiumRequest newStadiumRequest)
@@ -604,8 +604,8 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
 
         LogAction(
-            "Match stadium updated",
-            $"Match {matchId} stadium changed from {oldStadiumName} to {stadium.Name}");
+            "Estadio de partido actualizado",
+            $"Estadio del partido {matchId} cambiado de {oldStadiumName} a {stadium.Name}");
     }
 
     public void FinishMatch(int matchId)
@@ -616,7 +616,7 @@ public class TournamentService : ITournamentService
 
         _matchRepository.Update(match);
 
-        LogAction("Match finished", $"Match {matchId} has been marked as finished");
+        LogAction("Partido finalizado", $"Partido {matchId} marcado como finalizado");
  
     }
 

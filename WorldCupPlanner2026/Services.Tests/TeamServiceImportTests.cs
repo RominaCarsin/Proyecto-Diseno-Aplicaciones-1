@@ -176,7 +176,7 @@ public class TeamServiceImportTests
         var result = _service.Import(ValidCsv);
 
         Assert.AreEqual(1, result.SuccessfulRows);
-        AssertAuditActorExists("system");
+        AssertAuditActorExists("sistema");
     }
 
     [TestMethod]

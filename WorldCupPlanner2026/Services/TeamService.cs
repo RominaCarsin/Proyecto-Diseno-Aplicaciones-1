@@ -13,7 +13,7 @@ public class TeamService : ITeamService
     private const int RequiredTeamsCount = 48;
     private const int FirstFifaRanking = 300;
     private const int LastFifaRanking = 2500;
-    private const string SystemActorEmail = "system";
+    private const string SystemActorEmail = "sistema";
     private const string TeamNotFoundErrorMessage = "No se encontro el equipo.";
     private const string TeamNameAlreadyExistsErrorMessage = "Ya existe un equipo con este nombre.";
     private const string NameHeader = "Nombre";
@@ -59,8 +59,8 @@ public class TeamService : ITeamService
         AddTeamToConfederation(team);
         _repository.Add(team);
 
-        LogAction("Team created",
-            $"Team '{teamRequest.Name}' added to {teamRequest.ConfederationName} with FIFA ranking {teamRequest.RankingFifa}");
+        LogAction("Equipo creado",
+            $"Equipo '{teamRequest.Name}' agregado a {teamRequest.ConfederationName} con ranking FIFA {teamRequest.RankingFifa}");
     }
 
     public IEnumerable<TeamResponse> GetTeams() =>
@@ -96,8 +96,8 @@ public class TeamService : ITeamService
         team.UpdateFlag(updatedTeamData.FlagBase64);
         _repository.Update(team);
 
-        LogAction("Team updated",
-            $"Team '{currentName}' updated. New name: '{updatedTeamData.Name}', confederation: {updatedTeamData.ConfederationName}, ranking: {updatedTeamData.RankingFifa}");
+        LogAction("Equipo actualizado",
+            $"Equipo '{currentName}' actualizado. Nuevo nombre: '{updatedTeamData.Name}', confederación: {updatedTeamData.ConfederationName}, ranking: {updatedTeamData.RankingFifa}");
     }
 
     public void DeleteTeam(string name)
@@ -106,7 +106,7 @@ public class TeamService : ITeamService
         RemoveTeamFromConfederation(team);
         _repository.Delete(team);
 
-        LogAction("Team deleted", $"Team '{name}' was removed from the system");
+        LogAction("Equipo eliminado", $"Equipo '{name}' eliminado del sistema.");
     }
 
     public void AutoCompleteTeams(int seed)

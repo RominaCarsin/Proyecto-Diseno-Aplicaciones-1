@@ -34,8 +34,8 @@ public class UserService : IUserService
         var user = UserMapper.ToEntity(userRequest, _passwordHasher);
         _repository.Add(user);
 
-        _auditService.Log(userRequest.Email, "User created",
-            $"New user registered: {userRequest.Name} {userRequest.Surname} ({userRequest.Email})");
+        _auditService.Log(userRequest.Email, "Usuario creado",
+            $"Nuevo usuario registrado: {userRequest.Name} {userRequest.Surname} ({userRequest.Email})");
 
         return UserMapper.FromEntity(user);
     }
@@ -53,9 +53,9 @@ public class UserService : IUserService
             userRequest.DateOfBirth);
 
         _repository.Update(existingUser);
-        _auditService.Log(email, "User updated",
-            $"User {email} updated: Name={userRequest.Name}, Surname={userRequest.Surname}, " +
-            $"Email={userRequest.Email}, DOB={userRequest.DateOfBirth:yyyy-MM-dd}");
+        _auditService.Log(email, "Usuario actualizado",
+            $"Usuario {email} actualizado: Nombre={userRequest.Name}, Apellido={userRequest.Surname}, " +
+            $"Email={userRequest.Email}, FNac={userRequest.DateOfBirth:yyyy-MM-dd}");
     }
 
     public void DeleteUser(string email)
@@ -63,8 +63,8 @@ public class UserService : IUserService
         var existingUser = GetUserByEmailOrThrow(email);
         _repository.Delete(existingUser);
 
-        _auditService.Log("system", "User deleted",
-            $"User {email} was removed from the system");
+        _auditService.Log("system", "Usuario eliminado",
+            $"Usuario {email} eliminado del sistema.");
     }
 
     public UserResponse GetUserByEmail(string email)
@@ -103,8 +103,8 @@ public class UserService : IUserService
 
         _repository.Update(targetUser);
         
-        _auditService.Log(adminEmail, "Role added",
-            $"Role {role} granted to {targetEmail} by {adminEmail}");
+        _auditService.Log(adminEmail, "Rol agregado",
+            $"Rol {role} otorgado a {targetEmail} por {adminEmail}");
     }
 
     public void RemoveRoleFromUser(string adminEmail, string targetEmail, RoleDto role)
@@ -115,8 +115,8 @@ public class UserService : IUserService
         targetUser.RemoveRole(RoleMapper.ToDomain(role));
 
         _repository.Update(targetUser);
-        _auditService.Log(adminEmail, "Role revoked",
-            $"Role {role} revoked from {targetEmail} by {adminEmail}");
+        _auditService.Log(adminEmail, "Rol revocado",
+            $"Rol {role} revocado de {targetEmail} por {adminEmail}");
     }
 
     public void ChangePassword(string email, string currentPassword, string newPassword)
@@ -129,8 +129,8 @@ public class UserService : IUserService
         user.SetPassword(newPassword, _passwordHasher);
 
         _repository.Update(user);
-        _auditService.Log(email, "Password changed",
-            $"User {email} changed their own password");
+        _auditService.Log(email, "Contraseña cambiada",
+            $"Usuario {email} cambió su propia contraseña");
     }
 
     public void ResetPassword(string adminEmail, string targetEmail, string newPassword)
@@ -141,8 +141,8 @@ public class UserService : IUserService
         targetUser.SetPassword(newPassword, _passwordHasher);
 
         _repository.Update(targetUser);
-        _auditService.Log(adminEmail, "Password reset",
-            $"Password of {targetEmail} was reset by {adminEmail}");
+        _auditService.Log(adminEmail, "Contraseña restablecida",
+            $"Contraseña de {targetEmail} fue restablecida por {adminEmail}");
     }
     
     private User GetUserByEmailOrThrow(string email) =>

@@ -1213,7 +1213,7 @@ public class TournamentServiceTests
 
         var auditLog = _auditRepository.GetAll().Last();
 
-        Assert.AreEqual("Group stage simulation executed", auditLog.Action);
+        Assert.AreEqual("Simulación de fase de grupos ejecutada", auditLog.Action);
         StringAssert.Contains(auditLog.Details, DefaultSeed.ToString());
         StringAssert.Contains(auditLog.Details, "Aleatorio Puro");
     }
@@ -1239,7 +1239,7 @@ public class TournamentServiceTests
 
         var auditLog = _auditRepository.GetAll().Last();
 
-        Assert.AreEqual("Knockout simulation executed", auditLog.Action);
+        Assert.AreEqual("Simulación de fase eliminatoria ejecutada", auditLog.Action);
         StringAssert.Contains(auditLog.Details, DefaultSeed.ToString());
         StringAssert.Contains(auditLog.Details, "Aleatorio Puro");
     }
