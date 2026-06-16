@@ -29,16 +29,10 @@ public class GroupDrawRules
         {
             var group = groups[(startGroupIndex + offset) % groups.Count];
 
-            if (group.Teams.Count < _rules.MaxTeamsPerGroup)
+            if (group.CanAddTeam(team))
             {
-                try
-                {
-                    group.AddTeam(team);
-                    return;
-                }
-                catch (ArgumentException)
-                {
-                }
+                group.AddTeam(team);
+                return;
             }
         }
 
