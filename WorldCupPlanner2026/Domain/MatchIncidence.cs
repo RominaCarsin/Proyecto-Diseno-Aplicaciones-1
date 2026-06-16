@@ -5,8 +5,8 @@ public abstract class MatchIncidence
     private const string RequiredTeamErrorMessage = "La incidencia debe estar asociada a un equipo.";
     private const string InvalidMinuteErrorMessage = "El minuto de la incidencia debe estar entre 0 y 130.";
 
-    private const int MinMinute = 0;
-    private const int MaxMinute = 130;
+    public const int MinMinute = 0;
+    public const int MaxMinute = 130;
 
     public int IncidenceId { get; private set; } 
     public Team Team { get; private set; } = null!;

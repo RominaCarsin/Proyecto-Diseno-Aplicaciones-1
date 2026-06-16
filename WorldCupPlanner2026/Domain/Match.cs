@@ -11,17 +11,12 @@ public class Match
     private const string RequiredHomeTeamErrorMessage = "El equipo local no puede ser nulo.";
     private const string RequiredAwayTeamErrorMessage = "El equipo visitante no puede ser nulo.";
     private const string SameTeamsErrorMessage = "El equipo local y el visitante deben ser diferentes.";
-    private const string LockedMatchErrorMessage = "Los partidos bloqueados no pueden ser editados.";
     private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
     private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
     private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
     private readonly List<MatchIncidence> _incidences = new();
     private const string IncidenceTeamNotInMatchErrorMessage = "La incidencia debe pertenecer a un equipo del partido.";
-    private const string NegativeCardsErrorMessage = "Las tarjetas no pueden ser negativas.";
-    private const string NullRandomErrorMessage = "El generador de números aleatorios no puede ser nulo.";
-    private const int MinCardMinute = 0;
-    private const int MaxCardMinute = 130;
     
     public IReadOnlyCollection<MatchIncidence> Incidences => _incidences.AsReadOnly();
     public int MatchId { get; private set; }
@@ -91,10 +86,11 @@ public class Match
         ApplyResultToTeams();
     }
 
-    public void SetSimulationResult(SimulationResult result, Random? random)
+    public void ApplySimulationResult(SimulationResult result)
     {
         ValidateIsEditable();
-        ValidateSimulationResult(result, random);
+        ValidateGoalsAreNotNegative(result.HomeGoals, result.AwayGoals);
+        ValidateKnockoutMatchIsNotDraw(result.HomeGoals, result.AwayGoals);
 
         if (HasResult)
             RevertPreviousResultFromTeams();
@@ -104,7 +100,11 @@ public class Match
         Winner = DetermineWinner(result.HomeGoals, result.AwayGoals);
 
         ApplyResultToTeams();
-        RegisterCardsFromSimulation(result, random!);
+    }
+
+    public void ClearCards()
+    {
+        _incidences.RemoveAll(i => i is YellowCard || i is RedCard);
     }
 
     public void Finish()
@@ -148,59 +148,7 @@ public class Match
     
     private int CountIncidences<TIncidence>(Team team) where TIncidence : MatchIncidence =>
         _incidences.Count(incidence => incidence is TIncidence && ReferenceEquals(incidence.Team, team));
-    
-    private void ValidateSimulationResult(SimulationResult result, Random? random)
-    {
-        ValidateGoalsAreNotNegative(result.HomeGoals, result.AwayGoals);
-        ValidateKnockoutMatchIsNotDraw(result.HomeGoals, result.AwayGoals);
-        ValidateCardsAreNotNegative(result.HomeYellowCards, result.AwayYellowCards, 
-            result.HomeRedCards, result.AwayRedCards);
-        ValidateRandomIsNotNull(random);
-    }
 
-    private static void ValidateCardsAreNotNegative(int homeYellow, int awayYellow, int homeRed, int awayRed)
-    {
-        if (homeYellow < 0 || awayYellow < 0 || homeRed < 0 || awayRed < 0)
-            throw new ArgumentOutOfRangeException(nameof(SimulationResult), NegativeCardsErrorMessage);
-    }
-
-    private static void ValidateRandomIsNotNull(Random? random)
-    {
-        if (random is null)
-            throw new ArgumentNullException(nameof(random), NullRandomErrorMessage);
-    }
-
-    private void RegisterCardsFromSimulation(SimulationResult result, Random random)
-    {
-        ClearExistingCards();
-        RegisterYellowCards(HomeTeam, result.HomeYellowCards, random);
-        RegisterYellowCards(AwayTeam, result.AwayYellowCards, random);
-        RegisterRedCards(HomeTeam, result.HomeRedCards, random);
-        RegisterRedCards(AwayTeam, result.AwayRedCards, random);
-    }
-
-    private void ClearExistingCards()
-    {
-        _incidences.RemoveAll(i => i is YellowCard || i is RedCard);
-    }
-
-    private void RegisterYellowCards(Team team, int count, Random random)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            int minute = random.Next(MinCardMinute, MaxCardMinute + 1);
-            RegisterIncidence(new YellowCard(team, minute));
-        }
-    }
-
-    private void RegisterRedCards(Team team, int count, Random random)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            int minute = random.Next(MinCardMinute, MaxCardMinute + 1);
-            RegisterIncidence(new RedCard(team, minute));
-        }
-    }
     
     private void ValidateIsEditable()
     {

@@ -243,22 +243,111 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void SetSimulationResult_WithValidResult_ShouldSetGoalsAndRegisterCards()
+    public void ApplySimulationResult_ShouldSetGoalsAndUpdateTeamStats()
     {
         var homeTeam = BuildTeam("URUGUAY");
         var awayTeam = BuildTeam("ARGENTINA");
         var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
-        var random = new Random(42);
 
-        var result = new SimulationResult(
-            HomeGoals: 2,
-            AwayGoals: 1,
-            HomeYellowCards: 3,
-            AwayYellowCards: 2,
-            HomeRedCards: 1,
-            AwayRedCards: 0);
+        var result = new SimulationResult(3, 1, 2, 1, 0, 0);
+        match.ApplySimulationResult(result);
 
-        match.SetSimulationResult(result, random);
+        Assert.AreEqual(3, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(homeTeam, match.Winner);
+        Assert.AreEqual(3, homeTeam.Points);
+        Assert.AreEqual(0, awayTeam.Points);
+        Assert.AreEqual(2, homeTeam.GoalDifference);
+        Assert.AreEqual(-2, awayTeam.GoalDifference);
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_WithExistingResult_ShouldRevertPreviousTeamStats()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.ApplySimulationResult(new SimulationResult(2, 0, 1, 0, 0, 0));
+        match.ApplySimulationResult(new SimulationResult(0, 1, 0, 2, 0, 0));
+
+        Assert.AreEqual(0, homeTeam.Points);
+        Assert.AreEqual(3, awayTeam.Points);
+        Assert.AreEqual(-1, homeTeam.GoalDifference);
+        Assert.AreEqual(1, awayTeam.GoalDifference);
+        Assert.AreEqual(awayTeam, match.Winner);
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_WithInvalidGoals_ShouldThrow()
+    {
+        var match = CreateMatch();
+
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            match.ApplySimulationResult(new SimulationResult(-1, 0)));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            match.ApplySimulationResult(new SimulationResult(0, -1)));
+
+        var knockout = CreateMatch(group: null, phase: TournamentPhase.RoundOf32);
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            knockout.ApplySimulationResult(new SimulationResult(1, 1)));
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_OnFinishedMatch_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.ApplySimulationResult(new SimulationResult(1, 0)));
+    }
+
+    [TestMethod]
+    public void ClearCards_ShouldRemoveAllCardIncidences()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, 30));
+        match.RegisterIncidence(new YellowCard(awayTeam, 40));
+        match.RegisterIncidence(new RedCard(awayTeam, 80));
+
+        match.ClearCards();
+
+        Assert.AreEqual(0, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(0, match.YellowCardsOf(awayTeam));
+        Assert.AreEqual(0, match.RedCardsOf(awayTeam));
+    }
+
+    [TestMethod]
+    public void ClearCards_OnEmptyIncidences_ShouldNotThrow()
+    {
+        var match = CreateMatch();
+
+        match.ClearCards();
+
+        Assert.AreEqual(0, match.Incidences.Count);
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_ThenRegisterCards_ShouldHaveBothGoalsAndCards()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.ApplySimulationResult(new SimulationResult(2, 1, 3, 2, 1, 0));
+
+        var cardGenerator = new CardGenerator(new Random(42));
+        match.ClearCards();
+        foreach (var card in cardGenerator.GenerateYellowCards(homeTeam, 3))
+            match.RegisterIncidence(card);
+        foreach (var card in cardGenerator.GenerateYellowCards(awayTeam, 2))
+            match.RegisterIncidence(card);
+        foreach (var card in cardGenerator.GenerateRedCards(homeTeam, 1))
+            match.RegisterIncidence(card);
 
         Assert.AreEqual(2, match.HomeGoals);
         Assert.AreEqual(1, match.AwayGoals);
@@ -269,66 +358,36 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void SetSimulationResult_WithNullRandom_ShouldThrowArgumentNullException()
-    {
-        var match = CreateMatch();
-        var result = new SimulationResult(1, 1, 0, 0, 0, 0);
-
-        Assert.ThrowsException<ArgumentNullException>(() =>
-            match.SetSimulationResult(result, null));
-    }
-
-    [TestMethod]
-    public void SetSimulationResult_WithNegativeCards_ShouldThrowArgumentOutOfRangeException()
-    {
-        var match = CreateMatch();
-        var random = new Random(42);
-        var result = new SimulationResult(1, 1, -1, 0, 0, 0);
-
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
-            match.SetSimulationResult(result, random));
-    }
-
-    [TestMethod]
-    public void SetSimulationResult_WithExistingCards_ShouldClearOldCardsBeforeRegisteringNew()
+    public void ClearCards_ThenRegisterNewCards_ShouldReplaceOldCards()
     {
         var homeTeam = BuildTeam("URUGUAY");
         var awayTeam = BuildTeam("ARGENTINA");
         var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
-        var random = new Random(42);
+        var generator = new CardGenerator(new Random(42));
 
-        // First simulation with cards
-        var result1 = new SimulationResult(1, 1, 2, 2, 0, 0);
-        match.SetSimulationResult(result1, random);
+        match.ApplySimulationResult(new SimulationResult(1, 1, 2, 2, 0, 0));
+        match.ClearCards();
+        foreach (var card in generator.GenerateYellowCards(homeTeam, 2))
+            match.RegisterIncidence(card);
+        foreach (var card in generator.GenerateYellowCards(awayTeam, 2))
+            match.RegisterIncidence(card);
 
         Assert.AreEqual(2, match.YellowCardsOf(homeTeam));
         Assert.AreEqual(2, match.YellowCardsOf(awayTeam));
 
-        // Second simulation with different cards
-        var result2 = new SimulationResult(2, 0, 1, 3, 1, 0);
-        match.SetSimulationResult(result2, random);
+        match.ApplySimulationResult(new SimulationResult(2, 0, 1, 3, 1, 0));
+        match.ClearCards();
+        foreach (var card in generator.GenerateYellowCards(homeTeam, 1))
+            match.RegisterIncidence(card);
+        foreach (var card in generator.GenerateYellowCards(awayTeam, 3))
+            match.RegisterIncidence(card);
+        foreach (var card in generator.GenerateRedCards(homeTeam, 1))
+            match.RegisterIncidence(card);
 
         Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
         Assert.AreEqual(3, match.YellowCardsOf(awayTeam));
         Assert.AreEqual(1, match.RedCardsOf(homeTeam));
         Assert.AreEqual(0, match.RedCardsOf(awayTeam));
-    }
-
-    [TestMethod]
-    public void SetSimulationResult_ShouldUpdateTeamStats()
-    {
-        var homeTeam = BuildTeam("URUGUAY");
-        var awayTeam = BuildTeam("ARGENTINA");
-        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
-        var random = new Random(42);
-
-        var result = new SimulationResult(3, 1, 2, 1, 0, 0);
-        match.SetSimulationResult(result, random);
-
-        Assert.AreEqual(3, homeTeam.Points);
-        Assert.AreEqual(0, awayTeam.Points);
-        Assert.AreEqual(2, homeTeam.GoalDifference);
-        Assert.AreEqual(-2, awayTeam.GoalDifference);
     }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
