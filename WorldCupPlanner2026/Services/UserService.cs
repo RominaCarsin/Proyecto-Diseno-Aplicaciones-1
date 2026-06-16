@@ -99,6 +99,8 @@ public class UserService : IUserService
         var targetUser = GetUserByEmailOrThrow(targetEmail);
         targetUser.AddRole(RoleMapper.ToDomain(role));
 
+        _repository.Update(targetUser);
+        
         _auditService.Log(adminEmail, "Role added",
             $"Role {role} granted to {targetEmail} by {adminEmail}");
     }
