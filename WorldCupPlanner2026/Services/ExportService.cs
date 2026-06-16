@@ -36,7 +36,7 @@ public class ExportService : IExportService
 
         foreach (var log in logs)
         {
-            csv.WriteField(log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"));
+            csv.WriteField(log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
             csv.WriteField(log.ActorEmail);
             csv.WriteField(log.Action);
             csv.WriteField(log.Details);
@@ -66,7 +66,7 @@ public class ExportService : IExportService
         var row = 2;
         foreach (var log in logs)
         {
-            ws.Cell(row, 1).Value = log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
+            ws.Cell(row, 1).Value = log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
             ws.Cell(row, 2).Value = log.ActorEmail;
             ws.Cell(row, 3).Value = log.Action;
             ws.Cell(row, 4).Value = log.Details;
