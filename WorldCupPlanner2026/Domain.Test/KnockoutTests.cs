@@ -1,3 +1,9 @@
+using Domain;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Domain.Test;
 
 [TestClass]
@@ -7,27 +13,23 @@ public class KnockoutTests
     private const int CrossesSeed = 98765;
     private static readonly DateTime ValidMatchDate = new(2026, 7, 1);
 
-    private static IKnockoutMatchFactory CreateMatchFactory() =>
-        new KnockoutMatchFactory(
-            new List<Stadium>
-            {
-                new("KNOCKOUT STADIUM", "TBD", "Default knockout stadium", 60000)
-            },
-            new DateTime(2026, 7, 1));
+    // Estadio por defecto para pruebas
+    private static readonly Stadium DefaultStadium = new("Centenario", "Montevideo", "Estadio histórico", 60000);
+    private static readonly List<Stadium> DefaultStadiums = new() { DefaultStadium };
 
     private static Knockout CreateValidKnockout(
         int simulationSeed = SimulationSeed,
-        int crossesSeed = CrossesSeed)
+        int crossesSeed = CrossesSeed,
+        List<Stadium>? stadiums = null)
     {
         var shuffler = new TestShuffler(crossesSeed);
-        return new Knockout(simulationSeed, shuffler, CreateMatchFactory(), crossesSeed);
+        return new Knockout(simulationSeed, shuffler, stadiums ?? DefaultStadiums, crossesSeed);
     }
 
     [TestMethod]
     public void GivenSimulationSeed_WhenCreateKnockout_ThenSimulationSeedIsAssigned()
     {
         var knockout = CreateValidKnockout();
-
         Assert.AreEqual(SimulationSeed, knockout.SimulationSeed);
     }
 
@@ -35,7 +37,6 @@ public class KnockoutTests
     public void GivenCrossesSeed_WhenCreateKnockout_ThenCrossesSeedIsAssigned()
     {
         var knockout = CreateValidKnockout();
-
         Assert.AreEqual(CrossesSeed, knockout.CrossesSeed);
     }
 
@@ -43,7 +44,6 @@ public class KnockoutTests
     public void GivenValidSeed_WhenCreateKnockout_ThenMatchesStartsEmpty()
     {
         var knockout = CreateValidKnockout();
-
         Assert.IsNotNull(knockout);
         Assert.AreEqual(0, knockout.Matches.Count);
     }
@@ -74,7 +74,6 @@ public class KnockoutTests
     public void GivenNullQualifiedTeams_WhenSetQualifiedTeams_ThenThrowsArgumentException()
     {
         var knockout = CreateValidKnockout();
-
         Assert.ThrowsException<ArgumentException>(() => knockout.SetQualifiedTeams(null!));
     }
 
@@ -93,7 +92,6 @@ public class KnockoutTests
     public void GivenNoQualifiedTeamsSet_WhenInitializeRoundOf32_ThenThrowsInvalidOperationException()
     {
         var knockout = CreateValidKnockout();
-
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf32());
     }
 
@@ -117,20 +115,20 @@ public class KnockoutTests
         knockout.InitializeRoundOf32();
 
         Assert.AreEqual(16, knockout.Matches.Count);
-        CollectionAssert.AreEquivalent(ExpectedRoundOf32Codes(), knockout.Matches.Select(match => match.MatchCode).ToList());
+        CollectionAssert.AreEquivalent(ExpectedRoundOf32Codes(), knockout.Matches.Select(m => m.MatchCode).ToList());
 
         AssertMatchesUseExpectedPots(
-            knockout.Matches.Where(match => match.MatchCode!.StartsWith("A")).ToList(),
+            knockout.Matches.Where(m => m.MatchCode!.StartsWith("A")).ToList(),
             qualifiedTeams.Skip(4).Take(8),
             qualifiedTeams.Skip(24).Take(8));
 
         AssertMatchesUseExpectedPots(
-            knockout.Matches.Where(match => IsMatchCodeBetween(match.MatchCode, "B1", "B4")).ToList(),
+            knockout.Matches.Where(m => IsMatchCodeBetween(m.MatchCode, "B1", "B4")).ToList(),
             qualifiedTeams.Take(4),
             qualifiedTeams.Skip(20).Take(4));
 
         AssertMatchesUseExpectedPotSplit(
-            knockout.Matches.Where(match => IsMatchCodeBetween(match.MatchCode, "B5", "B8")).ToList(),
+            knockout.Matches.Where(m => IsMatchCodeBetween(m.MatchCode, "B5", "B8")).ToList(),
             qualifiedTeams.Skip(12).Take(8));
     }
 
@@ -142,7 +140,7 @@ public class KnockoutTests
 
         knockout.InitializeRoundOf32();
 
-        Assert.IsTrue(knockout.Matches.All(match => match.HomeTeam.GroupLabel != match.AwayTeam.GroupLabel));
+        Assert.IsTrue(knockout.Matches.All(m => m.HomeTeam.GroupLabel != m.AwayTeam.GroupLabel));
     }
 
     [TestMethod]
@@ -214,7 +212,6 @@ public class KnockoutTests
     public void GivenNullMatch_WhenAddMatch_ThenThrowsArgumentException()
     {
         var knockout = CreateValidKnockout();
-
         Assert.ThrowsException<ArgumentException>(() => knockout.AddMatch(null!));
     }
 
@@ -228,33 +225,32 @@ public class KnockoutTests
 
         Assert.ThrowsException<InvalidOperationException>(() => knockout.AddMatch(roundOf16Match));
     }
-    
-    // Round of 16 -------------
-    
+
+    // ==================== ROUND OF 16 ====================
+
     [TestMethod]
     public void GivenFinishedRoundOf32_WhenInitializeRoundOf16_ThenCreatesMatchesWithExpectedCodesAndWinners()
     {
         var knockout = CreateKnockoutWithFinishedRoundOf32();
-    
+
         knockout.InitializeRoundOf16();
-    
+
         Assert.AreEqual(8, knockout.Matches.Count(m => m.Phase == TournamentPhase.RoundOf16));
-    
+
         var roundOf16Matches = knockout.Matches
             .Where(m => m.Phase == TournamentPhase.RoundOf16)
             .ToList();
-    
+
         CollectionAssert.AreEquivalent(
-            new[] { "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8" }, 
+            new[] { "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8" },
             roundOf16Matches.Select(m => m.MatchCode).ToList());
-    
-        // Verifica emparejamiento: Ganador Ai vs Ganador Bi
+
         for (int i = 1; i <= 8; i++)
         {
             var matchC = roundOf16Matches.Single(m => m.MatchCode == $"C{i}");
             var matchA = knockout.Matches.Single(m => m.MatchCode == $"A{i}");
             var matchB = knockout.Matches.Single(m => m.MatchCode == $"B{i}");
-        
+
             Assert.AreEqual(matchA.Winner, matchC.HomeTeam);
             Assert.AreEqual(matchB.Winner, matchC.AwayTeam);
         }
@@ -264,11 +260,10 @@ public class KnockoutTests
     public void GivenUnfinishedRoundOf32_WhenInitializeRoundOf16_ThenThrowsInvalidOperationException()
     {
         var knockout = CreateValidKnockout();
-        var qualifiedTeams = CreateOrderedQualifiedTeams();
-        knockout.SetQualifiedTeams(qualifiedTeams);
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
         knockout.InitializeRoundOf32();
         // No finalizamos los partidos
-    
+
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf16());
     }
 
@@ -277,30 +272,29 @@ public class KnockoutTests
     {
         var knockout = CreateKnockoutWithFinishedRoundOf32();
         knockout.InitializeRoundOf16();
-    
+
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf16());
     }
-    
-    //QuarterFinals--------------
-    
+
+    // ==================== QUARTERFINALS ====================
+
     [TestMethod]
     public void GivenFinishedRoundOf16_WhenInitializeQuarterFinals_ThenCreatesMatchesWithExpectedCodesAndWinners()
     {
         var knockout = CreateKnockoutWithFinishedRoundOf16();
-    
+
         knockout.InitializeQuarterFinals();
-    
+
         Assert.AreEqual(4, knockout.Matches.Count(m => m.Phase == TournamentPhase.QuarterFinals));
-    
+
         var quarterFinalMatches = knockout.Matches
             .Where(m => m.Phase == TournamentPhase.QuarterFinals)
             .ToList();
-    
+
         CollectionAssert.AreEquivalent(
-            new[] { "D1", "D2", "D3", "D4" }, 
+            new[] { "D1", "D2", "D3", "D4" },
             quarterFinalMatches.Select(m => m.MatchCode).ToList());
-    
-        // Verifica emparejamientos consecutivos: C1vsC2, C3vsC4, C5vsC6, C7vsC8
+
         var pairings = new[] { (1, 2), (3, 4), (5, 6), (7, 8) };
         for (int d = 0; d < pairings.Length; d++)
         {
@@ -308,7 +302,7 @@ public class KnockoutTests
             var matchD = quarterFinalMatches.Single(m => m.MatchCode == $"D{d + 1}");
             var matchC1 = knockout.Matches.Single(m => m.MatchCode == $"C{c1}");
             var matchC2 = knockout.Matches.Single(m => m.MatchCode == $"C{c2}");
-        
+
             Assert.AreEqual(matchC1.Winner, matchD.HomeTeam);
             Assert.AreEqual(matchC2.Winner, matchD.AwayTeam);
         }
@@ -320,37 +314,35 @@ public class KnockoutTests
         var knockout = CreateKnockoutWithFinishedRoundOf32();
         knockout.InitializeRoundOf16();
         // No finalizamos los partidos de octavos
-    
+
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeQuarterFinals());
     }
-    
-    //Semifinals---------
-    
+
+    // ==================== SEMIFINALS ====================
+
     [TestMethod]
     public void GivenFinishedQuarterFinals_WhenInitializeSemiFinals_ThenCreatesMatchesWithExpectedCodesAndWinners()
     {
         var knockout = CreateKnockoutWithFinishedQuarterFinals();
-    
+
         knockout.InitializeSemiFinals();
-    
+
         Assert.AreEqual(2, knockout.Matches.Count(m => m.Phase == TournamentPhase.SemiFinals));
-    
+
         var semiFinalMatches = knockout.Matches
             .Where(m => m.Phase == TournamentPhase.SemiFinals)
             .ToList();
-    
+
         CollectionAssert.AreEquivalent(
-            new[] { "S1", "S2" }, 
+            new[] { "S1", "S2" },
             semiFinalMatches.Select(m => m.MatchCode).ToList());
-    
-        // S1: Ganador D1 vs Ganador D2
+
         var matchS1 = semiFinalMatches.Single(m => m.MatchCode == "S1");
         var matchD1 = knockout.Matches.Single(m => m.MatchCode == "D1");
         var matchD2 = knockout.Matches.Single(m => m.MatchCode == "D2");
         Assert.AreEqual(matchD1.Winner, matchS1.HomeTeam);
         Assert.AreEqual(matchD2.Winner, matchS1.AwayTeam);
-    
-        // S2: Ganador D3 vs Ganador D4
+
         var matchS2 = semiFinalMatches.Single(m => m.MatchCode == "S2");
         var matchD3 = knockout.Matches.Single(m => m.MatchCode == "D3");
         var matchD4 = knockout.Matches.Single(m => m.MatchCode == "D4");
@@ -363,27 +355,28 @@ public class KnockoutTests
     {
         var knockout = CreateKnockoutWithFinishedRoundOf16();
         knockout.InitializeQuarterFinals();
-    
+        // No finalizamos cuartos
+
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeSemiFinals());
     }
-    
-    //ThirdPlace---------
-    
+
+    // ==================== THIRD PLACE ====================
+
     [TestMethod]
     public void GivenFinishedSemiFinals_WhenInitializeThirdPlace_ThenCreatesMatchWithLosers()
     {
         var knockout = CreateKnockoutWithFinishedSemiFinals();
-    
+
         knockout.InitializeThirdPlace();
-    
+
         Assert.AreEqual(1, knockout.Matches.Count(m => m.Phase == TournamentPhase.ThirdPlace));
-    
+
         var thirdPlaceMatch = knockout.Matches.Single(m => m.Phase == TournamentPhase.ThirdPlace);
         Assert.AreEqual("T1", thirdPlaceMatch.MatchCode);
-    
+
         var matchS1 = knockout.Matches.Single(m => m.MatchCode == "S1");
         var matchS2 = knockout.Matches.Single(m => m.MatchCode == "S2");
-    
+
         Assert.AreEqual(matchS1.Loser, thirdPlaceMatch.HomeTeam);
         Assert.AreEqual(matchS2.Loser, thirdPlaceMatch.AwayTeam);
     }
@@ -393,27 +386,28 @@ public class KnockoutTests
     {
         var knockout = CreateKnockoutWithFinishedQuarterFinals();
         knockout.InitializeSemiFinals();
-    
+        // No finalizamos semifinales
+
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeThirdPlace());
     }
-    
-    //Final ----------------------
-    
+
+    // ==================== FINAL ====================
+
     [TestMethod]
     public void GivenFinishedSemiFinals_WhenInitializeFinal_ThenCreatesMatchWithWinners()
     {
         var knockout = CreateKnockoutWithFinishedSemiFinals();
-    
+
         knockout.InitializeFinal();
-    
+
         Assert.AreEqual(1, knockout.Matches.Count(m => m.Phase == TournamentPhase.Final));
-    
+
         var finalMatch = knockout.Matches.Single(m => m.Phase == TournamentPhase.Final);
         Assert.AreEqual("F1", finalMatch.MatchCode);
-    
+
         var matchS1 = knockout.Matches.Single(m => m.MatchCode == "S1");
         var matchS2 = knockout.Matches.Single(m => m.MatchCode == "S2");
-    
+
         Assert.AreEqual(matchS1.Winner, finalMatch.HomeTeam);
         Assert.AreEqual(matchS2.Winner, finalMatch.AwayTeam);
     }
@@ -423,7 +417,8 @@ public class KnockoutTests
     {
         var knockout = CreateKnockoutWithFinishedQuarterFinals();
         knockout.InitializeSemiFinals();
-    
+        // No finalizamos semifinales
+
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeFinal());
     }
 
@@ -432,22 +427,20 @@ public class KnockoutTests
     {
         var knockout = CreateKnockoutWithFinishedSemiFinals();
         knockout.InitializeThirdPlace();
-    
+
         // Final y tercer puesto pueden coexistir porque ambos dependen de semifinales
         knockout.InitializeFinal();
     }
-    
-    //Extra -----------------
-    
+
     [TestMethod]
     public void GivenFinalAndThirdPlaceInitialized_WhenAllOtherPhasesExist_ThenBracketIsComplete()
     {
         var knockout = CreateKnockoutWithFinishedSemiFinals();
         knockout.InitializeThirdPlace();
         knockout.InitializeFinal();
-    
+
         var phases = knockout.Matches.Select(m => m.Phase).Distinct().ToList();
-    
+
         CollectionAssert.Contains(phases, TournamentPhase.RoundOf32);
         CollectionAssert.Contains(phases, TournamentPhase.RoundOf16);
         CollectionAssert.Contains(phases, TournamentPhase.QuarterFinals);
@@ -457,16 +450,13 @@ public class KnockoutTests
         Assert.AreEqual(16 + 8 + 4 + 2 + 1 + 1, knockout.Matches.Count);
     }
 
-    // ──────────────────────────────────────────────
-    // RED: SetMatchResult — casos de prueba
-    // ──────────────────────────────────────────────
+    // ==================== SET MATCH RESULT ====================
 
     [TestMethod]
     public void SetMatchResult_WhenMatchExists_ShouldUpdateGoalsWithoutFinishingMatch()
     {
         var knockout = CreateValidKnockout();
-        var qualifiedTeams = CreateOrderedQualifiedTeams();
-        knockout.SetQualifiedTeams(qualifiedTeams);
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
         knockout.InitializeRoundOf32();
 
         string targetCode = "A1";
@@ -484,7 +474,6 @@ public class KnockoutTests
         Assert.IsNotNull(match.Winner);
     }
 
-    [TestCategory("UpdateResults")]
     [TestMethod]
     public void SetMatchResult_WhenMatchDoesNotExist_ShouldThrowArgumentException()
     {
@@ -493,11 +482,9 @@ public class KnockoutTests
         knockout.InitializeRoundOf32();
 
         Assert.ThrowsException<ArgumentException>(() =>
-            knockout.SetMatchResult("NON-EXISTENT", 1, 0),
-            "Debe fallar si el código de partido no existe en la fase de knockout.");
+            knockout.SetMatchResult("NON-EXISTENT", 1, 0));
     }
 
-    [TestCategory("UpdateResults")]
     [TestMethod]
     public void SetMatchResult_WhenResultIsDraw_ShouldThrowArgumentException()
     {
@@ -506,11 +493,9 @@ public class KnockoutTests
         knockout.InitializeRoundOf32();
 
         Assert.ThrowsException<ArgumentException>(() =>
-            knockout.SetMatchResult("A1", 1, 1),
-            "Los partidos de knockout no pueden terminar en empate.");
+            knockout.SetMatchResult("A1", 1, 1));
     }
 
-    [TestCategory("UpdateResults")]
     [TestMethod]
     public void SetMatchResult_WhenMatchIsAlreadyFinished_ShouldThrowInvalidOperationException()
     {
@@ -522,11 +507,41 @@ public class KnockoutTests
         knockout.FinishMatch("A1");
 
         Assert.ThrowsException<InvalidOperationException>(() =>
-                knockout.SetMatchResult("A1", 1, 2),
-            "No se debería poder cambiar el resultado de un partido ya finalizado.");
+            knockout.SetMatchResult("A1", 1, 2));
     }
 
-    //Helpers--------------------------------
+    // ==================== FINISH MATCH ====================
+
+    [TestMethod]
+    public void FinishMatch_WhenMatchHasResult_ShouldFinishMatch()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        knockout.SetMatchResult("A1", 3, 0);
+        knockout.FinishMatch("A1");
+
+        var match = knockout.Matches.Single(m => m.MatchCode == "A1");
+        Assert.AreEqual(MatchStatus.Finished, match.Status);
+        Assert.IsTrue(match.IsFinished);
+    }
+
+    [TestMethod]
+    public void GivenRoundOf32WithResultsButNotFinished_WhenInitializeRoundOf16_ThenThrowsInvalidOperationException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        foreach (var match in knockout.Matches.Where(m => m.Phase == TournamentPhase.RoundOf32))
+            knockout.SetMatchResult(match.MatchCode!, 1, 0);
+
+        Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf16());
+    }
+
+    // ==================== HELPERS ====================
+
     private static List<Team> CreateOrderedQualifiedTeams()
     {
         var teams = new List<Team>();
@@ -562,12 +577,12 @@ public class KnockoutTests
         string confederation,
         int rankingFifa = 1500,
         string groupLabel = "A") => new()
-    {
-        Name = name,
-        ConfederationName = confederation,
-        RankingFifa = rankingFifa,
-        GroupLabel = groupLabel
-    };
+        {
+            Name = name,
+            ConfederationName = confederation,
+            RankingFifa = rankingFifa,
+            GroupLabel = groupLabel
+        };
 
     private static Team BuildTeam(TeamRequest request) =>
         new(request.Name, request.ConfederationName, request.RankingFifa, request.GroupLabel);
@@ -575,26 +590,24 @@ public class KnockoutTests
     private static Match CreateKnockoutMatch(
         string homeTeamName,
         string awayTeamName,
-        TournamentPhase phase) =>
-        new(
-            ValidMatchDate,
-            new Stadium("CENTENARIO", "MONTEVIDEO", "Historic stadium", 60000),
-            BuildTeam(CreateTeamRequest(homeTeamName, "CONMEBOL", groupLabel: "A")),
-            BuildTeam(CreateTeamRequest(awayTeamName, "UEFA", groupLabel: "B")),
-            group: null,
-            phase: phase,
-            matchCode: "A1");
+        TournamentPhase phase,
+        string matchCode = "A1")
+    {
+        var homeTeam = BuildTeam(CreateTeamRequest(homeTeamName, "CONMEBOL", groupLabel: "A"));
+        var awayTeam = BuildTeam(CreateTeamRequest(awayTeamName, "UEFA", groupLabel: "B"));
+        return new Match(ValidMatchDate, DefaultStadium, homeTeam, awayTeam, null, phase, matchCode);
+    }
 
     private static void AssertMatchesUseExpectedPots(
         IReadOnlyCollection<Match> matches,
         IEnumerable<Team> expectedHomePot,
         IEnumerable<Team> expectedAwayPot)
     {
-        var homeNames = matches.Select(match => match.HomeTeam.Name).ToList();
-        var awayNames = matches.Select(match => match.AwayTeam.Name).ToList();
+        var homeNames = matches.Select(m => m.HomeTeam.Name).ToList();
+        var awayNames = matches.Select(m => m.AwayTeam.Name).ToList();
 
-        CollectionAssert.AreEquivalent(expectedHomePot.Select(team => team.Name).ToList(), homeNames);
-        CollectionAssert.AreEquivalent(expectedAwayPot.Select(team => team.Name).ToList(), awayNames);
+        CollectionAssert.AreEquivalent(expectedHomePot.Select(t => t.Name).ToList(), homeNames);
+        CollectionAssert.AreEquivalent(expectedAwayPot.Select(t => t.Name).ToList(), awayNames);
     }
 
     private static void AssertMatchesUseExpectedPotSplit(
@@ -602,10 +615,10 @@ public class KnockoutTests
         IEnumerable<Team> expectedPot)
     {
         var matchedTeamNames = matches
-            .SelectMany(match => new[] { match.HomeTeam.Name, match.AwayTeam.Name })
+            .SelectMany(m => new[] { m.HomeTeam.Name, m.AwayTeam.Name })
             .ToList();
 
-        CollectionAssert.AreEquivalent(expectedPot.Select(team => team.Name).ToList(), matchedTeamNames);
+        CollectionAssert.AreEquivalent(expectedPot.Select(t => t.Name).ToList(), matchedTeamNames);
     }
 
     private static List<string> ExpectedRoundOf32Codes() =>
@@ -621,8 +634,8 @@ public class KnockoutTests
 
     private static List<string> BuildFixtureSignature(IEnumerable<Match> matches) =>
         matches
-            .OrderBy(match => match.MatchCode)
-            .Select(match => $"{match.MatchCode}:{match.HomeTeam.Name}-{match.AwayTeam.Name}")
+            .OrderBy(m => m.MatchCode)
+            .Select(m => $"{m.MatchCode}:{m.HomeTeam.Name}-{m.AwayTeam.Name}")
             .ToList();
 
     private static string ConfederationFor(int seed)
@@ -691,36 +704,6 @@ public class KnockoutTests
                 (list[i], list[j]) = (list[j], list[i]);
             }
         }
-    }
-    
-    [TestMethod]
-    public void FinishMatch_WhenMatchHasResult_ShouldFinishMatch()
-    {
-        var knockout = CreateValidKnockout();
-        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
-        knockout.InitializeRoundOf32();
-
-        knockout.SetMatchResult("A1", 3, 0);
-
-        knockout.FinishMatch("A1");
-
-        var match = knockout.Matches.Single(m => m.MatchCode == "A1");
-
-        Assert.AreEqual(MatchStatus.Finished, match.Status);
-        Assert.IsTrue(match.IsFinished);
-    }
-    
-    [TestMethod]
-    public void GivenRoundOf32WithResultsButNotFinished_WhenInitializeRoundOf16_ThenThrowsInvalidOperationException()
-    {
-        var knockout = CreateValidKnockout();
-        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
-        knockout.InitializeRoundOf32();
-
-        foreach (var match in knockout.Matches.Where(m => m.Phase == TournamentPhase.RoundOf32))
-            knockout.SetMatchResult(match.MatchCode!, 1, 0);
-
-        Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf16());
     }
 
     private sealed class TeamRequest

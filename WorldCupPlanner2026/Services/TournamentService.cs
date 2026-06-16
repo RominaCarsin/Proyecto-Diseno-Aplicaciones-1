@@ -26,8 +26,6 @@ public class TournamentService : ITournamentService
     private const string MinHoursBetweenMatchesErrorMessage = "Los partidos en el mismo estadio deben tener al menos 4 horas de diferencia.";
     private const string InvalidIncidenceTypeErrorMessage = "El tipo de incidencia es inválido.";
 
-
-
     private readonly IRepository<Group> _groupRepository;
     private readonly IRepository<Match> _matchRepository;
     private readonly IRepository<Stadium> _stadiumRepository;
@@ -37,8 +35,6 @@ public class TournamentService : ITournamentService
     private readonly ISessionService _sessionService;
     private readonly IUpdateRankingService _updateRankingService;
     private readonly INotificationService _notificationService;
-    private readonly IKnockoutMatchFactory _matchFactory;
-
 
     public TournamentService(
         IRepository<Group> groupRepository,
@@ -49,8 +45,7 @@ public class TournamentService : ITournamentService
         IAuditService auditService,
         ISessionService sessionService,
         IUpdateRankingService updateRankingService,
-        INotificationService notificationService,
-        IKnockoutMatchFactory matchFactory)
+        INotificationService notificationService)
     {
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
@@ -61,8 +56,9 @@ public class TournamentService : ITournamentService
         _sessionService = sessionService;
         _updateRankingService = updateRankingService;
         _notificationService = notificationService;
-        _matchFactory = matchFactory;
     }
+
+    // ==================== GENERACIÓN DE FIXTURE ====================
 
     public void GenerateFixture(int seed, DateTime startDate)
     {
@@ -71,7 +67,6 @@ public class TournamentService : ITournamentService
         GeneratePots(seed);
 
         var pots = _potRepository.GetAll().ToList();
-
         var stadiums = _stadiumRepository.GetAll()
             .OrderBy(stadium => stadium.Name)
             .ToList();
@@ -91,6 +86,8 @@ public class TournamentService : ITournamentService
 
     public int GetStadiumCount() => _stadiumRepository.GetAll().Count();
 
+    // ==================== GRUPOS ====================
+
     public IEnumerable<GroupResponse> GetGroups() =>
         _groupRepository.GetAll().Select(GroupMapper.FromEntity);
 
@@ -100,18 +97,9 @@ public class TournamentService : ITournamentService
     public IEnumerable<TeamResponse> GetGroupStandings(char groupLabel)
     {
         var group = FindGroupByLabelOrThrow(groupLabel);
-
         return group.GetOrderedTeamsByPosition()
             .Select(TeamMapper.FromEntity);
     }
-
-    // public TeamResponse GetTeamByPosition(char groupLabel, int position)
-    // {
-    //     var group = FindGroupByLabelOrThrow(groupLabel);
-    //     var team = group.GetTeamByPosition(position);
-    //
-    //     return TeamMapper.FromEntity(team);
-    // }
 
     public IEnumerable<TeamResponse> GetQualifiedTeams()
     {
@@ -120,12 +108,12 @@ public class TournamentService : ITournamentService
         if (groups.Count != RequiredGroupCount)
             throw new InvalidOperationException("Deben existir exactamente 12 grupos para determinar clasificados.");
 
-        if (groups.Any(group => group.Teams.Count < MinTeamsPerGroup))
+        if (groups.Any(g => g.Teams.Count < MinTeamsPerGroup))
             throw new InvalidOperationException("Cada grupo debe tener al menos 3 equipos para determinar 1ro, 2do y 3ro.");
 
-        var winners = groups.Select(group => group.GetTeamByPosition(1));
-        var runnersUp = groups.Select(group => group.GetTeamByPosition(2));
-        var thirds = groups.Select(group => group.GetTeamByPosition(3));
+        var winners = groups.Select(g => g.GetTeamByPosition(1));
+        var runnersUp = groups.Select(g => g.GetTeamByPosition(2));
+        var thirds = groups.Select(g => g.GetTeamByPosition(3));
 
         var sortedWinners = SortTeams(winners);
         var sortedRunnersUp = SortTeams(runnersUp);
@@ -136,6 +124,8 @@ public class TournamentService : ITournamentService
             .Concat(bestThirds)
             .Select(TeamMapper.FromEntity);
     }
+
+    // ==================== PARTIDOS ====================
 
     public IEnumerable<MatchResponse> GetMatches()
     {
@@ -149,9 +139,10 @@ public class TournamentService : ITournamentService
     public MatchResponse GetMatchById(int matchId)
     {
         var match = FindMatchByIdOrThrow(matchId);
-
         return MatchMapper.ToResponse(match);
     }
+
+    // ==================== RESULTADOS DE GRUPO ====================
 
     public void SetGroupMatchResult(char groupLabel, int matchId, int homeGoals, int awayGoals)
     {
@@ -178,6 +169,8 @@ public class TournamentService : ITournamentService
         _groupRepository.Update(group);
         _matchRepository.Update(match);
     }
+
+    // ==================== SIMULACIÓN DE GRUPOS ====================
 
     public void SimulateGroupStage(int seed) =>
         SimulateGroupStage(seed, SimulationEngineTypeDto.Probabilistic);
@@ -206,6 +199,8 @@ public class TournamentService : ITournamentService
         _notificationService.NotifySimulationCompleted("Fase de grupos", matchCount);
     }
 
+    // ==================== FASE ELIMINATORIA ====================
+
     public void InitializeKnockoutStage(int simulationSeed, int crossesSeed = 0)
     {
         var groups = _groupRepository.GetAll().ToList();
@@ -214,77 +209,72 @@ public class TournamentService : ITournamentService
             throw new InvalidOperationException("No se ha generado la fase de grupos.");
 
         var allMatchesHaveResults = groups
-            .SelectMany(group => group.Matches)
-            .All(match => match.HasResult);
+            .SelectMany(g => g.Matches)
+            .All(m => m.HasResult);
 
         if (!allMatchesHaveResults)
             throw new InvalidOperationException("La fase de grupos debe estar simulada.");
 
-        if (_matchRepository.GetAll().Any(match => match.Phase != TournamentPhase.GroupStage))
+        if (_matchRepository.GetAll().Any(m => m.Phase != TournamentPhase.GroupStage))
             throw new InvalidOperationException("La fase eliminatoria ya fue inicializada.");
 
         var qualifiedTeamResponses = GetQualifiedTeams().ToList();
-
-        var qualifiedTeamNames = qualifiedTeamResponses
-            .Select(team => team.Name)
-            .ToHashSet();
-
+        var qualifiedTeamNames = qualifiedTeamResponses.Select(t => t.Name).ToHashSet();
         var qualifiedTeams = _teamRepository.GetAll()
-            .Where(team => qualifiedTeamNames.Contains(team.Name))
+            .Where(t => qualifiedTeamNames.Contains(t.Name))
             .ToList();
 
+        // Obtener los estadios del repositorio
+        var stadiums = _stadiumRepository.GetAll().ToList();
+
         var shuffler = new Shuffler(simulationSeed);
-        var knockout = new Knockout(simulationSeed, shuffler, _matchFactory, crossesSeed);
+        var knockout = new Knockout(simulationSeed, shuffler, stadiums, crossesSeed);
 
         knockout.SetQualifiedTeams(qualifiedTeams);
         knockout.InitializeRoundOf32();
 
         foreach (var match in knockout.Matches)
             _matchRepository.Add(match);
-        
-        
     }
 
     public void SetKnockoutMatchResult(string matchCode, int homeGoals, int awayGoals)
     {
         var allMatches = _matchRepository.GetAll().ToList();
-        var knockout = CreateKnockoutFromExistingMatches(allMatches);
+        var stadiums = _stadiumRepository.GetAll().ToList();
+        var knockout = CreateKnockoutFromExistingMatches(allMatches, stadiums);
 
         knockout.SetMatchResult(matchCode, homeGoals, awayGoals);
 
-        var updatedMatch = allMatches.Single(match => match.MatchCode == matchCode);
+        var updatedMatch = allMatches.Single(m => m.MatchCode == matchCode);
         _matchRepository.Update(updatedMatch);
 
         _notificationService.NotifyMatchResult(
             updatedMatch.MatchId, updatedMatch.HomeTeam.Name, updatedMatch.AwayTeam.Name,
             homeGoals, awayGoals);
     }
-    
+
     public void FinishKnockoutMatch(string matchCode)
     {
         var match = FindKnockoutMatchByCodeOrThrow(matchCode);
-
         FinishAndRecalculate(match);
-
         _matchRepository.Update(match);
 
         LogAction(
             "Partido de eliminación finalizado",
             $"Partido de eliminación {matchCode} marcado como finalizado");
     }
-    
+
     public void FinishAllKnockoutMatches()
     {
         var knockoutMatches = _matchRepository.GetAll()
-            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
             .ToList();
 
         if (!knockoutMatches.Any())
             throw new InvalidOperationException(KnockoutNotInitializedErrorMessage);
 
         var matchesToFinish = knockoutMatches
-            .Where(match => match.HasResult)
-            .Where(match => match.Status != MatchStatus.Finished)
+            .Where(m => m.HasResult && m.Status != MatchStatus.Finished)
             .ToList();
 
         foreach (var match in matchesToFinish)
@@ -300,54 +290,48 @@ public class TournamentService : ITournamentService
 
     public IEnumerable<MatchResponse> GetKnockoutMatches() =>
         _matchRepository.GetAll()
-            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
             .Select(m => MatchMapper.ToResponse(m))
             .ToList();
+
+    // ==================== INICIALIZACIÓN DE RONDAS ====================
 
     public void InitializeRoundOf16()
     {
         var knockout = GetLoadedKnockout();
-
         knockout.InitializeRoundOf16();
-
         AddNewMatchesByPhase(knockout, TournamentPhase.RoundOf16);
     }
 
     public void InitializeQuarterFinals()
     {
         var knockout = GetLoadedKnockout();
-
         knockout.InitializeQuarterFinals();
-
         AddNewMatchesByPhase(knockout, TournamentPhase.QuarterFinals);
     }
 
     public void InitializeSemiFinals()
     {
         var knockout = GetLoadedKnockout();
-
         knockout.InitializeSemiFinals();
-
         AddNewMatchesByPhase(knockout, TournamentPhase.SemiFinals);
     }
 
     public void InitializeThirdPlace()
     {
         var knockout = GetLoadedKnockout();
-
         knockout.InitializeThirdPlace();
-
         AddNewMatchesByPhase(knockout, TournamentPhase.ThirdPlace);
     }
 
     public void InitializeFinal()
     {
         var knockout = GetLoadedKnockout();
-
         knockout.InitializeFinal();
-
         AddNewMatchesByPhase(knockout, TournamentPhase.Final);
     }
+
+    // ==================== SIMULACIÓN DE ELIMINATORIA ====================
 
     public void SimulateKnockoutStage(int seed) =>
         SimulateKnockoutStage(seed, SimulationEngineTypeDto.Probabilistic);
@@ -355,7 +339,7 @@ public class TournamentService : ITournamentService
     public void SimulateKnockoutStage(int seed, SimulationEngineTypeDto simulationEngineType)
     {
         var knockoutMatches = _matchRepository.GetAll()
-            .Where(match => match.Phase != TournamentPhase.GroupStage)
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
             .ToList();
 
         if (!knockoutMatches.Any())
@@ -374,52 +358,10 @@ public class TournamentService : ITournamentService
             "Simulación de fase eliminatoria ejecutada",
             $"Simulación de fase eliminatoria ejecutada con semilla {seed} usando {simulationEngine.Name}");
 
-        var knockoutMatchCount = knockoutMatches.Count;
-        _notificationService.NotifySimulationCompleted("Fase eliminatoria", knockoutMatchCount);
+        _notificationService.NotifySimulationCompleted("Fase eliminatoria", knockoutMatches.Count);
     }
 
-    private void RecalculateFinishedKnockoutRankings(IEnumerable<Match> matches)
-    {
-        var finishedKnockoutMatches = matches
-            .Where(match => match.Phase != TournamentPhase.GroupStage)
-            .Where(match => match.Status == MatchStatus.Finished)
-            .OrderBy(match => match.Date);
-
-        foreach (var match in finishedKnockoutMatches)
-            _updateRankingService.UpdateAfterMatch(match);
-    }
-
-    public void FinishAllMatches()
-    {
-        var finishedCount = 0;
-
-        foreach (var group in _groupRepository.GetAll())
-        {
-            var finishedGroupMatches = group.FinishPlayedMatches().ToList();
-
-            foreach (var match in finishedGroupMatches)
-                _updateRankingService.UpdateAfterMatch(match);
-
-            if (finishedGroupMatches.Any())
-                _groupRepository.Update(group);
-
-            finishedCount += finishedGroupMatches.Count;
-        }
-
-        var standaloneMatches = _matchRepository.GetAll()
-            .Where(match => match.HasResult && match.Status != MatchStatus.Finished)
-            .ToList();
-
-        foreach (var match in standaloneMatches)
-        {
-            FinishAndRecalculate(match);
-            _matchRepository.Update(match);
-        }
-
-        finishedCount += standaloneMatches.Count;
-
-        LogAction("Todos los partidos finalizados", $"{finishedCount} partidos finalizados y rankings recalculados");
-    }
+    // ==================== MÉTODOS AUXILIARES PRIVADOS ====================
 
     private void ValidateFixtureCanBeGenerated()
     {
@@ -432,7 +374,7 @@ public class TournamentService : ITournamentService
         if (HasGroups())
             throw new InvalidOperationException(FixtureAlreadyGeneratedErrorMessage);
     }
-  
+
     private bool HasEnoughTeams() =>
         _teamRepository.GetAll().Count() >= GroupPhase.RequiredTeamCount;
 
@@ -446,27 +388,15 @@ public class TournamentService : ITournamentService
     {
         var teams = _teamRepository.GetAll().ToList();
 
-        ValidateTeamCount(teams);
+        if (teams.Count != GroupPhase.RequiredTeamCount)
+            throw new ArgumentException(InvalidTeamCountErrorMessage);
 
         var sortedTeams = SortByFifaRankingDescending(teams);
         new PotDraw().ShuffleByRanking(sortedTeams, seed);
-        CreateAndSavePots(sortedTeams);
-    }
 
-    private static void ValidateTeamCount(List<Team> teams)
-    {
-        if (teams.Count != GroupPhase.RequiredTeamCount)
-            throw new ArgumentException(InvalidTeamCountErrorMessage);
-    }
-
-    private static List<Team> SortByFifaRankingDescending(IEnumerable<Team> teams) =>
-        teams.OrderByDescending(team => team.RankingFifa).ToList();
-
-    private void CreateAndSavePots(List<Team> teams)
-    {
         for (int potNumber = Pot.MinNumber; potNumber <= Pot.MaxNumber; potNumber++)
         {
-            var potTeams = teams
+            var potTeams = sortedTeams
                 .Skip((potNumber - 1) * Pot.MaxTeams)
                 .Take(Pot.MaxTeams)
                 .ToList();
@@ -475,62 +405,75 @@ public class TournamentService : ITournamentService
         }
     }
 
+    private static List<Team> SortByFifaRankingDescending(IEnumerable<Team> teams) =>
+        teams.OrderByDescending(t => t.RankingFifa).ToList();
+
     private Group FindGroupByLabelOrThrow(char label) =>
         _groupRepository.GetAll()
-            .FirstOrDefault(group => group.Label == label)
+            .FirstOrDefault(g => g.Label == label)
             ?? throw new ArgumentException(GroupNotFoundErrorMessage);
 
     private Match FindMatchByIdOrThrow(int matchId) =>
         _matchRepository.GetAll()
-            .FirstOrDefault(match => match.MatchId == matchId)
+            .FirstOrDefault(m => m.MatchId == matchId)
             ?? throw new ArgumentException(MatchNotFoundErrorMessage);
 
     private static Match FindMatchInGroupOrThrow(Group group, int matchId) =>
         group.Matches
-            .FirstOrDefault(match => match.MatchId == matchId)
+            .FirstOrDefault(m => m.MatchId == matchId)
             ?? throw new ArgumentException(MatchNotFoundInGroupErrorMessage);
 
     private static IEnumerable<Team> SortTeams(IEnumerable<Team> teams) =>
-        teams.OrderByDescending(team => team.Points)
-            .ThenByDescending(team => team.GoalDifference)
-            .ThenByDescending(team => team.GoalsInFavor);
+        teams.OrderByDescending(t => t.Points)
+            .ThenByDescending(t => t.GoalDifference)
+            .ThenByDescending(t => t.GoalsInFavor);
 
     private Knockout GetLoadedKnockout()
     {
         var allMatches = _matchRepository.GetAll().ToList();
 
-        if (!allMatches.Any(match => match.Phase != TournamentPhase.GroupStage))
+        if (!allMatches.Any(m => m.Phase != TournamentPhase.GroupStage))
             throw new InvalidOperationException(KnockoutNotInitializedErrorMessage);
 
-        var knockout = CreateKnockoutFromExistingMatches(allMatches);
-
-        return knockout;
+        var stadiums = _stadiumRepository.GetAll().ToList();
+        return CreateKnockoutFromExistingMatches(allMatches, stadiums);
     }
 
-    private Knockout CreateKnockoutFromExistingMatches(IEnumerable<Match> matches)
+    private Knockout CreateKnockoutFromExistingMatches(IEnumerable<Match> matches, IEnumerable<Stadium> stadiums)
     {
         var shuffler = new Shuffler(0);
-        var knockout = new Knockout(0, shuffler, _matchFactory);
-
+        var knockout = new Knockout(0, shuffler, stadiums.ToList());
         knockout.LoadExistingMatches(matches.ToList());
-
         return knockout;
     }
 
     private void AddNewMatchesByPhase(Knockout knockout, TournamentPhase phase)
     {
         var existingMatchCodes = _matchRepository.GetAll()
-            .Select(match => match.MatchCode)
+            .Select(m => m.MatchCode)
             .ToHashSet();
 
         var newMatches = knockout.Matches
-            .Where(match => match.Phase == phase)
-            .Where(match => !existingMatchCodes.Contains(match.MatchCode))
+            .Where(m => m.Phase == phase)
+            .Where(m => !existingMatchCodes.Contains(m.MatchCode))
             .ToList();
 
         foreach (var match in newMatches)
             _matchRepository.Add(match);
     }
+
+    private Match FindKnockoutMatchByCodeOrThrow(string matchCode) =>
+        _matchRepository.GetAll()
+            .FirstOrDefault(m => m.Phase != TournamentPhase.GroupStage && m.MatchCode == matchCode)
+            ?? throw new ArgumentException(MatchNotFoundErrorMessage);
+
+    private void FinishAndRecalculate(Match match)
+    {
+        match.Finish();
+        _updateRankingService.UpdateAfterMatch(match);
+    }
+
+    // ==================== MÉTODOS PÚBLICOS ADICIONALES (CRUD) ====================
 
     public void AddMatch(MatchRequest matchRequest)
     {
@@ -612,13 +555,6 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
 
         LogAction("Partido finalizado", $"Partido {matchId} marcado como finalizado");
- 
-    }
-
-    private void FinishAndRecalculate(Match match)
-    {
-        match.Finish();
-        _updateRankingService.UpdateAfterMatch(match);
     }
 
     public IEnumerable<StadiumRequest> GetAvailableStadiumsForMatch(
@@ -632,9 +568,7 @@ public class TournamentService : ITournamentService
             try
             {
                 var stadium = StadiumMapper.ToEntity(stadiumRequest);
-
                 ValidateStadiumAvailability(matchId, stadium, match.Date);
-
                 return true;
             }
             catch (InvalidOperationException)
@@ -643,7 +577,7 @@ public class TournamentService : ITournamentService
             }
         });
     }
-    
+
     public void RegisterMatchIncidence(int matchId, string incidenceType, bool isHomeTeam, int minute)
     {
         var match = FindMatchByIdOrThrow(matchId);
@@ -655,39 +589,65 @@ public class TournamentService : ITournamentService
         _matchRepository.Update(match);
     }
 
-    private static MatchIncidence BuildIncidence(string incidenceType, Team team, int minute) =>
-        incidenceType switch
-        {
-            "Yellow" => new YellowCard(team, minute),
-            "Red" => new RedCard(team, minute),
-            _ => throw new ArgumentException(InvalidIncidenceTypeErrorMessage)
-        };
+    public void FinishAllMatches()
+    {
+        var finishedCount = 0;
 
+        // Finalizar partidos de grupo
+        foreach (var group in _groupRepository.GetAll())
+        {
+            var finishedGroupMatches = group.FinishPlayedMatches().ToList();
+
+            foreach (var match in finishedGroupMatches)
+                _updateRankingService.UpdateAfterMatch(match);
+
+            if (finishedGroupMatches.Any())
+                _groupRepository.Update(group);
+
+            finishedCount += finishedGroupMatches.Count;
+        }
+
+        // Finalizar partidos sueltos (eliminatoria, etc.)
+        var standaloneMatches = _matchRepository.GetAll()
+            .Where(m => m.HasResult && m.Status != MatchStatus.Finished)
+            .ToList();
+
+        foreach (var match in standaloneMatches)
+        {
+            FinishAndRecalculate(match);
+            _matchRepository.Update(match);
+        }
+
+        finishedCount += standaloneMatches.Count;
+
+        LogAction("Todos los partidos finalizados", $"{finishedCount} partidos finalizados y rankings recalculados");
+    }
+
+    // ==================== MÉTODOS PRIVADOS DE APOYO ====================
 
     private void AddMatchToGroup(Match match, char groupLabel)
     {
         var group = _groupRepository.GetAll()
-                        .FirstOrDefault(group => group.Label == groupLabel)
-                    ?? throw new ArgumentException(GroupNotFoundErrorMessage);
+            .FirstOrDefault(g => g.Label == groupLabel)
+            ?? throw new ArgumentException(GroupNotFoundErrorMessage);
 
         group.AddMatch(match);
-
         _groupRepository.Update(group);
     }
 
     private void ValidateStadiumAvailability(int? excludeMatchId, Stadium stadium, DateTime matchDate)
     {
         var matchesInSameStadiumAndDay = _matchRepository.GetAll()
-            .Where(match => excludeMatchId == null || match.MatchId != excludeMatchId.Value)
-            .Where(match => match.Stadium.Name == stadium.Name)
-            .Where(match => match.Date.Date == matchDate.Date)
+            .Where(m => excludeMatchId == null || m.MatchId != excludeMatchId.Value)
+            .Where(m => m.Stadium.Name == stadium.Name)
+            .Where(m => m.Date.Date == matchDate.Date)
             .ToList();
 
         if (matchesInSameStadiumAndDay.Count >= 3)
             throw new InvalidOperationException(MaxMatchesPerDayErrorMessage);
 
-        var tooClose = matchesInSameStadiumAndDay.Any(match =>
-            Math.Abs((match.Date - matchDate).TotalHours) < 4);
+        var tooClose = matchesInSameStadiumAndDay.Any(m =>
+            Math.Abs((m.Date - matchDate).TotalHours) < 4);
 
         if (tooClose)
             throw new InvalidOperationException(MinHoursBetweenMatchesErrorMessage);
@@ -699,17 +659,17 @@ public class TournamentService : ITournamentService
             throw new ArgumentException(errorMessage);
     }
 
+    private static MatchIncidence BuildIncidence(string incidenceType, Team team, int minute) =>
+        incidenceType switch
+        {
+            "Yellow" => new YellowCard(team, minute),
+            "Red" => new RedCard(team, minute),
+            _ => throw new ArgumentException(InvalidIncidenceTypeErrorMessage)
+        };
+
     private void LogAction(string action, string details)
     {
         var actorEmail = _sessionService.GetCurrentUserEmail() ?? "system";
-
         _auditService.Log(actorEmail, action, details);
     }
-    
-    private Match FindKnockoutMatchByCodeOrThrow(string matchCode) =>
-        _matchRepository.GetAll()
-            .FirstOrDefault(match =>
-                match.Phase != TournamentPhase.GroupStage &&
-                match.MatchCode == matchCode)
-        ?? throw new ArgumentException(MatchNotFoundErrorMessage);
 }

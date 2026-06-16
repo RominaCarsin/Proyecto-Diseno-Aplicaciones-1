@@ -40,12 +40,6 @@ builder.Services.AddScoped<ITournamentService, TournamentService>();
 builder.Services.AddScoped<IServices.INotificationService, NotificationService>();
 builder.Services.AddScoped<IUpdateRankingService, UpdateRankingService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<IKnockoutMatchFactory>(sp =>
-{
-    var stadiumRepo = sp.GetRequiredService<IRepository<Stadium>>();
-    var stadiums = stadiumRepo.GetAll().ToList();
-    return new KnockoutMatchFactory(stadiums, new DateTime(2026, 7, 1));
-});
 
 builder.Services.AddBlazoredLocalStorage();
 

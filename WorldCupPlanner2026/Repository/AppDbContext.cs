@@ -12,7 +12,6 @@ public class AppDbContext : DbContext
     public DbSet<Match> Matches { get; set; }
     public DbSet<Pot> Pots { get; set; }
     public DbSet<Stadium> Stadiums { get; set; }
-    public DbSet<Knockout> Knockouts { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<MatchIncidence> MatchIncidences { get; set; }
     public DbSet<Notification> Notifications { get; set; }
