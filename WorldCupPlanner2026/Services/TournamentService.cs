@@ -37,6 +37,7 @@ public class TournamentService : ITournamentService
     private readonly ISessionService _sessionService;
     private readonly IUpdateRankingService _updateRankingService;
     private readonly INotificationService _notificationService;
+    private readonly IKnockoutMatchFactory _matchFactory;
 
 
     public TournamentService(
@@ -48,7 +49,8 @@ public class TournamentService : ITournamentService
         IAuditService auditService,
         ISessionService sessionService,
         IUpdateRankingService updateRankingService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IKnockoutMatchFactory matchFactory)
     {
         _groupRepository = groupRepository;
         _matchRepository = matchRepository;
@@ -59,6 +61,7 @@ public class TournamentService : ITournamentService
         _sessionService = sessionService;
         _updateRankingService = updateRankingService;
         _notificationService = notificationService;
+        _matchFactory = matchFactory;
     }
 
     public void GenerateFixture(int seed, DateTime startDate)
@@ -231,7 +234,7 @@ public class TournamentService : ITournamentService
             .ToList();
 
         var shuffleService = new ShuffleService(simulationSeed);
-        var knockout = new Knockout(simulationSeed, shuffleService, crossesSeed);
+        var knockout = new Knockout(simulationSeed, shuffleService, _matchFactory, crossesSeed);
 
         knockout.SetQualifiedTeams(qualifiedTeams);
         knockout.InitializeRoundOf32();
@@ -509,10 +512,10 @@ public class TournamentService : ITournamentService
         return knockout;
     }
 
-    private static Knockout CreateKnockoutFromExistingMatches(IEnumerable<Match> matches)
+    private Knockout CreateKnockoutFromExistingMatches(IEnumerable<Match> matches)
     {
         var shuffleService = new ShuffleService(0);
-        var knockout = new Knockout(0, shuffleService);
+        var knockout = new Knockout(0, shuffleService, _matchFactory);
 
         knockout.LoadExistingMatches(matches.ToList());
 

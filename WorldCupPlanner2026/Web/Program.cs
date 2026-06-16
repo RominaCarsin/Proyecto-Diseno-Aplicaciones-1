@@ -41,6 +41,12 @@ builder.Services.AddScoped<IServices.INotificationService, NotificationService>(
 builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
 builder.Services.AddScoped<IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
 builder.Services.AddScoped<IUpdateRankingService, UpdateRankingService>();
+builder.Services.AddScoped<IKnockoutMatchFactory>(sp =>
+{
+    var stadiumRepo = sp.GetRequiredService<IRepository<Stadium>>();
+    var stadiums = stadiumRepo.GetAll().ToList();
+    return new KnockoutMatchFactory(stadiums, new DateTime(2026, 7, 1));
+});
 
 builder.Services.AddBlazoredLocalStorage();
 

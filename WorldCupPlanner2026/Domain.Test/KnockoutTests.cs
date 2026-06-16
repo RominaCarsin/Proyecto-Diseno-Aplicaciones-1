@@ -7,12 +7,20 @@ public class KnockoutTests
     private const int CrossesSeed = 98765;
     private static readonly DateTime ValidMatchDate = new(2026, 7, 1);
 
+    private static IKnockoutMatchFactory CreateMatchFactory() =>
+        new KnockoutMatchFactory(
+            new List<Stadium>
+            {
+                new("KNOCKOUT STADIUM", "TBD", "Default knockout stadium", 60000)
+            },
+            new DateTime(2026, 7, 1));
+
     private static Knockout CreateValidKnockout(
         int simulationSeed = SimulationSeed,
         int crossesSeed = CrossesSeed)
     {
         var shuffleService = new TestShuffleService(crossesSeed);
-        return new Knockout(simulationSeed, shuffleService, crossesSeed);
+        return new Knockout(simulationSeed, shuffleService, CreateMatchFactory(), crossesSeed);
     }
 
     [TestMethod]

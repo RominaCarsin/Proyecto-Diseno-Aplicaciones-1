@@ -33,6 +33,7 @@ public class TournamentServiceTests
     private ISessionService _sessionService = null!;
     private IUpdateRankingService _updateRankingService = null!;
     private INotificationService _notificationService = null!;
+    private IKnockoutMatchFactory _matchFactory = null!;
 
     [TestInitialize]
     public void Setup()
@@ -48,6 +49,12 @@ public class TournamentServiceTests
         _sessionService = new SessionService(null!, new AuthStateService());
         _updateRankingService = new UpdateRankingService(_auditService);
         _notificationService = new FakeNotificationService();
+        _matchFactory = new KnockoutMatchFactory(
+            new List<Stadium>
+            {
+                new("KNOCKOUT STADIUM", "TBD", "Default knockout stadium", 60000)
+            },
+            new DateTime(2026, 7, 1));
 
         _service = new TournamentService(
             _groupRepository,
@@ -58,7 +65,8 @@ public class TournamentServiceTests
             _auditService,
             _sessionService,
             _updateRankingService,
-            _notificationService);
+            _notificationService,
+            _matchFactory);
     }
 
     // ─────────────────────────────────────────────

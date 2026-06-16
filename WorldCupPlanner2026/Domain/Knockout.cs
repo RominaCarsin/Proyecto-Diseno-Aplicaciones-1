@@ -19,21 +19,29 @@ public class Knockout
     private const int FirstMatchNumber = 1;
     private const int RemainingSecondsFirstMatchNumber = 5;
 
-    private const string NullQualifiedTeamsErrorMessage = "Qualified teams cannot be null.";
-    private const string NullMatchErrorMessage = "Match cannot be null.";
-    private const string RoundOf32AlreadyInitErrorMessage = "Round of 32 has already been initialized.";
-    private const string PhaseNotFinishedErrorMessage = "Previous knockout phase must be finished before adding matches for the next phase.";
+    private const string NullQualifiedTeamsErrorMessage = "Los equipos clasificados no pueden ser nulos.";
+    private const string NullMatchErrorMessage = "El partido no puede ser nulo.";
+    private const string RoundOf32AlreadyInitErrorMessage = "Los dieciseisavos de final ya fueron inicializados.";
+    private const string PhaseNotFinishedErrorMessage = "La fase eliminatoria anterior debe estar finalizada antes de agregar partidos para la siguiente fase.";
     private const string MatchNotFoundErrorMessage = "No se encontró un partido con el código '{0}'.";
     private const string KnockoutDrawErrorMessage = "Los partidos de knockout no pueden terminar en empate.";
-    private const string QualifiedTeamsCountErrorMessage = "Knockout phase must receive exactly {0} qualified teams.";
-    private const string QualifiedTeamsCountInitErrorMessage = "Knockout phase requires exactly {0} qualified teams.";
-
-    private static readonly DateTime RoundOf32DefaultDate = new(2026, 7, 1);
-    private static readonly DateTime KnockoutPhaseDefaultDate = new(2026, 7, 1);
+    private const string QualifiedTeamsCountErrorMessage = "La fase eliminatoria debe recibir exactamente {0} equipos clasificados.";
+    private const string QualifiedTeamsCountInitErrorMessage = "La fase eliminatoria requiere exactamente {0} equipos clasificados.";
 
     private readonly List<Team> _qualifiedTeams = new();
     private readonly List<Match> _matches = new();
     private readonly IShuffleService _shuffleService = null!;
+    private readonly IKnockoutMatchFactory _matchFactory = null!;
+
+    private IShuffleService ShuffleService =>
+        _shuffleService
+        ?? throw new InvalidOperationException(
+            "El servicio de sorteo no está inicializado. ¿Fue este objeto reconstruido por EF Core?");
+
+    private IKnockoutMatchFactory MatchFactory =>
+        _matchFactory
+        ?? throw new InvalidOperationException(
+            "La factory de partidos no está inicializada. ¿Fue este objeto reconstruido por EF Core?");
     
     public int KnockoutId { get; private set; }
     public int SimulationSeed { get; private set; }
@@ -42,10 +50,21 @@ public class Knockout
     public IReadOnlyList<Match> Matches => _matches;
 
     private Knockout() { }
-    public Knockout(int simulationSeed, IShuffleService shuffleService, int crossesSeed = 0)
+    // Requerido por EF Core
+    public Knockout(
+        int simulationSeed,
+        IShuffleService shuffleService,
+        IKnockoutMatchFactory matchFactory,
+        int crossesSeed = 0)
     {
+        if (shuffleService is null)
+            throw new ArgumentNullException(nameof(shuffleService));
+        if (matchFactory is null)
+            throw new ArgumentNullException(nameof(matchFactory));
+
         SimulationSeed = simulationSeed;
         _shuffleService = shuffleService;
+        _matchFactory = matchFactory;
         CrossesSeed = crossesSeed;
     }
 
@@ -85,7 +104,13 @@ public class Knockout
         if (match is null)
             throw new ArgumentException(NullMatchErrorMessage);
 
-        ValidatePreviousPhaseFinished(match.Phase);
+        var previousPhase = GetPreviousPhase(match.Phase);
+
+        if (previousPhase is not null
+            && _matches.Any(m => m.Phase == previousPhase.Value)
+            && !PhaseIsFinished(previousPhase.Value))
+            throw new InvalidOperationException(PhaseNotFinishedErrorMessage);
+
         _matches.Add(match);
     }
 
@@ -106,7 +131,7 @@ public class Knockout
 
     private IEnumerable<Match> PairRemainingSecondPlaces(List<Team> remainingSecondPlaces)
     {
-        _shuffleService.Shuffle(remainingSecondPlaces);
+        ShuffleService.Shuffle(remainingSecondPlaces);
 
         var homePot = remainingSecondPlaces
             .Take(HalfRemainingSecondsCount)
@@ -122,8 +147,8 @@ public class Knockout
 
     private List<Match> PairTeams(List<Team> homePot, List<Team> awayPot, string prefix, int startNumber)
     {
-        _shuffleService.Shuffle(homePot);
-        _shuffleService.Shuffle(awayPot);
+        ShuffleService.Shuffle(homePot);
+        ShuffleService.Shuffle(awayPot);
 
         var matches = new List<Match>();
 
@@ -133,7 +158,7 @@ public class Knockout
             var awayTeam = TakeFirstAvailableOpponent(homeTeam, awayPot);
             var matchCode = $"{prefix}{startNumber + i}";
 
-            matches.Add(CreateRoundOf32Match(homeTeam, awayTeam, matchCode));
+            matches.Add(MatchFactory.Create(homeTeam, awayTeam, TournamentPhase.RoundOf32, matchCode));
         }
 
         return matches;
@@ -163,35 +188,6 @@ public class Knockout
     }
 
 
-    private static Match CreateRoundOf32Match(Team homeTeam, Team awayTeam, string matchCode) =>
-        new(
-            RoundOf32DefaultDate,
-            BuildDefaultStadium(),
-            homeTeam,
-            awayTeam,
-            group: null,
-            phase: TournamentPhase.RoundOf32,
-            matchCode: matchCode);
-
-    private static Stadium BuildDefaultStadium() =>
-        new("KNOCKOUT STADIUM", "TBD", "Default knockout stadium", 60000);
-
-    private void ValidatePreviousPhaseFinished(TournamentPhase phase)
-    {
-        var previousPhase = GetPreviousPhase(phase);
-
-        if (previousPhase is null)
-            return;
-
-        bool previousPhaseHasMatches = _matches.Any(match => match.Phase == previousPhase.Value);
-        bool previousPhaseIsFinished = _matches
-            .Where(match => match.Phase == previousPhase.Value)
-            .All(match => match.Status == MatchStatus.Finished);
-
-        if (previousPhaseHasMatches && !previousPhaseIsFinished)
-            throw new InvalidOperationException(PhaseNotFinishedErrorMessage);
-    }
-
     private static TournamentPhase? GetPreviousPhase(TournamentPhase phase) =>
         phase switch
         {
@@ -216,14 +212,14 @@ public class Knockout
             var matchA = _matches.Single(m => m.MatchCode == $"A{i}");
             var matchB = _matches.Single(m => m.MatchCode == $"B{i}");
 
-            var homeTeam = matchA.Winner ?? throw new InvalidOperationException($"Match A{i} has no winner");
-            var awayTeam = matchB.Winner ?? throw new InvalidOperationException($"Match B{i} has no winner");
+            var homeTeam = matchA.Winner ?? throw new InvalidOperationException($"El partido A{i} no tiene ganador");
+            var awayTeam = matchB.Winner ?? throw new InvalidOperationException($"El partido B{i} no tiene ganador");
 
-            var match = CreateKnockoutMatch(
+            var match = MatchFactory.Create(
                 homeTeam,
                 awayTeam,
-                $"C{i}",
-                TournamentPhase.RoundOf16);
+                TournamentPhase.RoundOf16,
+                $"C{i}");
 
             roundOf16Matches.Add(match);
         }
@@ -244,14 +240,14 @@ public class Knockout
             var matchC1 = _matches.Single(m => m.MatchCode == $"C{c1}");
             var matchC2 = _matches.Single(m => m.MatchCode == $"C{c2}");
 
-            var homeTeam = matchC1.Winner ?? throw new InvalidOperationException($"Match C{c1} has no winner");
-            var awayTeam = matchC2.Winner ?? throw new InvalidOperationException($"Match C{c2} has no winner");
+            var homeTeam = matchC1.Winner ?? throw new InvalidOperationException($"El partido C{c1} no tiene ganador");
+            var awayTeam = matchC2.Winner ?? throw new InvalidOperationException($"El partido C{c2} no tiene ganador");
 
-            var match = CreateKnockoutMatch(
+            var match = MatchFactory.Create(
                 homeTeam,
                 awayTeam,
-                $"D{d + 1}",
-                TournamentPhase.QuarterFinals);
+                TournamentPhase.QuarterFinals,
+                $"D{d + 1}");
 
             quarterFinalMatches.Add(match);
         }
@@ -268,18 +264,18 @@ public class Knockout
         var matchD1 = _matches.Single(m => m.MatchCode == "D1");
         var matchD2 = _matches.Single(m => m.MatchCode == "D2");
 
-        var homeTeamS1 = matchD1.Winner ?? throw new InvalidOperationException("Match D1 has no winner");
-        var awayTeamS1 = matchD2.Winner ?? throw new InvalidOperationException("Match D2 has no winner");
+        var homeTeamS1 = matchD1.Winner ?? throw new InvalidOperationException("El partido D1 no tiene ganador");
+        var awayTeamS1 = matchD2.Winner ?? throw new InvalidOperationException("El partido D2 no tiene ganador");
 
-        semiFinalMatches.Add(CreateKnockoutMatch(homeTeamS1, awayTeamS1, "S1", TournamentPhase.SemiFinals));
+        semiFinalMatches.Add(MatchFactory.Create(homeTeamS1, awayTeamS1, TournamentPhase.SemiFinals, "S1"));
 
         var matchD3 = _matches.Single(m => m.MatchCode == "D3");
         var matchD4 = _matches.Single(m => m.MatchCode == "D4");
 
-        var homeTeamS2 = matchD3.Winner ?? throw new InvalidOperationException("Match D3 has no winner");
-        var awayTeamS2 = matchD4.Winner ?? throw new InvalidOperationException("Match D4 has no winner");
+        var homeTeamS2 = matchD3.Winner ?? throw new InvalidOperationException("El partido D3 no tiene ganador");
+        var awayTeamS2 = matchD4.Winner ?? throw new InvalidOperationException("El partido D4 no tiene ganador");
 
-        semiFinalMatches.Add(CreateKnockoutMatch(homeTeamS2, awayTeamS2, "S2", TournamentPhase.SemiFinals));
+        semiFinalMatches.Add(MatchFactory.Create(homeTeamS2, awayTeamS2, TournamentPhase.SemiFinals, "S2"));
 
         AddMatches(semiFinalMatches);
     }
@@ -291,10 +287,10 @@ public class Knockout
         var matchS1 = _matches.Single(m => m.MatchCode == "S1");
         var matchS2 = _matches.Single(m => m.MatchCode == "S2");
 
-        var homeTeam = matchS1.Loser ?? throw new InvalidOperationException("Match S1 has no loser");
-        var awayTeam = matchS2.Loser ?? throw new InvalidOperationException("Match S2 has no loser");
+        var homeTeam = matchS1.Loser ?? throw new InvalidOperationException("El partido S1 no tiene perdedor");
+        var awayTeam = matchS2.Loser ?? throw new InvalidOperationException("El partido S2 no tiene perdedor");
 
-        var thirdPlaceMatch = CreateKnockoutMatch(homeTeam, awayTeam, "T1", TournamentPhase.ThirdPlace);
+        var thirdPlaceMatch = MatchFactory.Create(homeTeam, awayTeam, TournamentPhase.ThirdPlace, "T1");
 
         AddMatch(thirdPlaceMatch);
     }
@@ -306,10 +302,10 @@ public class Knockout
         var matchS1 = _matches.Single(m => m.MatchCode == "S1");
         var matchS2 = _matches.Single(m => m.MatchCode == "S2");
 
-        var homeTeam = matchS1.Winner ?? throw new InvalidOperationException("Match S1 has no winner");
-        var awayTeam = matchS2.Winner ?? throw new InvalidOperationException("Match S2 has no winner");
+        var homeTeam = matchS1.Winner ?? throw new InvalidOperationException("El partido S1 no tiene ganador");
+        var awayTeam = matchS2.Winner ?? throw new InvalidOperationException("El partido S2 no tiene ganador");
 
-        var finalMatch = CreateKnockoutMatch(homeTeam, awayTeam, "F1", TournamentPhase.Final);
+        var finalMatch = MatchFactory.Create(homeTeam, awayTeam, TournamentPhase.Final, "F1");
 
         AddMatch(finalMatch);
     }
@@ -317,12 +313,12 @@ public class Knockout
     private void ValidateCanInitializePhase(TournamentPhase phase)
     {
         if (_matches.Any(m => m.Phase == phase))
-            throw new InvalidOperationException($"{phase} has already been initialized.");
+            throw new InvalidOperationException($"La fase {phase} ya fue inicializada.");
 
         var previousPhase = GetPreviousPhase(phase);
 
         if (previousPhase != null && !PhaseIsFinished(previousPhase.Value))
-            throw new InvalidOperationException($"Previous phase {previousPhase} must be finished before initializing {phase}.");
+            throw new InvalidOperationException($"La fase anterior {previousPhase} debe estar finalizada antes de inicializar {phase}.");
     }
 
     private bool PhaseIsFinished(TournamentPhase phase)
@@ -361,6 +357,4 @@ public class Knockout
     }
     
 
-    private static Match CreateKnockoutMatch(Team homeTeam, Team awayTeam, string matchCode, TournamentPhase phase) =>
-        new(KnockoutPhaseDefaultDate, BuildDefaultStadium(), homeTeam, awayTeam, group: null, phase: phase, matchCode: matchCode);
 }
