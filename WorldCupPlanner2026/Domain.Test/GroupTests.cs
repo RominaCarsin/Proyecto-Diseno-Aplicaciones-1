@@ -320,6 +320,58 @@ public class GroupTests
         Assert.AreEqual(uruguay, standings[0]);
     }
 
+    [TestMethod]
+    public void CanAddTeam_WithValidTeam_ShouldReturnTrue()
+    {
+        var group = CreateValidGroup();
+        var team = TeamTestData.CreateUruguayTeam();
+
+        Assert.IsTrue(group.CanAddTeam(team));
+    }
+
+    [TestMethod]
+    public void CanAddTeam_WithNullTeam_ShouldReturnFalse()
+    {
+        var group = CreateValidGroup();
+
+        Assert.IsFalse(group.CanAddTeam(null));
+    }
+
+    [TestMethod]
+    public void CanAddTeam_WhenGroupIsFull_ShouldReturnFalse()
+    {
+        var group = CreateValidGroup();
+        AddFourTeams(group);
+
+        var extraTeam = new Team("EXTRA", "OFC", 2000);
+
+        Assert.IsFalse(group.CanAddTeam(extraTeam));
+    }
+
+    [TestMethod]
+    public void CanAddTeam_WhenViolatesConfederationRule_ShouldReturnFalse()
+    {
+        var group = CreateValidGroup();
+
+        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
+        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
+
+        Assert.IsFalse(group.CanAddTeam(new Team("BOLIVIA", "UEFA", 1400)));
+    }
+
+    [TestMethod]
+    public void CanAddTeam_WhenViolatesConfederationRule_ShouldNotModifyGroup()
+    {
+        var group = CreateValidGroup();
+
+        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
+        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
+
+        group.CanAddTeam(new Team("BOLIVIA", "UEFA", 1400));
+
+        Assert.AreEqual(2, group.Teams.Count);
+    }
+
     private static void AddFourTeams(Group group)
     {
         group.AddTeam(new Team("TEAM0", "AFC", 1000));
