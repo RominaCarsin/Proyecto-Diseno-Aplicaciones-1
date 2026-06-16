@@ -6,6 +6,8 @@ public class GroupStageSimulatorTests
     private const char LabelA = 'A';
     private const char LabelB = 'B';
     private const int Seed = 42;
+    private readonly ISimulationEngine _defaultEngine =
+        SimulationEngineFactory.Create(SimulationEngineType.Probabilistic);
 
     private Stadium CreateStadium() =>
         new("Centenario", "Montevideo", "ValidDescription", 20000);
@@ -35,7 +37,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 1700);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.IsTrue(match.HasResult);
         Assert.IsNotNull(match.HomeGoals);
@@ -49,7 +51,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 1700);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         int totalPoints = home.Points + away.Points;
         Assert.IsTrue(totalPoints == 2 || totalPoints == 3);
@@ -74,7 +76,7 @@ public class GroupStageSimulatorTests
         group.AddMatch(match1);
         group.AddMatch(match2);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.IsTrue(match1.HasResult);
         Assert.IsTrue(match2.HasResult);
@@ -87,7 +89,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 1500);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.AreEqual(match.HomeGoals, match.AwayGoals);
     }
@@ -99,7 +101,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 1500);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.IsNull(match.Winner);
     }
@@ -111,7 +113,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 1500);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.AreEqual(1, home.Points);
         Assert.AreEqual(1, away.Points);
@@ -130,8 +132,8 @@ public class GroupStageSimulatorTests
         var away2 = CreateTeam("AWAY", "UEFA", 300);
         var group2 = CreateGroupWithMatch(LabelA, home2, away2, out var match2);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group1 });
-        new GroupStageSimulator(Seed).Simulate(new[] { group2 });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group1 });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group2 });
 
         Assert.AreEqual(match1.HomeGoals, match2.HomeGoals);
         Assert.AreEqual(match1.AwayGoals, match2.AwayGoals);
@@ -144,7 +146,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 300);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.IsTrue(match.HomeGoals is >= 0 and <= 4);
         Assert.IsTrue(match.AwayGoals is >= 0 and <= 4);
@@ -161,7 +163,7 @@ public class GroupStageSimulatorTests
         var awayB = CreateTeam("AWAYB", "CAF", 1400);
         var groupB = CreateGroupWithMatch(LabelB, homeB, awayB, out var matchB);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { groupA, groupB });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { groupA, groupB });
 
         Assert.IsTrue(matchA.HasResult);
         Assert.IsTrue(matchB.HasResult);
@@ -214,7 +216,7 @@ public class GroupStageSimulatorTests
         var away = CreateTeam("AWAY", "UEFA", 300);
         var group = CreateGroupWithMatch(LabelA, home, away, out var match);
 
-        new GroupStageSimulator(Seed).Simulate(new[] { group });
+        new GroupStageSimulator(Seed, _defaultEngine).Simulate(new[] { group });
 
         Assert.IsTrue(match.YellowCardsOf(home) >= 0 && match.YellowCardsOf(home) <= 5);
         Assert.IsTrue(match.YellowCardsOf(away) >= 0 && match.YellowCardsOf(away) <= 5);
