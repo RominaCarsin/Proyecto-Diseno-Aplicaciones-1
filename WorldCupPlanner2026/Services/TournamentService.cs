@@ -294,40 +294,20 @@ public class TournamentService : ITournamentService
 
     // ==================== INICIALIZACIÓN DE RONDAS ====================
 
-    public void InitializeRoundOf16()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeRoundOf16();
-        AddNewMatchesByPhase(knockout, TournamentPhase.RoundOf16);
-    }
+    public void InitializeRoundOf16() =>
+        InitializePhase(TournamentPhase.RoundOf16, k => k.InitializeRoundOf16());
 
-    public void InitializeQuarterFinals()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeQuarterFinals();
-        AddNewMatchesByPhase(knockout, TournamentPhase.QuarterFinals);
-    }
+    public void InitializeQuarterFinals() =>
+        InitializePhase(TournamentPhase.QuarterFinals, k => k.InitializeQuarterFinals());
 
-    public void InitializeSemiFinals()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeSemiFinals();
-        AddNewMatchesByPhase(knockout, TournamentPhase.SemiFinals);
-    }
+    public void InitializeSemiFinals() =>
+        InitializePhase(TournamentPhase.SemiFinals, k => k.InitializeSemiFinals());
 
-    public void InitializeThirdPlace()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeThirdPlace();
-        AddNewMatchesByPhase(knockout, TournamentPhase.ThirdPlace);
-    }
+    public void InitializeThirdPlace() =>
+        InitializePhase(TournamentPhase.ThirdPlace, k => k.InitializeThirdPlace());
 
-    public void InitializeFinal()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeFinal();
-        AddNewMatchesByPhase(knockout, TournamentPhase.Final);
-    }
+    public void InitializeFinal() =>
+        InitializePhase(TournamentPhase.Final, k => k.InitializeFinal());
 
     // ==================== SIMULACIÓN DE ELIMINATORIA ====================
 
@@ -425,6 +405,13 @@ public class TournamentService : ITournamentService
         teams.OrderByDescending(t => t.Points)
             .ThenByDescending(t => t.GoalDifference)
             .ThenByDescending(t => t.GoalsInFavor);
+
+    private void InitializePhase(TournamentPhase phase, Action<Knockout> initializeAction)
+    {
+        var knockout = GetLoadedKnockout();
+        initializeAction(knockout);
+        AddNewMatchesByPhase(knockout, phase);
+    }
 
     private Knockout GetLoadedKnockout()
     {
