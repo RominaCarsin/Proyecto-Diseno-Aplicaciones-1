@@ -165,6 +165,86 @@ public class KnockoutTests
     }
 
     [TestMethod]
+    public void GivenGroupOverlapInPot_WhenInitializeRoundOf32_ThenBacktrackingAvoidsSameGroupPairings()
+    {
+        var noShuffle = new NullShuffler();
+        var knockout = new Knockout(SimulationSeed, noShuffle, DefaultStadiums, CrossesSeed);
+        var teams = CreateOrderedQualifiedTeams().ToList();
+
+        var overlappingGroups = new[] { "A", "A", "B", "C", "A", "B", "B", "C" };
+        for (int i = 0; i < overlappingGroups.Length; i++)
+        {
+            var t = teams[12 + i];
+            teams[12 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, overlappingGroups[i]);
+        }
+
+        knockout.SetQualifiedTeams(teams);
+        knockout.InitializeRoundOf32();
+
+        Assert.IsTrue(knockout.Matches.All(m => m.HomeTeam.GroupLabel != m.AwayTeam.GroupLabel));
+    }
+
+    [TestMethod]
+    public void GivenAllPossibleSplitsOfOverlappingGroups_WhenInitializeRoundOf32_ThenBacktrackingAvoidsSameGroupPairings()
+    {
+        var seeds = new[] { 0, 1, 42, 123, 456, 789, 1000, 5000, 98765, 12345, 54321, 99999, 11111, 22222, 33333 };
+
+        foreach (var seed in seeds)
+        {
+            var knockout = CreateValidKnockout(crossesSeed: seed);
+            var teams = CreateOrderedQualifiedTeams().ToList();
+
+            var groupLabels = new[] { "A", "A", "A", "B", "B", "B", "C", "C" };
+            for (int i = 0; i < groupLabels.Length; i++)
+            {
+                var t = teams[12 + i];
+                teams[12 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, groupLabels[i]);
+            }
+
+            knockout.SetQualifiedTeams(teams);
+            knockout.InitializeRoundOf32();
+
+            Assert.IsTrue(
+                knockout.Matches.All(m => m.HomeTeam.GroupLabel != m.AwayTeam.GroupLabel),
+                $"Seed {seed}: same-group pairing detected");
+        }
+    }
+
+    [TestMethod]
+    public void GivenOverlappingGroupPotsInAllPhases_WhenInitializeRoundOf32_ThenBacktrackingAvoidsSameGroupPairings()
+    {
+        var noShuffle = new NullShuffler();
+        var knockout = new Knockout(SimulationSeed, noShuffle, DefaultStadiums, CrossesSeed);
+        var teams = CreateOrderedQualifiedTeams().ToList();
+
+        var worstFirstGroups = new[] { "A", "A", "B", "B", "C", "C", "D", "D" };
+        for (int i = 0; i < worstFirstGroups.Length; i++)
+        {
+            var t = teams[4 + i];
+            teams[4 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, worstFirstGroups[i]);
+        }
+
+        var thirdPlaceGroups = new[] { "A", "B", "C", "D", "E", "F", "G", "H" };
+        for (int i = 0; i < thirdPlaceGroups.Length; i++)
+        {
+            var t = teams[24 + i];
+            teams[24 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, thirdPlaceGroups[i]);
+        }
+
+        var bestSecondGroups = new[] { "A", "A", "B", "B", "C", "C", "D", "D" };
+        for (int i = 0; i < bestSecondGroups.Length; i++)
+        {
+            var t = teams[12 + i];
+            teams[12 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, bestSecondGroups[i]);
+        }
+
+        knockout.SetQualifiedTeams(teams);
+        knockout.InitializeRoundOf32();
+
+        Assert.IsTrue(knockout.Matches.All(m => m.HomeTeam.GroupLabel != m.AwayTeam.GroupLabel));
+    }
+
+    [TestMethod]
     public void GivenSameCrossesSeed_WhenInitializeRoundOf32_ThenFixtureIsDeterministic()
     {
         var firstKnockout = CreateValidKnockout(simulationSeed: 111, crossesSeed: 777);
@@ -684,6 +764,11 @@ public class KnockoutTests
             match.SetResult(1, 0);
             match.Finish();
         }
+    }
+
+    private sealed class NullShuffler : IShuffler
+    {
+        public void Shuffle<T>(IList<T> list) { }
     }
 
     private sealed class TestShuffler : IShuffler

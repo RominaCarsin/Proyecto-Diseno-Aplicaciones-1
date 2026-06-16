@@ -299,17 +299,65 @@ public class Knockout
         Shuffler.Shuffle(awayPot);
 
         var matches = new List<Match>();
+        var assignment = new int[homePot.Count];
+        var used = new bool[awayPot.Count];
+        Array.Fill(assignment, -1);
 
-        for (int i = 0; i < homePot.Count; i++)
+        if (TryFindValidPairing(homePot, awayPot, assignment, used, 0))
         {
-            var homeTeam = homePot[i];
-            var awayTeam = TakeFirstAvailableOpponent(homeTeam, awayPot);
-            var matchCode = $"{prefix}{startNumber + i}";
+            for (int i = 0; i < homePot.Count; i++)
+            {
+                var homeTeam = homePot[i];
+                var awayTeam = awayPot[assignment[i]];
+                var matchCode = $"{prefix}{startNumber + i}";
 
-            matches.Add(CreateKnockoutMatch(homeTeam, awayTeam, TournamentPhase.RoundOf32, matchCode));
+                matches.Add(CreateKnockoutMatch(homeTeam, awayTeam, TournamentPhase.RoundOf32, matchCode));
+            }
+        }
+        else
+        {
+            var remainingAway = new List<Team>(awayPot);
+
+            for (int i = 0; i < homePot.Count; i++)
+            {
+                var homeTeam = homePot[i];
+                var awayTeam = TakeFirstAvailableOpponent(homeTeam, remainingAway);
+                var matchCode = $"{prefix}{startNumber + i}";
+
+                matches.Add(CreateKnockoutMatch(homeTeam, awayTeam, TournamentPhase.RoundOf32, matchCode));
+            }
         }
 
         return matches;
+    }
+
+    private static bool TryFindValidPairing(
+        List<Team> homePot, List<Team> awayPot, int[] assignment, bool[] used, int index)
+    {
+        if (index == homePot.Count)
+            return true;
+
+        var home = homePot[index];
+
+        for (int j = 0; j < awayPot.Count; j++)
+        {
+            if (used[j])
+                continue;
+
+            if (AreFromSameGroup(home, awayPot[j]))
+                continue;
+
+            used[j] = true;
+            assignment[index] = j;
+
+            if (TryFindValidPairing(homePot, awayPot, assignment, used, index + 1))
+                return true;
+
+            used[j] = false;
+            assignment[index] = -1;
+        }
+
+        return false;
     }
 
     private static Team TakeFirstAvailableOpponent(Team homeTeam, List<Team> awayPot)
