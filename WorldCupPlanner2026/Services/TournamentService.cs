@@ -217,13 +217,12 @@ public class TournamentService : ITournamentService
         if (_matchRepository.GetAll().Any(m => m.Phase != TournamentPhase.GroupStage))
             throw new InvalidOperationException("La fase eliminatoria ya fue inicializada.");
 
-        var qualifiedTeamResponses = GetQualifiedTeams().ToList();
-        var qualifiedTeamNames = qualifiedTeamResponses.Select(t => t.Name).ToHashSet();
-        var qualifiedTeams = _teamRepository.GetAll()
-            .Where(t => qualifiedTeamNames.Contains(t.Name))
-            .ToList();
+        var sortedWinners = SortTeams(groups.Select(g => g.GetTeamByPosition(1))).ToList();
+        var sortedRunnersUp = SortTeams(groups.Select(g => g.GetTeamByPosition(2))).ToList();
+        var bestThirds = SortTeams(groups.Select(g => g.GetTeamByPosition(3))).Take(BestThirdsCount).ToList();
 
-        // Obtener los estadios del repositorio
+        var qualifiedTeams = new QualifiedTeams(sortedWinners, sortedRunnersUp, bestThirds);
+
         var stadiums = _stadiumRepository.GetAll().ToList();
 
         var shuffler = new Shuffler(simulationSeed);

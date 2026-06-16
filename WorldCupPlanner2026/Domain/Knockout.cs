@@ -5,17 +5,6 @@ namespace Domain;
 public class Knockout
 {
     // Constantes de configuración
-    private const int RequiredQualifiedTeams = 32;
-    private const int BestFirstPlacesStart = 0;
-    private const int BestFirstPlacesCount = 4;
-    private const int WorstFirstPlacesStart = 4;
-    private const int WorstFirstPlacesCount = 8;
-    private const int BestSecondPlacesStart = 12;
-    private const int BestSecondPlacesCount = 8;
-    private const int WorstSecondPlacesStart = 20;
-    private const int WorstSecondPlacesCount = 4;
-    private const int ThirdPlacesStart = 24;
-    private const int ThirdPlacesCount = 8;
     private const int HalfRemainingSecondsCount = 4;
     private const int FirstMatchNumber = 1;
     private const int RemainingSecondsFirstMatchNumber = 5;
@@ -28,11 +17,9 @@ public class Knockout
     private const string PhaseNotFinishedErrorMessage = "La fase eliminatoria anterior debe estar finalizada antes de agregar partidos para la siguiente fase.";
     private const string MatchNotFoundErrorMessage = "No se encontró un partido con el código '{0}'.";
     private const string KnockoutDrawErrorMessage = "Los partidos de knockout no pueden terminar en empate.";
-    private const string QualifiedTeamsCountErrorMessage = "La fase eliminatoria debe recibir exactamente {0} equipos clasificados.";
-    private const string QualifiedTeamsCountInitErrorMessage = "La fase eliminatoria requiere exactamente {0} equipos clasificados.";
     private const string NoStadiumsAvailableErrorMessage = "No hay estadios disponibles para asignar a los partidos.";
 
-    private readonly List<Team> _qualifiedTeams = new();
+    private QualifiedTeams? _qualifiedTeams;
     private readonly List<Match> _matches = new();
     private readonly IShuffler _shuffler;
     private readonly List<Stadium> _stadiums = new();
@@ -42,7 +29,7 @@ public class Knockout
     
     public int SimulationSeed { get; private set; }
     public int CrossesSeed { get; private set; }
-    public IReadOnlyList<Team> QualifiedTeams => _qualifiedTeams;
+    public QualifiedTeams? QualifiedTeams => _qualifiedTeams;
     public IReadOnlyList<Match> Matches => _matches;
     
     public Knockout(
@@ -65,18 +52,12 @@ public class Knockout
 
     public void UpdateSimulationSeed(int newSeed) => SimulationSeed = newSeed;
 
-    public void SetQualifiedTeams(IEnumerable<Team> qualifiedTeams)
+    public void SetQualifiedTeams(QualifiedTeams qualifiedTeams)
     {
         if (qualifiedTeams is null)
             throw new ArgumentException(NullQualifiedTeamsErrorMessage);
 
-        var teams = qualifiedTeams.ToList();
-
-        if (teams.Count != RequiredQualifiedTeams)
-            throw new ArgumentException(string.Format(QualifiedTeamsCountErrorMessage, RequiredQualifiedTeams));
-
-        _qualifiedTeams.Clear();
-        _qualifiedTeams.AddRange(teams);
+        _qualifiedTeams = qualifiedTeams;
     }
 
     // ==================== INICIALIZACIÓN DE RONDAS ====================
@@ -85,11 +66,11 @@ public class Knockout
     {
         ValidateCanInitializeRoundOf32();
 
-        var worstFirstPlaces = GetQualifiedTeamsSegment(WorstFirstPlacesStart, WorstFirstPlacesCount);
-        var thirdPlaces = GetQualifiedTeamsSegment(ThirdPlacesStart, ThirdPlacesCount);
-        var bestFirstPlaces = GetQualifiedTeamsSegment(BestFirstPlacesStart, BestFirstPlacesCount);
-        var worstSecondPlaces = GetQualifiedTeamsSegment(WorstSecondPlacesStart, WorstSecondPlacesCount);
-        var bestSecondPlaces = GetQualifiedTeamsSegment(BestSecondPlacesStart, BestSecondPlacesCount);
+        var worstFirstPlaces = _qualifiedTeams!.WorstFirstPlaces.ToList();
+        var thirdPlaces = _qualifiedTeams!.ThirdPlaces.ToList();
+        var bestFirstPlaces = _qualifiedTeams!.BestFirstPlaces.ToList();
+        var worstSecondPlaces = _qualifiedTeams!.WorstSecondPlaces.ToList();
+        var bestSecondPlaces = _qualifiedTeams!.BestSecondPlaces.ToList();
 
         AddMatches(PairTeams(worstFirstPlaces, thirdPlaces, "A", FirstMatchNumber));
         AddMatches(PairTeams(bestFirstPlaces, worstSecondPlaces, "B", FirstMatchNumber));
@@ -245,8 +226,8 @@ public class Knockout
 
     private void ValidateCanInitializeRoundOf32()
     {
-        if (_qualifiedTeams.Count != RequiredQualifiedTeams)
-            throw new InvalidOperationException(string.Format(QualifiedTeamsCountInitErrorMessage, RequiredQualifiedTeams));
+        if (_qualifiedTeams is null)
+            throw new InvalidOperationException("No se han establecido los equipos clasificados. Use SetQualifiedTeams antes de inicializar.");
 
         if (_matches.Any(match => match.Phase == TournamentPhase.RoundOf32))
             throw new InvalidOperationException(RoundOf32AlreadyInitErrorMessage);
@@ -279,9 +260,6 @@ public class Knockout
             TournamentPhase.Final => TournamentPhase.SemiFinals,
             _ => null
         };
-
-    private List<Team> GetQualifiedTeamsSegment(int start, int count) =>
-        _qualifiedTeams.Skip(start).Take(count).ToList();
 
     private IEnumerable<Match> PairRemainingSecondPlaces(List<Team> remainingSecondPlaces)
     {

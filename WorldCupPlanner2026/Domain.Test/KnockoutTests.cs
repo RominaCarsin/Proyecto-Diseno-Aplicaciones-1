@@ -60,14 +60,31 @@ public class KnockoutTests
     }
 
     [TestMethod]
-    [DataRow(31)]
-    [DataRow(33)]
-    public void GivenQualifiedTeamListWithoutExactlyThirtyTwoTeams_WhenSetQualifiedTeams_ThenThrowsArgumentException(int teamCount)
+    [DataRow(11)]
+    [DataRow(13)]
+    public void GivenInvalidFirstPlacesCount_WhenConstructingQualifiedTeams_ThenThrowsArgumentException(int count)
     {
-        var knockout = CreateValidKnockout();
-        var qualifiedTeams = CreateQualifiedTeams(teamCount);
+        var teams = CreateQualifiedTeams(count);
+        Assert.ThrowsException<ArgumentException>(() =>
+            new QualifiedTeams(teams, CreateQualifiedTeams(12), CreateQualifiedTeams(8)));
+    }
 
-        Assert.ThrowsException<ArgumentException>(() => knockout.SetQualifiedTeams(qualifiedTeams));
+    [TestMethod]
+    [DataRow(11)]
+    [DataRow(13)]
+    public void GivenInvalidSecondPlacesCount_WhenConstructingQualifiedTeams_ThenThrowsArgumentException(int count)
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new QualifiedTeams(CreateQualifiedTeams(12), CreateQualifiedTeams(count), CreateQualifiedTeams(8)));
+    }
+
+    [TestMethod]
+    [DataRow(7)]
+    [DataRow(9)]
+    public void GivenInvalidThirdPlacesCount_WhenConstructingQualifiedTeams_ThenThrowsArgumentException(int count)
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new QualifiedTeams(CreateQualifiedTeams(12), CreateQualifiedTeams(12), CreateQualifiedTeams(count)));
     }
 
     [TestMethod]
@@ -78,14 +95,14 @@ public class KnockoutTests
     }
 
     [TestMethod]
-    public void GivenThirtyTwoQualifiedTeams_WhenSetQualifiedTeams_ThenQualifiedTeamsAreAssigned()
+    public void GivenQualifiedTeams_WhenSetQualifiedTeams_ThenQualifiedTeamsPropertyIsSet()
     {
         var knockout = CreateValidKnockout();
         var qualifiedTeams = CreateOrderedQualifiedTeams();
 
         knockout.SetQualifiedTeams(qualifiedTeams);
 
-        CollectionAssert.AreEqual(qualifiedTeams, knockout.QualifiedTeams.ToList());
+        Assert.AreSame(qualifiedTeams, knockout.QualifiedTeams);
     }
 
     [TestMethod]
@@ -119,17 +136,17 @@ public class KnockoutTests
 
         AssertMatchesUseExpectedPots(
             knockout.Matches.Where(m => m.MatchCode!.StartsWith("A")).ToList(),
-            qualifiedTeams.Skip(4).Take(8),
-            qualifiedTeams.Skip(24).Take(8));
+            qualifiedTeams.WorstFirstPlaces,
+            qualifiedTeams.ThirdPlaces);
 
         AssertMatchesUseExpectedPots(
             knockout.Matches.Where(m => IsMatchCodeBetween(m.MatchCode, "B1", "B4")).ToList(),
-            qualifiedTeams.Take(4),
-            qualifiedTeams.Skip(20).Take(4));
+            qualifiedTeams.BestFirstPlaces,
+            qualifiedTeams.WorstSecondPlaces);
 
         AssertMatchesUseExpectedPotSplit(
             knockout.Matches.Where(m => IsMatchCodeBetween(m.MatchCode, "B5", "B8")).ToList(),
-            qualifiedTeams.Skip(12).Take(8));
+            qualifiedTeams.BestSecondPlaces);
     }
 
     [TestMethod]
@@ -147,13 +164,15 @@ public class KnockoutTests
     public void GivenAllSecondBestTeamsFromSameGroup_WhenInitializeRoundOf32_ThenFallbackToFirstOpponent()
     {
         var knockout = CreateValidKnockout();
-        var teams = CreateOrderedQualifiedTeams().ToList();
-        for (int i = 12; i <= 19; i++)
+        var qt = CreateOrderedQualifiedTeams();
+        var secondPlaces = qt.SecondPlaces.ToList();
+        for (int i = 0; i < 8; i++)
         {
-            var t = teams[i];
-            teams[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, "A");
+            var t = secondPlaces[i];
+            secondPlaces[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, "A");
         }
-        knockout.SetQualifiedTeams(teams);
+        var modifiedQt = new QualifiedTeams(qt.FirstPlaces.ToList(), secondPlaces, qt.BestThirdPlaces.ToList());
+        knockout.SetQualifiedTeams(modifiedQt);
 
         knockout.InitializeRoundOf32();
 
@@ -169,16 +188,18 @@ public class KnockoutTests
     {
         var noShuffle = new NullShuffler();
         var knockout = new Knockout(SimulationSeed, noShuffle, DefaultStadiums, CrossesSeed);
-        var teams = CreateOrderedQualifiedTeams().ToList();
+        var qt = CreateOrderedQualifiedTeams();
+        var secondPlaces = qt.SecondPlaces.ToList();
 
         var overlappingGroups = new[] { "A", "A", "B", "C", "A", "B", "B", "C" };
         for (int i = 0; i < overlappingGroups.Length; i++)
         {
-            var t = teams[12 + i];
-            teams[12 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, overlappingGroups[i]);
+            var t = secondPlaces[i];
+            secondPlaces[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, overlappingGroups[i]);
         }
 
-        knockout.SetQualifiedTeams(teams);
+        var modifiedQt = new QualifiedTeams(qt.FirstPlaces.ToList(), secondPlaces, qt.BestThirdPlaces.ToList());
+        knockout.SetQualifiedTeams(modifiedQt);
         knockout.InitializeRoundOf32();
 
         Assert.IsTrue(knockout.Matches.All(m => m.HomeTeam.GroupLabel != m.AwayTeam.GroupLabel));
@@ -192,16 +213,18 @@ public class KnockoutTests
         foreach (var seed in seeds)
         {
             var knockout = CreateValidKnockout(crossesSeed: seed);
-            var teams = CreateOrderedQualifiedTeams().ToList();
+            var qt = CreateOrderedQualifiedTeams();
+            var secondPlaces = qt.SecondPlaces.ToList();
 
             var groupLabels = new[] { "A", "A", "A", "B", "B", "B", "C", "C" };
             for (int i = 0; i < groupLabels.Length; i++)
             {
-                var t = teams[12 + i];
-                teams[12 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, groupLabels[i]);
+                var t = secondPlaces[i];
+                secondPlaces[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, groupLabels[i]);
             }
 
-            knockout.SetQualifiedTeams(teams);
+            var modifiedQt = new QualifiedTeams(qt.FirstPlaces.ToList(), secondPlaces, qt.BestThirdPlaces.ToList());
+            knockout.SetQualifiedTeams(modifiedQt);
             knockout.InitializeRoundOf32();
 
             Assert.IsTrue(
@@ -215,30 +238,34 @@ public class KnockoutTests
     {
         var noShuffle = new NullShuffler();
         var knockout = new Knockout(SimulationSeed, noShuffle, DefaultStadiums, CrossesSeed);
-        var teams = CreateOrderedQualifiedTeams().ToList();
+        var qt = CreateOrderedQualifiedTeams();
+        var firstPlaces = qt.FirstPlaces.ToList();
+        var secondPlaces = qt.SecondPlaces.ToList();
+        var thirdPlaces = qt.BestThirdPlaces.ToList();
 
         var worstFirstGroups = new[] { "A", "A", "B", "B", "C", "C", "D", "D" };
         for (int i = 0; i < worstFirstGroups.Length; i++)
         {
-            var t = teams[4 + i];
-            teams[4 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, worstFirstGroups[i]);
+            var t = firstPlaces[4 + i];
+            firstPlaces[4 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, worstFirstGroups[i]);
         }
 
         var thirdPlaceGroups = new[] { "A", "B", "C", "D", "E", "F", "G", "H" };
         for (int i = 0; i < thirdPlaceGroups.Length; i++)
         {
-            var t = teams[24 + i];
-            teams[24 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, thirdPlaceGroups[i]);
+            var t = thirdPlaces[i];
+            thirdPlaces[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, thirdPlaceGroups[i]);
         }
 
         var bestSecondGroups = new[] { "A", "A", "B", "B", "C", "C", "D", "D" };
         for (int i = 0; i < bestSecondGroups.Length; i++)
         {
-            var t = teams[12 + i];
-            teams[12 + i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, bestSecondGroups[i]);
+            var t = secondPlaces[i];
+            secondPlaces[i] = new Team(t.Name, t.ConfederationName, t.RankingFifa, bestSecondGroups[i]);
         }
 
-        knockout.SetQualifiedTeams(teams);
+        var modifiedQt = new QualifiedTeams(firstPlaces, secondPlaces, thirdPlaces);
+        knockout.SetQualifiedTeams(modifiedQt);
         knockout.InitializeRoundOf32();
 
         Assert.IsTrue(knockout.Matches.All(m => m.HomeTeam.GroupLabel != m.AwayTeam.GroupLabel));
@@ -622,17 +649,18 @@ public class KnockoutTests
 
     // ==================== HELPERS ====================
 
-    private static List<Team> CreateOrderedQualifiedTeams()
+    private static QualifiedTeams CreateOrderedQualifiedTeams()
     {
-        var teams = new List<Team>();
+        var bestFirstPlaces = CreateTeams("FIRST-BEST", 1, 4, ["A", "B", "C", "D"]).ToList();
+        var worstFirstPlaces = CreateTeams("FIRST-WORST", 1, 8, ["E", "F", "G", "H", "I", "J", "K", "L"]).ToList();
+        var bestSecondPlaces = CreateTeams("SECOND-BEST", 1, 8, ["A", "B", "C", "D", "E", "F", "G", "H"]).ToList();
+        var worstSecondPlaces = CreateTeams("SECOND-WORST", 1, 4, ["I", "J", "K", "L"]).ToList();
+        var thirdPlaces = CreateTeams("THIRD", 1, 8, ["A", "B", "C", "D", "E", "F", "G", "H"]).ToList();
 
-        teams.AddRange(CreateTeams("FIRST-BEST", 1, 4, ["A", "B", "C", "D"]));
-        teams.AddRange(CreateTeams("FIRST-WORST", 1, 8, ["E", "F", "G", "H", "I", "J", "K", "L"]));
-        teams.AddRange(CreateTeams("SECOND-BEST", 1, 8, ["A", "B", "C", "D", "E", "F", "G", "H"]));
-        teams.AddRange(CreateTeams("SECOND-WORST", 1, 4, ["I", "J", "K", "L"]));
-        teams.AddRange(CreateTeams("THIRD", 1, 8, ["A", "B", "C", "D", "E", "F", "G", "H"]));
+        var firstPlaces = bestFirstPlaces.Concat(worstFirstPlaces).ToList();
+        var secondPlaces = bestSecondPlaces.Concat(worstSecondPlaces).ToList();
 
-        return teams;
+        return new QualifiedTeams(firstPlaces, secondPlaces, thirdPlaces);
     }
 
     private static List<Team> CreateQualifiedTeams(int count) =>
