@@ -21,6 +21,8 @@ public class UserServiceTests
 
     private static readonly DateTime ValidDateOfBirth = new(2000, 1, 1);
 
+    private static readonly IPasswordHasher Hasher = new PasswordHasher();
+
     private UserService _service = null!;
     private IRepository<User> _repository = null!;
 
@@ -30,7 +32,7 @@ public class UserServiceTests
         _repository = new FakeRepository<User>();
         var auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
-        _service = new UserService(_repository, auditService);
+        _service = new UserService(_repository, auditService, Hasher);
     }
 
     [TestMethod]
@@ -249,7 +251,7 @@ public class UserServiceTests
         _service.ChangePassword(ValidEmail, ValidPassword, "Newpass1!");
 
         var user = _repository.GetAll().First();
-        Assert.IsTrue(user.VerifyPassword("Newpass1!"));
+        Assert.IsTrue(user.VerifyPassword("Newpass1!", Hasher));
     }
 
     [TestMethod]
@@ -270,8 +272,8 @@ public class UserServiceTests
         _service.ResetPassword(AdminEmail, ValidEmail, "NewPass1!");
 
         var user = FindUserByEmail(ValidEmail);
-        Assert.IsFalse(user!.VerifyPassword(ValidPassword));
-        Assert.IsTrue(user.VerifyPassword("NewPass1!"));
+        Assert.IsFalse(user!.VerifyPassword(ValidPassword, Hasher));
+        Assert.IsTrue(user.VerifyPassword("NewPass1!", Hasher));
     }
 
     [TestMethod]
@@ -330,8 +332,8 @@ public class UserServiceTests
         _service.ChangePassword("journalist@test.com", ValidPassword, "Newpass1!");
 
         var user = FindUserByEmail("journalist@test.com");
-        Assert.IsTrue(user!.VerifyPassword("Newpass1!"));
-        Assert.IsFalse(user.VerifyPassword(ValidPassword));
+        Assert.IsTrue(user!.VerifyPassword("Newpass1!", Hasher));
+        Assert.IsFalse(user.VerifyPassword(ValidPassword, Hasher));
     }
 
     [TestMethod]

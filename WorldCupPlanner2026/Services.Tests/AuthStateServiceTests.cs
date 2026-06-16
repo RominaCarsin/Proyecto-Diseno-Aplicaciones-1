@@ -11,6 +11,8 @@ public class AuthStateServiceTests
     private const string ValidEmail = "juan@gmail.com";
     private const string ValidPassword = "Password1!";
 
+    private static readonly IPasswordHasher Hasher = new PasswordHasher();
+
     private AuthStateService _authStateService = null!;
     private SessionService _sessionService = null!;
     private UserService _userService = null!;
@@ -26,7 +28,7 @@ public class AuthStateServiceTests
         var auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
 
-        _userService = new UserService(userRepository, auditService);
+        _userService = new UserService(userRepository, auditService, Hasher);
         _sessionService = new SessionService(_userService, _authStateService);
     }
     

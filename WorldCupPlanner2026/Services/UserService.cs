@@ -17,11 +17,13 @@ public class UserService : IUserService
     
     private readonly IRepository<User> _repository;
     private readonly IAuditService _auditService;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public UserService(IRepository<User> repository, IAuditService auditService)
+    public UserService(IRepository<User> repository, IAuditService auditService, IPasswordHasher passwordHasher)
     {
         _repository = repository;
         _auditService = auditService;
+        _passwordHasher = passwordHasher;
     }
 
     public UserResponse AddUser(UserRequest userRequest)
@@ -29,7 +31,7 @@ public class UserService : IUserService
         if (FindByEmail(userRequest.Email) is not null)
             throw new ArgumentException(UserAlreadyExistsErrorMessage);
 
-        var user = UserMapper.ToEntity(userRequest);
+        var user = UserMapper.ToEntity(userRequest, _passwordHasher);
         _repository.Add(user);
 
         _auditService.Log(userRequest.Email, "User created",
@@ -80,7 +82,7 @@ public class UserService : IUserService
     {
         var user = GetUserByEmailOrThrow(email);
 
-        if (!user.VerifyPassword(password))
+        if (!user.VerifyPassword(password, _passwordHasher))
             throw new ArgumentException(InvalidPasswordErrorMessage);
 
         return UserMapper.FromEntity(user);
@@ -121,10 +123,10 @@ public class UserService : IUserService
     {
         var user = GetUserByEmailOrThrow(email);
 
-        if (!user.VerifyPassword(currentPassword))
+        if (!user.VerifyPassword(currentPassword, _passwordHasher))
             throw new ArgumentException(CurrentPasswordIncorrectErrorMessage);
 
-        user.SetPassword(newPassword);
+        user.SetPassword(newPassword, _passwordHasher);
 
         _repository.Update(user);
         _auditService.Log(email, "Password changed",
@@ -136,7 +138,7 @@ public class UserService : IUserService
         EnsureUserIsAdmin(adminEmail);
 
         var targetUser = GetUserByEmailOrThrow(targetEmail);
-        targetUser.SetPassword(newPassword);
+        targetUser.SetPassword(newPassword, _passwordHasher);
 
         _repository.Update(targetUser);
         _auditService.Log(adminEmail, "Password reset",

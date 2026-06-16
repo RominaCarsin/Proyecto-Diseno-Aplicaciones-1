@@ -41,6 +41,7 @@ builder.Services.AddScoped<IServices.INotificationService, NotificationService>(
 builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
 builder.Services.AddScoped<IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
 builder.Services.AddScoped<IUpdateRankingService, UpdateRankingService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IKnockoutMatchFactory>(sp =>
 {
     var stadiumRepo = sp.GetRequiredService<IRepository<Stadium>>();
@@ -61,7 +62,8 @@ using (var scope = app.Services.CreateScope())
 
     dbContext.Database.Migrate();
 
-    AppDbContext.Seed(dbContext);
+    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    AppDbContext.Seed(dbContext, hasher);
 }
 
 if (!app.Environment.IsDevelopment())

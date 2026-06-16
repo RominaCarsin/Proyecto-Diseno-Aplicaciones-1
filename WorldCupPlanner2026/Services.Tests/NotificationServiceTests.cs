@@ -9,6 +9,7 @@ namespace Services.Tests;
 [TestClass]
 public class NotificationServiceTests
 {
+    private static readonly IPasswordHasher Hasher = new PasswordHasher();
     private const string HomeTeamName = "ARGENTINA";
     private const string AwayTeamName = "BRAZIL";
 
@@ -298,14 +299,14 @@ public class NotificationServiceTests
 
     private User AddJournalist(string email)
     {
-        var user = new User("Periodista", "Prensa", email, new DateTime(1990, 1, 1), "Password1!", Role.Journalist);
+        var user = new User(Hasher, "Periodista", "Prensa", email, new DateTime(1990, 1, 1), "Password1!", Role.Journalist);
         _userRepository.Add(user);
         return user;
     }
 
     private User AddEditor(string email)
     {
-        var user = new User("Editor", "Deportes", email, new DateTime(1990, 1, 1), "Password1!", Role.Editor);
+        var user = new User(Hasher, "Editor", "Deportes", email, new DateTime(1990, 1, 1), "Password1!", Role.Editor);
         _userRepository.Add(user);
         return user;
     }

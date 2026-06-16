@@ -13,7 +13,6 @@ public enum Role
 
 public class User
 {
-    private const int CaesarShift = 3;
     private const int MinPasswordLength = 8;
     private const int MaxAgeInYears = 120;
 
@@ -43,6 +42,7 @@ public class User
 
     private User(){}
     public User(
+        IPasswordHasher passwordHasher,
         string name,
         string surname,
         string email,
@@ -52,7 +52,7 @@ public class User
     {
         UpdatePersonalInfo(name, surname, email, dateOfBirth);
         Roles = roles;
-        SetPassword(plainPassword);
+        SetPassword(plainPassword, passwordHasher);
     }
 
     public void UpdatePersonalInfo(string name, string surname, string email, DateTime dateOfBirth)
@@ -68,18 +68,18 @@ public class User
         DateOfBirth = dateOfBirth;
     }
 
-    public void SetPassword(string plainPassword)
+    public void SetPassword(string plainPassword, IPasswordHasher passwordHasher)
     {
         ValidatePasswordComplexity(plainPassword);
-        PasswordHash = EncryptPassword(plainPassword, CaesarShift);
+        PasswordHash = passwordHasher.Hash(plainPassword);
     }
 
-    public bool VerifyPassword(string plainPassword)
+    public bool VerifyPassword(string plainPassword, IPasswordHasher passwordHasher)
     {
         if (string.IsNullOrEmpty(PasswordHash))
             return false;
 
-        return DecryptPassword(PasswordHash, CaesarShift) == plainPassword;
+        return passwordHasher.Verify(plainPassword, PasswordHash);
     }
 
     public void AddRole(Role role) => Roles |= role;
@@ -149,10 +149,4 @@ public class User
         if (!password.Any(c => !char.IsLetterOrDigit(c)))
             throw new ArgumentException(PasswordMissingSpecialCharErrorMessage);
     }
-
-    private static string EncryptPassword(string password, int shift) =>
-        new string(password.Select(c => (char)(c + shift)).ToArray());
-
-    private static string DecryptPassword(string cipherText, int shift) =>
-        new string(cipherText.Select(c => (char)(c - shift)).ToArray());
 }

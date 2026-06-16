@@ -15,6 +15,8 @@ public class SessionServiceTests
 
     private static readonly DateTime ValidDateOfBirth = new(2000, 1, 1);
 
+    private static readonly IPasswordHasher Hasher = new PasswordHasher();
+
     private UserService _userService = null!;
     private SessionService _sessionService = null!;
     private IRepository<User> _repository = null!;
@@ -27,7 +29,7 @@ public class SessionServiceTests
         var auditService = new AuditService(auditRepository);
         var authState = new AuthStateService();
 
-        _userService = new UserService(_repository, auditService);
+        _userService = new UserService(_repository, auditService, Hasher);
         _sessionService = new SessionService(_userService, authState);
     }
 
