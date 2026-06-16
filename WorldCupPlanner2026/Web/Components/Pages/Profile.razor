@@ -21,6 +21,7 @@
                 <div class="avatar-box bg-wc-blue text-white d-flex align-items-center justify-content-center">
                     <i class="bi bi-person-fill h1 mb-0"></i>
                 </div>
+
                 <div>
                     <h3 class="mb-0">@currentUser.Name</h3>
                     <p class="text-muted mb-0">@currentUser.Email</p>
@@ -32,11 +33,18 @@
             <div class="row g-4 mt-2">
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Nombre</label>
-                    <input type="text" value="@currentUser.Name" class="form-control border-custom-input" disabled />
+                    <input type="text"
+                           value="@currentUser.Name"
+                           class="form-control border-custom-input"
+                           disabled />
                 </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Email</label>
-                    <input type="email" value="@currentUser.Email" class="form-control border-custom-input" disabled />
+                    <input type="email"
+                           value="@currentUser.Email"
+                           class="form-control border-custom-input"
+                           disabled />
                 </div>
             </div>
         </div>
@@ -47,24 +55,29 @@
                 <i class="bi bi-shield-check text-wc-blue h4 mb-0"></i>
                 <h3 class="mb-0">Rol y Permisos</h3>
             </div>
+
             <GeometricDivider />
 
             <div class="row g-4 mt-2">
                 <div class="col-md-12">
                     <label class="form-label fw-bold d-block mb-3">Roles asignados</label>
+
                     <div class="d-flex flex-wrap gap-2">
                         @if (currentUser.Roles.HasFlag(RoleDto.Admin))
                         {
                             <span class="badge bg-success-soft text-success px-3 py-2">Administrador</span>
                         }
+
                         @if (currentUser.Roles.HasFlag(RoleDto.Editor))
                         {
                             <span class="badge bg-success-soft text-success px-3 py-2">Editor</span>
                         }
+
                         @if (currentUser.Roles.HasFlag(RoleDto.Journalist))
                         {
                             <span class="badge bg-success-soft text-success px-3 py-2">Periodista</span>
                         }
+
                         @if (currentUser.Roles == RoleDto.None)
                         {
                             <span class="badge bg-secondary text-white px-3 py-2">Sin roles asignados</span>
@@ -80,6 +93,7 @@
                 <i class="bi bi-key text-wc-red h4 mb-0"></i>
                 <h3 class="mb-0">Cambiar Contraseña</h3>
             </div>
+
             <GeometricDivider />
 
             <div class="max-w-md mt-4 space-y-4">
@@ -87,6 +101,7 @@
                 {
                     <div class="alert alert-success border-custom py-2">@successMessage</div>
                 }
+
                 @if (!string.IsNullOrWhiteSpace(errorMessage))
                 {
                     <div class="alert alert-danger border-custom py-2">@errorMessage</div>
@@ -94,15 +109,104 @@
 
                 <div>
                     <label class="form-label fw-bold">Contraseña Actual</label>
-                    <input type="password" @bind="currentPassword" class="form-control border-custom-input" placeholder="••••••••" />
+
+                    <div class="password-input-wrapper">
+                        <input type="@(showCurrentPassword ? "text" : "password")"
+                               @bind="currentPassword"
+                               class="form-control border-custom-input password-input"
+                               placeholder="••••••••" />
+
+                        <button type="button"
+                                class="password-eye-button"
+                                title="@(showCurrentPassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                                @onclick="ToggleCurrentPasswordVisibility">
+
+                            @if (showCurrentPassword)
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 3l18 18" />
+                                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                                    <path d="M9.88 5.09A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.19 4.2" />
+                                    <path d="M6.61 6.61C3.8 8.37 2 12 2 12s3.5 7 10 7a10.7 10.7 0 0 0 5.39-1.39" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            }
+                        </button>
+                    </div>
                 </div>
+
                 <div>
                     <label class="form-label fw-bold">Nueva Contraseña</label>
-                    <input type="password" @bind="newPassword" class="form-control border-custom-input" placeholder="••••••••" />
+
+                    <div class="password-input-wrapper">
+                        <input type="@(showNewPassword ? "text" : "password")"
+                               @bind="newPassword"
+                               class="form-control border-custom-input password-input"
+                               placeholder="••••••••" />
+
+                        <button type="button"
+                                class="password-eye-button"
+                                title="@(showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                                @onclick="ToggleNewPasswordVisibility">
+
+                            @if (showNewPassword)
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 3l18 18" />
+                                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                                    <path d="M9.88 5.09A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.19 4.2" />
+                                    <path d="M6.61 6.61C3.8 8.37 2 12 2 12s3.5 7 10 7a10.7 10.7 0 0 0 5.39-1.39" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            }
+                        </button>
+                    </div>
                 </div>
+
                 <div>
                     <label class="form-label fw-bold">Confirmar Nueva Contraseña</label>
-                    <input type="password" @bind="confirmPassword" class="form-control border-custom-input" placeholder="••••••••" />
+
+                    <div class="password-input-wrapper">
+                        <input type="@(showConfirmPassword ? "text" : "password")"
+                               @bind="confirmPassword"
+                               class="form-control border-custom-input password-input"
+                               placeholder="••••••••" />
+
+                        <button type="button"
+                                class="password-eye-button"
+                                title="@(showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                                @onclick="ToggleConfirmPasswordVisibility">
+
+                            @if (showConfirmPassword)
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 3l18 18" />
+                                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                                    <path d="M9.88 5.09A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.19 4.2" />
+                                    <path d="M6.61 6.61C3.8 8.37 2 12 2 12s3.5 7 10 7a10.7 10.7 0 0 0 5.39-1.39" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            }
+                        </button>
+                    </div>
                 </div>
 
                 <button @onclick="ResetPassword" class="btn btn-wc-red px-4 mt-2">
@@ -115,11 +219,17 @@
 
 @code {
     private UserResponse? currentUser;
+
     private string currentPassword = "";
     private string newPassword = "";
     private string confirmPassword = "";
+
     private string successMessage = "";
     private string errorMessage = "";
+
+    private bool showCurrentPassword;
+    private bool showNewPassword;
+    private bool showConfirmPassword;
 
     protected override void OnInitialized()
     {
@@ -151,8 +261,16 @@
         try
         {
             UserService.ChangePassword(currentUser.Email, currentPassword, newPassword);
+
             successMessage = "Contraseña actualizada correctamente.";
-            currentPassword = newPassword = confirmPassword = "";
+
+            currentPassword = "";
+            newPassword = "";
+            confirmPassword = "";
+
+            showCurrentPassword = false;
+            showNewPassword = false;
+            showConfirmPassword = false;
         }
         catch (ArgumentException ex)
         {
@@ -165,13 +283,28 @@
         successMessage = "";
         errorMessage = "";
     }
+
+    private void ToggleCurrentPasswordVisibility()
+    {
+        showCurrentPassword = !showCurrentPassword;
+    }
+
+    private void ToggleNewPasswordVisibility()
+    {
+        showNewPassword = !showNewPassword;
+    }
+
+    private void ToggleConfirmPasswordVisibility()
+    {
+        showConfirmPassword = !showConfirmPassword;
+    }
 }
 
 <style>
     .avatar-box {
         width: 80px;
         height: 80px;
-        border-radius: 4px; /* Manteniendo la estética geométrica */
+        border-radius: 4px;
     }
 
     .bg-success-soft {
@@ -191,5 +324,51 @@
     .border-custom-input:focus {
         border-color: var(--wc-blue);
         box-shadow: none;
+    }
+
+    .password-input-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .password-input {
+        padding-right: 3rem !important;
+    }
+
+    .password-eye-button {
+        position: absolute;
+        top: 50%;
+        right: 0.85rem;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+    }
+
+    .password-eye-button svg {
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .password-eye-button:hover {
+        color: #1b2789;
+    }
+
+    .password-eye-button:focus {
+        outline: none;
     }
 </style>
