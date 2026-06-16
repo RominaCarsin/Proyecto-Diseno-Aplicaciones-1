@@ -30,11 +30,11 @@ public class Knockout
 
     private readonly List<Team> _qualifiedTeams = new();
     private readonly List<Match> _matches = new();
-    private readonly IShuffleService _shuffleService = null!;
+    private readonly IShuffler _shuffler = null!;
     private readonly IKnockoutMatchFactory _matchFactory = null!;
 
-    private IShuffleService ShuffleService =>
-        _shuffleService
+    private IShuffler Shuffler =>
+        _shuffler
         ?? throw new InvalidOperationException(
             "El servicio de sorteo no está inicializado. ¿Fue este objeto reconstruido por EF Core?");
 
@@ -53,17 +53,17 @@ public class Knockout
     // Requerido por EF Core
     public Knockout(
         int simulationSeed,
-        IShuffleService shuffleService,
+        IShuffler shuffler,
         IKnockoutMatchFactory matchFactory,
         int crossesSeed = 0)
     {
-        if (shuffleService is null)
-            throw new ArgumentNullException(nameof(shuffleService));
+        if (shuffler is null)
+            throw new ArgumentNullException(nameof(shuffler));
         if (matchFactory is null)
             throw new ArgumentNullException(nameof(matchFactory));
 
         SimulationSeed = simulationSeed;
-        _shuffleService = shuffleService;
+        _shuffler = shuffler;
         _matchFactory = matchFactory;
         CrossesSeed = crossesSeed;
     }
@@ -131,7 +131,7 @@ public class Knockout
 
     private IEnumerable<Match> PairRemainingSecondPlaces(List<Team> remainingSecondPlaces)
     {
-        ShuffleService.Shuffle(remainingSecondPlaces);
+        Shuffler.Shuffle(remainingSecondPlaces);
 
         var homePot = remainingSecondPlaces
             .Take(HalfRemainingSecondsCount)
@@ -147,8 +147,8 @@ public class Knockout
 
     private List<Match> PairTeams(List<Team> homePot, List<Team> awayPot, string prefix, int startNumber)
     {
-        ShuffleService.Shuffle(homePot);
-        ShuffleService.Shuffle(awayPot);
+        Shuffler.Shuffle(homePot);
+        Shuffler.Shuffle(awayPot);
 
         var matches = new List<Match>();
 

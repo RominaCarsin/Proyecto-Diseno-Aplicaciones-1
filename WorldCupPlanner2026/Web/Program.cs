@@ -38,8 +38,6 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
 builder.Services.AddScoped<IServices.INotificationService, NotificationService>();
-builder.Services.AddScoped<ShuffleService>(_ => new ShuffleService(42));
-builder.Services.AddScoped<IShuffleService>(sp => sp.GetRequiredService<ShuffleService>());
 builder.Services.AddScoped<IUpdateRankingService, UpdateRankingService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IKnockoutMatchFactory>(sp =>

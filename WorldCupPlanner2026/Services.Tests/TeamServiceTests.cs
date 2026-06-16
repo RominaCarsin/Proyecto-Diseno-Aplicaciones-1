@@ -197,7 +197,7 @@ public class TeamServiceTests
             new("BETA", "UEFA", 1800),
             new("GAMMA", "UEFA", 1800),
         };
-        new ShuffleService(seed: 7).ShuffleByRanking(expectedTiedTeams);
+        new PotDraw().ShuffleByRanking(expectedTiedTeams, seed: 7);
         var expectedTiedNames = expectedTiedTeams.Select(t => t.Name).ToList();
 
         CollectionAssert.AreEqual(

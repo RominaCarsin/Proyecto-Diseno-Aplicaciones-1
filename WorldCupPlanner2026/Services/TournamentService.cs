@@ -233,8 +233,8 @@ public class TournamentService : ITournamentService
             .Where(team => qualifiedTeamNames.Contains(team.Name))
             .ToList();
 
-        var shuffleService = new ShuffleService(simulationSeed);
-        var knockout = new Knockout(simulationSeed, shuffleService, _matchFactory, crossesSeed);
+        var shuffler = new Shuffler(simulationSeed);
+        var knockout = new Knockout(simulationSeed, shuffler, _matchFactory, crossesSeed);
 
         knockout.SetQualifiedTeams(qualifiedTeams);
         knockout.InitializeRoundOf32();
@@ -449,7 +449,7 @@ public class TournamentService : ITournamentService
         ValidateTeamCount(teams);
 
         var sortedTeams = SortByFifaRankingDescending(teams);
-        ShuffleTiedRankingGroups(sortedTeams, seed);
+        new PotDraw().ShuffleByRanking(sortedTeams, seed);
         CreateAndSavePots(sortedTeams);
     }
 
@@ -461,11 +461,6 @@ public class TournamentService : ITournamentService
 
     private static List<Team> SortByFifaRankingDescending(IEnumerable<Team> teams) =>
         teams.OrderByDescending(team => team.RankingFifa).ToList();
-
-    private static void ShuffleTiedRankingGroups(List<Team> teams, int seed)
-    {
-        new ShuffleService(seed).ShuffleByRanking(teams);
-    }
 
     private void CreateAndSavePots(List<Team> teams)
     {
@@ -514,8 +509,8 @@ public class TournamentService : ITournamentService
 
     private Knockout CreateKnockoutFromExistingMatches(IEnumerable<Match> matches)
     {
-        var shuffleService = new ShuffleService(0);
-        var knockout = new Knockout(0, shuffleService, _matchFactory);
+        var shuffler = new Shuffler(0);
+        var knockout = new Knockout(0, shuffler, _matchFactory);
 
         knockout.LoadExistingMatches(matches.ToList());
 

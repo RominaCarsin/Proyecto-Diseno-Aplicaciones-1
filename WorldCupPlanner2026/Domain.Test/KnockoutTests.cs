@@ -19,8 +19,8 @@ public class KnockoutTests
         int simulationSeed = SimulationSeed,
         int crossesSeed = CrossesSeed)
     {
-        var shuffleService = new TestShuffleService(crossesSeed);
-        return new Knockout(simulationSeed, shuffleService, CreateMatchFactory(), crossesSeed);
+        var shuffler = new TestShuffler(crossesSeed);
+        return new Knockout(simulationSeed, shuffler, CreateMatchFactory(), crossesSeed);
     }
 
     [TestMethod]
@@ -673,11 +673,11 @@ public class KnockoutTests
         }
     }
 
-    private sealed class TestShuffleService : IShuffleService
+    private sealed class TestShuffler : IShuffler
     {
         private readonly int _seed;
 
-        public TestShuffleService(int seed)
+        public TestShuffler(int seed)
         {
             _seed = seed;
         }
@@ -690,34 +690,6 @@ public class KnockoutTests
                 int j = random.Next(i + 1);
                 (list[i], list[j]) = (list[j], list[i]);
             }
-        }
-
-        public void ShuffleByRanking(IList<Team> teams)
-        {
-            var random = new Random(_seed);
-            int start = 0;
-
-            while (start < teams.Count)
-            {
-                int end = FindEndOfTiedGroup(teams, start);
-
-                if (end - start > 1)
-                    for (int i = end - 1; i > start; i--)
-                    {
-                        int j = random.Next(start, i + 1);
-                        (teams[i], teams[j]) = (teams[j], teams[i]);
-                    }
-
-                start = end;
-            }
-        }
-
-        private static int FindEndOfTiedGroup(IList<Team> teams, int start)
-        {
-            int end = start;
-            while (end < teams.Count && teams[end].RankingFifa == teams[start].RankingFifa)
-                end++;
-            return end;
         }
     }
     

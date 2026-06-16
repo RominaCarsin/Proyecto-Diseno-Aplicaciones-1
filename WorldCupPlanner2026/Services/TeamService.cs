@@ -72,7 +72,7 @@ public class TeamService : ITeamService
             .OrderByDescending(team => team.RankingFifa)
             .ToList();
 
-        new ShuffleService(seed).ShuffleByRanking(orderedTeams);
+        new PotDraw().ShuffleByRanking(orderedTeams, seed);
 
         return orderedTeams.Select(TeamMapper.FromEntity);
     }
