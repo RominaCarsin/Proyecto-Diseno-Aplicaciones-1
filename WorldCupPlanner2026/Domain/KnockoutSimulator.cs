@@ -5,11 +5,6 @@ public class KnockoutSimulator
     private readonly int _seed;
     private readonly ISimulationEngine _simulationEngine;
 
-    public KnockoutSimulator(int seed)
-        : this(seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic))
-    {
-    }
-
     public KnockoutSimulator(int seed, ISimulationEngine simulationEngine)
     {
         _seed = seed;

@@ -18,7 +18,7 @@ public class KnockoutSimulatorTests
     [TestMethod]
     public void Simulate_WithNoMatches_ShouldNotThrow()
     {
-        new KnockoutSimulator(Seed).Simulate(Enumerable.Empty<Match>());
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(Enumerable.Empty<Match>());
     }
 
     [TestMethod]
@@ -26,7 +26,7 @@ public class KnockoutSimulatorTests
     {
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.IsNotNull(match.HomeGoals);
         Assert.IsNotNull(match.AwayGoals);
@@ -37,7 +37,7 @@ public class KnockoutSimulatorTests
     {
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
         Assert.IsFalse(match.IsFinished);
@@ -48,7 +48,7 @@ public class KnockoutSimulatorTests
     {
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.AreNotEqual(match.HomeGoals, match.AwayGoals);
         Assert.IsNotNull(match.Winner);
@@ -61,7 +61,7 @@ public class KnockoutSimulatorTests
         // los rangos de goles (2-3 / 0-1) son siempre disjuntos.
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1500));
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.AreNotEqual(match.HomeGoals, match.AwayGoals);
         Assert.IsNotNull(match.Winner);
@@ -74,7 +74,7 @@ public class KnockoutSimulatorTests
         match.SetResult(2, 1);
         match.Finish();
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
     }
 
     [TestMethod]
@@ -84,7 +84,7 @@ public class KnockoutSimulatorTests
         match.SetResult(2, 1);
         match.Finish();
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.AreEqual(2, match.HomeGoals);
         Assert.AreEqual(1, match.AwayGoals);
@@ -99,7 +99,7 @@ public class KnockoutSimulatorTests
 
         var pendingMatch = CreateMatch(CreateTeam("HOME2", 1800), CreateTeam("AWAY2", 1400), "C2");
 
-        new KnockoutSimulator(Seed).Simulate(new[] { finishedMatch, pendingMatch });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { finishedMatch, pendingMatch });
 
         Assert.AreEqual(3, finishedMatch.HomeGoals);
         Assert.AreEqual(0, finishedMatch.AwayGoals);
@@ -117,7 +117,7 @@ public class KnockoutSimulatorTests
         var match1 = CreateMatch(CreateTeam("HOME1", 1500), CreateTeam("AWAY1", 1700), "C1");
         var match2 = CreateMatch(CreateTeam("HOME2", 1800), CreateTeam("AWAY2", 1400), "C2");
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match1, match2 });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match1, match2 });
 
         Assert.IsTrue(match1.HasResult);
         Assert.IsTrue(match2.HasResult);
@@ -135,8 +135,8 @@ public class KnockoutSimulatorTests
         var match1 = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700), "C1");
         var match2 = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700), "C1");
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match1 });
-        new KnockoutSimulator(Seed).Simulate(new[] { match2 });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match1 });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match2 });
 
         Assert.AreEqual(match1.HomeGoals, match2.HomeGoals);
         Assert.AreEqual(match1.AwayGoals, match2.AwayGoals);
@@ -152,8 +152,8 @@ public class KnockoutSimulatorTests
             .Select(i => CreateMatch(CreateTeam($"HOME{i}", 1500), CreateTeam($"AWAY{i}", 1700), $"C{i}"))
             .ToList();
 
-        new KnockoutSimulator(1).Simulate(matches1);
-        new KnockoutSimulator(2).Simulate(matches2);
+        new KnockoutSimulator(1, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(matches1);
+        new KnockoutSimulator(2, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(matches2);
 
         var results1 = matches1.Select(m => $"{m.HomeGoals}-{m.AwayGoals}").ToList();
         var results2 = matches2.Select(m => $"{m.HomeGoals}-{m.AwayGoals}").ToList();
@@ -167,7 +167,7 @@ public class KnockoutSimulatorTests
     {
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.IsTrue(match.HomeGoals is >= 0 and <= 3);
         Assert.IsTrue(match.AwayGoals is >= 0 and <= 3);
@@ -179,7 +179,7 @@ public class KnockoutSimulatorTests
         var match = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700));
         match.SetResult(3, 0);
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.IsTrue(match.HasResult);
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
@@ -230,7 +230,7 @@ public class KnockoutSimulatorTests
     {
         var match = CreateMatch(CreateTeam("HOME", 2500), CreateTeam("AWAY", 300));
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match });
 
         Assert.IsTrue(match.YellowCardsOf(match.HomeTeam) >= 0 && match.YellowCardsOf(match.HomeTeam) <= 5);
         Assert.IsTrue(match.YellowCardsOf(match.AwayTeam) >= 0 && match.YellowCardsOf(match.AwayTeam) <= 5);
@@ -244,8 +244,8 @@ public class KnockoutSimulatorTests
         var match1 = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700), "C1");
         var match2 = CreateMatch(CreateTeam("HOME", 1500), CreateTeam("AWAY", 1700), "C1");
 
-        new KnockoutSimulator(Seed).Simulate(new[] { match1 });
-        new KnockoutSimulator(Seed).Simulate(new[] { match2 });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match1 });
+        new KnockoutSimulator(Seed, SimulationEngineFactory.Create(SimulationEngineType.Probabilistic)).Simulate(new[] { match2 });
 
         Assert.AreEqual(match1.YellowCardsOf(match1.HomeTeam), match2.YellowCardsOf(match2.HomeTeam));
         Assert.AreEqual(match1.YellowCardsOf(match1.AwayTeam), match2.YellowCardsOf(match2.AwayTeam));
