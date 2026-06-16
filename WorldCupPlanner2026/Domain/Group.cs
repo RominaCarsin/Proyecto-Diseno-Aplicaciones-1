@@ -1,16 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Domain;
+﻿namespace Domain;
 
 public class Group
 {
     private const char MinLabel = 'A';
     private const char MaxLabel = 'L';
     private const int MaxTeams = 4;
-    private const int MaxUEFATeamsPerGroup = 2;
-    private const int MaxOtherConfederationTeamsPerGroup = 1;
-    
-    private const string TooManyTeamsFromSameConfederationErrorMessage = "El grupo no puede tener más de 2 equipos de la misma confederación.";
+
     private const string LabelOutOfRangeErrorMessage = "La etiqueta debe ser una letra mayúscula entre 'A' y 'L'.";
     private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
     private const string FullGroupErrorMessage = "El grupo no puede tener más de 4 equipos.";
@@ -19,15 +14,26 @@ public class Group
 
     private readonly List<Team> _teams = new();
     private readonly List<Match> _matches = new();
-    
+    private readonly IGroupRules _compositionPolicy;
+    private readonly IGroupPositionsCalculator _standingsCalculator;
     public int GroupId { get; private set; }
     public char Label { get; private set; }
     public IReadOnlyList<Team> Teams => _teams;
     public IReadOnlyList<Match> Matches => _matches;
 
-    private Group() { }
-    public Group(char label)
+    private Group()
     {
+        _compositionPolicy = new GroupConfederationRule();
+        _standingsCalculator = new GroupOrderPointsGoalDiffCalculator();
+    }
+
+    public Group(
+        char label,
+        IGroupRules? compositionPolicy = null,
+        IGroupPositionsCalculator? standingsCalculator = null)
+    {
+        _compositionPolicy = compositionPolicy ?? new GroupConfederationRule();
+        _standingsCalculator = standingsCalculator ?? new GroupOrderPointsGoalDiffCalculator();
         UpdateLabel(label);
     }
 
@@ -42,28 +48,12 @@ public class Group
     {
         ValidateRequiredTeam(team);
         ValidateGroupHasAvailableSlot();
-        ValidateConfederationLimit(team!);
+        _compositionPolicy.EnsureCanAdd(_teams, team!);
 
         _teams.Add(team!);
     }
-    
+
     public void FinishMatch(Match match) => match.Finish();
-
-    private void ValidateConfederationLimit(Team team)
-    {
-        int teamsFromSameConfederation = _teams.Count(t =>
-            t.ConfederationName == team.ConfederationName);
-
-        bool isUefa = team.ConfederationName == "UEFA";
-
-        int limit = isUefa
-            ? MaxUEFATeamsPerGroup
-            : MaxOtherConfederationTeamsPerGroup;
-
-        if (teamsFromSameConfederation >= limit)
-            throw new ArgumentException(TooManyTeamsFromSameConfederationErrorMessage);
-    }
-
 
     public void AddMatch(Match? match)
     {
@@ -85,16 +75,10 @@ public class Group
         ValidatePosition(position);
         return GetOrderedTeamsByPosition().ElementAt(position - 1);
     }
-    public IEnumerable<Team> GetOrderedTeamsByPosition()
-    {
-        return _teams
-            .OrderByDescending(t => t.Points)
-            .ThenByDescending(t => t.GoalDifference)
-            .ThenByDescending(t => t.GoalsInFavor)
-            .ToList();
-    }
-    
-    
+
+    public IEnumerable<Team> GetOrderedTeamsByPosition() =>
+        _standingsCalculator.Order(_teams);
+
     public IEnumerable<Match> FinishPlayedMatches()
     {
         var playedMatches = _matches

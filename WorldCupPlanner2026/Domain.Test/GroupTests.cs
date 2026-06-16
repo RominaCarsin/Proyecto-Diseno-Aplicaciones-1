@@ -5,21 +5,7 @@ public class GroupTests
 {
     private const char ValidLabel = 'A';
     private const char LowercaseLabel = 'a';
-    private const char InvalidLabel = 'Z';
-
     private Group CreateValidGroup() => new(ValidLabel);
-
-    private Team CreateUruguayTeam() =>
-        new("URUGUAY", "CONMEBOL", 1500);
-
-    private Team CreateArgentinaTeam() =>
-        new("ARGENTINA", "UEFA", 1700);
-
-    private Team CreateBrazilTeam() =>
-        new("BRAZIL", "AFC", 1800);
-
-    private Team CreateChileTeam() =>
-        new("CHILE", "CAF", 1400);
 
     private Match CreateMatch(Group group, Team home, Team away) =>
         new Match(
@@ -52,7 +38,7 @@ public class GroupTests
     public void AddTeam_WithValidTeam_ShouldAddTeam()
     {
         var group = CreateValidGroup();
-        var team = CreateUruguayTeam();
+        var team = TeamTestData.CreateUruguayTeam();
 
         group.AddTeam(team);
 
@@ -70,29 +56,6 @@ public class GroupTests
     }
     
     [TestMethod]
-    public void Add2UEFATeamsToGroup_ShouldSucced()
-    {
-        var group = CreateValidGroup();
-
-        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
-        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
-
-        Assert.AreEqual(2, group.Teams.Count);
-    }
-
-    [TestMethod]
-    public void Add3UEFATeamsToGroup_ShouldThrowException()
-    {
-        var group = CreateValidGroup();
-
-        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
-        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            group.AddTeam(new Team("BOLIVIA", "UEFA", 1400)));
-    }
-    
-    [TestMethod]
     public void AddTeam_WhenGroupIsFull_ShouldThrowArgumentException()
     {
         var group = CreateValidGroup();
@@ -105,33 +68,11 @@ public class GroupTests
     }
 
     [TestMethod]
-    public void Add2NonUEFATeamsFromSameConfederationToGroup_ShouldThrowException()
-    {
-        var group = CreateValidGroup();
-
-        group.AddTeam(new Team("URUGUAY", "CONMEBOL", 1500));
-
-        Assert.ThrowsException<ArgumentException>(() =>
-            group.AddTeam(new Team("ARGENTINA", "CONMEBOL", 1700)));
-    }
-    
-    [TestMethod]
-    public void AddTeamsFromDifferentNonUEFAConfederationsToGroup_ShouldSucceed()
-    {
-        var group = CreateValidGroup();
-
-        group.AddTeam(new Team("URUGUAY", "CONMEBOL", 1500));
-        group.AddTeam(new Team("MEXICO", "CONCACAF", 1600));
-
-        Assert.AreEqual(2, group.Teams.Count);
-    }
-    
-    [TestMethod]
     public void AddMatch_WithValidMatch_ShouldAddMatchToGroup()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -156,8 +97,8 @@ public class GroupTests
     public void SetMatchResult_WhenHomeTeamWins_ShouldUpdateTeamStats()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -179,8 +120,8 @@ public class GroupTests
     public void SetMatchResult_WhenAwayTeamWins_ShouldUpdateTeamStats()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -200,8 +141,8 @@ public class GroupTests
     public void SetMatchResult_WhenDraw_ShouldGiveBothTeamsOnePoint()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -219,131 +160,11 @@ public class GroupTests
     
 
     [TestMethod]
-    public void GetStandings_WithNoMatches_ShouldReturnAllTeamsWithZeroPoints()
-    {
-        var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-
-        group.AddTeam(uruguay);
-        group.AddTeam(argentina);
-
-        var standings = group.GetOrderedTeamsByPosition().ToList();
-
-        Assert.AreEqual(2, standings.Count);
-        Assert.IsTrue(standings.All(t => t.Points == 0));
-    }
-
-    [TestMethod]
-    public void GetStandings_ShouldOrderByPoints()
-    {
-        var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-
-        group.AddTeam(uruguay);
-        group.AddTeam(argentina);
-
-        var match = CreateMatch(group, uruguay, argentina);
-        match.SetResult(2, 0);
-        group.AddMatch(match);
-
-        var standings = group.GetOrderedTeamsByPosition().ToList();
-
-        Assert.AreEqual(uruguay, standings[0]);
-    }
-
-    [TestMethod]
-    public void GetStandings_WhenSamePoints_ShouldOrderByGoalDifference()
-    {
-        var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-        var chile = CreateChileTeam();
-
-        group.AddTeam(uruguay);
-        group.AddTeam(argentina);
-        group.AddTeam(brazil);
-        group.AddTeam(chile);
-        
-        var match1 = CreateMatch(group, uruguay, chile);
-        match1.SetResult(1, 0);
-        group.AddMatch(match1);
-
-        var match2 = CreateMatch(group, argentina, brazil);
-        match2.SetResult(3, 0);
-        group.AddMatch(match2);
-
-        var standings = group.GetOrderedTeamsByPosition().ToList();
-
-        Assert.AreEqual(argentina, standings[0]);
-        Assert.AreEqual(uruguay, standings[1]);
-    }
-
-    [TestMethod]
-    public void GetStandings_WhenSamePointsAndGoalDifference_ShouldOrderByGoalsFor()
-    {
-        var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-        var chile = CreateChileTeam();
-
-        group.AddTeam(uruguay);
-        group.AddTeam(argentina);
-        group.AddTeam(brazil);
-        group.AddTeam(chile);
-
-        var match1 = CreateMatch(group, uruguay, argentina);
-        match1.SetResult(2, 1);
-        group.AddMatch(match1);
-
-        var match2 = CreateMatch(group, brazil, chile);
-        match2.SetResult(3, 2);
-        group.AddMatch(match2);
-
-        var standings = group.GetOrderedTeamsByPosition().ToList();
-
-        Assert.AreEqual(brazil, standings[0]);
-        Assert.AreEqual(uruguay, standings[1]);
-    }
-
-    [TestMethod]
-    public void GetStandings_AfterMultipleMatches_ShouldReflectAccumulatedStats()
-    {
-        var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-        var chile = CreateChileTeam();
-
-        group.AddTeam(uruguay);
-        group.AddTeam(argentina);
-        group.AddTeam(brazil);
-        group.AddTeam(chile);
-
-        var match1 = CreateMatch(group, uruguay, argentina);
-        match1.SetResult(1, 0);
-        group.AddMatch(match1);
-
-        var match2 = CreateMatch(group, uruguay, brazil);
-        match2.SetResult(2, 0);
-        group.AddMatch(match2);
-
-        var standings = group.GetOrderedTeamsByPosition().ToList();
-
-        Assert.AreEqual(uruguay, standings[0]);
-        Assert.AreEqual(6, uruguay.Points);
-    }
-    
-
-    [TestMethod]
     public void GetTeamByPosition_WithValidPosition_ShouldReturnTeamFromStandings()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -373,8 +194,8 @@ public class GroupTests
     public void FinishMatch_WithValidMatch_ShouldMarkMatchAsFinished()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -390,10 +211,10 @@ public class GroupTests
     public void FinishPlayedMatches_ShouldFinishOnlyMatchesWithResultAndReturnThem()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-        var chile = CreateChileTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
+        var brazil = TeamTestData.CreateBrazilTeam();
+        var chile = TeamTestData.CreateChileTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -423,10 +244,10 @@ public class GroupTests
     public void FinishPlayedMatches_CalledTwice_ShouldNotReturnAlreadyFinishedMatches()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
-        var brazil = CreateBrazilTeam();
-        var chile = CreateChileTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
+        var brazil = TeamTestData.CreateBrazilTeam();
+        var chile = TeamTestData.CreateChileTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -451,8 +272,8 @@ public class GroupTests
     public void FinishPlayedMatches_WithNoPlayedMatches_ShouldReturnEmpty()
     {
         var group = CreateValidGroup();
-        var uruguay = CreateUruguayTeam();
-        var argentina = CreateArgentinaTeam();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
 
         group.AddTeam(uruguay);
         group.AddTeam(argentina);
@@ -466,7 +287,39 @@ public class GroupTests
         Assert.AreEqual(0, finished.Count);
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
     }
-    
+
+    [TestMethod]
+    public void AddTeam_With3UefaTeams_ShouldThrowArgumentException()
+    {
+        var group = CreateValidGroup();
+
+        group.AddTeam(new Team("URUGUAY", "UEFA", 1500));
+        group.AddTeam(new Team("ARGENTINA", "UEFA", 1700));
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            group.AddTeam(new Team("BOLIVIA", "UEFA", 1400)));
+    }
+
+    [TestMethod]
+    public void GetOrderedTeamsByPosition_WithMatches_ShouldReturnOrderedStandings()
+    {
+        var group = CreateValidGroup();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
+
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        var match = CreateMatch(group, uruguay, argentina);
+        match.SetResult(2, 0);
+        group.AddMatch(match);
+
+        var standings = group.GetOrderedTeamsByPosition().ToList();
+
+        Assert.AreEqual(2, standings.Count);
+        Assert.AreEqual(uruguay, standings[0]);
+    }
+
     private static void AddFourTeams(Group group)
     {
         group.AddTeam(new Team("TEAM0", "AFC", 1000));
