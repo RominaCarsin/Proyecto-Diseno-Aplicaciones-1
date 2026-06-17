@@ -210,4 +210,28 @@ public class PureRandomSimulationEngineTests
         Assert.AreEqual(firstResult.HomeRedCards, secondResult.HomeRedCards);
         Assert.AreEqual(firstResult.AwayRedCards, secondResult.AwayRedCards);
     }
+
+    [TestMethod]
+    public void Simulate_Knockout_WithSeed42_ShouldHaveAwayWin()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 1500);
+        var away = CreateTeam("AWAY", 1500);
+
+        var result = engine.Simulate(home, away, TournamentPhase.RoundOf16, new Random(42));
+
+        Assert.IsTrue(result.AwayGoals >= 2, "Expected away team to win with seed 42");
+    }
+
+    [TestMethod]
+    public void Simulate_Knockout_WithSeed1_ShouldHaveHomeWin()
+    {
+        var engine = new PureRandomSimulationEngine();
+        var home = CreateTeam("HOME", 1500);
+        var away = CreateTeam("AWAY", 1500);
+
+        var result = engine.Simulate(home, away, TournamentPhase.RoundOf16, new Random(1));
+
+        Assert.IsTrue(result.HomeGoals >= 2, "Expected home team to win with seed 1");
+    }
 }

@@ -118,6 +118,16 @@ public class UserTests
         Assert.ThrowsException<ArgumentException>(() =>
             new User(Hasher, ValidName, ValidSurname, ValidEmail, tooOldDate, ValidPassword));
     }
+
+    [TestMethod]
+    public void CreateUser_WithBirthDateExactly119YearsAgo_ShouldBeValid()
+    {
+        var validDate = DateTime.Now.AddYears(-119);
+
+        var user = new User(Hasher, ValidName, ValidSurname, ValidEmail, validDate, ValidPassword);
+
+        Assert.AreEqual(validDate.Date, user.DateOfBirth.Date);
+    }
     
     [TestMethod]
     public void CreateUser_WithEmptyPassword_ShouldThrowArgumentException()
@@ -317,7 +327,71 @@ public class UserTests
 
         Assert.IsFalse(user.HasRole(Role.Admin));
     }
-    
+
+    [TestMethod]
+    public void CreateUser_UserId_ShouldDefaultToZero()
+    {
+        var user = CreateValidUser();
+
+        Assert.AreEqual(0, user.UserId);
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, null!, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullSurname_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, null!, ValidEmail, ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, ValidSurname, null!, ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithWhitespaceEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, ValidSurname, "   ", ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullPassword_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, null!));
+    }
+
+    [TestMethod]
+    public void AddRole_WithRoleNone_ShouldNotChangeRoles()
+    {
+        var user = CreateValidUser();
+
+        user.AddRole(Role.None);
+
+        Assert.AreEqual(Role.None, user.Roles);
+    }
+
+    [TestMethod]
+    public void RemoveRole_WithRoleNone_ShouldNotChangeRoles()
+    {
+        var user = CreateValidUser();
+        user.AddRole(Role.Admin);
+
+        user.RemoveRole(Role.None);
+
+        Assert.IsTrue(user.HasRole(Role.Admin));
+    }
+
     private static User CreateValidUser() =>
         new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword);
 }

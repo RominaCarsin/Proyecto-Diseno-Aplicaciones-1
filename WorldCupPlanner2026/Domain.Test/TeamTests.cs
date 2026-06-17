@@ -395,7 +395,89 @@ public class TeamTests
         Assert.ThrowsException<ArgumentException>(() =>
             team.UpdateConfederationName("INVALID"));
     }
-    
+
+    [TestMethod]
+    public void CreateTeam_TeamId_ShouldDefaultToZero()
+    {
+        var team = CreateValidTeam();
+
+        Assert.AreEqual(0, team.TeamId);
+    }
+
+    [TestMethod]
+    public void UpdateName_WithNullName_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateName(null!));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithNullValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName(null!));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithEmptyValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName(""));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithWhitespaceValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName("   "));
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AtMinimumBoundary_ShouldSucceed()
+    {
+        var team = CreateValidTeam();
+
+        team.UpdateRankingFifa(300);
+
+        Assert.AreEqual(300, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AtMaximumBoundary_ShouldSucceed()
+    {
+        var team = CreateValidTeam();
+
+        team.UpdateRankingFifa(2500);
+
+        Assert.AreEqual(2500, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_BelowMinimum_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateRankingFifa(299));
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AboveMaximum_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateRankingFifa(2501));
+    }
+
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
 }

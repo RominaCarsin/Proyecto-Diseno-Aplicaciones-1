@@ -85,6 +85,14 @@ public class PotTests
 
         Assert.IsTrue(pot.IsFull());
     }
+
+    [TestMethod]
+    public void CreatePot_PotId_ShouldDefaultToZero()
+    {
+        var pot = new Pot(1, BuildTeams(12));
+
+        Assert.AreEqual(0, pot.PotId);
+    }
     
     private static List<Team> BuildTeams(int count, int rankingStart = 500)
     {

@@ -27,6 +27,27 @@ public class KnockoutTests
     }
 
     [TestMethod]
+    public void GivenNullStadiums_WhenCreateKnockout_ThenThrowsArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Knockout(SimulationSeed, new TestShuffler(CrossesSeed), null!));
+    }
+
+    [TestMethod]
+    public void GivenEmptyStadiums_WhenCreateKnockout_ThenThrowsArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Knockout(SimulationSeed, new TestShuffler(CrossesSeed), new List<Stadium>()));
+    }
+
+    [TestMethod]
+    public void GivenNullShuffler_WhenCreateKnockout_ThenThrowsArgumentNullException()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() =>
+            new Knockout(SimulationSeed, null!, DefaultStadiums));
+    }
+
+    [TestMethod]
     public void GivenSimulationSeed_WhenCreateKnockout_ThenSimulationSeedIsAssigned()
     {
         var knockout = CreateValidKnockout();
@@ -525,6 +546,37 @@ public class KnockoutTests
         var match = knockout.Matches.Single(m => m.MatchCode == "A1");
         Assert.AreEqual(MatchStatus.Finished, match.Status);
         Assert.IsTrue(match.IsFinished);
+    }
+
+    [TestMethod]
+    public void FinishMatch_WhenMatchDoesNotExist_ShouldThrowArgumentException()
+    {
+        var knockout = CreateValidKnockout();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            knockout.FinishMatch("NON-EXISTENT"));
+    }
+
+    [TestMethod]
+    public void LoadExistingMatches_ShouldReplaceAllMatches()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        var originalMatches = knockout.Matches.ToList();
+        var emptyList = new List<Match>();
+
+        knockout.LoadExistingMatches(emptyList);
+
+        Assert.AreEqual(0, knockout.Matches.Count);
+
+        knockout.LoadExistingMatches(originalMatches);
+
+        Assert.AreEqual(originalMatches.Count, knockout.Matches.Count);
+        CollectionAssert.AreEqual(
+            originalMatches.Select(m => m.MatchCode).ToList(),
+            knockout.Matches.Select(m => m.MatchCode).ToList());
     }
 
     [TestMethod]

@@ -107,7 +107,46 @@ public class ConfederationTests
 
         Assert.AreEqual(ValidSlots - 1, confederation.RemainingSlots);
     }
-    
+
+    [TestMethod]
+    public void IsFull_WhenSlotsExceeded_ShouldReturnTrue()
+    {
+        var confederation = new Confederation("OFC", slots: 1);
+        confederation.AddTeam(BuildTeam("URUGUAY", "OFC"));
+
+        Assert.IsTrue(confederation.IsFull);
+    }
+
+    [TestMethod]
+    public void IsFull_WhenSlotsNotExceeded_ShouldReturnFalse()
+    {
+        var confederation = new Confederation(ValidName, ValidSlots);
+
+        Assert.IsFalse(confederation.IsFull);
+    }
+
+    [TestMethod]
+    public void CreateConfederation_ConfederationId_ShouldDefaultToZero()
+    {
+        var confederation = new Confederation(ValidName, ValidSlots);
+
+        Assert.AreEqual(0, confederation.ConfederationId);
+    }
+
+    [TestMethod]
+    public void CreateConfederation_WithNullName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Confederation(null!, ValidSlots));
+    }
+
+    [TestMethod]
+    public void CreateConfederation_WithWhitespaceName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Confederation("   ", ValidSlots));
+    }
+
     private static Team BuildTeam(string name, string confederation = "CONMEBOL") =>
         new Team(name, confederation, 1200);
 }

@@ -320,6 +320,83 @@ public class GroupTests
         Assert.AreEqual(uruguay, standings[0]);
     }
 
+    [TestMethod]
+    public void CreateGroup_GroupId_ShouldDefaultToZero()
+    {
+        var group = CreateValidGroup();
+
+        Assert.AreEqual(0, group.GroupId);
+    }
+
+    [TestMethod]
+    public void CreateGroup_WithLabelAtMinBoundary_ShouldSucceed()
+    {
+        var group = new Group('A');
+
+        Assert.AreEqual('A', group.Label);
+    }
+
+    [TestMethod]
+    public void CreateGroup_WithLabelAtMaxBoundary_ShouldSucceed()
+    {
+        var group = new Group('L');
+
+        Assert.AreEqual('L', group.Label);
+    }
+
+    [TestMethod]
+    public void CreateGroup_WithLabelBelowMinBoundary_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Group('@'));
+    }
+
+    [TestMethod]
+    public void CreateGroup_WithLabelAboveMaxBoundary_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Group('M'));
+    }
+
+    [TestMethod]
+    public void CreateGroup_WithLowercaseMaxLabel_ShouldNormalizeToUppercase()
+    {
+        var group = new Group('l');
+
+        Assert.AreEqual('L', group.Label);
+    }
+
+    [TestMethod]
+    public void SetMatchSimulationResult_WithValidData_ShouldApplyResultAndRegisterCards()
+    {
+        var group = CreateValidGroup();
+        var uruguay = TeamTestData.CreateUruguayTeam();
+        var argentina = TeamTestData.CreateArgentinaTeam();
+        group.AddTeam(uruguay);
+        group.AddTeam(argentina);
+
+        var match = CreateMatch(group, uruguay, argentina);
+        group.AddMatch(match);
+
+        var result = new SimulationResult(2, 1, 3, 2, 1, 0);
+        var random = new Random(42);
+
+        group.SetMatchSimulationResult(match, result, random);
+
+        Assert.AreEqual(2, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(uruguay, match.Winner);
+    }
+
+    [TestMethod]
+    public void SetMatchSimulationResult_WithNullMatch_ShouldThrowArgumentException()
+    {
+        var group = CreateValidGroup();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            group.SetMatchSimulationResult(null, new SimulationResult(1, 0), new Random(42)));
+    }
+
     private static void AddFourTeams(Group group)
     {
         group.AddTeam(new Team("TEAM0", "AFC", 1000));

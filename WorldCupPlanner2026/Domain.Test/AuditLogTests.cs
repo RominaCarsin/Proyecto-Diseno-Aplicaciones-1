@@ -69,4 +69,20 @@ public class AuditLogTests
         Assert.ThrowsException<ArgumentException>(() =>
             new AuditLog(ValidActorEmail, "   ", ValidDetails));
     }
+
+    [TestMethod]
+    public void CreateAuditLog_AuditLogId_ShouldDefaultToZero()
+    {
+        var log = new AuditLog(ValidActorEmail, ValidAction, ValidDetails);
+
+        Assert.AreEqual(0, log.AuditLogId);
+    }
+
+    [TestMethod]
+    public void CreateAuditLog_WithNullDetails_ShouldStoreNull()
+    {
+        var log = new AuditLog(ValidActorEmail, ValidAction, null!);
+
+        Assert.IsNull(log.Details);
+    }
 }

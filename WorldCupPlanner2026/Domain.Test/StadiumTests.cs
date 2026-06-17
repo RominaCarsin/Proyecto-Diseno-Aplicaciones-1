@@ -455,6 +455,60 @@ public class StadiumTests
             stadium.UpdateCapacity(19999));
     }
     
+    // ─── StadiumId ────────────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void CreateStadium_StadiumId_ShouldDefaultToZero()
+    {
+        var stadium = CreateValidStadium();
+
+        Assert.AreEqual(0, stadium.StadiumId);
+    }
+
+    // ─── Update boundary tests ────────────────────────────────────────────────
+
+    [TestMethod]
+    public void UpdateName_WithNameExactlyAtMaxLength_ShouldUpdateNameSuccessfully()
+    {
+        var stadium = CreateValidStadium();
+        var nameWithMaxLength = new string('A', 80);
+
+        stadium.UpdateName(nameWithMaxLength);
+
+        Assert.AreEqual(nameWithMaxLength, stadium.Name);
+    }
+
+    [TestMethod]
+    public void UpdateCity_WithCityExactlyAtMaxLength_ShouldUpdateCitySuccessfully()
+    {
+        var stadium = CreateValidStadium();
+        var cityWithMaxLength = new string('A', 60);
+
+        stadium.UpdateCity(cityWithMaxLength);
+
+        Assert.AreEqual(cityWithMaxLength, stadium.City);
+    }
+
+    [TestMethod]
+    public void UpdateCapacity_WithVeryHighCapacity_ShouldUpdateCapacitySuccessfully()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateCapacity(200000);
+
+        Assert.AreEqual(200000, stadium.Capacity);
+    }
+
+    [TestMethod]
+    public void UpdateDescription_WithWhitespaceDescription_ShouldStoreWhitespace()
+    {
+        var stadium = CreateValidStadium();
+
+        stadium.UpdateDescription("   ");
+
+        Assert.AreEqual("   ", stadium.Description);
+    }
+
     // ─── Builders ─────────────────────────────────────────────────────────────
 
     private static Stadium CreateValidStadium() =>

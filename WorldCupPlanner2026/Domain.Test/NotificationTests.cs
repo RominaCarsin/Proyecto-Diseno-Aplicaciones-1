@@ -93,4 +93,20 @@ public class NotificationTests
 
         Assert.IsTrue(notification.IsRead);
     }
+
+    [TestMethod]
+    public void CreateNotification_NotificationId_ShouldDefaultToZero()
+    {
+        var notification = new Notification(ValidUserId, ValidMessage);
+
+        Assert.AreEqual(0, notification.NotificationId);
+    }
+
+    [TestMethod]
+    public void CreateNotification_User_ShouldBeNull()
+    {
+        var notification = new Notification(ValidUserId, ValidMessage);
+
+        Assert.IsNull(notification.User);
+    }
 }

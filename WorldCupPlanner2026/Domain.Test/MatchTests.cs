@@ -358,6 +358,138 @@ public class MatchTests
     }
 
     [TestMethod]
+    public void CreateMatch_MatchId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.MatchId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_StadiumId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.StadiumId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_HomeTeamId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.HomeTeamId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_AwayTeamId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.AwayTeamId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WinnerId_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.WinnerId);
+    }
+
+    [TestMethod]
+    public void SetResult_WinnerId_ShouldRemainNull()
+    {
+        var match = CreateMatch();
+        match.SetResult(2, 1);
+
+        Assert.IsNull(match.WinnerId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_GroupId_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.GroupId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_RankingApplied_ShouldBeFalse()
+    {
+        var match = CreateMatch();
+
+        Assert.IsFalse(match.RankingApplied);
+    }
+
+    [TestMethod]
+    public void Loser_WhenWinnerIsNull_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.Loser);
+    }
+
+    [TestMethod]
+    public void Loser_WhenHomeTeamWins_ShouldBeAwayTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.SetResult(2, 0);
+
+        Assert.AreEqual(awayTeam, match.Loser);
+    }
+
+    [TestMethod]
+    public void Loser_WhenAwayTeamWins_ShouldBeHomeTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.SetResult(0, 2);
+
+        Assert.AreEqual(homeTeam, match.Loser);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithMatchCode_ShouldNormalizeToUpperAndTrim()
+    {
+        var match = new Match(ValidDate, BuildStadium(), BuildTeam("URUGUAY"), BuildTeam("ARGENTINA"),
+            group: null, phase: TournamentPhase.RoundOf32, matchCode: "  abc  ");
+
+        Assert.AreEqual("ABC", match.MatchCode);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithNullMatchCode_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.MatchCode);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithWhitespaceMatchCode_ShouldBeNull()
+    {
+        var match = new Match(ValidDate, BuildStadium(), BuildTeam("URUGUAY"), BuildTeam("ARGENTINA"),
+            group: null, phase: TournamentPhase.RoundOf32, matchCode: "   ");
+
+        Assert.IsNull(match.MatchCode);
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithNullStadium_ShouldThrowArgumentException()
+    {
+        var match = CreateMatch();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            match.UpdateStadium(null!));
+    }
+
+    [TestMethod]
     public void ClearCards_ThenRegisterNewCards_ShouldReplaceOldCards()
     {
         var homeTeam = BuildTeam("URUGUAY");
