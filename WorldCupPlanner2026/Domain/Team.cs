@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Domain;
 
 public class Team
@@ -30,7 +28,7 @@ public class Team
     public string GroupLabel { get; private set; } = string.Empty;
     public string FlagBase64 { get; private set; } = string.Empty;
 
-    public Team (){}
+    public Team() { }
     public Team(string name, string confederationName, int rankingFifa, string groupLabel = "", string flagBase64 = "")
     {
         UpdateName(name);
@@ -46,7 +44,7 @@ public class Team
 
     public void UpdateName(string name)
     {
-        var normalized = TextNormalizer. Normalize(name);
+        var normalized = TextNormalizer.Normalize(name);
 
         if (string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength)
             throw new ArgumentException(NameInvalidErrorMessage);

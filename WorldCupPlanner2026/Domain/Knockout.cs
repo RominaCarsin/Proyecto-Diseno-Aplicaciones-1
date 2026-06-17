@@ -1,10 +1,7 @@
-using Domain;
-
 namespace Domain;
 
 public class Knockout
 {
-    // Constantes de configuración
     private const int RequiredQualifiedTeams = 32;
     private const int BestFirstPlacesStart = 0;
     private const int BestFirstPlacesCount = 4;
@@ -20,8 +17,7 @@ public class Knockout
     private const int FirstMatchNumber = 1;
     private const int RemainingSecondsFirstMatchNumber = 5;
     private static readonly DateTime KnockoutPhaseDefaultDate = new(2026, 7, 1);
-
-    // Mensajes de error
+    
     private const string NullQualifiedTeamsErrorMessage = "Los equipos clasificados no pueden ser nulos.";
     private const string NullMatchErrorMessage = "El partido no puede ser nulo.";
     private const string RoundOf32AlreadyInitErrorMessage = "Los dieciseisavos de final ya fueron inicializados.";
@@ -78,8 +74,6 @@ public class Knockout
         _qualifiedTeams.Clear();
         _qualifiedTeams.AddRange(teams);
     }
-
-    // ==================== INICIALIZACIÓN DE RONDAS ====================
 
     public void InitializeRoundOf32()
     {
@@ -193,8 +187,6 @@ public class Knockout
         AddMatch(finalMatch);
     }
 
-    // ==================== GESTIÓN DE PARTIDOS ====================
-
     public void AddMatch(Match match)
     {
         if (match is null)
@@ -240,9 +232,7 @@ public class Knockout
 
         match.Finish();
     }
-
-    // ==================== MÉTODOS PRIVADOS AUXILIARES ====================
-
+    
     private void ValidateCanInitializeRoundOf32()
     {
         if (_qualifiedTeams.Count != RequiredQualifiedTeams)
@@ -334,8 +324,6 @@ public class Knockout
         foreach (var match in matches)
             AddMatch(match);
     }
-
-    // ==================== CREACIÓN DE PARTIDOS Y ASIGNACIÓN DE ESTADIOS ====================
 
     private Match CreateKnockoutMatch(Team homeTeam, Team awayTeam, TournamentPhase phase, string matchCode) =>
         new(KnockoutPhaseDefaultDate, PickStadium(matchCode), homeTeam, awayTeam, group: null, phase: phase, matchCode: matchCode);

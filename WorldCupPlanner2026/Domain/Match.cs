@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Domain;
 
 public class Match
@@ -15,8 +13,9 @@ public class Match
     private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
     private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
-    private readonly List<MatchIncidence> _incidences = new();
     private const string IncidenceTeamNotInMatchErrorMessage = "La incidencia debe pertenecer a un equipo del partido.";
+    
+    private readonly List<MatchIncidence> _incidences = new();
     
     public IReadOnlyCollection<MatchIncidence> Incidences => _incidences.AsReadOnly();
     public int MatchId { get; private set; }

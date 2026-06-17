@@ -7,6 +7,8 @@ public class Confederation
     private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
     private const string ConfederationFullErrorMessage = "La confederación está completa.";
     
+    private readonly List<Team> _teams = new();
+
     public int ConfederationId { get; private set; }
     public string Name { get; private set; } = null!;
     public IReadOnlyList<Team> Teams => _teams;
@@ -14,8 +16,6 @@ public class Confederation
 
     public bool IsFull => _teams.Count >= Slots;
     public int RemainingSlots => Slots - _teams.Count;
-
-    private readonly List<Team> _teams = new();
 
     private Confederation() { }
     public Confederation(string name, int slots)

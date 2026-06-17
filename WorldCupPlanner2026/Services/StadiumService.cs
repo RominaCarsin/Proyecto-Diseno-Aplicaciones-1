@@ -47,7 +47,7 @@ public class StadiumService : IStadiumService
         if (IsRenamingToDifferentName(existingStadium, updatedStadium))
             EnsureStadiumNameIsNotTaken(updatedStadium.Name);
 
-        UpdateStadium(existingStadium, updatedStadium);
+        ApplyStadiumUpdates(existingStadium, updatedStadium);
         LogAction("Estadio actualizado",
             $"Estadio '{originalStadiumName}' actualizado. Nuevo nombre: '{updatedStadiumData.Name}', ciudad: {updatedStadiumData.City}, capacidad: {updatedStadiumData.Capacity}");
     }
@@ -85,7 +85,7 @@ public class StadiumService : IStadiumService
         return !updated.Name.Equals(existing.Name, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void UpdateStadium(Stadium stadiumToUpdate, Stadium stadiumToAdd)
+    private void ApplyStadiumUpdates(Stadium stadiumToUpdate, Stadium stadiumToAdd)
     {
         stadiumToUpdate.UpdateName(stadiumToAdd.Name);
         stadiumToUpdate.UpdateCity(stadiumToAdd.City);

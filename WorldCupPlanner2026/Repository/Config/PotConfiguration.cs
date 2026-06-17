@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+namespace Repository.Configurations;
+
 public class PotConfiguration : IEntityTypeConfiguration<Pot>
 {
     public void Configure(EntityTypeBuilder<Pot> builder)

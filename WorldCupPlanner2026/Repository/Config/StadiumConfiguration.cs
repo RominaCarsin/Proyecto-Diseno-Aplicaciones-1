@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+namespace Repository.Configurations;
+
 public class StadiumConfiguration : IEntityTypeConfiguration<Stadium>
 {
     public void Configure(EntityTypeBuilder<Stadium> builder)

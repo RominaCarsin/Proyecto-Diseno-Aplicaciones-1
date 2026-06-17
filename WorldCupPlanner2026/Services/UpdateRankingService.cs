@@ -5,11 +5,12 @@ namespace Services;
 
 public class UpdateRankingService : IUpdateRankingService
 {
-    private readonly IAuditService _auditService;
     private const string MatchNotFinishedErrorMessage = "El ranking solo se recalcula para partidos finalizados.";
     private const string SystemActor = "SISTEMA";
     private const string RankingAction = "RANKING_UPDATE";
-    
+
+    private readonly IAuditService _auditService;
+
     public UpdateRankingService(IAuditService auditService)
     {
         _auditService = auditService;
