@@ -468,6 +468,24 @@ public class TeamServiceTests
         var updatedTeam = FindTeamByName(ValidTeamName);
         Assert.AreEqual(flagBase64, updatedTeam!.FlagBase64);
     }
+    
+    [TestMethod]
+    public void AutoCompleteTeams_WhenGeneratedNameAlreadyExists_ShouldSkipToNextAvailableName()
+    {
+        _service.AddTeam(BuildTeamRequest("UEFA_01", "UEFA", ranking: 1000));
+
+        _service.AutoCompleteTeams(seed: 10);
+
+        var uefaTeams = _service.GetTeams()
+            .Where(team => team.ConfederationName == "UEFA")
+            .Select(team => team.Name)
+            .ToList();
+
+        Assert.AreEqual(16, uefaTeams.Count);
+        Assert.AreEqual(1, uefaTeams.Count(name => name == "UEFA_01"));
+        Assert.IsTrue(uefaTeams.Contains("UEFA_02"));
+        Assert.IsTrue(uefaTeams.Contains("UEFA_16"));
+    }
 
     private static TeamRequest BuildTeamRequest(
         string name,

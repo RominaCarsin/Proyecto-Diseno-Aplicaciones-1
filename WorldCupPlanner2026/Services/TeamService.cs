@@ -150,9 +150,6 @@ public class TeamService : ITeamService
             .Select(line => line.TrimEnd('\r'))
             .ToList();
 
-        if (lines.Count == 0)
-            return BuildGlobalErrorResult(result, EmptyCsvErrorMessage);
-
         var headers = SplitCsvLine(lines[0]).Select(header => NormalizeHeader(header.Trim())).ToArray();
         if (headers.Length != ExpectedHeaders.Length || !HeadersAreValid(headers))
             return HandleInvalidHeader(result, actorEmail, shouldPersistRows);

@@ -69,6 +69,19 @@ public class GroupFixtureGeneratorTests
         Assert.AreEqual(72, allMatches.Count);
         Assert.IsTrue(allMatches.All(m => m.Phase == TournamentPhase.GroupStage));
     }
+    
+    [TestMethod]
+    public void Generate_WhenNoStadiumIsAvailable_ShouldThrowInvalidOperationException()
+    {
+        var groups = CreateGroupsWithTeams();
+        var stadiums = GroupPhaseTestHelpers.BuildStadiums(1);
+        var generator = new GroupFixtureGenerator(new MatchFactory(), new TournamentRules());
+
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            generator.Generate(groups, stadiums, GroupPhaseTestHelpers.StartDate));
+
+        Assert.AreEqual("No hay estadios disponibles para este horario.", exception.Message);
+    }
 
     private static List<Group> CreateGroupsWithTeams()
     {
