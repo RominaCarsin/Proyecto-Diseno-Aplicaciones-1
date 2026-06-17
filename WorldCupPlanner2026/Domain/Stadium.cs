@@ -22,7 +22,7 @@ public class Stadium
 
     [ExcludeFromCodeCoverage]
     protected Stadium() {}
-    public Stadium(string name, string city, string? description, int capacity)
+    public Stadium(string? name, string? city, string? description, int capacity)
     {
         Name = NormalizeAndValidateName(name);
         City = NormalizeAndValidateCity(city);
@@ -30,12 +30,12 @@ public class Stadium
         Capacity = ValidateCapacity(capacity);
     }
     
-    public void UpdateName(string name)
+    public void UpdateName(string? name)
     {
         Name = NormalizeAndValidateName(name);
     }
 
-    public void UpdateCity(string city)
+    public void UpdateCity(string? city)
     {
         City = NormalizeAndValidateCity(city);
     }
@@ -50,13 +50,13 @@ public class Stadium
         Capacity = ValidateCapacity(capacity);
     }
     
-    private static string NormalizeAndValidateName(string name) =>
+    private static string NormalizeAndValidateName(string? name) =>
         NormalizeAndValidateTextField(name, MaxNameLength, NameEmptyErrorMessage, NameTooLongErrorMessage);
 
-    private static string NormalizeAndValidateCity(string city) =>
+    private static string NormalizeAndValidateCity(string? city) =>
         NormalizeAndValidateTextField(city, MaxCityLength, CityEmptyErrorMessage, CityTooLongErrorMessage);
 
-    private static string NormalizeAndValidateTextField(string value, int maxLength, string emptyErrorMessage, string tooLongErrorMessage)
+    private static string NormalizeAndValidateTextField(string? value, int maxLength, string emptyErrorMessage, string tooLongErrorMessage)
     {
         var normalized = TextNormalizer.Normalize(value);
 
