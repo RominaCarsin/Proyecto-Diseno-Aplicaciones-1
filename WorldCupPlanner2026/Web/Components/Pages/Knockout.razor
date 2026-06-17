@@ -104,15 +104,16 @@
                 }
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(errorMessage))
-            {
-                <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
-            }
-
-            @if (!string.IsNullOrWhiteSpace(successMessage))
-            {
-                <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
-            }
+            <div class="feedback-slot">
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="alert alert-danger border-custom py-2 feedback-message">@errorMessage</div>
+                }
+                else if (!string.IsNullOrWhiteSpace(successMessage))
+                {
+                    <div class="alert alert-success border-custom py-2 feedback-message">@successMessage</div>
+                }
+            </div>
         </div>
 
         @if (!AllMatches.Any())
@@ -738,5 +739,32 @@
         font-weight: 700;
         color: var(--g800);
         font-size: 0.875rem;
+    }
+
+    .diagonal-corners {
+        position: relative;
+    }
+
+    .feedback-slot {
+        min-height: 56px;
+        display: flex;
+        align-items: center;
+    }
+
+    .feedback-slot .feedback-message {
+        width: 100%;
+        margin: 0;
+        animation: feedback-fade-in 0.18s ease-out;
+    }
+
+    @@keyframes feedback-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>

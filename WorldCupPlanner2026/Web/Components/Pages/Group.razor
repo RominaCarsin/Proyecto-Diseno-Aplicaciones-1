@@ -129,15 +129,16 @@
             }
         }
 
-        @if (!string.IsNullOrWhiteSpace(errorMessage))
-        {
-            <div class="alert alert-danger border-custom py-2 mt-3">@errorMessage</div>
-        }
-
-        @if (!string.IsNullOrWhiteSpace(successMessage))
-        {
-            <div class="alert alert-success border-custom py-2 mt-3">@successMessage</div>
-        }
+        <div class="feedback-slot mt-3">
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger border-custom py-2 feedback-message">@errorMessage</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(successMessage))
+            {
+                <div class="alert alert-success border-custom py-2 feedback-message">@successMessage</div>
+            }
+        </div>
     </div>
 
     @if (!groups.Any())
@@ -518,6 +519,29 @@
 
     .score-input {
         width: 70px;
+    }
+
+    .feedback-slot {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .feedback-slot .feedback-message {
+        width: 100%;
+        margin: 0;
+        animation: feedback-fade-in 0.18s ease-out;
+    }
+
+    @@keyframes feedback-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-2px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     @@media (min-width: 1400px) {
