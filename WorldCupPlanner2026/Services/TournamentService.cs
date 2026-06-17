@@ -22,8 +22,7 @@ public class TournamentService : ITournamentService
     private const string NotEnoughStadiumsErrorMessage = "Se necesitan al menos 4 estadios para generar el fixture.";
     private const string MatchRequestRequiredErrorMessage = "La solicitud de partido no puede ser nula.";
     private const string StadiumRequestRequiredErrorMessage = "La solicitud de estadio no puede ser nula.";
-    private const string MaxMatchesPerDayErrorMessage = "El estadio no puede tener más de 3 partidos por día.";
-    private const string MinHoursBetweenMatchesErrorMessage = "Los partidos en el mismo estadio deben tener al menos 4 horas de diferencia.";
+
     private const string InvalidIncidenceTypeErrorMessage = "El tipo de incidencia es inválido.";
 
     private readonly IRepository<Group> _groupRepository;
@@ -218,13 +217,12 @@ public class TournamentService : ITournamentService
         if (_matchRepository.GetAll().Any(m => m.Phase != TournamentPhase.GroupStage))
             throw new InvalidOperationException("La fase eliminatoria ya fue inicializada.");
 
-        var qualifiedTeamResponses = GetQualifiedTeams().ToList();
-        var qualifiedTeamNames = qualifiedTeamResponses.Select(t => t.Name).ToHashSet();
-        var qualifiedTeams = _teamRepository.GetAll()
-            .Where(t => qualifiedTeamNames.Contains(t.Name))
-            .ToList();
+        var sortedWinners = SortTeams(groups.Select(g => g.GetTeamByPosition(1))).ToList();
+        var sortedRunnersUp = SortTeams(groups.Select(g => g.GetTeamByPosition(2))).ToList();
+        var bestThirds = SortTeams(groups.Select(g => g.GetTeamByPosition(3))).Take(BestThirdsCount).ToList();
 
-        // Obtener los estadios del repositorio
+        var qualifiedTeams = new QualifiedTeams(sortedWinners, sortedRunnersUp, bestThirds);
+
         var stadiums = _stadiumRepository.GetAll().ToList();
 
         var shuffler = new Shuffler(simulationSeed);
@@ -296,40 +294,20 @@ public class TournamentService : ITournamentService
 
     // ==================== INICIALIZACIÓN DE RONDAS ====================
 
-    public void InitializeRoundOf16()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeRoundOf16();
-        AddNewMatchesByPhase(knockout, TournamentPhase.RoundOf16);
-    }
+    public void InitializeRoundOf16() =>
+        InitializePhase(TournamentPhase.RoundOf16, k => k.InitializeRoundOf16());
 
-    public void InitializeQuarterFinals()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeQuarterFinals();
-        AddNewMatchesByPhase(knockout, TournamentPhase.QuarterFinals);
-    }
+    public void InitializeQuarterFinals() =>
+        InitializePhase(TournamentPhase.QuarterFinals, k => k.InitializeQuarterFinals());
 
-    public void InitializeSemiFinals()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeSemiFinals();
-        AddNewMatchesByPhase(knockout, TournamentPhase.SemiFinals);
-    }
+    public void InitializeSemiFinals() =>
+        InitializePhase(TournamentPhase.SemiFinals, k => k.InitializeSemiFinals());
 
-    public void InitializeThirdPlace()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeThirdPlace();
-        AddNewMatchesByPhase(knockout, TournamentPhase.ThirdPlace);
-    }
+    public void InitializeThirdPlace() =>
+        InitializePhase(TournamentPhase.ThirdPlace, k => k.InitializeThirdPlace());
 
-    public void InitializeFinal()
-    {
-        var knockout = GetLoadedKnockout();
-        knockout.InitializeFinal();
-        AddNewMatchesByPhase(knockout, TournamentPhase.Final);
-    }
+    public void InitializeFinal() =>
+        InitializePhase(TournamentPhase.Final, k => k.InitializeFinal());
 
     // ==================== SIMULACIÓN DE ELIMINATORIA ====================
 
@@ -427,6 +405,13 @@ public class TournamentService : ITournamentService
         teams.OrderByDescending(t => t.Points)
             .ThenByDescending(t => t.GoalDifference)
             .ThenByDescending(t => t.GoalsInFavor);
+
+    private void InitializePhase(TournamentPhase phase, Action<Knockout> initializeAction)
+    {
+        var knockout = GetLoadedKnockout();
+        initializeAction(knockout);
+        AddNewMatchesByPhase(knockout, phase);
+    }
 
     private Knockout GetLoadedKnockout()
     {
@@ -637,20 +622,10 @@ public class TournamentService : ITournamentService
 
     private void ValidateStadiumAvailability(int? excludeMatchId, Stadium stadium, DateTime matchDate)
     {
-        var matchesInSameStadiumAndDay = _matchRepository.GetAll()
-            .Where(m => excludeMatchId == null || m.MatchId != excludeMatchId.Value)
-            .Where(m => m.Stadium.Name == stadium.Name)
-            .Where(m => m.Date.Date == matchDate.Date)
-            .ToList();
+        var scheduledMatches = _matchRepository.GetAll()
+            .Where(m => excludeMatchId == null || m.MatchId != excludeMatchId.Value);
 
-        if (matchesInSameStadiumAndDay.Count >= 3)
-            throw new InvalidOperationException(MaxMatchesPerDayErrorMessage);
-
-        var tooClose = matchesInSameStadiumAndDay.Any(m =>
-            Math.Abs((m.Date - matchDate).TotalHours) < 4);
-
-        if (tooClose)
-            throw new InvalidOperationException(MinHoursBetweenMatchesErrorMessage);
+        StadiumAvailability.Validate(scheduledMatches, stadium, matchDate);
     }
 
     private static void ValidateNotNull<T>(T? value, string errorMessage)
