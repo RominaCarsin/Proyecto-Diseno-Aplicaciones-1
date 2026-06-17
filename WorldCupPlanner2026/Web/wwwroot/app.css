@@ -516,7 +516,7 @@ td {
 }
 
 .blazor-error-boundary::after {
-    content: "An error has occurred.";
+    content: "Ocurrió un error.";
 }
 
 @media (max-width: 900px) {

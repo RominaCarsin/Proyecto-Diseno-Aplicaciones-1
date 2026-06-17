@@ -36,10 +36,10 @@ public class ExportServiceTests
         var lines = csv.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         Assert.AreEqual(1, lines.Length, "Solo debe existir la fila de encabezado.");
-        Assert.IsTrue(lines[0].Contains("Timestamp"));
-        Assert.IsTrue(lines[0].Contains("ActorEmail"));
-        Assert.IsTrue(lines[0].Contains("Action"));
-        Assert.IsTrue(lines[0].Contains("Details"));
+        Assert.IsTrue(lines[0].Contains("Marca de Tiempo"));
+        Assert.IsTrue(lines[0].Contains("Email del Actor"));
+        Assert.IsTrue(lines[0].Contains("Acción"));
+        Assert.IsTrue(lines[0].Contains("Detalles"));
     }
 
     [TestMethod]
@@ -91,7 +91,7 @@ public class ExportServiceTests
         var result = _service.ExportAuditLogToCsv(logs);
         var csv = Encoding.UTF8.GetString(result);
 
-        Assert.IsTrue(csv.Contains("/"), "El timestamp debe contener separadores de fecha.");
+        Assert.IsTrue(csv.Contains("-"), "El timestamp debe contener separadores de fecha.");
         Assert.IsTrue(csv.Contains(":"), "El timestamp debe contener separadores de hora.");
     }
 
@@ -111,13 +111,13 @@ public class ExportServiceTests
 
         using var stream = new MemoryStream(result);
         using var workbook = new XLWorkbook(stream);
-        var ws = workbook.Worksheet("Audit Log");
+        var ws = workbook.Worksheet("Log de Auditoría");
 
         Assert.IsNotNull(ws);
-        Assert.AreEqual("Timestamp", ws.Cell(1, 1).GetString());
-        Assert.AreEqual("ActorEmail", ws.Cell(1, 2).GetString());
-        Assert.AreEqual("Action", ws.Cell(1, 3).GetString());
-        Assert.AreEqual("Details", ws.Cell(1, 4).GetString());
+        Assert.AreEqual("Marca de Tiempo", ws.Cell(1, 1).GetString());
+        Assert.AreEqual("Email del Actor", ws.Cell(1, 2).GetString());
+        Assert.AreEqual("Acción", ws.Cell(1, 3).GetString());
+        Assert.AreEqual("Detalles", ws.Cell(1, 4).GetString());
         Assert.AreEqual("", ws.Cell(2, 1).GetString(), "No debe haber datos en la fila 2.");
     }
 
@@ -128,7 +128,7 @@ public class ExportServiceTests
 
         using var stream = new MemoryStream(result);
         using var workbook = new XLWorkbook(stream);
-        var ws = workbook.Worksheet("Audit Log");
+        var ws = workbook.Worksheet("Log de Auditoría");
 
         Assert.IsTrue(ws.Cell(1, 1).Style.Font.Bold, "El header debe estar en negrita.");
     }
@@ -140,7 +140,7 @@ public class ExportServiceTests
 
         using var stream = new MemoryStream(result);
         using var workbook = new XLWorkbook(stream);
-        var ws = workbook.Worksheet("Audit Log");
+        var ws = workbook.Worksheet("Log de Auditoría");
 
         Assert.AreEqual(XLColor.LightGray, ws.Cell(1, 1).Style.Fill.BackgroundColor);
     }
@@ -157,7 +157,7 @@ public class ExportServiceTests
 
         using var stream = new MemoryStream(result);
         using var workbook = new XLWorkbook(stream);
-        var ws = workbook.Worksheet("Audit Log");
+        var ws = workbook.Worksheet("Log de Auditoría");
 
         Assert.AreEqual("admin@test.com", ws.Cell(2, 2).GetString());
         Assert.AreEqual("User created", ws.Cell(2, 3).GetString());
@@ -178,7 +178,7 @@ public class ExportServiceTests
 
         using var stream = new MemoryStream(result);
         using var workbook = new XLWorkbook(stream);
-        var ws = workbook.Worksheet("Audit Log");
+        var ws = workbook.Worksheet("Log de Auditoría");
 
         Assert.AreEqual("User created", ws.Cell(2, 3).GetString());
         Assert.AreEqual("User deleted", ws.Cell(3, 3).GetString());
@@ -207,16 +207,16 @@ public class ExportServiceTests
         var lines = csv.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 
         Assert.AreEqual(1, lines.Length, "Solo debe existir la fila de encabezado.");
-        Assert.IsTrue(lines[0].Contains("MatchCode"));
-        Assert.IsTrue(lines[0].Contains("Date"));
-        Assert.IsTrue(lines[0].Contains("Phase"));
-        Assert.IsTrue(lines[0].Contains("Group"));
-        Assert.IsTrue(lines[0].Contains("HomeTeam"));
-        Assert.IsTrue(lines[0].Contains("AwayTeam"));
-        Assert.IsTrue(lines[0].Contains("HomeGoals"));
-        Assert.IsTrue(lines[0].Contains("AwayGoals"));
-        Assert.IsTrue(lines[0].Contains("Stadium"));
-        Assert.IsTrue(lines[0].Contains("Status"));
+        Assert.IsTrue(lines[0].Contains("Código"));
+        Assert.IsTrue(lines[0].Contains("Fecha"));
+        Assert.IsTrue(lines[0].Contains("Fase"));
+        Assert.IsTrue(lines[0].Contains("Grupo"));
+        Assert.IsTrue(lines[0].Contains("Equipo Local"));
+        Assert.IsTrue(lines[0].Contains("Equipo Visitante"));
+        Assert.IsTrue(lines[0].Contains("Goles Local"));
+        Assert.IsTrue(lines[0].Contains("Goles Visitante"));
+        Assert.IsTrue(lines[0].Contains("Estadio"));
+        Assert.IsTrue(lines[0].Contains("Estado"));
     }
 
     [TestMethod]
@@ -280,16 +280,16 @@ public class ExportServiceTests
         var ws = workbook.Worksheet("Fixture");
 
         Assert.IsNotNull(ws);
-        Assert.AreEqual("MatchCode", ws.Cell(1, 1).GetString());
-        Assert.AreEqual("Date", ws.Cell(1, 2).GetString());
-        Assert.AreEqual("Phase", ws.Cell(1, 3).GetString());
-        Assert.AreEqual("Group", ws.Cell(1, 4).GetString());
-        Assert.AreEqual("HomeTeam", ws.Cell(1, 5).GetString());
-        Assert.AreEqual("AwayTeam", ws.Cell(1, 6).GetString());
-        Assert.AreEqual("HomeGoals", ws.Cell(1, 7).GetString());
-        Assert.AreEqual("AwayGoals", ws.Cell(1, 8).GetString());
-        Assert.AreEqual("Stadium", ws.Cell(1, 9).GetString());
-        Assert.AreEqual("Status", ws.Cell(1, 10).GetString());
+        Assert.AreEqual("Código", ws.Cell(1, 1).GetString());
+        Assert.AreEqual("Fecha", ws.Cell(1, 2).GetString());
+        Assert.AreEqual("Fase", ws.Cell(1, 3).GetString());
+        Assert.AreEqual("Grupo", ws.Cell(1, 4).GetString());
+        Assert.AreEqual("Equipo Local", ws.Cell(1, 5).GetString());
+        Assert.AreEqual("Equipo Visitante", ws.Cell(1, 6).GetString());
+        Assert.AreEqual("Goles Local", ws.Cell(1, 7).GetString());
+        Assert.AreEqual("Goles Visitante", ws.Cell(1, 8).GetString());
+        Assert.AreEqual("Estadio", ws.Cell(1, 9).GetString());
+        Assert.AreEqual("Estado", ws.Cell(1, 10).GetString());
         Assert.AreEqual("", ws.Cell(2, 1).GetString(), "No debe haber datos en la fila 2.");
     }
 
@@ -400,7 +400,7 @@ public class ExportServiceTests
         using var stream = new MemoryStream(result);
         using var workbook = new XLWorkbook(stream);
 
-        Assert.IsTrue(workbook.Worksheets.Any(ws => ws.Name == "Audit Log"));
+        Assert.IsTrue(workbook.Worksheets.Any(ws => ws.Name == "Log de Auditoría"));
     }
 
     // ─── Audit ───

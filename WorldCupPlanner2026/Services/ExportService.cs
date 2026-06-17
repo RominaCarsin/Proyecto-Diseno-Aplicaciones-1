@@ -28,10 +28,10 @@ public class ExportService : IExportService
             Delimiter = ","
         });
 
-        csv.WriteField("Timestamp");
-        csv.WriteField("ActorEmail");
-        csv.WriteField("Action");
-        csv.WriteField("Details");
+        csv.WriteField("Marca de Tiempo");
+        csv.WriteField("Email del Actor");
+        csv.WriteField("Acción");
+        csv.WriteField("Detalles");
         csv.NextRecord();
 
         foreach (var log in logs)
@@ -52,12 +52,12 @@ public class ExportService : IExportService
     public byte[] ExportAuditLogToXlsx(IEnumerable<AuditLog> logs)
     {
         using var workbook = new XLWorkbook();
-        var ws = workbook.AddWorksheet("Audit Log");
+        var ws = workbook.AddWorksheet("Log de Auditoría");
 
-        ws.Cell(1, 1).Value = "Timestamp";
-        ws.Cell(1, 2).Value = "ActorEmail";
-        ws.Cell(1, 3).Value = "Action";
-        ws.Cell(1, 4).Value = "Details";
+        ws.Cell(1, 1).Value = "Marca de Tiempo";
+        ws.Cell(1, 2).Value = "Email del Actor";
+        ws.Cell(1, 3).Value = "Acción";
+        ws.Cell(1, 4).Value = "Detalles";
 
         var headerRange = ws.Range(1, 1, 1, 4);
         headerRange.Style.Font.Bold = true;
@@ -91,16 +91,16 @@ public class ExportService : IExportService
             Delimiter = ","
         });
 
-        csv.WriteField("MatchCode");
-        csv.WriteField("Date");
-        csv.WriteField("Phase");
-        csv.WriteField("Group");
-        csv.WriteField("HomeTeam");
-        csv.WriteField("AwayTeam");
-        csv.WriteField("HomeGoals");
-        csv.WriteField("AwayGoals");
-        csv.WriteField("Stadium");
-        csv.WriteField("Status");
+        csv.WriteField("Código");
+        csv.WriteField("Fecha");
+        csv.WriteField("Fase");
+        csv.WriteField("Grupo");
+        csv.WriteField("Equipo Local");
+        csv.WriteField("Equipo Visitante");
+        csv.WriteField("Goles Local");
+        csv.WriteField("Goles Visitante");
+        csv.WriteField("Estadio");
+        csv.WriteField("Estado");
         csv.NextRecord();
 
         foreach (var match in matches)
@@ -129,16 +129,16 @@ public class ExportService : IExportService
         using var workbook = new XLWorkbook();
         var ws = workbook.AddWorksheet("Fixture");
 
-        ws.Cell(1, 1).Value = "MatchCode";
-        ws.Cell(1, 2).Value = "Date";
-        ws.Cell(1, 3).Value = "Phase";
-        ws.Cell(1, 4).Value = "Group";
-        ws.Cell(1, 5).Value = "HomeTeam";
-        ws.Cell(1, 6).Value = "AwayTeam";
-        ws.Cell(1, 7).Value = "HomeGoals";
-        ws.Cell(1, 8).Value = "AwayGoals";
-        ws.Cell(1, 9).Value = "Stadium";
-        ws.Cell(1, 10).Value = "Status";
+        ws.Cell(1, 1).Value = "Código";
+        ws.Cell(1, 2).Value = "Fecha";
+        ws.Cell(1, 3).Value = "Fase";
+        ws.Cell(1, 4).Value = "Grupo";
+        ws.Cell(1, 5).Value = "Equipo Local";
+        ws.Cell(1, 6).Value = "Equipo Visitante";
+        ws.Cell(1, 7).Value = "Goles Local";
+        ws.Cell(1, 8).Value = "Goles Visitante";
+        ws.Cell(1, 9).Value = "Estadio";
+        ws.Cell(1, 10).Value = "Estado";
 
         var headerRange = ws.Range(1, 1, 1, 10);
         headerRange.Style.Font.Bold = true;
