@@ -20,7 +20,8 @@ public class Stadium
     public string? Description { get; private set; }
     public int Capacity { get; private set; }
 
-    private Stadium() {}
+    [ExcludeFromCodeCoverage]
+    protected Stadium() {}
     public Stadium(string name, string city, string? description, int capacity)
     {
         Name = NormalizeAndValidateName(name);

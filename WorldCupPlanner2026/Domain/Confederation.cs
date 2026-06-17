@@ -17,7 +17,8 @@ public class Confederation
     public bool IsFull => _teams.Count >= Slots;
     public int RemainingSlots => Slots - _teams.Count;
 
-    private Confederation() { }
+    [ExcludeFromCodeCoverage]
+    protected Confederation() { }
     public Confederation(string name, int slots)
     {
         ValidateName(name);

@@ -16,7 +16,8 @@ public class Pot
 
     public bool IsFull() => Teams.Count == MaxTeams;
 
-    private Pot() {}
+    [ExcludeFromCodeCoverage]
+    protected Pot() {}
     public Pot(int number, List<Team> teams)
     {
         ValidatePotNumber(number);

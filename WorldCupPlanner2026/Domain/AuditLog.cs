@@ -1,4 +1,6 @@
-﻿namespace Domain;
+﻿global using System.Diagnostics.CodeAnalysis;
+
+namespace Domain;
 
 public class AuditLog
 {
@@ -11,7 +13,8 @@ public class AuditLog
     public string Action { get; private set; }
     public string Details { get; private set; }
 
-    private AuditLog()
+    [ExcludeFromCodeCoverage]
+    protected AuditLog()
     {
         ActorEmail = string.Empty;
         Action = string.Empty;

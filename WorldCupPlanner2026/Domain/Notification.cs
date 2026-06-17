@@ -13,7 +13,8 @@ public class Notification
     public bool IsRead { get; private set; }
     public int MatchId { get; private set; }
 
-    private Notification() { }
+    [ExcludeFromCodeCoverage]
+    protected Notification() { }
 
     public Notification(int userId, string message, int matchId = 0)
     {

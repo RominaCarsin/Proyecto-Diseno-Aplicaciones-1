@@ -12,6 +12,7 @@ public abstract class MatchIncidence
     public Team Team { get; private set; } = null!;
     public int Minute { get; private set; }
 
+    [ExcludeFromCodeCoverage]
     protected MatchIncidence() { }
 
     protected MatchIncidence(Team? team, int minute)

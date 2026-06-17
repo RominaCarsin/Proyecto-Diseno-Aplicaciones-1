@@ -28,7 +28,8 @@ public class Team
     public string GroupLabel { get; private set; } = string.Empty;
     public string FlagBase64 { get; private set; } = string.Empty;
 
-    public Team() { }
+    [ExcludeFromCodeCoverage]
+    protected Team() { }
     public Team(string name, string confederationName, int rankingFifa, string groupLabel = "", string flagBase64 = "")
     {
         UpdateName(name);

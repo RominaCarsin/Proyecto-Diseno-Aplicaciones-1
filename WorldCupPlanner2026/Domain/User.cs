@@ -38,7 +38,8 @@ public class User
     public string PasswordHash { get; private set; } = string.Empty;
     public Role Roles { get; private set; }
 
-    private User(){}
+    [ExcludeFromCodeCoverage]
+    protected User(){}
     public User(
         IPasswordHasher passwordHasher,
         string name,

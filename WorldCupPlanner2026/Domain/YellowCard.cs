@@ -2,7 +2,8 @@
 
 public class YellowCard : MatchIncidence
 {
-    private YellowCard() { }
+    [ExcludeFromCodeCoverage]
+    protected YellowCard() { }
 
     public YellowCard(Team? team, int minute) : base(team, minute) { }
 }

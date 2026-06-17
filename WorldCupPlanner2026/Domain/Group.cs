@@ -21,7 +21,8 @@ public class Group
     public IReadOnlyList<Team> Teams => _teams;
     public IReadOnlyList<Match> Matches => _matches;
 
-    private Group()
+    [ExcludeFromCodeCoverage]
+    protected Group()
     {
         _compositionPolicy = new GroupConfederationRule();
         _standingsCalculator = new GroupOrderPointsGoalDiffCalculator();

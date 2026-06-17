@@ -42,7 +42,8 @@ public class Match
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
     public bool IsFinished => Status == MatchStatus.Finished;
 
-    private Match() {}
+    [ExcludeFromCodeCoverage]
+    protected Match() {}
     public Match(
         DateTime date,
         Stadium? stadium,
