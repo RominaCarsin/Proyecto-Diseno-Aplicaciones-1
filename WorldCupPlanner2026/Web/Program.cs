@@ -53,9 +53,7 @@ using (var scope = app.Services.CreateScope())
         dbContext.Database.EnsureDeleted();
 
     dbContext.Database.Migrate();
-
-    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-    AppDbContext.Seed(dbContext, hasher);
+    
 }
 
 if (!app.Environment.IsDevelopment())
