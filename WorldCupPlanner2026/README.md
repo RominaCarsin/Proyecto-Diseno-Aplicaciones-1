@@ -20,11 +20,12 @@ Desarrollado como Obligatorio 2 de **Diseño de Aplicaciones 1 — Universidad O
 | Entity Framework Core | 8.0.0 — Code First, Azure SQL Edge |
 | Azure SQL Edge | Docker — base de datos relacional |
 | Docker | docker-compose para levantar la BD |
-| MSTest | TDD — tests unitarios e integración |
-| ClosedXML | Exportación a XLSX |
-| CsvHelper | Exportación a CSV |
-| Blazorise + Bootstrap 5 | Componentes UI |
-| Blazored.LocalStorage | Persistencia de sesión en cliente |
+| MSTest | 3.1.1 — tests unitarios e integración |
+| ClosedXML | 0.105.0 — Exportación a XLSX |
+| CsvHelper | 33.1.0 — Exportación a CSV |
+| Blazorise + Bootstrap 5 | 2.2.0 — Componentes UI |
+| Blazored.LocalStorage | 4.5.0 — Persistencia de sesión en cliente |
+| Moq | 4.20.72 — Mocking en tests de servicios |
 
 ---
 
@@ -46,16 +47,17 @@ WorldCupPlanner2026/
 ├── Services/            # Implementación de servicios
 │   ├── Mappers/         # Conversión entidad ↔ DTO
 │   └── *.cs             # TournamentService, NotificationService, ExportService, ...
-├── Domain.Test/         # Tests unitarios de dominio (313 tests)
+├── Domain.Test/         # Tests unitarios de dominio (492 tests)
 ├── Repository.Tests/    # Tests de repositorio EF In-Memory (7 tests)
-├── Services.Tests/      # Tests unitarios de servicios (278 tests)
+├── Services.Tests/      # Tests unitarios de servicios (293 tests)
 │   └── FakeRepository.cs# Fake in-memory para tests de servicios
 ├── Web/                 # Blazor Server App
 │   ├── Components/
-│   │   └── Pages/       # Login, Users, Teams, Stadiums, Groups, Matches,
-│   │                    # Knockout, Ranking, Logs, Export, Notifications...
+│   │   └── Pages/       # Error, Export, Group, Home, Import, Knockout, Login,
+│   │                    # Logs, Matches, Profile, Ranking, Stadium, Team, Users
 │   ├── Program.cs       # DI, EF, seed de datos
 │   └── appsettings.json # Cadena de conexión
+├── Skills/              # Skills para el agente de IA
 ├── .github/
 │   └── AGENTS/          # Skills e instrucciones para el agente de IA
 ├── data/                # Volumen persistido de Azure SQL Edge
@@ -103,17 +105,10 @@ dotnet run
 La aplicación estará disponible en `https://localhost:5001`.
 Las migraciones y el seed inicial se aplican automáticamente al iniciar.
 
-### 5. Usuarios de prueba
-
-| Email | Contraseña | Rol |
-|---|---|---|
-| admin@test.com | Password1! | Admin + Editor |
-| periodista@test.com | Password1! | Periodista |
-
-### 6. Ejecutar los tests
+### 5. Ejecutar los tests
 
 ```bash
 dotnet test
 ```
 
-Resultado esperado: **598 tests en verde** (313 Domain + 278 Services + 7 Repository).
+Resultado esperado: **792 tests en verde** (492 Domain + 293 Services + 7 Repository).
