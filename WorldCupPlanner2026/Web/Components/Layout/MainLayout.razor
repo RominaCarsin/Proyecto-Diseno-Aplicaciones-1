@@ -1,32 +1,40 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
 @using IServices
+@using Microsoft.AspNetCore.Components.Routing
 @inject ISessionService SessionService
 @inject NavigationManager Navigation
 
 <div class="page">
 
-    <aside class="sidebar">
-        <NavMenu />
-    </aside>
+    @if (!IsLoginPage)
+    {
+        <aside class="sidebar">
+            <NavMenu/>
+        </aside>
+    }   
+<main class="main-content">
 
-    <main class="main-content">
+        @if (!IsLoginPage)
+        {
+            <div class="top-row px-4">
+                @if (SessionService.IsLoggedIn())
+                {
+                    <div class="d-flex align-items-center gap-3">
+                        <NotificationBell />
+                        <span class="text-muted">Hola, <strong>@SessionService.GetCurrentUser()?.Name</strong></span>
+                        <a href="/profile" class="btn btn-outline-secondary btn-sm">Mi cuenta</a>
+                        <button class="btn btn-danger btn-sm" @onclick="HandleLogout">Cerrar sesión</button>
+                    </div>
+                }
+                else
+                {
+                    <a href="/login" class="btn btn-outline-secondary btn-sm">Iniciar sesión</a>
+                }
+            </div>
+        }
 
-        <div class="top-row px-4">
-            @if (SessionService.IsLoggedIn())
-            {
-                <div class="d-flex align-items-center gap-3">
-                    <span class="text-muted">Hola, <strong>@SessionService.GetCurrentUser()?.Name</strong></span>
-                    <a href="/profile" class="btn btn-outline-secondary btn-sm">Mi cuenta</a>
-                    <button class="btn btn-danger btn-sm" @onclick="HandleLogout">Cerrar sesión</button>
-                </div>
-            }
-            else
-            {
-                <a href="/login" class="btn btn-outline-secondary btn-sm">Iniciar sesión</a>
-            }
-        </div>
-
-        <article class="content-wrapper px-4 py-4">
+        <article class="content-wrapper px-4 @(IsLoginPage ? "login-content-padding" : "py-4")">
             <div class="container-fluid">
                 @Body
             </div>
@@ -36,10 +44,35 @@
 
 </div>
 
+<style>
+    .login-content-padding {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+</style>
+
 @code {
+    private bool IsLoginPage =>
+        new Uri(Navigation.Uri).AbsolutePath.Equals("/login", StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     private void HandleLogout()
     {
         SessionService.Logout();
         Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
     }
 }

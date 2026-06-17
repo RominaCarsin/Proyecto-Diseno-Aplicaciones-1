@@ -5,71 +5,64 @@ public class Group
     private const char MinLabel = 'A';
     private const char MaxLabel = 'L';
     private const int MaxTeams = 4;
-    private const int MaxUEFATeamsPerGroup = 2;
-    private const int MaxOtherConfederationTeamsPerGroup = 1;
-    private const double DrawZone = 0.10;
-    
-    private const string TooManyTeamsFromSameConfederationErrorMessage = "El grupo no puede tener más de 2 equipos de la misma confederación.";
+
     private const string LabelOutOfRangeErrorMessage = "La etiqueta debe ser una letra mayúscula entre 'A' y 'L'.";
     private const string NullTeamErrorMessage = "El equipo no puede ser nulo.";
     private const string FullGroupErrorMessage = "El grupo no puede tener más de 4 equipos.";
-    private const string TeamNotFoundErrorMessage = "El equipo no existe en el grupo.";
     private const string InvalidPositionErrorMessage = "La posición es inválida.";
     private const string NullMatchErrorMessage = "El partido no puede ser nulo.";
 
     private readonly List<Team> _teams = new();
     private readonly List<Match> _matches = new();
-
+    private readonly IGroupRules _compositionPolicy;
+    private readonly IGroupPositionsCalculator _standingsCalculator;
+    public int GroupId { get; private set; }
     public char Label { get; private set; }
     public IReadOnlyList<Team> Teams => _teams;
     public IReadOnlyList<Match> Matches => _matches;
 
-    public Group(char label)
+    [ExcludeFromCodeCoverage]
+    protected Group()
     {
+        _compositionPolicy = new GroupConfederationRule();
+        _standingsCalculator = new GroupOrderPointsGoalDiffCalculator();
+    }
+
+    public Group(
+        char label,
+        IGroupRules? compositionPolicy = null,
+        IGroupPositionsCalculator? standingsCalculator = null)
+    {
+        _compositionPolicy = compositionPolicy ?? new GroupConfederationRule();
+        _standingsCalculator = standingsCalculator ?? new GroupOrderPointsGoalDiffCalculator();
         UpdateLabel(label);
     }
 
-    public void UpdateLabel(char label)
+    private void UpdateLabel(char label)
     {
         var normalizedLabel = NormalizeLabel(label);
         ValidateLabel(normalizedLabel);
         Label = normalizedLabel;
     }
 
+    public bool CanAddTeam(Team? team)
+    {
+        if (team is null) return false;
+        if (_teams.Count >= MaxTeams) return false;
+        if (!_compositionPolicy.CanAdd(_teams, team)) return false;
+        return true;
+    }
+
     public void AddTeam(Team? team)
     {
         ValidateRequiredTeam(team);
         ValidateGroupHasAvailableSlot();
-        ValidateConfederationLimit(team!);
+        _compositionPolicy.EnsureCanAdd(_teams, team!);
 
         _teams.Add(team!);
     }
-    
+
     public void FinishMatch(Match match) => match.Finish();
-
-    private void ValidateConfederationLimit(Team team)
-    {
-        int teamsFromSameConfederation = _teams.Count(t =>
-            t.ConfederationName == team.ConfederationName);
-
-        bool isUefa = team.ConfederationName == "UEFA";
-
-        int limit = isUefa
-            ? MaxUEFATeamsPerGroup
-            : MaxOtherConfederationTeamsPerGroup;
-
-        if (teamsFromSameConfederation >= limit)
-            throw new ArgumentException(TooManyTeamsFromSameConfederationErrorMessage);
-    }
-
-    public void RemoveTeam(Team? team)
-    {
-        ValidateRequiredTeam(team);
-
-        if (!_teams.Remove(team!))
-            throw new ArgumentException(TeamNotFoundErrorMessage);
-    }
-
 
     public void AddMatch(Match? match)
     {
@@ -80,64 +73,34 @@ public class Group
     public void SetMatchResult(Match match, int homeGoals, int awayGoals) =>
         match.SetResult(homeGoals, awayGoals);
 
+    public void SetMatchSimulationResult(Match? match, SimulationResult result, Random random)
+    {
+        ValidateRequiredMatch(match);
+        match!.ApplySimulationResult(result);
+        var cardGenerator = new CardGenerator(random);
+        match.ClearCards();
+        CardRegistration.RegisterCards(match, cardGenerator, result);
+    }
+
     public Team GetTeamByPosition(int position)
     {
         ValidatePosition(position);
-        return GetStandings().ElementAt(position - 1);
+        return GetOrderedTeamsByPosition().ElementAt(position - 1);
     }
-    public IEnumerable<Team> GetStandings()
+
+    public IEnumerable<Team> GetOrderedTeamsByPosition() =>
+        _standingsCalculator.Order(_teams);
+
+    public IEnumerable<Match> FinishPlayedMatches()
     {
-        return _teams
-            .OrderByDescending(t => t.Points)
-            .ThenByDescending(t => t.GoalDifference)
-            .ThenByDescending(t => t.GoalsInFavor)
+        var playedMatches = _matches
+            .Where(match => match.HasResult && match.Status != MatchStatus.Finished)
             .ToList();
-    }
-    
-    public void SimulateMatches(int seed)
-    {
-        var random = new Random(seed + Label);
 
-        foreach (var match in _matches)
-        {
-            var (homeGoals, awayGoals) = SimulateResult(
-                match.HomeTeam.RankingFifa,
-                match.AwayTeam.RankingFifa,
-                random);
+        foreach (var match in playedMatches)
+            match.Finish();
 
-            SetMatchResult(match, homeGoals, awayGoals);
-        }
-    }
-    
-    private static (int homeGoals, int awayGoals) SimulateResult(
-        int homeRanking,
-        int awayRanking,
-        Random random)
-    {
-        if (homeRanking == awayRanking)
-        {
-            int drawGoals = SimulateGoals(random, 0, 2);
-            return (drawGoals, drawGoals);
-        }
-        
-        int total = homeRanking + awayRanking;
-        double homeProbability = (double)homeRanking / total;
-
-        double roll = random.NextDouble();
-
-        if (roll < homeProbability - DrawZone)
-            return (SimulateGoals(random, 2, 4), SimulateGoals(random, 0, 2));
-
-        if (roll > homeProbability + DrawZone)
-            return (SimulateGoals(random, 0, 2), SimulateGoals(random, 2, 4));
-        
-        int finalDrawGoals = SimulateGoals(random, 0, 2);
-        return (finalDrawGoals, finalDrawGoals);
-    }
-    
-    private static int SimulateGoals(Random random, int min, int max)
-    {
-        return random.Next(min, max + 1);
+        return playedMatches;
     }
 
     private static char NormalizeLabel(char label) => char.ToUpperInvariant(label);

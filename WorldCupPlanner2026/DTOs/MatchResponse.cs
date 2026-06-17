@@ -27,6 +27,15 @@ public class MatchResponse
     public string? MatchCode { get; set; }
     
     public string Status { get; set; } = "NotFinished";
+    public bool IsFinished { get; set; }
     
     public bool HasResult { get; set; }
+    
+    public int HomeYellowCards { get; set; }
+    
+    public int AwayYellowCards { get; set; }
+    
+    public int HomeRedCards { get; set; }
+    
+    public int AwayRedCards { get; set; }
 }

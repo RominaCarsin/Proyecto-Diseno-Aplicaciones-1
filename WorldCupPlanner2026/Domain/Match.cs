@@ -9,31 +9,41 @@ public class Match
     private const string RequiredHomeTeamErrorMessage = "El equipo local no puede ser nulo.";
     private const string RequiredAwayTeamErrorMessage = "El equipo visitante no puede ser nulo.";
     private const string SameTeamsErrorMessage = "El equipo local y el visitante deben ser diferentes.";
-    private const string LockedMatchErrorMessage = "Los partidos bloqueados no pueden ser editados.";
     private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
     private const string FinishedMatchErrorMessage = "Los partidos finalizados no pueden ser editados.";
     private const string DrawInKnockoutErrorMessage = "Los partidos de eliminación directa no pueden terminar en empate.";
     private const string KnockoutGroupErrorMessage = "Los partidos de eliminación directa no pueden tener un grupo asignado.";
-
-    private static int _nextId = 1;
-
-    public int Id { get; private set; }
+    private const string IncidenceTeamNotInMatchErrorMessage = "La incidencia debe pertenecer a un equipo del partido.";
+    
+    private readonly List<MatchIncidence> _incidences = new();
+    
+    public IReadOnlyCollection<MatchIncidence> Incidences => _incidences.AsReadOnly();
+    public int MatchId { get; private set; }
+    public int StadiumId { get; private set; }
+    public int HomeTeamId { get; private set; }
+    public int AwayTeamId { get; private set; }
+    public int? WinnerId { get; private set; }
+    public int? GroupId { get; private set; }
     public DateTime Date { get; private set; }
-    public Stadium Stadium { get; private set; }
-    public Team HomeTeam { get; private set; }
-    public Team AwayTeam { get; private set; }
+    public Stadium Stadium { get; private set; } = null!;
+    public Team HomeTeam { get; private set; } = null!;
+    public Team AwayTeam { get; private set; } = null!;
     public int? HomeGoals { get; private set; }
     public int? AwayGoals { get; private set; }
     public Team? Winner { get; private set; }
     public Team? Loser => Winner is null ? null : ReferenceEquals(Winner, HomeTeam) ? AwayTeam : HomeTeam;
-    public bool IsLocked { get; private set; }
     public MatchStatus Status { get; private set; }
     public char? Group { get; private set; }
     public TournamentPhase Phase { get; private set; }
     public string? MatchCode { get; private set; }
+    
+    public bool RankingApplied { get; private set; }
 
     public bool HasResult => HomeGoals.HasValue && AwayGoals.HasValue;
+    public bool IsFinished => Status == MatchStatus.Finished;
 
+    [ExcludeFromCodeCoverage]
+    protected Match() {}
     public Match(
         DateTime date,
         Stadium? stadium,
@@ -49,8 +59,7 @@ public class Match
         ValidateRequired(awayTeam, RequiredAwayTeamErrorMessage);
         ValidateTeamsAreDifferent(homeTeam!, awayTeam!);
         ValidateGroupIsNotAssignedToKnockoutPhase(group, phase);
-
-        Id = _nextId++;
+        
         Date = date;
         Stadium = stadium!;
         HomeTeam = homeTeam!;
@@ -77,11 +86,31 @@ public class Match
         ApplyResultToTeams();
     }
 
+    public void ApplySimulationResult(SimulationResult result)
+    {
+        ValidateIsEditable();
+        ValidateGoalsAreNotNegative(result.HomeGoals, result.AwayGoals);
+        ValidateKnockoutMatchIsNotDraw(result.HomeGoals, result.AwayGoals);
+
+        if (HasResult)
+            RevertPreviousResultFromTeams();
+
+        HomeGoals = result.HomeGoals;
+        AwayGoals = result.AwayGoals;
+        Winner = DetermineWinner(result.HomeGoals, result.AwayGoals);
+
+        ApplyResultToTeams();
+    }
+
+    public void ClearCards()
+    {
+        _incidences.RemoveAll(i => i is YellowCard || i is RedCard);
+    }
+
     public void Finish()
     {
         ValidateIsNotFinished();
         Status = MatchStatus.Finished;
-        IsLocked = true;
     }
 
     public void UpdateDate(DateTime newDate)
@@ -99,28 +128,41 @@ public class Match
 
         Stadium = newStadium!;
     }
-
-    public void LockEdition()
+    
+    public void MarkRankingApplied()
     {
-        IsLocked = true;
+        RankingApplied = true;
     }
+    
+    public void RegisterIncidence(MatchIncidence incidence)
+    {
+        ValidateIsEditable();
+        ValidateIncidenceBelongsToMatch(incidence);
+        _incidences.Add(incidence);
+    }
+
+    public int YellowCardsOf(Team team) => CountIncidences<YellowCard>(team);
+    public int RedCardsOf(Team team) => CountIncidences<RedCard>(team);
+    
+    private void ValidateIncidenceBelongsToMatch(MatchIncidence incidence)
+    {
+        if (!ReferenceEquals(incidence.Team, HomeTeam) && !ReferenceEquals(incidence.Team, AwayTeam))
+            throw new ArgumentException(IncidenceTeamNotInMatchErrorMessage);
+    }
+    
+    private int CountIncidences<TIncidence>(Team team) where TIncidence : MatchIncidence =>
+        _incidences.Count(incidence => incidence is TIncidence && ReferenceEquals(incidence.Team, team));
+
     
     private void ValidateIsEditable()
     {
         ValidateIsNotFinished();
-        ValidateIsNotLocked();
     }
 
     private void ValidateIsNotFinished()
     {
         if (Status == MatchStatus.Finished)
             throw new InvalidOperationException(FinishedMatchErrorMessage);
-    }
-
-    private void ValidateIsNotLocked()
-    {
-        if (IsLocked)
-            throw new InvalidOperationException(LockedMatchErrorMessage);
     }
 
     private static void ValidateDate(DateTime date)

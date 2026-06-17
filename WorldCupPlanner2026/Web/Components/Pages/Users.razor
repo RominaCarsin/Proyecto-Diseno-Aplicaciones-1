@@ -1,4 +1,4 @@
-﻿@page "/users"
+@page "/users"
 @rendermode InteractiveServer
 @using DTOs
 @using IServices
@@ -53,9 +53,35 @@
                 {
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Contraseña</label>
-                        <input type="password" @bind="formData.Password"
-                               placeholder="Mín. 8 chars, mayúscula, número, especial"
-                               class="form-control border-custom-input" />
+                        <div class="password-input-wrapper">
+                            <input type="@(showCreatePassword ? "text" : "password")"
+                                   @bind="formData.Password"
+                                   placeholder="Mín. 8 chars, mayúscula, número, especial"
+                                   class="form-control border-custom-input password-input" />
+
+                            <button type="button"
+                                    class="password-eye-button"
+                                    title="@(showCreatePassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                                    @onclick="ToggleCreatePasswordVisibility">
+
+                                @if (showCreatePassword)
+                                {
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 3l18 18" />
+                                        <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                                        <path d="M9.88 5.09A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.19 4.2" />
+                                        <path d="M6.61 6.61C3.8 8.37 2 12 2 12s3.5 7 10 7a10.7 10.7 0 0 0 5.39-1.39" />
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                }
+                            </button>
+                        </div>
                     </div>
                 }
             </div>
@@ -64,6 +90,7 @@
             {
                 <div class="alert alert-success border-custom py-2">@successMessage</div>
             }
+
             @if (!string.IsNullOrWhiteSpace(errorMessage))
             {
                 <div class="alert alert-danger border-custom py-2">@errorMessage</div>
@@ -90,17 +117,46 @@
             <div class="bg-white border-custom p-4 diagonal-corners">
                 <h3 class="mb-3">Resetear contraseña de @resettingEmail</h3>
                 <GeometricDivider />
+
                 <div class="row g-3 mt-2">
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Nueva contraseña</label>
-                        <input type="password" @bind="newPassword"
-                               placeholder="Nueva contraseña"
-                               class="form-control border-custom-input" />
+
+                        <div class="password-input-wrapper">
+                            <input type="@(showResetPassword ? "text" : "password")"
+                                   @bind="newPassword"
+                                   placeholder="Nueva contraseña"
+                                   class="form-control border-custom-input password-input" />
+
+                            <button type="button"
+                                    class="password-eye-button"
+                                    title="@(showResetPassword ? "Ocultar contraseña" : "Mostrar contraseña")"
+                                    @onclick="ToggleResetPasswordVisibility">
+
+                                @if (showResetPassword)
+                                {
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 3l18 18" />
+                                        <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                                        <path d="M9.88 5.09A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-3.19 4.2" />
+                                        <path d="M6.61 6.61C3.8 8.37 2 12 2 12s3.5 7 10 7a10.7 10.7 0 0 0 5.39-1.39" />
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                }
+                            </button>
+                        </div>
                     </div>
                 </div>
+
                 <div class="d-flex gap-2 mt-3">
                     <button @onclick="ConfirmResetPassword" class="btn btn-wc-red px-4">Confirmar</button>
-                    <button @onclick="() => resettingEmail = null" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
+                    <button @onclick="CancelResetPassword" class="btn btn-outline-dark border-custom px-4">Cancelar</button>
                 </div>
             </div>
         }
@@ -119,6 +175,7 @@
                             <th class="px-4 py-3 text-center">Acciones</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @if (!users.Any())
                         {
@@ -137,25 +194,36 @@
                                     <td class="px-4 py-3 align-middle">@user.Surname</td>
                                     <td class="px-4 py-3 align-middle text-muted">@user.Email</td>
                                     <td class="px-4 py-3 align-middle">@user.DateOfBirth.ToString("dd/MM/yyyy")</td>
+
                                     <td class="px-4 py-3 align-middle">
                                         <div class="d-flex gap-2 flex-wrap">
                                             @{
                                                 var isSelf = user.Email == AdminEmail;
                                             }
+
                                             <button @onclick="() => ToggleRole(user, RoleDto.Admin)"
                                                     disabled="@isSelf"
                                                     title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Admin) ? "Quitar rol Admin" : "Asignar rol Admin"))"
                                                     class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Admin) ? "btn-success" : "btn-outline-secondary") border-custom">
                                                 Admin
                                             </button>
+
                                             <button @onclick="() => ToggleRole(user, RoleDto.Editor)"
                                                     disabled="@isSelf"
                                                     title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Editor) ? "Quitar rol Editor" : "Asignar rol Editor"))"
                                                     class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Editor) ? "btn-success" : "btn-outline-secondary") border-custom">
                                                 Editor
                                             </button>
+
+                                            <button @onclick="() => ToggleRole(user, RoleDto.Journalist)"
+                                                    disabled="@isSelf"
+                                                    title="@(isSelf ? "No podés modificar tus propios roles" : (user.Roles.HasFlag(RoleDto.Journalist) ? "Quitar rol Periodista" : "Asignar rol Periodista"))"
+                                                    class="btn btn-sm @(user.Roles.HasFlag(RoleDto.Journalist) ? "btn-success" : "btn-outline-secondary") border-custom">
+                                                Periodista
+                                            </button>
                                         </div>
                                     </td>
+
                                     <td class="px-4 py-3 align-middle">
                                         <div class="d-flex justify-content-center gap-2">
                                             <button @onclick="() => EditUser(user)"
@@ -164,12 +232,14 @@
                                                 <i class="bi bi-pencil-square"></i>
                                                 <span class="d-none d-lg-inline">Editar</span>
                                             </button>
+
                                             <button @onclick="() => StartResetPassword(user.Email)"
                                                     title="Resetear contraseña"
                                                     class="btn btn-sm btn-outline-warning border-custom d-flex align-items-center gap-1">
                                                 <i class="bi bi-key"></i>
                                                 <span class="d-none d-lg-inline">Contraseña</span>
                                             </button>
+
                                             <button @onclick="() => DeleteUser(user.Email)"
                                                     disabled="@(user.Email == AdminEmail)"
                                                     title="@(user.Email == AdminEmail ? "No podés eliminar tu propio usuario" : "Eliminar usuario")"
@@ -189,26 +259,87 @@
     }
 </div>
 
+<style>
+    .password-input-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .password-input {
+        padding-right: 3rem !important;
+    }
+
+    .password-eye-button {
+        position: absolute;
+        top: 50%;
+        right: 0.85rem;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+    }
+
+    .password-eye-button svg {
+        width: 21px;
+        height: 21px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .password-eye-button:hover {
+        color: #1b2789;
+    }
+
+    .password-eye-button:focus {
+        outline: none;
+    }
+</style>
+
 @code {
     private IEnumerable<UserResponse> users = Enumerable.Empty<UserResponse>();
-    private UserRequest formData = new() { DateOfBirth = DateTime.Today.AddYears(-18) };
+
+    private UserRequest formData = new()
+    {
+        DateOfBirth = DateTime.Today.AddYears(-18)
+    };
+
     private string? editingEmail;
     private string? resettingEmail;
     private string newPassword = string.Empty;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
 
+    private bool showCreatePassword;
+    private bool showResetPassword;
+
     private bool IsAdmin => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Admin);
+
     private string AdminEmail => SessionService.GetCurrentUserEmail() ?? string.Empty;
 
     protected override void OnInitialized()
     {
-        if (IsAdmin) RefreshUI();
+        if (IsAdmin)
+        {
+            RefreshUI();
+        }
     }
 
     private void SaveUser()
     {
         ClearMessages();
+
         try
         {
             if (editingEmail == null)
@@ -223,7 +354,14 @@
             }
 
             editingEmail = null;
-            formData = new() { DateOfBirth = DateTime.Today.AddYears(-18) };
+
+            formData = new()
+            {
+                DateOfBirth = DateTime.Today.AddYears(-18)
+            };
+
+            showCreatePassword = false;
+
             RefreshUI();
         }
         catch (ArgumentException ex)
@@ -235,24 +373,29 @@
     private void EditUser(UserResponse user)
     {
         editingEmail = user.Email;
+
         formData = new UserRequest
         {
-            Name        = user.Name,
-            Surname     = user.Surname,
-            Email       = user.Email,
+            Name = user.Name,
+            Surname = user.Surname,
+            Email = user.Email,
             DateOfBirth = user.DateOfBirth,
-            Password    = "Placeholder1!"
+            Password = "Placeholder1!"
         };
+
+        showCreatePassword = false;
         ClearMessages();
     }
 
     private void DeleteUser(string email)
     {
         ClearMessages();
+
         try
         {
             UserService.DeleteUser(email);
             successMessage = $"Usuario '{email}' eliminado.";
+
             RefreshUI();
         }
         catch (ArgumentException ex)
@@ -264,12 +407,17 @@
     private void ToggleRole(UserResponse user, RoleDto role)
     {
         ClearMessages();
+
         try
         {
             if (user.Roles.HasFlag(role))
+            {
                 UserService.RemoveRoleFromUser(AdminEmail, user.Email, role);
+            }
             else
+            {
                 UserService.AddRoleToUser(AdminEmail, user.Email, role);
+            }
 
             RefreshUI();
         }
@@ -282,19 +430,25 @@
     private void StartResetPassword(string email)
     {
         resettingEmail = email;
-        newPassword    = string.Empty;
+        newPassword = string.Empty;
+        showResetPassword = false;
+
         ClearMessages();
     }
 
     private void ConfirmResetPassword()
     {
         ClearMessages();
+
         try
         {
             UserService.ResetPassword(AdminEmail, resettingEmail!, newPassword);
-            successMessage  = $"Contraseña de '{resettingEmail}' reseteada.";
-            resettingEmail  = null;
-            newPassword     = string.Empty;
+
+            successMessage = $"Contraseña de '{resettingEmail}' reseteada.";
+
+            resettingEmail = null;
+            newPassword = string.Empty;
+            showResetPassword = false;
         }
         catch (ArgumentException ex)
         {
@@ -302,18 +456,47 @@
         }
     }
 
-    private void CancelEdit()
+    private void CancelResetPassword()
     {
-        editingEmail = null;
-        formData     = new() { DateOfBirth = DateTime.Today.AddYears(-18) };
+        resettingEmail = null;
+        newPassword = string.Empty;
+        showResetPassword = false;
+
         ClearMessages();
     }
 
-    private void RefreshUI() => users = UserService.GetUsers();
+    private void CancelEdit()
+    {
+        editingEmail = null;
+
+        formData = new()
+        {
+            DateOfBirth = DateTime.Today.AddYears(-18)
+        };
+
+        showCreatePassword = false;
+
+        ClearMessages();
+    }
+
+    private void RefreshUI()
+    {
+        users = UserService.GetUsers();
+    }
 
     private void ClearMessages()
     {
-        errorMessage   = string.Empty;
+        errorMessage = string.Empty;
         successMessage = string.Empty;
+    }
+
+    private void ToggleCreatePasswordVisibility()
+    {
+        showCreatePassword = !showCreatePassword;
+    }
+
+    private void ToggleResetPasswordVisibility()
+    {
+        showResetPassword = !showResetPassword;
     }
 }

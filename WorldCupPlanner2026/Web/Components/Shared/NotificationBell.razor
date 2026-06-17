@@ -1,0 +1,243 @@
+@using DTOs
+@using IServices
+@using Domain
+@inject IServices.INotificationService NotificationService
+@inject ISessionService SessionService
+@implements IDisposable
+@implements IAsyncDisposable
+
+@if (IsJournalist)
+{
+    <Dropdown @ref="_dropdown" EndAligned Display="Display.InlineBlock">
+        <DropdownToggle Color="Color.Light" Class="notification-bell-toggle">
+            @if (_unreadCount > 0)
+            {
+                <i class="fa-solid fa-bell"></i>
+                <Badge Color="Color.Danger" Pill Class="notification-badge">@(_unreadCount > 9 ? "9+" : _unreadCount)</Badge>
+            }
+            else
+            {
+                <i class="fa-regular fa-bell"></i>
+            }
+        </DropdownToggle>
+        <DropdownMenu Class="notification-dropdown-menu">
+            <div class="notification-dropdown-header">
+                <span class="fw-bold">Notificaciones</span>
+                <div class="d-flex gap-2">
+                    @if (_unreadCount > 0)
+                    {
+                        <Button Color="Color.Link" Size="Size.Small" Class="p-0 text-success notification-action-link"
+                                Clicked="MarkAllAsRead">
+                            Marcar todas leídas
+                        </Button>
+                    }
+                </div>
+            </div>
+
+            <DropdownDivider />
+
+            @if (!_notifications.Any())
+            {
+                <div class="notification-empty">
+                    <i class="fa-solid fa-bell-slash"></i>
+                    <p>Sin notificaciones</p>
+                </div>
+            }
+            else
+            {
+                <div class="notification-list">
+                    @foreach (var notification in _notifications.Take(10))
+                    {
+                        <div class="notification-item @(notification.IsRead ? "read" : "unread")">
+                            <div class="notification-item-content">
+                                <div class="notification-item-icon">
+                                    @if (notification.IsRead)
+                                    {
+                                        <i class="fa-regular fa-envelope-open text-muted"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid fa-envelope text-primary"></i>
+                                    }
+                                </div>
+                                <div class="notification-item-text">
+                                    <p class="notification-message @(notification.IsRead ? "" : "fw-bold")">@notification.Message</p>
+                                    <span class="notification-time">
+                                        @GetRelativeTime(notification.CreatedAt)
+                                    </span>
+                                </div>
+                            </div>
+                            @if (!notification.IsRead)
+                            {
+                                <Button Color="Color.Success"
+                                        Outline
+                                        Size="Size.Small"
+                                        Class="notification-mark-btn"
+                                        Clicked="() => MarkAsRead(notification.Id)"
+                                        Title="Marcar como leída">
+                                    <i class="fa-solid fa-check"></i>
+                                </Button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </DropdownMenu>
+    </Dropdown>
+}
+
+<!-- Toast container using Blazorise Toaster -->
+<Toaster Placement="ToasterPlacement.BottomEnd">
+    @foreach (var toast in _activeToasts)
+    {
+        <Toast @key="toast.Id" Visible Autohide AutohideDelay="5000" Closed="() => DismissToast(toast.Id)">
+            <ToastHeader>
+                <Icon Name="IconName.Bell" Margin="Margin.IsAuto.FromEnd" />
+                <Small>Notificación</Small>
+                <CloseButton />
+            </ToastHeader>
+            <ToastBody>
+                @toast.Message
+            </ToastBody>
+        </Toast>
+    }
+</Toaster>
+
+@code {
+    private List<NotificationResponse> _notifications = new();
+    private List<ToastMessage> _activeToasts = new();
+    private int _unreadCount;
+    private int _lastKnownCount;
+    private Timer? _pollTimer;
+    private HashSet<int> _shownNotificationIds = new();
+    private Dropdown? _dropdown;
+
+    private bool IsJournalist => SessionService.IsLoggedIn() && SessionService.CurrentUserHasRole(RoleDto.Journalist);
+    private int CurrentUserId => SessionService.GetCurrentUser()?.Id ?? 0;
+
+    protected override void OnInitialized()
+    {
+        if (!IsJournalist) return;
+
+        LoadNotifications();
+        _lastKnownCount = _unreadCount;
+
+        // Mark all existing notifications as "already shown" so we don't toast them on first load
+        foreach (var n in _notifications.Where(n => !n.IsRead))
+        {
+            _shownNotificationIds.Add(n.Id);
+        }
+
+        _pollTimer = new Timer(async _ => await PollForNewNotifications(), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    private void LoadNotifications()
+    {
+        if (CurrentUserId == 0) return;
+
+        _unreadCount = NotificationService.GetUnreadCount(CurrentUserId);
+        _notifications = NotificationService.GetAllNotifications(CurrentUserId).ToList();
+    }
+
+    private async Task PollForNewNotifications()
+    {
+        if (CurrentUserId == 0) return;
+
+        try
+        {
+            var newUnread = NotificationService.GetUnreadCount(CurrentUserId);
+
+            if (newUnread > _lastKnownCount)
+            {
+                var unreadNotifications = NotificationService.GetUnreadNotifications(CurrentUserId).ToList();
+
+                var newNotifications = unreadNotifications
+                    .Where(n => !_shownNotificationIds.Contains(n.Id))
+                    .ToList();
+
+                foreach (var notification in newNotifications)
+                {
+                    _shownNotificationIds.Add(notification.Id);
+                    ShowToast(notification.Message);
+                }
+
+                _notifications = NotificationService.GetAllNotifications(CurrentUserId).ToList();
+                _unreadCount = newUnread;
+                _lastKnownCount = newUnread;
+
+                await InvokeAsync(StateHasChanged);
+            }
+            else if (newUnread != _lastKnownCount)
+            {
+                _lastKnownCount = newUnread;
+                _unreadCount = newUnread;
+                _notifications = NotificationService.GetAllNotifications(CurrentUserId).ToList();
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            // Ignore polling errors (e.g., DB not available)
+        }
+    }
+
+    private void ShowToast(string message)
+    {
+        var toast = new ToastMessage(message);
+        _activeToasts.Add(toast);
+    }
+
+    private void DismissToast(Guid toastId)
+    {
+        _activeToasts.RemoveAll(t => t.Id == toastId);
+    }
+
+    private void MarkAsRead(int notificationId)
+    {
+        NotificationService.MarkAsRead(notificationId);
+        LoadNotifications();
+        StateHasChanged();
+    }
+
+    private void MarkAllAsRead()
+    {
+        NotificationService.MarkAllAsRead(CurrentUserId);
+        LoadNotifications();
+        StateHasChanged();
+    }
+
+    private static string GetRelativeTime(DateTime dateTime)
+    {
+        var localTime = dateTime.ToLocalTime();
+        var diff = DateTime.Now - localTime;
+
+        if (diff.TotalMinutes < 1) return "Ahora";
+        if (diff.TotalMinutes < 60) return $"Hace {(int)diff.TotalMinutes}m";
+        if (diff.TotalHours < 24) return $"Hace {(int)diff.TotalHours}h";
+        if (diff.TotalDays < 7) return $"Hace {(int)diff.TotalDays}d";
+        return localTime.ToString("dd/MM/yyyy HH:mm");
+    }
+
+    public void Dispose()
+    {
+        _pollTimer?.Dispose();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _pollTimer?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private class ToastMessage
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Message { get; }
+
+        public ToastMessage(string message)
+        {
+            Message = message;
+        }
+    }
+}

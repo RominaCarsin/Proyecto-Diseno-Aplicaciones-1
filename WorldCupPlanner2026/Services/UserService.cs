@@ -17,11 +17,13 @@ public class UserService : IUserService
     
     private readonly IRepository<User> _repository;
     private readonly IAuditService _auditService;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public UserService(IRepository<User> repository, IAuditService auditService)
+    public UserService(IRepository<User> repository, IAuditService auditService, IPasswordHasher passwordHasher)
     {
         _repository = repository;
         _auditService = auditService;
+        _passwordHasher = passwordHasher;
     }
 
     public UserResponse AddUser(UserRequest userRequest)
@@ -29,11 +31,11 @@ public class UserService : IUserService
         if (FindByEmail(userRequest.Email) is not null)
             throw new ArgumentException(UserAlreadyExistsErrorMessage);
 
-        var user = UserMapper.ToEntity(userRequest);
+        var user = UserMapper.ToEntity(userRequest, _passwordHasher);
         _repository.Add(user);
 
-        _auditService.Log(userRequest.Email, "User created",
-            $"New user registered: {userRequest.Name} {userRequest.Surname} ({userRequest.Email})");
+        _auditService.Log(userRequest.Email, "Usuario creado",
+            $"Nuevo usuario registrado: {userRequest.Name} {userRequest.Surname} ({userRequest.Email})");
 
         return UserMapper.FromEntity(user);
     }
@@ -50,9 +52,10 @@ public class UserService : IUserService
             userRequest.Email,
             userRequest.DateOfBirth);
 
-        _auditService.Log(email, "User updated",
-            $"User {email} updated: Name={userRequest.Name}, Surname={userRequest.Surname}, " +
-            $"Email={userRequest.Email}, DOB={userRequest.DateOfBirth:yyyy-MM-dd}");
+        _repository.Update(existingUser);
+        _auditService.Log(email, "Usuario actualizado",
+            $"Usuario {email} actualizado: Nombre={userRequest.Name}, Apellido={userRequest.Surname}, " +
+            $"Email={userRequest.Email}, FNac={userRequest.DateOfBirth:yyyy-MM-dd}");
     }
 
     public void DeleteUser(string email)
@@ -60,8 +63,8 @@ public class UserService : IUserService
         var existingUser = GetUserByEmailOrThrow(email);
         _repository.Delete(existingUser);
 
-        _auditService.Log("system", "User deleted",
-            $"User {email} was removed from the system");
+        _auditService.Log("system", "Usuario eliminado",
+            $"Usuario {email} eliminado del sistema.");
     }
 
     public UserResponse GetUserByEmail(string email)
@@ -79,7 +82,7 @@ public class UserService : IUserService
     {
         var user = GetUserByEmailOrThrow(email);
 
-        if (!user.VerifyPassword(password))
+        if (!user.VerifyPassword(password, _passwordHasher))
             throw new ArgumentException(InvalidPasswordErrorMessage);
 
         return UserMapper.FromEntity(user);
@@ -98,8 +101,10 @@ public class UserService : IUserService
         var targetUser = GetUserByEmailOrThrow(targetEmail);
         targetUser.AddRole(RoleMapper.ToDomain(role));
 
-        _auditService.Log(adminEmail, "Role added",
-            $"Role {role} granted to {targetEmail} by {adminEmail}");
+        _repository.Update(targetUser);
+        
+        _auditService.Log(adminEmail, "Rol agregado",
+            $"Rol {role} otorgado a {targetEmail} por {adminEmail}");
     }
 
     public void RemoveRoleFromUser(string adminEmail, string targetEmail, RoleDto role)
@@ -109,21 +114,23 @@ public class UserService : IUserService
         var targetUser = GetUserByEmailOrThrow(targetEmail);
         targetUser.RemoveRole(RoleMapper.ToDomain(role));
 
-        _auditService.Log(adminEmail, "Role revoked",
-            $"Role {role} revoked from {targetEmail} by {adminEmail}");
+        _repository.Update(targetUser);
+        _auditService.Log(adminEmail, "Rol revocado",
+            $"Rol {role} revocado de {targetEmail} por {adminEmail}");
     }
 
     public void ChangePassword(string email, string currentPassword, string newPassword)
     {
         var user = GetUserByEmailOrThrow(email);
 
-        if (!user.VerifyPassword(currentPassword))
+        if (!user.VerifyPassword(currentPassword, _passwordHasher))
             throw new ArgumentException(CurrentPasswordIncorrectErrorMessage);
 
-        user.SetPassword(newPassword);
+        user.SetPassword(newPassword, _passwordHasher);
 
-        _auditService.Log(email, "Password changed",
-            $"User {email} changed their own password");
+        _repository.Update(user);
+        _auditService.Log(email, "Contraseña cambiada",
+            $"Usuario {email} cambió su propia contraseña");
     }
 
     public void ResetPassword(string adminEmail, string targetEmail, string newPassword)
@@ -131,10 +138,11 @@ public class UserService : IUserService
         EnsureUserIsAdmin(adminEmail);
 
         var targetUser = GetUserByEmailOrThrow(targetEmail);
-        targetUser.SetPassword(newPassword);
+        targetUser.SetPassword(newPassword, _passwordHasher);
 
-        _auditService.Log(adminEmail, "Password reset",
-            $"Password of {targetEmail} was reset by {adminEmail}");
+        _repository.Update(targetUser);
+        _auditService.Log(adminEmail, "Contraseña restablecida",
+            $"Contraseña de {targetEmail} fue restablecida por {adminEmail}");
     }
     
     private User GetUserByEmailOrThrow(string email) =>

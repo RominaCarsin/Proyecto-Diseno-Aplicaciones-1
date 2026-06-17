@@ -17,13 +17,13 @@
     else
     {
         @* --- FILTROS DE AUDITORÍA --- *@
-        <div class="bg-white border-custom p-6 diagonal-corners">
+        <div class="bg-white border-custom p-4 diagonal-corners">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h3 class="mb-0">Filtros de Auditoría</h3>
                 <div class="d-flex gap-2">
-                    <span class="badge bg-success-soft text-success px-3 py-2 cursor-pointer">Success</span>
+                    <span class="badge bg-success-soft text-success px-3 py-2 cursor-pointer">Éxito</span>
                     <span class="badge bg-info-soft text-info px-3 py-2 cursor-pointer">Info</span>
-                    <span class="badge bg-warning-soft text-warning px-3 py-2 cursor-pointer">Warning</span>
+                    <span class="badge bg-warning-soft text-warning px-3 py-2 cursor-pointer">Advertencia</span>
                     <span class="badge bg-danger-soft text-danger px-3 py-2 cursor-pointer">Error</span>
                 </div>
             </div>
@@ -64,7 +64,7 @@
                 <table class="table table-hover mb-0">
                     <thead class="bg-light">
                         <tr class="border-bottom-2">
-                            <th class="px-4 py-3">Timestamp</th>
+                            <th class="px-4 py-3">Fecha/Hora</th>
                             <th class="px-4 py-3">Acción</th>
                             <th class="px-4 py-3">Usuario</th>
                             <th class="px-4 py-3">Severidad</th>
@@ -86,7 +86,7 @@
                             {
                                 <tr>
                                     <td class="px-4 py-3 font-monospace text-sm">
-                                        @log.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                                        @log.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                                     </td>
                                     <td class="px-4 py-3 fw-bold">@log.Action</td>
                                     <td class="px-4 py-3 text-muted text-sm">@log.ActorEmail</td>
@@ -169,16 +169,16 @@
     {
         var action = (log.Action ?? string.Empty).ToLowerInvariant();
 
-        if (action.Contains("error") || action.Contains("fail") || action.Contains("invalid"))
+        if (action.Contains("error") || action.Contains("fall"))
             return LogSeverity.Error;
 
-        if (action.Contains("delete") || action.Contains("removed") || action.Contains("revoke"))
+        if (action.Contains("elimin") || action.Contains("revoc"))
             return LogSeverity.Warning;
 
-        if (action.Contains("create") || action.Contains("add") || action.Contains("import") || action.Contains("simulate") || action.Contains("shuffle"))
+        if (action.Contains("cread") || action.Contains("agreg") || action.Contains("import") || action.Contains("simul"))
             return LogSeverity.Success;
 
-        if (action.Contains("update") || action.Contains("change") || action.Contains("lock") || action.Contains("result"))
+        if (action.Contains("actualiz") || action.Contains("cambi") || action.Contains("result") || action.Contains("finaliz"))
             return LogSeverity.Info;
 
         return LogSeverity.Info;

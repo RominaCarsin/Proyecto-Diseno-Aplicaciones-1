@@ -5,8 +5,7 @@
 @inject ISessionService SessionService
 @inject ITeamService TeamService
 @inject IStadiumService StadiumService
-@inject IGroupService GroupService
-@inject IMatchService MatchService
+@inject ITournamentService TournamentService
 
 <PageTitle>Inicio - WorldCupPlanner 2026</PageTitle>
 
@@ -22,16 +21,20 @@
         @foreach (var stat in Stats)
         {
             <div class="col-md-3">
-                <div class="bg-white border-custom diagonal-corners overflow-hidden">
-                    <div class="@stat.Color p-4 d-flex align-items-center justify-content-center">
-                        <i class="bi @stat.Icon text-white fs-2"></i>
+                <a href="@stat.Href" class="stat-card-link">
+                    <div class="bg-white border-custom diagonal-corners overflow-hidden h-100 stat-card-clickable">
+                        <div class="@stat.Color p-4 d-flex align-items-center justify-content-center">
+                            <i class="bi @stat.Icon text-white fs-2"></i>
+                        </div>
+
+                        <GeometricDivider />
+
+                        <div class="p-4">
+                            <div class="text-3xl font-bold mb-1">@stat.Value</div>
+                            <div class="text-muted small text-uppercase">@stat.Label</div>
+                        </div>
                     </div>
-                    <GeometricDivider />
-                    <div class="p-4">
-                        <div class="text-3xl font-bold mb-1">@stat.Value</div>
-                        <div class="text-muted small text-uppercase">@stat.Label</div>
-                    </div>
-                </div>
+                </a>
             </div>
         }
     </div>
@@ -42,7 +45,9 @@
                 <div class="bg-primary-custom text-white px-4 py-3">
                     <h5 class="mb-0">Proximos Partidos</h5>
                 </div>
+
                 <GeometricDivider />
+
                 <div class="p-4">
                     @if (UpcomingMatches.Any())
                     {
@@ -53,6 +58,7 @@
                                     <span class="badge bg-light text-dark px-3 py-2">@match.Date</span>
                                     <span>@match.Stadium</span>
                                 </div>
+
                                 <div class="d-flex align-items-center justify-content-between fw-bold">
                                     <span class="flex-fill text-end pe-3">@match.HomeTeam</span>
                                     <span class="border-custom px-3 py-1">VS</span>
@@ -71,6 +77,30 @@
     </div>
 </div>
 
+<style>
+    .stat-card-link {
+        display: block;
+        height: 100%;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .stat-card-link:hover {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .stat-card-clickable {
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .stat-card-clickable:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+    }
+</style>
+
 @code {
     private List<StatCard> Stats = new();
     private List<MatchInfo> UpcomingMatches = new();
@@ -84,15 +114,15 @@
     {
         var teams = TeamService.GetTeams().Count();
         var stadiums = StadiumService.GetAllStadiums().Count();
-        var groups = GroupService.GetGroups().Count();
-        var matches = MatchService.GetMatches().ToList();
+        var groups = TournamentService.GetGroups().Count();
+        var matches = TournamentService.GetMatches().ToList();
 
         Stats =
         [
-            new("Equipos", teams.ToString(), "bi-people-fill", "bg-wc-red"),
-            new("Estadios", stadiums.ToString(), "bi-geo-alt-fill", "bg-wc-green"),
-            new("Grupos", groups.ToString(), "bi-grid-3x3-gap-fill", "bg-wc-blue"),
-            new("Partidos", matches.Count.ToString(), "bi-calendar3", "bg-danger-custom")
+            new("Equipos", teams.ToString(), "bi-people-fill", "bg-wc-red", "/teams/create"),
+            new("Estadios", stadiums.ToString(), "bi-geo-alt-fill", "bg-wc-green", "/stadiums"),
+            new("Grupos", groups.ToString(), "bi-grid-3x3-gap-fill", "bg-wc-blue", "/groups"),
+            new("Partidos", matches.Count.ToString(), "bi-calendar3", "bg-danger-custom", "/matches")
         ];
 
         UpcomingMatches = matches
@@ -105,9 +135,20 @@
                 match.AwayTeam.Name,
                 match.Stadium.Name))
             .ToList();
-
     }
 
-    public record StatCard(string Label, string Value, string Icon, string Color);
-    public record MatchInfo(string Date, string HomeTeam, string AwayTeam, string Stadium);
+    public record StatCard(
+        string Label,
+        string Value,
+        string Icon,
+        string Color,
+        string Href
+    );
+
+    public record MatchInfo(
+        string Date,
+        string HomeTeam,
+        string AwayTeam,
+        string Stadium
+    );
 }

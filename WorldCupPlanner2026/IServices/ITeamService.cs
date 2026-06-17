@@ -10,4 +10,10 @@ public interface ITeamService
     void UpdateTeam(string currentName, TeamRequest request);
     void DeleteTeam(string name);
     void AutoCompleteTeams(int seed);
+
+    IEnumerable<ConfederationResponse> GetConfederations();
+    
+    TeamImportResult PreviewImport(string csvContent);
+    TeamImportResult Import(string csvContent);
+    IEnumerable<TeamResponse> GetTeamsByRanking();
 }

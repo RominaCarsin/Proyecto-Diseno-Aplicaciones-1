@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 using DTOs;
 using IRepository;
 using Repository;
@@ -15,6 +15,8 @@ public class SessionServiceTests
 
     private static readonly DateTime ValidDateOfBirth = new(2000, 1, 1);
 
+    private static readonly IPasswordHasher Hasher = new PasswordHasher();
+
     private UserService _userService = null!;
     private SessionService _sessionService = null!;
     private IRepository<User> _repository = null!;
@@ -22,12 +24,12 @@ public class SessionServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<User>();
-        var auditRepository = new Repository<AuditLog>();
+        _repository = new FakeRepository<User>();
+        var auditRepository = new FakeRepository<AuditLog>();
         var auditService = new AuditService(auditRepository);
         var authState = new AuthStateService();
 
-        _userService = new UserService(_repository, auditService);
+        _userService = new UserService(_repository, auditService, Hasher);
         _sessionService = new SessionService(_userService, authState);
     }
 
@@ -188,6 +190,17 @@ public class SessionServiceTests
     }
 
     [TestMethod]
+    public void CurrentUserHasRole_WhenUserIsJournalist_ShouldReturnTrueOnlyForJournalist()
+    {
+        CreateUserWithRole("Journalist@test.com", Role.Journalist);
+        _sessionService.Login("Journalist@test.com", ValidPassword);
+
+        Assert.IsTrue(_sessionService.CurrentUserHasRole(RoleDto.Journalist));
+        Assert.IsFalse(_sessionService.CurrentUserHasRole(RoleDto.Admin));
+        Assert.IsFalse(_sessionService.CurrentUserHasRole(RoleDto.Editor));
+    }
+
+    [TestMethod]
     public void CurrentUserHasRole_WhenUserDoesNotHaveRole_ShouldReturnFalse()
     {
         CreateUserWithRole("editor@test.com", Role.Editor);
@@ -206,6 +219,43 @@ public class SessionServiceTests
 
         Assert.IsTrue(_sessionService.CurrentUserHasRole(RoleDto.Admin));
         Assert.IsTrue(_sessionService.CurrentUserHasRole(RoleDto.Editor));
+    }
+
+    [TestMethod]
+    public void Login_AsJournalist_ShouldSetCurrentUserWithJournalistRole()
+    {
+        CreateUserWithRole("journalist@test.com", Role.Journalist);
+
+        _sessionService.Login("journalist@test.com", ValidPassword);
+
+        Assert.IsTrue(_sessionService.IsLoggedIn());
+        Assert.AreEqual("journalist@test.com", _sessionService.GetCurrentUserEmail());
+        Assert.IsTrue(_sessionService.CurrentUserHasRole(RoleDto.Journalist));
+        Assert.IsFalse(_sessionService.CurrentUserHasRole(RoleDto.Editor));
+        Assert.IsFalse(_sessionService.CurrentUserHasRole(RoleDto.Admin));
+    }
+
+    [TestMethod]
+    public void GetCurrentUser_AsJournalist_ShouldReturnUserWithJournalistRole()
+    {
+        CreateUserWithRole("journalist@test.com", Role.Journalist);
+        _sessionService.Login("journalist@test.com", ValidPassword);
+
+        var current = _sessionService.GetCurrentUser();
+
+        Assert.IsNotNull(current);
+        Assert.IsTrue(current.Roles.HasFlag(RoleDto.Journalist));
+        Assert.IsFalse(current.Roles.HasFlag(RoleDto.Editor));
+        Assert.IsFalse(current.Roles.HasFlag(RoleDto.Admin));
+    }
+
+    [TestMethod]
+    public void CurrentUserHasRole_WhenJournalistTriesEditorAction_ShouldReturnFalse()
+    {
+        CreateUserWithRole("journalist@test.com", Role.Journalist);
+        _sessionService.Login("journalist@test.com", ValidPassword);
+
+        Assert.IsFalse(_sessionService.CurrentUserHasRole(RoleDto.Editor));
     }
     
     private static UserRequest BuildValidUserRequest() =>

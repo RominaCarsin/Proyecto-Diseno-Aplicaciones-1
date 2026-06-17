@@ -14,12 +14,15 @@ public class Stadium
     private const string DescriptionTooLongErrorMessage = "La descripción del estadio no puede superar los 400 caracteres.";
     private const string CapacityTooSmallErrorMessage = "La capacidad del estadio debe ser de al menos 20000.";
     
-    public string Name { get; private set; }
-    public string City { get; private set; }
+    public int StadiumId { get; private set; }
+    public string Name { get; private set; } = null!;
+    public string City { get; private set; } = null!;
     public string? Description { get; private set; }
     public int Capacity { get; private set; }
 
-    public Stadium(string name, string city, string? description, int capacity)
+    [ExcludeFromCodeCoverage]
+    protected Stadium() {}
+    public Stadium(string? name, string? city, string? description, int capacity)
     {
         Name = NormalizeAndValidateName(name);
         City = NormalizeAndValidateCity(city);
@@ -27,19 +30,35 @@ public class Stadium
         Capacity = ValidateCapacity(capacity);
     }
     
-    private static string NormalizeAndValidateName(string name) =>
+    public void UpdateName(string? name)
+    {
+        Name = NormalizeAndValidateName(name);
+    }
+
+    public void UpdateCity(string? city)
+    {
+        City = NormalizeAndValidateCity(city);
+    }
+
+    public void UpdateDescription(string? description)
+    {
+        Description = NormalizeDescription(description);
+    }
+
+    public void UpdateCapacity(int capacity)
+    {
+        Capacity = ValidateCapacity(capacity);
+    }
+    
+    private static string NormalizeAndValidateName(string? name) =>
         NormalizeAndValidateTextField(name, MaxNameLength, NameEmptyErrorMessage, NameTooLongErrorMessage);
 
-    private static string NormalizeAndValidateCity(string city) =>
+    private static string NormalizeAndValidateCity(string? city) =>
         NormalizeAndValidateTextField(city, MaxCityLength, CityEmptyErrorMessage, CityTooLongErrorMessage);
 
-    private static string NormalizeAndValidateTextField(
-        string value,
-        int maxLength,
-        string emptyErrorMessage,
-        string tooLongErrorMessage)
+    private static string NormalizeAndValidateTextField(string? value, int maxLength, string emptyErrorMessage, string tooLongErrorMessage)
     {
-        var normalized = Normalize(value);
+        var normalized = TextNormalizer.Normalize(value);
 
         if (string.IsNullOrWhiteSpace(normalized))
             throw new ArgumentException(emptyErrorMessage);
@@ -68,7 +87,4 @@ public class Stadium
 
         return capacity;
     }
-    
-    private static string Normalize(string value) =>
-        value?.Trim().ToUpper() ?? string.Empty;
 }

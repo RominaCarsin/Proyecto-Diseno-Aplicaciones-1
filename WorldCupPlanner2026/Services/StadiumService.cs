@@ -26,8 +26,8 @@ public class StadiumService : IStadiumService
         EnsureStadiumNameIsNotTaken(stadium.Name);
 
         _repository.Add(stadium);
-        LogAction("Stadium created",
-            $"Stadium '{stadium.Name}' created in {stadium.City} with capacity {stadium.Capacity}");
+        LogAction("Estadio creado",
+            $"Estadio '{stadium.Name}' creado en {stadium.City} con capacidad {stadium.Capacity}");
     }
 
     public void DeleteStadium(string stadiumName)
@@ -35,8 +35,8 @@ public class StadiumService : IStadiumService
         var existingStadium = FindStadiumByNameOrThrow(stadiumName);
 
         _repository.Delete(existingStadium);
-        LogAction("Stadium deleted",
-            $"Stadium '{stadiumName}' was removed from the system");
+        LogAction("Estadio eliminado",
+            $"Estadio '{stadiumName}' eliminado del sistema.");
     }
 
     public void UpdateStadium(string originalStadiumName, StadiumRequest updatedStadiumData)
@@ -47,9 +47,9 @@ public class StadiumService : IStadiumService
         if (IsRenamingToDifferentName(existingStadium, updatedStadium))
             EnsureStadiumNameIsNotTaken(updatedStadium.Name);
 
-        ReplaceStadium(existingStadium, updatedStadium);
-        LogAction("Stadium updated",
-            $"Stadium '{originalStadiumName}' updated. New name: '{updatedStadiumData.Name}', city: {updatedStadiumData.City}, capacity: {updatedStadiumData.Capacity}");
+        ApplyStadiumUpdates(existingStadium, updatedStadium);
+        LogAction("Estadio actualizado",
+            $"Estadio '{originalStadiumName}' actualizado. Nuevo nombre: '{updatedStadiumData.Name}', ciudad: {updatedStadiumData.City}, capacidad: {updatedStadiumData.Capacity}");
     }
 
     public IEnumerable<StadiumResponse> GetAllStadiums()
@@ -68,7 +68,7 @@ public class StadiumService : IStadiumService
     {
         return _repository.GetAll()
             .FirstOrDefault(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase))
-            ?? throw new ArgumentException($"A stadium with the name '{stadiumName}' does not exist");
+            ?? throw new ArgumentException($"No existe un estadio con el nombre '{stadiumName}'.");
     }
 
     private void EnsureStadiumNameIsNotTaken(string stadiumName)
@@ -77,7 +77,7 @@ public class StadiumService : IStadiumService
             .Any(s => s.Name.Equals(stadiumName, StringComparison.OrdinalIgnoreCase));
 
         if (nameAlreadyExists)
-            throw new ArgumentException($"A stadium with the name '{stadiumName}' already exists");
+            throw new ArgumentException($"Ya existe un estadio con el nombre '{stadiumName}'.");
     }
 
     private static bool IsRenamingToDifferentName(Stadium existing, Stadium updated)
@@ -85,9 +85,11 @@ public class StadiumService : IStadiumService
         return !updated.Name.Equals(existing.Name, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void ReplaceStadium(Stadium stadiumToRemove, Stadium stadiumToAdd)
+    private void ApplyStadiumUpdates(Stadium stadiumToUpdate, Stadium stadiumToAdd)
     {
-        _repository.Delete(stadiumToRemove);
-        _repository.Add(stadiumToAdd);
+        stadiumToUpdate.UpdateName(stadiumToAdd.Name);
+        stadiumToUpdate.UpdateCity(stadiumToAdd.City);
+        stadiumToUpdate.UpdateDescription(stadiumToAdd.Description);
+        stadiumToUpdate.UpdateCapacity(stadiumToAdd.Capacity);
     }
 }

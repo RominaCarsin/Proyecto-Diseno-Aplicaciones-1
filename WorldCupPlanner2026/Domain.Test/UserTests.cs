@@ -9,6 +9,7 @@ public class UserTests
     private const string ValidPassword = "Password1!";
 
     private static readonly DateTime ValidDateOfBirth = new(2000, 1, 1);
+    private static readonly IPasswordHasher Hasher = new PasswordHasher();
 
     [TestMethod]
     public void CreateUser_WithValidData_ShouldCreateUserWithExpectedProperties()
@@ -24,13 +25,13 @@ public class UserTests
     [TestMethod]
     public void CreateUser_WithInitialRoles_ShouldAssignRoles()
     {
-        var user = new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword, Role.Admin);
+        var user = new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword, Role.Admin);
 
         Assert.IsTrue(user.HasRole(Role.Admin));
     }
 
     [TestMethod]
-    public void CreateUser_ShouldStorePasswordEncryptedNotAsPlainText()
+    public void CreateUser_ShouldStorePasswordHashedNotAsPlainText()
     {
         var user = CreateValidUser();
 
@@ -38,83 +39,75 @@ public class UserTests
         Assert.IsFalse(string.IsNullOrWhiteSpace(user.PasswordHash));
         Assert.IsFalse(user.PasswordHash.Contains(ValidPassword));
     }
-
-    [TestMethod]
-    public void CreateUser_ShouldEncryptPasswordWithCaesarCipher()
-    {
-        var user = CreateValidUser();
-
-        Assert.AreEqual("Sdvvzrug4$", user.PasswordHash);
-    }
     
     [TestMethod]
     public void CreateUser_WithEmptyName_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User("", ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword));
+            new User(Hasher, "", ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword));
     }
 
     [TestMethod]
     public void CreateUser_WithWhitespaceOnlyName_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User("   ", ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword));
+            new User(Hasher, "   ", ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword));
     }
     
     [TestMethod]
     public void CreateUser_WithEmptySurname_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, "", ValidEmail, ValidDateOfBirth, ValidPassword));
+            new User(Hasher, ValidName, "", ValidEmail, ValidDateOfBirth, ValidPassword));
     }
 
     [TestMethod]
     public void CreateUser_WithWhitespaceOnlySurname_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, "   ", ValidEmail, ValidDateOfBirth, ValidPassword));
+            new User(Hasher, ValidName, "   ", ValidEmail, ValidDateOfBirth, ValidPassword));
     }
     
     [TestMethod]
     public void CreateUser_WithEmptyEmail_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, "", ValidDateOfBirth, ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, "", ValidDateOfBirth, ValidPassword));
     }
 
     [TestMethod]
     public void CreateUser_WithEmailMissingAtSign_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, "juancitoemail.com", ValidDateOfBirth, ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, "juancitoemail.com", ValidDateOfBirth, ValidPassword));
     }
 
     [TestMethod]
     public void CreateUser_WithEmailMissingTextBeforeAtSign_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, "@gmail.com", ValidDateOfBirth, ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, "@gmail.com", ValidDateOfBirth, ValidPassword));
     }
 
     [TestMethod]
     public void CreateUser_WithEmailMissingTextAfterAtSign_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, "juancito@", ValidDateOfBirth, ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, "juancito@", ValidDateOfBirth, ValidPassword));
     }
     
     [TestMethod]
     public void CreateUser_WithMinValueBirthDate_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, DateTime.MinValue, ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, DateTime.MinValue, ValidPassword));
     }
 
     [TestMethod]
     public void CreateUser_WithFutureBirthDate_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, DateTime.Now.AddDays(1), ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, DateTime.Now.AddDays(1), ValidPassword));
     }
 
     [TestMethod]
@@ -123,49 +116,59 @@ public class UserTests
         var tooOldDate = DateTime.Now.AddYears(-121);
 
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, tooOldDate, ValidPassword));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, tooOldDate, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithBirthDateExactly119YearsAgo_ShouldBeValid()
+    {
+        var validDate = DateTime.Now.AddYears(-119);
+
+        var user = new User(Hasher, ValidName, ValidSurname, ValidEmail, validDate, ValidPassword);
+
+        Assert.AreEqual(validDate.Date, user.DateOfBirth.Date);
     }
     
     [TestMethod]
     public void CreateUser_WithEmptyPassword_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ""));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ""));
     }
 
     [TestMethod]
     public void CreateUser_WithPasswordShorterThan8Characters_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "Pass1!"));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "Pass1!"));
     }
 
     [TestMethod]
     public void CreateUser_WithPasswordMissingLowercaseLetter_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "PASSWORD1!"));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "PASSWORD1!"));
     }
 
     [TestMethod]
     public void CreateUser_WithPasswordMissingUppercaseLetter_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "password1!"));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "password1!"));
     }
 
     [TestMethod]
     public void CreateUser_WithPasswordMissingDigit_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "Password!"));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "Password!"));
     }
 
     [TestMethod]
     public void CreateUser_WithPasswordMissingSpecialCharacter_ShouldThrowArgumentException()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "Password1"));
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, "Password1"));
     }
     
     [TestMethod]
@@ -173,7 +176,7 @@ public class UserTests
     {
         var user = CreateValidUser();
 
-        Assert.IsTrue(user.VerifyPassword(ValidPassword));
+        Assert.IsTrue(user.VerifyPassword(ValidPassword, Hasher));
     }
 
     [TestMethod]
@@ -181,7 +184,7 @@ public class UserTests
     {
         var user = CreateValidUser();
 
-        Assert.IsFalse(user.VerifyPassword("Password2!"));
+        Assert.IsFalse(user.VerifyPassword("Password2!", Hasher));
     }
 
     [TestMethod]
@@ -192,7 +195,7 @@ public class UserTests
             .GetProperty(nameof(user.PasswordHash))!
             .SetValue(user, "");
 
-        Assert.IsFalse(user.VerifyPassword(ValidPassword));
+        Assert.IsFalse(user.VerifyPassword(ValidPassword, Hasher));
     }
     
     [TestMethod]
@@ -201,11 +204,11 @@ public class UserTests
         var user = CreateValidUser();
         var oldHash = user.PasswordHash;
 
-        user.SetPassword("Newpass1!");
+        user.SetPassword("Newpass1!", Hasher);
 
         Assert.AreNotEqual(oldHash, user.PasswordHash);
-        Assert.IsTrue(user.VerifyPassword("Newpass1!"));
-        Assert.IsFalse(user.VerifyPassword(ValidPassword));
+        Assert.IsTrue(user.VerifyPassword("Newpass1!", Hasher));
+        Assert.IsFalse(user.VerifyPassword(ValidPassword, Hasher));
     }
 
     [TestMethod]
@@ -214,7 +217,7 @@ public class UserTests
         var user = CreateValidUser();
 
         Assert.ThrowsException<ArgumentException>(() =>
-            user.SetPassword("short"));
+            user.SetPassword("short", Hasher));
     }
     
     [TestMethod]
@@ -247,6 +250,16 @@ public class UserTests
         user.AddRole(Role.Admin);
 
         Assert.IsTrue(user.HasRole(Role.Admin));
+    }
+
+    [TestMethod]
+    public void AddRole_WithJournalistRole_ShouldAssignRoleToUser()
+    {
+        var user = CreateValidUser();
+
+        user.AddRole(Role.Journalist);
+
+        Assert.IsTrue(user.HasRole(Role.Journalist));
     }
 
     [TestMethod]
@@ -314,7 +327,71 @@ public class UserTests
 
         Assert.IsFalse(user.HasRole(Role.Admin));
     }
-    
+
+    [TestMethod]
+    public void CreateUser_UserId_ShouldDefaultToZero()
+    {
+        var user = CreateValidUser();
+
+        Assert.AreEqual(0, user.UserId);
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullName_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, null!, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullSurname_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, null!, ValidEmail, ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, ValidSurname, null!, ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithWhitespaceEmail_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, ValidSurname, "   ", ValidDateOfBirth, ValidPassword));
+    }
+
+    [TestMethod]
+    public void CreateUser_WithNullPassword_ShouldThrowArgumentException()
+    {
+        Assert.ThrowsException<ArgumentException>(() =>
+            new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, null!));
+    }
+
+    [TestMethod]
+    public void AddRole_WithRoleNone_ShouldNotChangeRoles()
+    {
+        var user = CreateValidUser();
+
+        user.AddRole(Role.None);
+
+        Assert.AreEqual(Role.None, user.Roles);
+    }
+
+    [TestMethod]
+    public void RemoveRole_WithRoleNone_ShouldNotChangeRoles()
+    {
+        var user = CreateValidUser();
+        user.AddRole(Role.Admin);
+
+        user.RemoveRole(Role.None);
+
+        Assert.IsTrue(user.HasRole(Role.Admin));
+    }
+
     private static User CreateValidUser() =>
-        new User(ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword);
+        new User(Hasher, ValidName, ValidSurname, ValidEmail, ValidDateOfBirth, ValidPassword);
 }

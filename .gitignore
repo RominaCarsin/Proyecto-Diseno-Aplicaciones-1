@@ -571,3 +571,13 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 
 # End of https://www.toptal.com/developers/gitignore/api/csharp,jetbrains,rider,dotnetcore
+
+# AI tools
+.ai/
+.claude/
+**/claudeCodeTabState.xml
+**/copilotDiffState.xml
+
+# Generated artifacts
+Metodos.md
+package-lock.json

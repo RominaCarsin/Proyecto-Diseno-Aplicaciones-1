@@ -6,7 +6,7 @@ namespace Services.Mappers;
 
 public static class MatchMapper
 {
-    public static Match ToEntity(MatchRequest matchRequest, IRepository<Group>? groupRepository = null) =>
+    public static Match ToEntity(MatchRequest matchRequest) =>
         new(
             date: matchRequest.Date,
             stadium: StadiumMapper.ToEntity(matchRequest.Stadium),
@@ -16,10 +16,10 @@ public static class MatchMapper
             phase: ResolvePhase(matchRequest.Phase)
         );
 
-    public static MatchResponse ToResponse(Match match) =>
+    public static MatchResponse ToResponse(Match match, bool isLocked = false) =>
         new()
         {
-            Id = match.Id,
+            Id = match.MatchId,
             Date = match.Date,
             Stadium = StadiumMapper.FromEntity(match.Stadium),
             HomeTeam = TeamMapper.FromEntity(match.HomeTeam),
@@ -30,9 +30,14 @@ public static class MatchMapper
             AwayGoals = match.AwayGoals,
             Winner = match.Winner is null ? null : TeamMapper.FromEntity(match.Winner),
             MatchCode = match.MatchCode,
-            IsLocked = match.IsLocked,
             Status = match.Status.ToString(),
-            HasResult = match.HasResult
+            HasResult = match.HasResult,
+            IsFinished = match.IsFinished,
+            IsLocked = isLocked,
+            HomeYellowCards = match.YellowCardsOf(match.HomeTeam),
+            AwayYellowCards = match.YellowCardsOf(match.AwayTeam),
+            HomeRedCards = match.RedCardsOf(match.HomeTeam),
+            AwayRedCards = match.RedCardsOf(match.AwayTeam)
         };
     
 

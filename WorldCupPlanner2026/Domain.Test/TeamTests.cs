@@ -228,13 +228,256 @@ public class TeamTests
     }
     
     [TestMethod]
-    public void Normalize_WithLowercaseAndSpaces_ShouldReturnNormalizedString()
+    public void CreateTeam_WithoutFlag_ShouldHaveEmptyFlag()
     {
-        var result = Team.Normalize("  uruguay  ");
+        var team = new Team(ValidName, ValidConfederation, ValidRanking);
 
-        Assert.AreEqual("URUGUAY", result);
+        Assert.AreEqual(string.Empty, team.FlagBase64);
     }
     
+    [TestMethod]
+    public void UpdateFlag_WithValidBase64_ShouldAssignFlag()
+    {
+        var team = CreateValidTeam();
+        var validBase64 = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+
+        team.UpdateFlag(validBase64);
+
+        Assert.AreEqual(validBase64, team.FlagBase64);
+    }
+    
+    [TestMethod]
+    public void UpdateFlag_WithInvalidBase64_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateFlag("esto no es base64 !!!"));
+    }
+    
+    [TestMethod]
+    public void UpdateFlag_WithEmptyOrWhitespace_ShouldResetToEmpty()
+    {
+        var team = CreateValidTeam();
+        team.UpdateFlag(Convert.ToBase64String(new byte[] { 9, 9 }));
+
+        team.UpdateFlag("   ");
+
+        Assert.AreEqual(string.Empty, team.FlagBase64);
+    }
+
+    [TestMethod]
+    public void RecordMultipleResults_ShouldAccumulateCorrectly()
+    {
+        var team = CreateValidTeam();
+
+        team.RecordWin(goalsScored: 3, goalsConceded: 1);
+        team.RecordDraw(goalsScored: 1);
+        team.RecordLoss(goalsScored: 0, goalsConceded: 2);
+
+        Assert.AreEqual(4, team.Points);
+        Assert.AreEqual(4, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void RevertLoss_WithNegativeScoredGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RevertLoss(goalsScored: -1, goalsConceded: 0));
+    }
+
+    [TestMethod]
+    public void RevertLoss_WithNegativeConcededGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RevertLoss(goalsScored: 0, goalsConceded: -1));
+    }
+
+    [TestMethod]
+    public void RevertDraw_WithNegativeGoals_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.RevertDraw(goalsScored: -1));
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithMaxLengthName_ShouldSucceed()
+    {
+        var name = new string('A', 60);
+
+        var team = new Team(name, ValidConfederation, ValidRanking);
+
+        Assert.AreEqual(name, team.Name);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithNameExceedingMaxLength_ShouldThrowArgumentException()
+    {
+        var name = new string('A', 61);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            new Team(name, ValidConfederation, ValidRanking));
+    }
+
+    [TestMethod]
+    public void UpdateGroupLabel_WithLowercase_ShouldNormalizeToUppercase()
+    {
+        var team = CreateValidTeam();
+
+        team.UpdateGroupLabel("group a");
+
+        Assert.AreEqual("GROUP A", team.GroupLabel);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithGroupLabel_ShouldStoreNormalizedLabel()
+    {
+        var team = new Team(ValidName, ValidConfederation, ValidRanking, "group b");
+
+        Assert.AreEqual("GROUP B", team.GroupLabel);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_ShouldUpdateValue()
+    {
+        var team = CreateValidTeam();
+
+        team.UpdateRankingFifa(800);
+
+        Assert.AreEqual(800, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void CreateTeam_WithValidFlag_ShouldStoreFlag()
+    {
+        var validBase64 = Convert.ToBase64String(new byte[] { 1, 2, 3, 4 });
+
+        var team = new Team(ValidName, ValidConfederation, ValidRanking, flagBase64: validBase64);
+
+        Assert.AreEqual(validBase64, team.FlagBase64);
+    }
+
+    [TestMethod]
+    public void UpdateFlag_WithNullValue_ShouldResetToEmpty()
+    {
+        var team = CreateValidTeam();
+        team.UpdateFlag(Convert.ToBase64String(new byte[] { 9, 9 }));
+
+        team.UpdateFlag(null!);
+
+        Assert.AreEqual(string.Empty, team.FlagBase64);
+    }
+
+    [TestMethod]
+    public void RecordDraw_WithZeroGoals_ShouldSucceed()
+    {
+        var team = CreateValidTeam();
+
+        team.RecordDraw(0);
+
+        Assert.AreEqual(1, team.Points);
+        Assert.AreEqual(0, team.GoalsInFavor);
+        Assert.AreEqual(0, team.GoalDifference);
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithInvalidValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName("INVALID"));
+    }
+
+    [TestMethod]
+    public void CreateTeam_TeamId_ShouldDefaultToZero()
+    {
+        var team = CreateValidTeam();
+
+        Assert.AreEqual(0, team.TeamId);
+    }
+
+    [TestMethod]
+    public void UpdateName_WithNullName_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateName(null!));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithNullValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName(null!));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithEmptyValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName(""));
+    }
+
+    [TestMethod]
+    public void UpdateConfederationName_WithWhitespaceValue_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateConfederationName("   "));
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AtMinimumBoundary_ShouldSucceed()
+    {
+        var team = CreateValidTeam();
+
+        team.UpdateRankingFifa(300);
+
+        Assert.AreEqual(300, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AtMaximumBoundary_ShouldSucceed()
+    {
+        var team = CreateValidTeam();
+
+        team.UpdateRankingFifa(2500);
+
+        Assert.AreEqual(2500, team.RankingFifa);
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_BelowMinimum_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateRankingFifa(299));
+    }
+
+    [TestMethod]
+    public void UpdateRankingFifa_AboveMaximum_ShouldThrowArgumentException()
+    {
+        var team = CreateValidTeam();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            team.UpdateRankingFifa(2501));
+    }
+
     private static Team CreateValidTeam() =>
         new Team(ValidName, ValidConfederation, ValidRanking);
 }

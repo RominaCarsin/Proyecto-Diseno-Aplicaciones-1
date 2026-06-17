@@ -5,12 +5,12 @@ public enum Role
 {
     None = 0,
     Admin = 1,
-    Editor = 2
+    Editor = 2,
+    Journalist = 4
 }
 
 public class User
 {
-    private const int CaesarShift = 3;
     private const int MinPasswordLength = 8;
     private const int MaxAgeInYears = 120;
 
@@ -29,14 +29,19 @@ public class User
     private const string PasswordMissingDigitErrorMessage = "La contraseña debe contener un número.";
     private const string PasswordMissingSpecialCharErrorMessage = "La contraseña debe contener un carácter especial.";
     
-    public string Name { get; private set; }
-    public string Surname { get; private set; }
-    public string Email { get; private set; }
+    public int UserId { get; private set; }
+    public string Name { get; private set; } = null!;
+    public string Surname { get; private set; } = null!;
+    
+    public string Email { get; private set; } = null!;
     public DateTime DateOfBirth { get; private set; }
     public string PasswordHash { get; private set; } = string.Empty;
     public Role Roles { get; private set; }
 
+    [ExcludeFromCodeCoverage]
+    protected User(){}
     public User(
+        IPasswordHasher passwordHasher,
         string name,
         string surname,
         string email,
@@ -46,7 +51,7 @@ public class User
     {
         UpdatePersonalInfo(name, surname, email, dateOfBirth);
         Roles = roles;
-        SetPassword(plainPassword);
+        SetPassword(plainPassword, passwordHasher);
     }
 
     public void UpdatePersonalInfo(string name, string surname, string email, DateTime dateOfBirth)
@@ -62,18 +67,18 @@ public class User
         DateOfBirth = dateOfBirth;
     }
 
-    public void SetPassword(string plainPassword)
+    public void SetPassword(string plainPassword, IPasswordHasher passwordHasher)
     {
         ValidatePasswordComplexity(plainPassword);
-        PasswordHash = EncryptPassword(plainPassword, CaesarShift);
+        PasswordHash = passwordHasher.Hash(plainPassword);
     }
 
-    public bool VerifyPassword(string plainPassword)
+    public bool VerifyPassword(string plainPassword, IPasswordHasher passwordHasher)
     {
         if (string.IsNullOrEmpty(PasswordHash))
             return false;
 
-        return DecryptPassword(PasswordHash, CaesarShift) == plainPassword;
+        return passwordHasher.Verify(plainPassword, PasswordHash);
     }
 
     public void AddRole(Role role) => Roles |= role;
@@ -143,10 +148,4 @@ public class User
         if (!password.Any(c => !char.IsLetterOrDigit(c)))
             throw new ArgumentException(PasswordMissingSpecialCharErrorMessage);
     }
-
-    private static string EncryptPassword(string password, int shift) =>
-        new string(password.Select(c => (char)(c + shift)).ToArray());
-
-    private static string DecryptPassword(string cipherText, int shift) =>
-        new string(cipherText.Select(c => (char)(c - shift)).ToArray());
 }

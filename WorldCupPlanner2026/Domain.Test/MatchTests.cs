@@ -19,7 +19,6 @@ public class MatchTests
         Assert.AreEqual(TournamentPhase.GroupStage, match.Phase);
         Assert.AreEqual(MatchStatus.NotFinished, match.Status);
         Assert.IsFalse(match.HasResult);
-        Assert.IsFalse(match.IsLocked);
     }
 
     [TestMethod]
@@ -156,16 +155,6 @@ public class MatchTests
     }
 
     [TestMethod]
-    public void LockedMatch_ShouldRejectEditableChanges()
-    {
-        var match = CreateMatch();
-        match.LockEdition();
-
-        Assert.ThrowsException<InvalidOperationException>(() => match.UpdateDate(AnotherValidDate));
-        Assert.ThrowsException<InvalidOperationException>(() => match.UpdateStadium(BuildStadium("MARACANA")));
-    }
-
-    [TestMethod]
     public void Finish_ShouldSetStatusAndLockMatch()
     {
         var match = CreateMatch();
@@ -173,9 +162,31 @@ public class MatchTests
         match.Finish();
 
         Assert.AreEqual(MatchStatus.Finished, match.Status);
-        Assert.IsTrue(match.IsLocked);
         Assert.ThrowsException<InvalidOperationException>(() => match.Finish());
         Assert.ThrowsException<InvalidOperationException>(() => match.SetResult(1, 0));
+    }
+    
+    [TestMethod]
+    public void IsFinished_ShouldReturnTrueOnlyWhenStatusIsFinished()
+    {
+        var match = CreateMatch();
+        Assert.IsFalse(match.IsFinished);
+
+        match.Finish();
+        Assert.IsTrue(match.IsFinished);
+    }
+    
+    [TestMethod]
+    public void RegisterIncidence_YellowCard_ShouldBeCountedForThatTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, minute: 30));
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(0, match.YellowCardsOf(awayTeam));
     }
 
     private static Match CreateMatch(
@@ -193,6 +204,323 @@ public class MatchTests
             group: group,
             phase: phase
         );
+    
+    [TestMethod]
+    public void RegisterIncidence_RedCard_ShouldBeCountedSeparatelyFromYellow()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, minute: 30));
+        match.RegisterIncidence(new RedCard(homeTeam, minute: 80));
+        match.RegisterIncidence(new RedCard(awayTeam, minute: 85));
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(homeTeam));
+        Assert.AreEqual(1, match.RedCardsOf(awayTeam));
+    }
+    
+    [TestMethod]
+    public void RegisterIncidence_OnFineshedMatch_ShouldThrowInvalidOperationException()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: BuildTeam("ARGENTINA"));
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.RegisterIncidence(new YellowCard(homeTeam, minute: 30)));
+    }
+    
+    [TestMethod]
+    public void RegisterIncidence_ForTeamNotInMatch_ShouldThrowArgumentException()
+    {
+        var match = CreateMatch(homeTeam: BuildTeam("URUGUAY"), awayTeam: BuildTeam("ARGENTINA"));
+        var outsider = BuildTeam("BRAZIL");
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            match.RegisterIncidence(new YellowCard(outsider, minute: 30)));
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_ShouldSetGoalsAndUpdateTeamStats()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        var result = new SimulationResult(3, 1, 2, 1, 0, 0);
+        match.ApplySimulationResult(result);
+
+        Assert.AreEqual(3, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(homeTeam, match.Winner);
+        Assert.AreEqual(3, homeTeam.Points);
+        Assert.AreEqual(0, awayTeam.Points);
+        Assert.AreEqual(2, homeTeam.GoalDifference);
+        Assert.AreEqual(-2, awayTeam.GoalDifference);
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_WithExistingResult_ShouldRevertPreviousTeamStats()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.ApplySimulationResult(new SimulationResult(2, 0, 1, 0, 0, 0));
+        match.ApplySimulationResult(new SimulationResult(0, 1, 0, 2, 0, 0));
+
+        Assert.AreEqual(0, homeTeam.Points);
+        Assert.AreEqual(3, awayTeam.Points);
+        Assert.AreEqual(-1, homeTeam.GoalDifference);
+        Assert.AreEqual(1, awayTeam.GoalDifference);
+        Assert.AreEqual(awayTeam, match.Winner);
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_WithInvalidGoals_ShouldThrow()
+    {
+        var match = CreateMatch();
+
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            match.ApplySimulationResult(new SimulationResult(-1, 0)));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() =>
+            match.ApplySimulationResult(new SimulationResult(0, -1)));
+
+        var knockout = CreateMatch(group: null, phase: TournamentPhase.RoundOf32);
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            knockout.ApplySimulationResult(new SimulationResult(1, 1)));
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_OnFinishedMatch_ShouldThrowInvalidOperationException()
+    {
+        var match = CreateMatch();
+        match.Finish();
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            match.ApplySimulationResult(new SimulationResult(1, 0)));
+    }
+
+    [TestMethod]
+    public void ClearCards_ShouldRemoveAllCardIncidences()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.RegisterIncidence(new YellowCard(homeTeam, 30));
+        match.RegisterIncidence(new YellowCard(awayTeam, 40));
+        match.RegisterIncidence(new RedCard(awayTeam, 80));
+
+        match.ClearCards();
+
+        Assert.AreEqual(0, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(0, match.YellowCardsOf(awayTeam));
+        Assert.AreEqual(0, match.RedCardsOf(awayTeam));
+    }
+
+    [TestMethod]
+    public void ClearCards_OnEmptyIncidences_ShouldNotThrow()
+    {
+        var match = CreateMatch();
+
+        match.ClearCards();
+
+        Assert.AreEqual(0, match.Incidences.Count);
+    }
+
+    [TestMethod]
+    public void ApplySimulationResult_ThenRegisterCards_ShouldHaveBothGoalsAndCards()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.ApplySimulationResult(new SimulationResult(2, 1, 3, 2, 1, 0));
+
+        var cardGenerator = new CardGenerator(new Random(42));
+        match.ClearCards();
+        foreach (var card in cardGenerator.GenerateYellowCards(homeTeam, 3))
+            match.RegisterIncidence(card);
+        foreach (var card in cardGenerator.GenerateYellowCards(awayTeam, 2))
+            match.RegisterIncidence(card);
+        foreach (var card in cardGenerator.GenerateRedCards(homeTeam, 1))
+            match.RegisterIncidence(card);
+
+        Assert.AreEqual(2, match.HomeGoals);
+        Assert.AreEqual(1, match.AwayGoals);
+        Assert.AreEqual(3, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(2, match.YellowCardsOf(awayTeam));
+        Assert.AreEqual(1, match.RedCardsOf(homeTeam));
+        Assert.AreEqual(0, match.RedCardsOf(awayTeam));
+    }
+
+    [TestMethod]
+    public void CreateMatch_MatchId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.MatchId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_StadiumId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.StadiumId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_HomeTeamId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.HomeTeamId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_AwayTeamId_ShouldDefaultToZero()
+    {
+        var match = CreateMatch();
+
+        Assert.AreEqual(0, match.AwayTeamId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WinnerId_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.WinnerId);
+    }
+
+    [TestMethod]
+    public void SetResult_WinnerId_ShouldRemainNull()
+    {
+        var match = CreateMatch();
+        match.SetResult(2, 1);
+
+        Assert.IsNull(match.WinnerId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_GroupId_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.GroupId);
+    }
+
+    [TestMethod]
+    public void CreateMatch_RankingApplied_ShouldBeFalse()
+    {
+        var match = CreateMatch();
+
+        Assert.IsFalse(match.RankingApplied);
+    }
+
+    [TestMethod]
+    public void Loser_WhenWinnerIsNull_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.Loser);
+    }
+
+    [TestMethod]
+    public void Loser_WhenHomeTeamWins_ShouldBeAwayTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.SetResult(2, 0);
+
+        Assert.AreEqual(awayTeam, match.Loser);
+    }
+
+    [TestMethod]
+    public void Loser_WhenAwayTeamWins_ShouldBeHomeTeam()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+
+        match.SetResult(0, 2);
+
+        Assert.AreEqual(homeTeam, match.Loser);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithMatchCode_ShouldNormalizeToUpperAndTrim()
+    {
+        var match = new Match(ValidDate, BuildStadium(), BuildTeam("URUGUAY"), BuildTeam("ARGENTINA"),
+            group: null, phase: TournamentPhase.RoundOf32, matchCode: "  abc  ");
+
+        Assert.AreEqual("ABC", match.MatchCode);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithNullMatchCode_ShouldBeNull()
+    {
+        var match = CreateMatch();
+
+        Assert.IsNull(match.MatchCode);
+    }
+
+    [TestMethod]
+    public void CreateMatch_WithWhitespaceMatchCode_ShouldBeNull()
+    {
+        var match = new Match(ValidDate, BuildStadium(), BuildTeam("URUGUAY"), BuildTeam("ARGENTINA"),
+            group: null, phase: TournamentPhase.RoundOf32, matchCode: "   ");
+
+        Assert.IsNull(match.MatchCode);
+    }
+
+    [TestMethod]
+    public void UpdateStadium_WithNullStadium_ShouldThrowArgumentException()
+    {
+        var match = CreateMatch();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            match.UpdateStadium(null!));
+    }
+
+    [TestMethod]
+    public void ClearCards_ThenRegisterNewCards_ShouldReplaceOldCards()
+    {
+        var homeTeam = BuildTeam("URUGUAY");
+        var awayTeam = BuildTeam("ARGENTINA");
+        var match = CreateMatch(homeTeam: homeTeam, awayTeam: awayTeam);
+        var generator = new CardGenerator(new Random(42));
+
+        match.ApplySimulationResult(new SimulationResult(1, 1, 2, 2, 0, 0));
+        match.ClearCards();
+        foreach (var card in generator.GenerateYellowCards(homeTeam, 2))
+            match.RegisterIncidence(card);
+        foreach (var card in generator.GenerateYellowCards(awayTeam, 2))
+            match.RegisterIncidence(card);
+
+        Assert.AreEqual(2, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(2, match.YellowCardsOf(awayTeam));
+
+        match.ApplySimulationResult(new SimulationResult(2, 0, 1, 3, 1, 0));
+        match.ClearCards();
+        foreach (var card in generator.GenerateYellowCards(homeTeam, 1))
+            match.RegisterIncidence(card);
+        foreach (var card in generator.GenerateYellowCards(awayTeam, 3))
+            match.RegisterIncidence(card);
+        foreach (var card in generator.GenerateRedCards(homeTeam, 1))
+            match.RegisterIncidence(card);
+
+        Assert.AreEqual(1, match.YellowCardsOf(homeTeam));
+        Assert.AreEqual(3, match.YellowCardsOf(awayTeam));
+        Assert.AreEqual(1, match.RedCardsOf(homeTeam));
+        Assert.AreEqual(0, match.RedCardsOf(awayTeam));
+    }
 
     private static Stadium BuildStadium(string name = "CENTENARIO") =>
         new(name, "MONTEVIDEO", "Historic stadium", 60000);

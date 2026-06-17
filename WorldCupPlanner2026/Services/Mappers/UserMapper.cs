@@ -5,9 +5,10 @@ namespace Services.Mappers;
 
 public static class UserMapper
 {
-    public static User ToEntity(UserRequest request)
+    public static User ToEntity(UserRequest request, IPasswordHasher passwordHasher)
     {
         return new User(
+            passwordHasher,
             request.Name,
             request.Surname,
             request.Email,
@@ -21,6 +22,7 @@ public static class UserMapper
     {
         return new UserResponse
         {
+            Id = user.UserId,
             Name = user.Name,
             Surname = user.Surname,
             Email = user.Email,

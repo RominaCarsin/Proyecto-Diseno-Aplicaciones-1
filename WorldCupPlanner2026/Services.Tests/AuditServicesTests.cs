@@ -17,7 +17,7 @@ public class AuditServiceTests
     [TestInitialize]
     public void Setup()
     {
-        _repository = new Repository<AuditLog>();
+        _repository = new FakeRepository<AuditLog>();
         _service = new AuditService(_repository);
     }
     

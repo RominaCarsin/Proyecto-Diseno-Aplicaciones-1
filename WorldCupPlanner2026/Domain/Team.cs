@@ -11,27 +11,33 @@ public class Team
     private const string ConfederationRequiredErrorMessage = "La confederación es obligatoria.";
     private const string ConfederationInvalidErrorMessage = "La confederación es inválida.";
     private const string NegativeGoalsErrorMessage = "Los goles no pueden ser negativos.";
-
+    private const string FlagInvalidErrorMessage = "La bandera debe estar en formato base64 válido.";
+    
     private static readonly HashSet<string> ValidConfederations = new()
     {
         "AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"
     };
-
-    public string Name { get; private set; }
-    public string ConfederationName { get; private set; }
+    
+    public int TeamId { get; private set; }
+    public string Name { get; private set; } = null!;
+    public string ConfederationName { get; private set; } = null!;
     public int RankingFifa { get; private set; }
     public int Points { get; private set; }
     public int GoalDifference { get; private set; }
     public int GoalsInFavor { get; private set; }
     public string GroupLabel { get; private set; } = string.Empty;
+    public string FlagBase64 { get; private set; } = string.Empty;
 
-    public Team(string name, string confederationName, int rankingFifa, string groupLabel = "")
+    [ExcludeFromCodeCoverage]
+    protected Team() { }
+    public Team(string name, string confederationName, int rankingFifa, string groupLabel = "", string flagBase64 = "")
     {
         UpdateName(name);
         UpdateConfederationName(confederationName);
         UpdateRankingFifa(rankingFifa);
         UpdateGroupLabel(groupLabel);
-
+        UpdateFlag(flagBase64);
+        
         Points = 0;
         GoalDifference = 0;
         GoalsInFavor = 0;
@@ -39,7 +45,7 @@ public class Team
 
     public void UpdateName(string name)
     {
-        var normalized = Normalize(name);
+        var normalized = TextNormalizer.Normalize(name);
 
         if (string.IsNullOrWhiteSpace(normalized) || normalized.Length > MaxNameLength)
             throw new ArgumentException(NameInvalidErrorMessage);
@@ -49,7 +55,7 @@ public class Team
 
     public void UpdateConfederationName(string confederationName)
     {
-        var normalized = Normalize(confederationName);
+        var normalized = TextNormalizer.Normalize(confederationName);
 
         if (string.IsNullOrWhiteSpace(normalized))
             throw new ArgumentException(ConfederationRequiredErrorMessage);
@@ -70,7 +76,7 @@ public class Team
     
     public void UpdateGroupLabel(string groupLabel)
     {
-        GroupLabel = Normalize(groupLabel);
+        GroupLabel = TextNormalizer.Normalize(groupLabel);
     }
 
     public void RecordWin(int goalsScored, int goalsConceded) =>
@@ -91,9 +97,30 @@ public class Team
     public void RevertLoss(int goalsScored, int goalsConceded) =>
         RevertStatsChange(0, goalsScored, goalsConceded);
 
-    public static string Normalize(string value) =>
-        value?.Trim().ToUpper() ?? string.Empty;
-        
+    public void UpdateFlag(string flagBase64)
+    {
+        FlagBase64 = NormalizeFlag(flagBase64);
+    }
+
+    private static string NormalizeFlag(string flagBase64)
+    {
+        if (string.IsNullOrWhiteSpace(flagBase64))
+            return string.Empty;
+
+        var trimmed = flagBase64.Trim();
+
+        if (!IsValidBase64(trimmed))
+            throw new ArgumentException(FlagInvalidErrorMessage);
+
+        return trimmed;
+    }
+
+    private static bool IsValidBase64(string value)
+    {
+        var buffer = new Span<byte>(new byte[value.Length]);
+        return Convert.TryFromBase64String(value, buffer, out _);
+    }
+
     private void ApplyStatsChange(int points, int goalsScored, int goalsConceded)
     {
         ValidateGoalsAreNotNegative(goalsScored, goalsConceded);
