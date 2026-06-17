@@ -11,164 +11,164 @@
 
 
    <div class="ph">
-       <h1 class="pt">Matches</h1>
-       <p class="ps">Create and edit matches · WorldCupPlanner 2026</p>
+       <h1 class="pt">Partidos</h1>
+       <p class="ps">Crear y editar partidos · WorldCupPlanner 2026</p>
    </div>
 
 
    <div class="card">
        <div class="card-header">
-           <span class="card-title">New match</span>
+            <span class="card-title">Nuevo partido</span>
        </div>
        <div class="card-body">
            <div class="fg">
-               <label class="fl">Date <span class="req">*</span></label>
-               <input class="finput @(_dateInvalid ? "invalid" : "")" type="datetime-local" @bind="_date" />
-               @if (_dateInvalid) { <span class="ferr">Date is required.</span> }
+                <label class="fl">Fecha <span class="req">*</span></label>
+                <input class="finput @(_dateInvalid ? "invalid" : "")" type="datetime-local" @bind="_date" />
+                @if (_dateInvalid) { <span class="ferr">La fecha es obligatoria.</span> }
            </div>
            <div class="fg">
-               <label class="fl">Stadium <span class="req">*</span></label>
-               <select class="finput @(_stadiumInvalid ? "invalid" : "")" @bind="_selectedStadiumName">
-                   <option value="">Select stadium</option>
-                   @foreach (var stadium in _stadiums)
-                   {
-                       <option value="@stadium.Name"
-                               disabled="@(!IsStadiumAvailableForEdit(stadium.Name))">
-                           @stadium.Name @(IsStadiumAvailableForEdit(stadium.Name) ? "" : " - Not available")
-                       </option>
-                   }
-               </select>
-               @if (_stadiumInvalid) { <span class="ferr">Stadium is required.</span> }
+                <label class="fl">Estadio <span class="req">*</span></label>
+                <select class="finput @(_stadiumInvalid ? "invalid" : "")" @bind="_selectedStadiumName">
+                    <option value="">Seleccionar estadio</option>
+                    @foreach (var stadium in _stadiums)
+                    {
+                        <option value="@stadium.Name"
+                                disabled="@(!IsStadiumAvailableForEdit(stadium.Name))">
+                            @stadium.Name @(IsStadiumAvailableForEdit(stadium.Name) ? "" : " - No disponible")
+                        </option>
+                    }
+                </select>
+                @if (_stadiumInvalid) { <span class="ferr">El estadio es obligatorio.</span> }
            </div>
            <div class="fg">
-               <label class="fl">Home team <span class="req">*</span></label>
-               <select class="finput @(_homeTeamInvalid ? "invalid" : "")" @bind="_selectedHomeTeamName">
-                   <option value="">Select home team</option>
-                   @foreach (var team in _teams)
-                   {
-                       <option value="@team.Name">@team.Name</option>
-                   }
-               </select>
-               @if (_homeTeamInvalid) { <span class="ferr">Home team is required.</span> }
+                <label class="fl">Equipo local <span class="req">*</span></label>
+                <select class="finput @(_homeTeamInvalid ? "invalid" : "")" @bind="_selectedHomeTeamName">
+                    <option value="">Seleccionar equipo local</option>
+                    @foreach (var team in _teams)
+                    {
+                        <option value="@team.Name">@team.Name</option>
+                    }
+                </select>
+                @if (_homeTeamInvalid) { <span class="ferr">El equipo local es obligatorio.</span> }
            </div>
            <div class="fg">
-               <label class="fl">Away team <span class="req">*</span></label>
-               <select class="finput @(_awayTeamInvalid ? "invalid" : "")" @bind="_selectedAwayTeamName">
-                   <option value="">Select away team</option>
-                   @foreach (var team in _teams)
-                   {
-                       <option value="@team.Name">@team.Name</option>
-                   }
-               </select>
-               @if (_awayTeamInvalid) { <span class="ferr">Away team is required and must be different from home team.</span> }
+                <label class="fl">Equipo visitante <span class="req">*</span></label>
+                <select class="finput @(_awayTeamInvalid ? "invalid" : "")" @bind="_selectedAwayTeamName">
+                    <option value="">Seleccionar equipo visitante</option>
+                    @foreach (var team in _teams)
+                    {
+                        <option value="@team.Name">@team.Name</option>
+                    }
+                </select>
+                @if (_awayTeamInvalid) { <span class="ferr">El equipo visitante es obligatorio y debe ser diferente al local.</span> }
            </div>
            <div class="fg">
-               <label class="fl">Phase <span class="req">*</span></label>
-               <select class="finput" @bind="_phase">
-                   <option value="GroupStage">Group stage</option>
-                   <option value="RoundOf32">Round of 32</option>
-                   <option value="QuarterFinals">Quarter finals</option>
-                   <option value="SemiFinals">Semi finals</option>
-                   <option value="ThirdPlace">Third place</option>
-                   <option value="Final">Final</option>
-               </select>
+                <label class="fl">Fase <span class="req">*</span></label>
+                <select class="finput" @bind="_phase">
+                    <option value="GroupStage">Fase de grupos</option>
+                    <option value="RoundOf32">Dieciseisavos</option>
+                    <option value="QuarterFinals">Cuartos de final</option>
+                    <option value="SemiFinals">Semifinales</option>
+                    <option value="ThirdPlace">Tercer puesto</option>
+                    <option value="Final">Final</option>
+                </select>
            </div>
            @if (_phase == "GroupStage")
            {
                <div class="fg">
-                   <label class="fl">Group <span class="req">*</span></label>
-                   <select class="finput @(_groupInvalid ? "invalid" : "")" @bind="_group">
-                       <option value="">Select group</option>
-                       @foreach (var group in _groups)
-                       {
-                           <option value="@group">@group</option>
-                       }
-                   </select>
-                   @if (_groupInvalid) { <span class="ferr">Group is required for group stage matches.</span> }
+                <label class="fl">Grupo <span class="req">*</span></label>
+                    <select class="finput @(_groupInvalid ? "invalid" : "")" @bind="_group">
+                        <option value="">Seleccionar grupo</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group">@group</option>
+                        }
+                    </select>
+                    @if (_groupInvalid) { <span class="ferr">El grupo es obligatorio para partidos de fase de grupos.</span> }
                </div>
            }
            @if (!string.IsNullOrEmpty(_successMessage)) { <div class="alert-box suc">✓ @_successMessage</div> }
            @if (!string.IsNullOrEmpty(_errorMessage)) { <div class="alert-box err">@_errorMessage</div> }
        </div>
        <div class="card-footer">
-           <button class="btn-p" @onclick="SaveMatch">Save match</button>
+            <button class="btn-p" @onclick="SaveMatch">Guardar partido</button>
        </div>
    </div>
 
 
    <div class="card" style="margin-top: 1.5rem;">
        <div class="card-header">
-           <span class="card-title">Filters</span>
+            <span class="card-title">Filtros</span>
        </div>
        <div class="card-body">
            <div class="filters-grid">
                <div class="fg">
-                   <label class="fl">Date</label>
-                   <input class="finput" type="date" @bind="_filterDate" />
-               </div>
-               <div class="fg">
-                   <label class="fl">Stadium</label>
-                   <select class="finput" @bind="_filterStadium">
-                       <option value="">All stadiums</option>
-                       @foreach (var stadium in _stadiums)
-                       {
-                           <option value="@stadium.Name">@stadium.Name</option>
-                       }
-                   </select>
-               </div>
-               <div class="fg">
-                   <label class="fl">Group</label>
-                   <select class="finput" @bind="_filterGroup">
-                       <option value="">All groups</option>
-                       @foreach (var group in _groups)
-                       {
-                           <option value="@group">@group</option>
-                       }
-                   </select>
-               </div>
-               <div class="fg">
-                   <label class="fl">Phase</label>
-                   <select class="finput" @bind="_filterPhase">
-                       <option value="">All phases</option>
-                       <option value="GroupStage">Group stage</option>
-                       <option value="RoundOf32">Round of 32</option>
-                       <option value="QuarterFinals">Quarter finals</option>
-                       <option value="SemiFinals">Semi finals</option>
-                       <option value="ThirdPlace">Third place</option>
-                       <option value="Final">Final</option>
-                   </select>
+                    <label class="fl">Fecha</label>
+                    <input class="finput" type="date" @bind="_filterDate" />
+                </div>
+                <div class="fg">
+                    <label class="fl">Estadio</label>
+                    <select class="finput" @bind="_filterStadium">
+                        <option value="">Todos los estadios</option>
+                        @foreach (var stadium in _stadiums)
+                        {
+                            <option value="@stadium.Name">@stadium.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="fg">
+                    <label class="fl">Grupo</label>
+                    <select class="finput" @bind="_filterGroup">
+                        <option value="">Todos los grupos</option>
+                        @foreach (var group in _groups)
+                        {
+                            <option value="@group">@group</option>
+                        }
+                    </select>
+                </div>
+                <div class="fg">
+                    <label class="fl">Fase</label>
+                    <select class="finput" @bind="_filterPhase">
+                        <option value="">Todas las fases</option>
+                        <option value="GroupStage">Fase de grupos</option>
+                        <option value="RoundOf32">Dieciseisavos</option>
+                        <option value="QuarterFinals">Cuartos de final</option>
+                        <option value="SemiFinals">Semifinales</option>
+                        <option value="ThirdPlace">Tercer puesto</option>
+                        <option value="Final">Final</option>
+                    </select>
                </div>
            </div>
-           <button class="btn btn-g" @onclick="ClearFilters">Clear filters</button>
+            <button class="btn btn-g" @onclick="ClearFilters">Limpiar filtros</button>
        </div>
    </div>
 
 
    <div class="card" style="margin-top: 1.5rem;">
        <div class="card-header">
-           <span class="card-title">Registered matches (@FilteredMatches.Count())</span>
+            <span class="card-title">Partidos registrados (@FilteredMatches.Count())</span>
        </div>
        <div class="card-body" style="overflow-x: auto;">
            @if (!FilteredMatches.Any())
            {
-               <p style="color: #888;">No matches registered yet.</p>
+                <p style="color: #888;">No hay partidos registrados aún.</p>
            }
            else
            {
                <table>
                    <thead>
                        <tr>
-                           <th>Id</th>
-                           <th>Date</th>
-                           <th>Stadium</th>
-                           <th>Home</th>
-                           <th>Away</th>
-                           <th>Group</th>
-                           <th>Phase</th>
-                           <th>Result</th>
-                           <th>Winner</th>
-                           <th>Locked</th>
-                           <th>Actions</th>
+                            <th>Id</th>
+                            <th>Fecha</th>
+                            <th>Estadio</th>
+                            <th>Local</th>
+                            <th>Visitante</th>
+                            <th>Grupo</th>
+                            <th>Fase</th>
+                            <th>Resultado</th>
+                            <th>Ganador</th>
+                            <th>Bloqueado</th>
+                            <th>Acciones</th>
                        </tr>
                    </thead>
                    <tbody>
@@ -194,7 +194,7 @@
                                            {
                                                <option value="@stadium.Name"
                                                        disabled="@(!IsStadiumAvailableForEdit(stadium.Name))">
-                                                   @stadium.Name @(IsStadiumAvailableForEdit(stadium.Name) ? "" : " - Not available")
+                                                    @stadium.Name @(IsStadiumAvailableForEdit(stadium.Name) ? "" : " - No disponible")
                                                </option>
                                            }
                                        </select>
@@ -228,8 +228,8 @@
                                    @if (_editingMatchId == match.Id)
                                    {
                                        <div style="display: flex; gap: 4px;">
-                                           <button class="btn-p" @onclick="SaveEdit">Save</button>
-                                           <button class="btn btn-g" @onclick="CancelEdit">Cancel</button>
+                                            <button class="btn-p" @onclick="SaveEdit">Guardar</button>
+                                            <button class="btn btn-g" @onclick="CancelEdit">Cancelar</button>
                                        </div>
                                    }
                                    else
@@ -237,7 +237,7 @@
                                        <button class="btn btn-s"
                                                disabled="@match.IsLocked"
                                                @onclick="() => StartEdit(match)">
-                                           Edit
+                                            Editar
                                        </button>
                                    }
                                </td>

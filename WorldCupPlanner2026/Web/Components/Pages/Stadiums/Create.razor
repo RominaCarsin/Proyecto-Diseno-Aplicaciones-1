@@ -7,63 +7,63 @@
 <div class="page-wrap">
 
   <div class="ph">
-    <h1 class="pt">Stadiums</h1>
-    <p class="ps">Create new stadium · WorldCupPlanner 2026</p>
+    <h1 class="pt">Estadios</h1>
+    <p class="ps">Crear nuevo estadio · WorldCupPlanner 2026</p>
   </div>
 
   <div class="card">
     <div class="card-header">
-      <span class="card-title">@(_editingStadiumName != null ? "Edit stadium" : "New stadium")</span>
+      <span class="card-title">@(_editingStadiumName != null ? "Editar estadio" : "Nuevo estadio")</span>
     </div>
 
     <div class="card-body">
 
       <div class="fg">
-        <label class="fl">Name <span class="req">*</span></label>
+        <label class="fl">Nombre <span class="req">*</span></label>
         <input class="finput @(_nameInvalid ? "invalid" : "")"
                type="text" maxlength="80"
-               placeholder="Ex: Estadio Centenario"
+               placeholder="Ej: Estadio Centenario"
                @bind="_name" @bind:event="oninput" />
         @if (_nameInvalid)
         {
-          <span class="ferr">Name is required (1–80 characters)</span>
+          <span class="ferr">El nombre es obligatorio (1–80 caracteres)</span>
         }
       </div>
 
       <div class="fg">
-        <label class="fl">City <span class="req">*</span></label>
+        <label class="fl">Ciudad <span class="req">*</span></label>
         <input class="finput @(_cityInvalid ? "invalid" : "")"
                type="text" maxlength="60"
-               placeholder="Ex: Montevideo"
+               placeholder="Ej: Montevideo"
                @bind="_city" @bind:event="oninput" />
         @if (_cityInvalid)
         {
-          <span class="ferr">City is required (1–60 characters)</span>
+          <span class="ferr">La ciudad es obligatoria (1–60 caracteres)</span>
         }
       </div>
 
       <div class="fg">
-        <label class="fl">Description</label>
+        <label class="fl">Descripción</label>
         <textarea class="finput @(_descInvalid ? "invalid" : "")"
                   maxlength="400"
-                  placeholder="Optional description..."
+                  placeholder="Descripción opcional..."
                   @bind="_description" @bind:event="oninput"></textarea>
         @if (_descInvalid)
         {
-          <span class="ferr">Description cannot exceed 400 characters</span>
+          <span class="ferr">La descripción no puede exceder 400 caracteres</span>
         }
       </div>
 
       <div class="fg">
-        <label class="fl">Capacity <span class="req">*</span></label>
+        <label class="fl">Capacidad <span class="req">*</span></label>
         <input class="finput @(_capacityInvalid ? "invalid" : "")"
                type="number" min="20000"
-               placeholder="Ex: 60000"
+               placeholder="Ej: 60000"
                @bind="_capacity" @bind:event="oninput" />
-        <span class="fhint">Minimum 20,000 spectators</span>
+        <span class="fhint">Mínimo 20,000 espectadores</span>
         @if (_capacityInvalid)
         {
-          <span class="ferr">Capacity must be at least 20,000</span>
+          <span class="ferr">La capacidad debe ser al menos 20,000</span>
         }
       </div>
 
@@ -82,33 +82,33 @@
     <div class="card-footer">
       @if (_editingStadiumName != null)
       {
-        <button class="btn btn-g" @onclick="CancelEdit">Cancel edit</button>
+        <button class="btn btn-g" @onclick="CancelEdit">Cancelar edición</button>
       }
       <button class="btn-p" @onclick="Save">
-        @(_editingStadiumName != null ? "Update stadium" : "Save stadium")
+        @(_editingStadiumName != null ? "Actualizar estadio" : "Guardar estadio")
       </button>
     </div>
   </div>
 
   <div class="card" style="margin-top: 1.5rem;">
     <div class="card-header">
-      <span class="card-title">Registered stadiums (@_stadiums.Count())</span>
+      <span class="card-title">Estadios registrados (@_stadiums.Count())</span>
     </div>
     <div class="card-body" style="overflow-x: auto;">
       @if (!_stadiums.Any())
       {
-        <p style="color: #888;">No stadiums registered yet.</p>
+        <p style="color: #888;">No hay estadios registrados aún.</p>
       }
       else
       {
         <table>
           <thead>
           <tr>
-            <th>Name</th>
-            <th>City</th>
-            <th>Capacity</th>
-            <th>Description</th>
-            <th>Actions</th>
+            <th>Nombre</th>
+            <th>Ciudad</th>
+            <th>Capacidad</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
           </tr>
           </thead>
           <tbody>
@@ -123,10 +123,10 @@
                 <div class="actions-cell">
                   <button class="btn btn-s" 
                           disabled="@(_editingStadiumName == stadium.Name)"
-                          @onclick="() => EditStadium(stadium)">Edit</button>
+                          @onclick="() => EditStadium(stadium)">Editar</button>
                   <button class="btn btn-d"
                           disabled="@(_editingStadiumName == stadium.Name)"
-                          @onclick="() => DeleteStadium(stadium.Name)">Delete</button>
+                          @onclick="() => DeleteStadium(stadium.Name)">Eliminar</button>
                 </div>
               </td>
             </tr>
@@ -179,8 +179,8 @@
                 StadiumService.AddStadium(request);
 
             var message = _editingStadiumName != null
-                ? $"Stadium '{_name}' updated successfully!"
-                : $"Stadium '{_name}' created successfully!";
+                ? $"Estadio '{_name}' actualizado correctamente."
+                : $"Estadio '{_name}' creado correctamente.";
 
             ClearForm();
             LoadStadiums();
@@ -221,7 +221,7 @@
 
             StadiumService.DeleteStadium(stadiumName);
 
-            var message = $"Stadium '{stadiumName}' deleted successfully!";
+            var message = $"Estadio '{stadiumName}' eliminado correctamente.";
             LoadStadiums();
             _successMessage = message;
         }
