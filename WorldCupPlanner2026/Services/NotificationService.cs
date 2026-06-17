@@ -9,7 +9,7 @@ namespace Services;
 public class NotificationService : INotificationService
 {
     private const string NotificationNotFoundErrorMessage = "No se encontró la notificación.";
-    private const string NotificationReadAction = "NOTIFICATION_READ";
+    private const string NotificationReadAction = "Notificación leída";
 
     private readonly IRepository<Notification> _notificationRepository;
     private readonly IRepository<User> _userRepository;

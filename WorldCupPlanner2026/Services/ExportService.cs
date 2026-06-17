@@ -9,7 +9,7 @@ namespace Services;
 
 public class ExportService : IExportService
 {
-    private const string ExportAction = "EXPORT";
+    private const string ExportAction = "Exportación";
 
     private readonly IAuditService _auditService;
     private readonly ISessionService _sessionService;

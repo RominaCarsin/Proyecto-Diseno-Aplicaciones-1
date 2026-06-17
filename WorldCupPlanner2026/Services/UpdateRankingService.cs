@@ -7,7 +7,7 @@ public class UpdateRankingService : IUpdateRankingService
 {
     private const string MatchNotFinishedErrorMessage = "El ranking solo se recalcula para partidos finalizados.";
     private const string SystemActor = "SISTEMA";
-    private const string RankingAction = "RANKING_UPDATE";
+    private const string RankingAction = "Actualización de ranking";
 
     private readonly IAuditService _auditService;
 
