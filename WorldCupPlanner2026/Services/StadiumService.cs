@@ -91,6 +91,5 @@ public class StadiumService : IStadiumService
         stadiumToUpdate.UpdateCity(stadiumToAdd.City);
         stadiumToUpdate.UpdateDescription(stadiumToAdd.Description);
         stadiumToUpdate.UpdateCapacity(stadiumToAdd.Capacity);
-        
     }
 }

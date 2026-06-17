@@ -133,6 +133,11 @@ public class TeamService : ITeamService
     public TeamImportResult Import(string csvContent) =>
         ProcessImport(csvContent, shouldPersistRows: true);
 
+    public IEnumerable<TeamResponse> GetTeamsByRanking() =>
+        _repository.GetAll()
+            .OrderByDescending(team => team.RankingFifa)
+            .Select(TeamMapper.FromEntity);
+
     private TeamImportResult ProcessImport(string csvContent, bool shouldPersistRows)
     {
         var result = new TeamImportResult();
@@ -272,11 +277,6 @@ public class TeamService : ITeamService
             confederation.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
         ?? throw new ArgumentException($"No se encontro la confederacion '{name}'.");
 
-    public IEnumerable<TeamResponse> GetTeamsByRanking() =>
-        _repository.GetAll()
-            .OrderByDescending(team => team.RankingFifa)
-            .Select(TeamMapper.FromEntity);
-    
     private void AddFictionalTeamsToConfederation(string confederationName, int teamsToCreate, Random random)
     {
         var existingNames = _repository.GetAll()
