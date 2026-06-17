@@ -33,8 +33,6 @@ public class Knockout
     private readonly IShuffler _shuffler;
     private readonly List<Stadium> _stadiums = new();
 
-    private IShuffler Shuffler =>
-        _shuffler ?? throw new InvalidOperationException("El servicio de sorteo no está inicializado.");
     
     public int SimulationSeed { get; private set; }
     public int CrossesSeed { get; private set; }
@@ -275,7 +273,7 @@ public class Knockout
 
     private IEnumerable<Match> PairRemainingSecondPlaces(List<Team> remainingSecondPlaces)
     {
-        Shuffler.Shuffle(remainingSecondPlaces);
+        _shuffler.Shuffle(remainingSecondPlaces);
 
         var homePot = remainingSecondPlaces.Take(HalfRemainingSecondsCount).ToList();
         var awayPot = remainingSecondPlaces.Skip(HalfRemainingSecondsCount).Take(HalfRemainingSecondsCount).ToList();
@@ -285,8 +283,8 @@ public class Knockout
 
     private List<Match> PairTeams(List<Team> homePot, List<Team> awayPot, string prefix, int startNumber)
     {
-        Shuffler.Shuffle(homePot);
-        Shuffler.Shuffle(awayPot);
+        _shuffler.Shuffle(homePot);
+        _shuffler.Shuffle(awayPot);
 
         var matches = new List<Match>();
 

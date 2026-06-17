@@ -6,7 +6,7 @@ namespace Services.Mappers;
 
 public static class MatchMapper
 {
-    public static Match ToEntity(MatchRequest matchRequest, IRepository<Group>? groupRepository = null) =>
+    public static Match ToEntity(MatchRequest matchRequest) =>
         new(
             date: matchRequest.Date,
             stadium: StadiumMapper.ToEntity(matchRequest.Stadium),
