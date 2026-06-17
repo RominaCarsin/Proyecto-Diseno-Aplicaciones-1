@@ -411,7 +411,7 @@ public class ExportServiceTests
         _service.ExportAuditLogToCsv(Enumerable.Empty<AuditLog>());
 
         var logs = _auditRepository.GetAll().ToList();
-        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Action == "Exportación"));
         Assert.IsTrue(logs.Any(l => l.Details.Contains("AuditLog") && l.Details.Contains("CSV")));
     }
 
@@ -421,7 +421,7 @@ public class ExportServiceTests
         _service.ExportAuditLogToXlsx(Enumerable.Empty<AuditLog>());
 
         var logs = _auditRepository.GetAll().ToList();
-        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Action == "Exportación"));
         Assert.IsTrue(logs.Any(l => l.Details.Contains("AuditLog") && l.Details.Contains("XLSX")));
     }
 
@@ -431,7 +431,7 @@ public class ExportServiceTests
         _service.ExportFixtureToCsv(Enumerable.Empty<MatchResponseRow>());
 
         var logs = _auditRepository.GetAll().ToList();
-        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Action == "Exportación"));
         Assert.IsTrue(logs.Any(l => l.Details.Contains("Fixture") && l.Details.Contains("CSV")));
     }
 
@@ -441,7 +441,7 @@ public class ExportServiceTests
         _service.ExportFixtureToXlsx(Enumerable.Empty<MatchResponseRow>());
 
         var logs = _auditRepository.GetAll().ToList();
-        Assert.IsTrue(logs.Any(l => l.Action == "EXPORT"));
+        Assert.IsTrue(logs.Any(l => l.Action == "Exportación"));
         Assert.IsTrue(logs.Any(l => l.Details.Contains("Fixture") && l.Details.Contains("XLSX")));
     }
 }

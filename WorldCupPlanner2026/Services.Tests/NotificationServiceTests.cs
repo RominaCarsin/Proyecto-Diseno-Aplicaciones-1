@@ -280,7 +280,7 @@ public class NotificationServiceTests
         _service.MarkAsRead(notification.NotificationId);
 
         var logs = _auditRepository.GetAll().ToList();
-        Assert.IsTrue(logs.Any(l => l.Action == "NOTIFICATION_READ"));
+        Assert.IsTrue(logs.Any(l => l.Action == "Notificación leída"));
     }
 
     [TestMethod]
@@ -292,7 +292,7 @@ public class NotificationServiceTests
         _service.MarkAllAsRead(journalist.UserId);
 
         var logs = _auditRepository.GetAll().ToList();
-        Assert.IsTrue(logs.Any(l => l.Action == "NOTIFICATION_READ"));
+        Assert.IsTrue(logs.Any(l => l.Action == "Notificación leída"));
     }
 
     // ─── Helpers ───
