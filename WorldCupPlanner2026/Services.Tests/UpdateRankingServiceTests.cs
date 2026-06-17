@@ -68,6 +68,27 @@ public class UpdateRankingServiceTests
         Assert.IsTrue(logs.All(log => log.Action.Contains("RANKING", StringComparison.OrdinalIgnoreCase)));
     }
 
+    [TestMethod]
+    public void UpdateAfterMatch_WhenRankingAlreadyApplied_ShouldNotRecalculateOrAuditAgain()
+    {
+        var strong = BuildTeam("STRONG", 1500);
+        var weak = BuildTeam("WEAK", 1200);
+        var match = BuildFinishedMatch(home: weak, away: strong, homeGoals: 2, awayGoals: 0);
+
+        _service.UpdateAfterMatch(match); // primera vez: aplica ranking, deja RankingApplied = true
+
+        var weakRankingAfterFirst = weak.RankingFifa;
+        var strongRankingAfterFirst = strong.RankingFifa;
+        var logsAfterFirst = _auditRepository.GetAll().Count();
+
+        _service.UpdateAfterMatch(match); // segunda vez: debe entrar al "return" y no hacer nada
+
+        Assert.AreEqual(weakRankingAfterFirst, weak.RankingFifa);
+        Assert.AreEqual(strongRankingAfterFirst, strong.RankingFifa);
+        Assert.AreEqual(logsAfterFirst, _auditRepository.GetAll().Count());
+    }
+    
+    
     private static Match BuildFinishedMatch(Team home, Team away, int homeGoals, int awayGoals)
     {
         var match = new Match(

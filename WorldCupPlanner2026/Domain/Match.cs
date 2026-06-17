@@ -129,6 +129,10 @@ public class Match
         Stadium = newStadium!;
     }
     
+    public void MarkRankingApplied()
+    {
+        RankingApplied = true;
+    }
     
     public void RegisterIncidence(MatchIncidence incidence)
     {

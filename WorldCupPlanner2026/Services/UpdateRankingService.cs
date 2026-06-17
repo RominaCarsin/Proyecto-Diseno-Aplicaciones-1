@@ -42,6 +42,8 @@ public class UpdateRankingService : IUpdateRankingService
         AuditRankingChange(homeTeam, homeRankingBefore);
         AuditRankingChange(awayTeam, awayRankingBefore);
         
+        match.MarkRankingApplied();
+        
     }
 
     private static double ResultFor(Team team, Match match)
