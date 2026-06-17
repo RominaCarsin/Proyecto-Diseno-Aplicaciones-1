@@ -97,11 +97,35 @@ public class RankingCalculatorTests
     }
 
     [TestMethod]
+    public void CalculateDelta_StrongTeamLosesToWeakInGroupStage_ShouldReturnNegativeDelta()
+    {
+        var delta = RankingCalculator.CalculateDelta(
+            teamRanking: 1500,
+            opponentRanking: 1200,
+            result: 0.0,
+            phase: TournamentPhase.GroupStage);
+
+        Assert.IsTrue(delta < 0);
+    }
+
+    [TestMethod]
+    public void CalculateNewRanking_WhenRankingEndsInHalfPointAfterKnockoutLoss_ShouldRoundAwayFromZero()
+    {
+        var newRanking = RankingCalculator.CalculateNewRanking(
+            teamRanking: 1500,
+            opponentRanking: 1500,
+            result: 0.0,
+            phase: TournamentPhase.QuarterFinals);
+
+        Assert.AreEqual(1478, newRanking);
+    }
+
+    [TestMethod]
     public void CalculateNewRanking_WhenCalculatedRankingIsBelowMinimum_ShouldReturnMinimumRanking()
     {
         var newRanking = RankingCalculator.CalculateNewRanking(
             teamRanking: 300,
-            opponentRanking: 2500,
+            opponentRanking: 2000,
             result: 0.0,
             phase: TournamentPhase.QuarterFinals);
 
@@ -113,7 +137,7 @@ public class RankingCalculatorTests
     {
         var newRanking = RankingCalculator.CalculateNewRanking(
             teamRanking: 2500,
-            opponentRanking: 300,
+            opponentRanking: 2500,
             result: 1.0,
             phase: TournamentPhase.QuarterFinals);
 

@@ -591,6 +591,41 @@ public class KnockoutTests
 
         Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf16());
     }
+    
+
+    [TestMethod]
+    public void GivenNoStadiumsAvailable_WhenInitializeRoundOf32_ThenThrowsInvalidOperationException()
+    {
+        var knockout = CreateValidKnockout();
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+
+        var field = typeof(Knockout).GetField("_stadiums",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var stadiums = (List<Stadium>)field!.GetValue(knockout)!;
+        stadiums.Clear();
+
+        Assert.ThrowsException<InvalidOperationException>(() => knockout.InitializeRoundOf32());
+    }
+
+    [TestMethod]
+    public void GivenMultipleStadiums_WhenInitializeRoundOf32_ThenStadiumsAreAssignedFromAvailableList()
+    {
+        var stadiums = new List<Stadium>
+        {
+            new("Centenario", "Montevideo", null, 60000),
+            new("Maracaná", "Río de Janeiro", null, 78000),
+            new("Azteca", "Ciudad de México", null, 87000)
+        };
+        var knockout = new Knockout(SimulationSeed, new TestShuffler(CrossesSeed), stadiums, CrossesSeed);
+        knockout.SetQualifiedTeams(CreateOrderedQualifiedTeams());
+        knockout.InitializeRoundOf32();
+
+        foreach (var match in knockout.Matches)
+        {
+            Assert.IsNotNull(match.Stadium);
+            Assert.IsTrue(stadiums.Contains(match.Stadium));
+        }
+    }
 
     // ==================== HELPERS ====================
 
