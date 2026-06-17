@@ -119,7 +119,7 @@
             .OrderBy(m => m.Date)
             .Select(m => new MatchResponseRow(
                 m.MatchCode ?? "",
-                m.Date.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
+                m.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm"),
                 m.Phase,
                 m.Group?.ToString() ?? "",
                 m.HomeTeam.Name,
