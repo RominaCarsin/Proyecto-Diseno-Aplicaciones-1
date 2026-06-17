@@ -157,6 +157,16 @@ public class TournamentServiceTests
     }
 
     [TestMethod]
+    public void GenerateFixture_WithMoreThan48Teams_ShouldThrowArgumentException()
+    {
+        AddTeams(49);
+        AddStadiums(4);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1)));
+    }
+
+    [TestMethod]
     public void CanGenerateFixture_WithAllConditionsMet_ShouldReturnTrue()
     {
         AddTeams(48);
@@ -286,6 +296,19 @@ public class TournamentServiceTests
     }
 
     [TestMethod]
+    public void SetGroupMatchResult_WithExistingGroupButInvalidMatchId_ShouldThrowArgumentException()
+    {
+        AddTeams(48);
+        AddStadiums(4);
+        _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1));
+
+        var firstGroup = _groupRepository.GetAll().First();
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.SetGroupMatchResult(firstGroup.Label, 9999, 1, 0));
+    }
+
+    [TestMethod]
     public void FinishGroupMatch_WithGeneratedFixture_ShouldFinishMatch()
     {
         AddTeams(48);
@@ -323,6 +346,21 @@ public class TournamentServiceTests
     [TestMethod]
     public void GetQualifiedTeams_WithoutTwelveGroups_ShouldThrowInvalidOperationException()
     {
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _service.GetQualifiedTeams());
+    }
+
+    [TestMethod]
+    public void GetQualifiedTeams_WithGroupHavingLessThan3Teams_ShouldThrowInvalidOperationException()
+    {
+        for (char label = 'A'; label <= 'L'; label++)
+        {
+            var group = new Group(label);
+            group.AddTeam(new Team($"Team_{label}_1", "UEFA", 1500));
+            group.AddTeam(new Team($"Team_{label}_2", "CONMEBOL", 1400));
+            _groupRepository.Add(group);
+        }
+
         Assert.ThrowsException<InvalidOperationException>(() =>
             _service.GetQualifiedTeams());
     }
@@ -605,6 +643,20 @@ public class TournamentServiceTests
         Assert.IsNotNull(matches.First().AwayTeam);
         Assert.IsFalse(string.IsNullOrWhiteSpace(matches.First().MatchCode));
     }
+
+    [TestMethod]
+    public void GetMatches_WhenKnockoutExists_ShouldLockGroupStageMatches()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
+
+        var allMatches = _service.GetMatches().ToList();
+        var groupMatches = allMatches.Where(m => m.Phase == "GroupStage").ToList();
+        var knockoutMatch = allMatches.First(m => m.Phase != "GroupStage");
+
+        Assert.IsTrue(groupMatches.All(m => m.IsLocked));
+        Assert.IsFalse(knockoutMatch.IsLocked);
+    }
     
     [TestMethod]
     public void FinishKnockoutMatch_WithResult_ShouldFinishMatchAndRecalculateRanking()
@@ -627,6 +679,16 @@ public class TournamentServiceTests
         Assert.AreNotEqual(homeRankingBefore, knockoutMatch.HomeTeam.RankingFifa);
     }
     
+    [TestMethod]
+    public void FinishKnockoutMatch_WithNonExistentMatchCode_ShouldThrowArgumentException()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.FinishKnockoutMatch("NONEXISTENT"));
+    }
+
     [TestMethod]
     public void FinishAllKnockoutMatches_WithResults_ShouldFinishAllKnockoutMatchesAndRecalculateRanking()
     {
@@ -665,6 +727,13 @@ public class TournamentServiceTests
         Assert.IsTrue(knockoutMatches.All(match => !match.HasResult));
     }
     
+    [TestMethod]
+    public void FinishAllKnockoutMatches_WithoutInitializedKnockout_ShouldThrowInvalidOperationException()
+    {
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _service.FinishAllKnockoutMatches());
+    }
+
     [TestMethod]
     public void SetKnockoutMatchResult_WithInitializedKnockout_ShouldApplyResult()
     {
@@ -722,6 +791,18 @@ public class TournamentServiceTests
             .ToList();
 
         Assert.AreEqual(8, roundOf16.Count);
+    }
+
+    [TestMethod]
+    public void InitializeRoundOf16_WithoutKnockoutInitialized_ShouldThrowInvalidOperationException()
+    {
+        AddTeams(48);
+        AddStadiums(4);
+        _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1));
+        _service.SimulateGroupStage(DefaultSeed);
+
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _service.InitializeRoundOf16());
     }
 
     [TestMethod]
@@ -950,6 +1031,23 @@ public class TournamentServiceTests
     }
     
     [TestMethod]
+    public void AddMatch_WithNonExistentGroupLabel_ShouldThrowArgumentException()
+    {
+        AddTeams(48);
+        AddStadiums(4);
+        _service.GenerateFixture(DefaultSeed, new DateTime(2026, 6, 1));
+
+        var request = BuildValidMatchRequest(
+            homeTeamName: "EXTRA_HOME",
+            awayTeamName: "EXTRA_AWAY",
+            date: new DateTime(2026, 9, 1, 12, 0, 0));
+        request.Group = 'Z';
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddMatch(request));
+    }
+
+    [TestMethod]
     public void RegisterMatchIncidence_YellowForHomeTeam_ShouldBeCountedOnDomainMatch()
     {
         var saved = AddValidMatchAndGetResponse();
@@ -1048,6 +1146,25 @@ public class TournamentServiceTests
         Assert.AreNotEqual(homeBefore, sampleMatch.HomeTeam.RankingFifa);
     }
     
+    [TestMethod]
+    public void FinishAllMatches_WithStandaloneMatchWithoutResult_ShouldNotFinishIt()
+    {
+        var home = new Team("HOME", "CONMEBOL", 1500, "A");
+        var away = new Team("AWAY", "UEFA", 1400, "B");
+        var match = new Match(
+            ValidMatchDate,
+            new Stadium("TEST_STADIUM", "CITY", "Test stadium", 50000),
+            home, away,
+            group: null, phase: TournamentPhase.RoundOf16, matchCode: "K1");
+
+        _matchRepository.Add(match);
+
+        _service.FinishAllMatches();
+
+        var standalone = _matchRepository.GetAll().First(m => m.MatchCode == "K1");
+        Assert.AreEqual(MatchStatus.NotFinished, standalone.Status);
+        Assert.IsFalse(standalone.HasResult);
+    }
     
     [TestMethod]
     public void SimulateKnockoutStage_ShouldNotRecalculateRankingBeforeMatchesAreFinished()
@@ -1063,6 +1180,34 @@ public class TournamentServiceTests
         _service.SimulateKnockoutStage(DefaultSeed);
 
         Assert.AreEqual(homeRankingBefore, knockoutMatch.HomeTeam.RankingFifa);
+    }
+
+    [TestMethod]
+    public void FinishAllMatches_WithKnockoutMatches_ShouldAlsoFinishStandaloneMatches()
+    {
+        CreateFixtureAndSimulateGroupStage();
+        _service.InitializeKnockoutStage(DefaultSeed);
+
+        var knockoutMatches = _matchRepository.GetAll()
+            .Where(m => m.Phase != TournamentPhase.GroupStage)
+            .ToList();
+
+        foreach (var match in knockoutMatches)
+            _service.SetKnockoutMatchResult(match.MatchCode!, 1, 0);
+
+        _service.FinishAllMatches();
+
+        Assert.IsTrue(knockoutMatches.All(m => m.Status == MatchStatus.Finished));
+    }
+
+    [TestMethod]
+    public void AddMatch_WithInvalidPhaseString_ShouldThrowArgumentException()
+    {
+        var request = BuildValidMatchRequest();
+        request.Phase = "InvalidPhase";
+
+        Assert.ThrowsException<ArgumentException>(() =>
+            _service.AddMatch(request));
     }
     
     private void SimulateAndFinishKnockoutStage()
